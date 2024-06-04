@@ -1,5 +1,22 @@
 import { createRoot } from "react-dom/client";
-import App from "./App";
+import { createBrowserRouter, RouterProvider, Link } from "react-router-dom";
 
-const root = createRoot(document.getElementById("root"));
-root.render(<App />);
+const router = createBrowserRouter([
+  {
+    path: "/",
+    element: (
+      <div>
+        <h1>Maylands Competitions </h1>
+        <Link to="routetest">Route test</Link>
+      </div>
+    ),
+  },
+  {
+    path: "routetest",
+    element: <div>It worked !</div>,
+  },
+]);
+
+createRoot(document.getElementById("root")).render(
+  <RouterProvider router={router} />,
+);
