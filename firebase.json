@@ -1,20 +1,7 @@
 {
   "hosting": {
     "public": "public",
-    "ignore": [
-      "firebase.json",
-      "package-lock.json",
-      "package.json",
-      "tsconfig.json",
-      "eslint.config.mjs",
-      "**/.*",
-      "**/node_modules/**",
-      ".github/workflows/**",
-      ".husky/**",
-      ".parcel-cache/**",
-      "dist/**",
-      "src/**"
-    ],
+    "ignore": [],
     "rewrites": [
       {
         "source": "**",
