@@ -1,105 +1,64 @@
-import { MatchState, getPlayers, getUmpire } from "../src/umpire/index";
+import { getPlayers, getUmpire } from "../src/umpire/index";
 describe("umpiring", () => {
   const singlesPlayers = getPlayers(false);
   const doublesPlayers = getPlayers(true);
-  const getNormalUmpire = () => getUmpire("normal");
-  const getHardbatUmpire = () => getUmpire("hardbat");
-  const getHandicapUmpire = () => getUmpire("handicap");
+  const getAnUmpire = (bestOf = 1) => getUmpire("normal", false, bestOf);
+
   describe("initialization", () => {
-    it("should initialize a normal umpire - singles", () => {
-      const umpire = getNormalUmpire();
-      const matchState = umpire.initialize(false, 1);
-      expect(matchState).toEqual<Partial<MatchState>>({
-        team1StartGameScore: 0,
-        team2StartGameScore: 0,
-        adjustedUpTo: 11,
-        team1Left: true,
-        team1Score: { gamesWon: 0, pointsWon: 0 },
-        team2Score: { gamesWon: 0, pointsWon: 0 },
-        availableServers: singlesPlayers,
-        availableReceivers: [],
-        isDoubles: false,
-        bestOf: 1,
-      });
+    it("should have team1 left", () => {
+      expect(getAnUmpire().team1Left).toBe(true);
     });
 
-    it("should initialize a hardbat umpire - singles", () => {
-      const umpire = getHardbatUmpire();
-      const matchState = umpire.initialize(false, 1);
-      expect(matchState).toEqual<Partial<MatchState>>({
-        team1StartGameScore: 0,
-        team2StartGameScore: 0,
-        adjustedUpTo: 15,
-        team1Left: true,
-        team1Score: { gamesWon: 0, pointsWon: 0 },
-        team2Score: { gamesWon: 0, pointsWon: 0 },
-        availableServers: singlesPlayers,
-        availableReceivers: [],
-        isDoubles: false,
-        bestOf: 1,
-      });
+    it.each([1, 3])("should have best of", (bestOf) => {
+      expect(getAnUmpire(bestOf).bestOf).toBe(bestOf);
+    });
+    it("should initialize normal scoring", () => {
+      const umpire = getUmpire("normal", false, 1);
+      expect(umpire.upTo).toBe(11);
+      expect(umpire.team1Score).toStrictEqual({ gamesWon: 0, pointsWon: 0 });
+      expect(umpire.team2Score).toStrictEqual({ gamesWon: 0, pointsWon: 0 });
+    });
+    it("should initialize available servers and receivers for singles", () => {
+      const umpire = getUmpire("normal", false, 1);
+      expect(umpire.availableServers).toEqual(singlesPlayers);
+      expect(umpire.availableReceivers).toEqual([]);
+    });
+    it("should initialize available servers and receivers for doubles", () => {
+      const umpire = getUmpire("normal", true, 1);
+      expect(umpire.availableServers).toEqual(doublesPlayers);
+      expect(umpire.availableReceivers).toHaveLength(0);
     });
 
-    describe("handicap inititialization - singles", () => {
+    it("should initialize hardbat scoring", () => {
+      const umpire = getUmpire("hardbat", false, 1);
+      expect(umpire.upTo).toBe(15);
+      expect(umpire.team1Score).toStrictEqual({ gamesWon: 0, pointsWon: 0 });
+      expect(umpire.team2Score).toStrictEqual({ gamesWon: 0, pointsWon: 0 });
+    });
+
+    describe("handicap scoring", () => {
       it("should adjust negatives start game scores if set option and negative handicaps", () => {
-        const umpire = getHandicapUmpire();
-        const matchState = umpire.initialize(false, 1, {
+        const umpire = getUmpire("handicap", false, 1, {
           team1Handicap: -1,
           team2Handicap: -2,
           shiftNegatives: true,
         });
-        expect(matchState).toEqual<Partial<MatchState>>({
-          team1StartGameScore: 1,
-          team2StartGameScore: 0,
-          adjustedUpTo: 33,
-          team1Left: true,
-          team1Score: { gamesWon: 0, pointsWon: 1 },
-          team2Score: { gamesWon: 0, pointsWon: 0 },
-          availableServers: singlesPlayers,
-          availableReceivers: [],
-          isDoubles: false,
-          bestOf: 1,
-        });
+
+        expect(umpire.upTo).toBe(33);
+        expect(umpire.team1Score).toStrictEqual({ gamesWon: 0, pointsWon: 1 });
+        expect(umpire.team2Score).toStrictEqual({ gamesWon: 0, pointsWon: 0 });
       });
 
       it("should leave negatives and upTo if do not shiftNegatives", () => {
-        const umpire = getHandicapUmpire();
-        const matchState = umpire.initialize(false, 1, {
+        const umpire = getUmpire("handicap", false, 1, {
           team1Handicap: -1,
           team2Handicap: -2,
           shiftNegatives: false,
         });
-        expect(matchState).toEqual<Partial<MatchState>>({
-          team1StartGameScore: -1,
-          team2StartGameScore: -2,
-          adjustedUpTo: 31,
-          team1Left: true,
-          team1Score: { gamesWon: 0, pointsWon: -1 },
-          team2Score: { gamesWon: 0, pointsWon: -2 },
-          availableServers: singlesPlayers,
-          availableReceivers: [],
-          isDoubles: false,
-          bestOf: 1,
-        });
-      });
-    });
 
-    describe("doubles", () => {
-      it("should have 4 players available", () => {
-        const umpire = getNormalUmpire();
-        const matchState = umpire.initialize(true, 5);
-        expect(matchState).toEqual<Partial<MatchState>>({
-          team1StartGameScore: 0,
-          team2StartGameScore: 0,
-          adjustedUpTo: 11,
-          team1Left: true,
-          team1Score: { gamesWon: 0, pointsWon: 0 },
-          team2Score: { gamesWon: 0, pointsWon: 0 },
-          availableServers: doublesPlayers,
-          availableReceivers: [],
-          isDoubles: true,
-          bestOf: 5,
-        });
+        expect(umpire.upTo).toBe(31);
+        expect(umpire.team1Score).toStrictEqual({ gamesWon: 0, pointsWon: -1 });
+        expect(umpire.team2Score).toStrictEqual({ gamesWon: 0, pointsWon: -2 });
       });
     });
   });
@@ -108,45 +67,34 @@ describe("umpiring", () => {
     describe("when singles", () => {
       // todo parameterize
       it("should set the server and receiver", () => {
-        const umpire = getNormalUmpire();
-        const matchState = umpire.initialize(false, 1);
-        const newMatchState = umpire.setInitialServer("Team1Player1");
-        expect(newMatchState).toEqual<MatchState>({
-          ...matchState,
-          availableReceivers: [],
-          availableServers: [],
-          server: "Team1Player1",
-          receiver: "Team2Player1",
-        });
+        const umpire = getUmpire("normal", false, 1);
+        umpire.setInitialServer("Team1Player1");
+        expect(umpire.availableServers).toHaveLength(0);
+        expect(umpire.availableReceivers).toHaveLength(0);
+        expect(umpire.server).toEqual("Team1Player1");
+        expect(umpire.receiver).toEqual("Team2Player1");
       });
     });
     describe("when doubles", () => {
       // todo parameterize
       it("should set the server and available receivers", () => {
-        const umpire = getNormalUmpire();
-        const matchState = umpire.initialize(true, 1);
-        const newMatchState = umpire.setInitialServer("Team1Player1");
-        expect(newMatchState).toEqual<MatchState>({
-          ...matchState,
-          availableReceivers: ["Team2Player1", "Team2Player2"],
-          availableServers: [],
-          server: "Team1Player1",
-          receiver: undefined,
-        });
+        const umpire = getUmpire("normal", true, 1);
+        umpire.setInitialServer("Team1Player1");
+        expect(umpire.availableServers).toHaveLength(0);
+        expect(umpire.availableReceivers).toEqual([
+          "Team2Player1",
+          "Team2Player2",
+        ]);
+        expect(umpire.server).toEqual("Team1Player1");
+        expect(umpire.receiver).toBeUndefined();
       });
     });
   });
 
   it("should allow switching ends", () => {
     // should happen before match starts
-    const umpire = getNormalUmpire();
-    const matchState = umpire.initialize(true, 5);
-    expect(matchState.team1Left).toBe(true);
-    const newMatchState = umpire.switchEnds();
-
-    expect(newMatchState).toEqual({
-      ...matchState,
-      team1Left: false,
-    });
+    const umpire = getAnUmpire();
+    umpire.switchEnds();
+    expect(umpire.team1Left).toBe(false);
   });
 });
