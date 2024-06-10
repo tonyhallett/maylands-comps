@@ -1,6 +1,10 @@
 import {
+  MatchWinState,
+  MatchWinStateOptions,
+  getMatchWinState,
+} from "../src/umpire/helpers";
+import {
   GameScore,
-  HandicapOptions,
   Player,
   PointHistory,
   Team1Player,
@@ -8,8 +12,10 @@ import {
   TeamScore,
   Umpire,
   getPlayers,
-  shiftHandicap,
 } from "../src/umpire/index";
+
+import { HandicapOptions, shiftHandicap } from "../src/umpire/shiftHandicap";
+
 describe("umpiring", () => {
   const singlesPlayers = getPlayers(false);
   const doublesPlayers = getPlayers(true);
@@ -65,6 +71,9 @@ describe("umpiring", () => {
   };
 
   describe("initialization", () => {
+    it("should have match win state not won", () => {
+      expect(getAnUmpire().matchWinState).toBe(MatchWinState.NotWon);
+    });
     it("should have team1 left", () => {
       expect(getAnUmpire().team1Left).toBe(true);
     });
@@ -108,6 +117,12 @@ describe("umpiring", () => {
 
   const scorePoints = (umpire: Umpire, team1: boolean, n: number) => {
     [...Array(n)].forEach(() => umpire.pointScored(team1));
+  };
+  const oneThenOtherScores = (umpire: Umpire, n: number) => {
+    for (let i = 0; i < n; i++) {
+      umpire.pointScored(true);
+      umpire.pointScored(false);
+    }
   };
   const scoreGames = (
     umpire: Umpire,
@@ -240,6 +255,468 @@ describe("umpiring", () => {
         { team1Points: 7, team2Points: 11 },
         { team1Points: 11, team2Points: 6 },
       ]);
+    });
+
+    describe("match win state", () => {
+      describe("helper", () => {
+        describe("clear by 2", () => {
+          const normal11: MatchWinStateOptions = {
+            clearBy2: true,
+            upTo: 11,
+            bestOf: 5,
+          };
+          it("should be NotWon at 0/0 - 0/0", () => {
+            expect(
+              getMatchWinState(
+                normal11,
+                {
+                  gamesWon: 0,
+                  pointsWon: 0,
+                },
+                {
+                  gamesWon: 0,
+                  pointsWon: 0,
+                },
+              ),
+            ).toBe(MatchWinState.NotWon);
+          });
+
+          it("should be NotWon at 0/9 - 0/9", () => {
+            expect(
+              getMatchWinState(
+                normal11,
+                {
+                  gamesWon: 0,
+                  pointsWon: 9,
+                },
+                {
+                  gamesWon: 0,
+                  pointsWon: 9,
+                },
+              ),
+            ).toBe(MatchWinState.NotWon);
+          });
+
+          it("should be NotWon at 1/0 - 0/0", () => {
+            expect(
+              getMatchWinState(
+                normal11,
+                {
+                  gamesWon: 1,
+                  pointsWon: 0,
+                },
+                {
+                  gamesWon: 0,
+                  pointsWon: 0,
+                },
+              ),
+            ).toBe(MatchWinState.NotWon);
+          });
+
+          it("should be NotWon at 0/10 - 0/10", () => {
+            expect(
+              getMatchWinState(
+                normal11,
+                {
+                  gamesWon: 0,
+                  pointsWon: 10,
+                },
+                {
+                  gamesWon: 0,
+                  pointsWon: 10,
+                },
+              ),
+            ).toBe(MatchWinState.NotWon);
+          });
+
+          it("should be NotWon at 0/11 - 0/11", () => {
+            expect(
+              getMatchWinState(
+                normal11,
+                {
+                  gamesWon: 0,
+                  pointsWon: 11,
+                },
+                {
+                  gamesWon: 0,
+                  pointsWon: 11,
+                },
+              ),
+            ).toBe(MatchWinState.NotWon);
+          });
+
+          it("should be GamePointTeam1 at 0/10 - 0/9", () => {
+            expect(
+              getMatchWinState(
+                normal11,
+                {
+                  gamesWon: 0,
+                  pointsWon: 10,
+                },
+                {
+                  gamesWon: 0,
+                  pointsWon: 9,
+                },
+              ),
+            ).toBe(MatchWinState.GamePointTeam1);
+          });
+
+          it("should be GamePointTeam2 at 0/9 - 0/10", () => {
+            expect(
+              getMatchWinState(
+                normal11,
+                {
+                  gamesWon: 0,
+                  pointsWon: 9,
+                },
+                {
+                  gamesWon: 0,
+                  pointsWon: 10,
+                },
+              ),
+            ).toBe(MatchWinState.GamePointTeam2);
+          });
+
+          it("should be MatchPointTeam1 at 2/10 - 0/9", () => {
+            expect(
+              getMatchWinState(
+                normal11,
+                {
+                  gamesWon: 2,
+                  pointsWon: 10,
+                },
+                {
+                  gamesWon: 0,
+                  pointsWon: 9,
+                },
+              ),
+            ).toBe(MatchWinState.MatchPointTeam1);
+          });
+
+          it("should be MatchPointTeam2 at 0/9 - 2/10", () => {
+            expect(
+              getMatchWinState(
+                normal11,
+                {
+                  gamesWon: 0,
+                  pointsWon: 9,
+                },
+                {
+                  gamesWon: 2,
+                  pointsWon: 10,
+                },
+              ),
+            ).toBe(MatchWinState.MatchPointTeam2);
+          });
+
+          it("should be Team1Won at 3/0 - 0/0", () => {
+            expect(
+              getMatchWinState(
+                normal11,
+                {
+                  gamesWon: 3,
+                  pointsWon: 0,
+                },
+                {
+                  gamesWon: 0,
+                  pointsWon: 0,
+                },
+              ),
+            ).toBe(MatchWinState.Team1Won);
+          });
+
+          it("should be Team2Won at 0/0 - 3/0", () => {
+            expect(
+              getMatchWinState(
+                normal11,
+                {
+                  gamesWon: 0,
+                  pointsWon: 0,
+                },
+                {
+                  gamesWon: 3,
+                  pointsWon: 0,
+                },
+              ),
+            ).toBe(MatchWinState.Team2Won);
+          });
+        });
+        describe("not clear by 2", () => {
+          const hardBatBestOf3Options: MatchWinStateOptions = {
+            clearBy2: false,
+            upTo: 15,
+            bestOf: 3,
+          };
+          it("should be NotWon at 0/11 - 0/0", () => {
+            expect(
+              getMatchWinState(
+                hardBatBestOf3Options,
+                {
+                  gamesWon: 0,
+                  pointsWon: 11,
+                },
+                {
+                  gamesWon: 0,
+                  pointsWon: 0,
+                },
+              ),
+            ).toBe(MatchWinState.NotWon);
+          });
+
+          it("should be GamePointTeam1 at 0/14 - 0/0", () => {
+            expect(
+              getMatchWinState(
+                hardBatBestOf3Options,
+                {
+                  gamesWon: 0,
+                  pointsWon: 14,
+                },
+                {
+                  gamesWon: 0,
+                  pointsWon: 0,
+                },
+              ),
+            ).toBe(MatchWinState.GamePointTeam1);
+          });
+
+          it("should be GamePointTeam2 at 0/0 - 0/14", () => {
+            expect(
+              getMatchWinState(
+                hardBatBestOf3Options,
+                {
+                  gamesWon: 0,
+                  pointsWon: 0,
+                },
+                {
+                  gamesWon: 0,
+                  pointsWon: 14,
+                },
+              ),
+            ).toBe(MatchWinState.GamePointTeam2);
+          });
+
+          it("should be GamePointTeam1 & GamePointTeam2 at 0/14 - 0/14", () => {
+            expect(
+              getMatchWinState(
+                hardBatBestOf3Options,
+                {
+                  gamesWon: 0,
+                  pointsWon: 14,
+                },
+                {
+                  gamesWon: 0,
+                  pointsWon: 14,
+                },
+              ),
+            ).toBe(MatchWinState.GamePointTeam1 & MatchWinState.GamePointTeam2);
+          });
+
+          it("should be MatchPointTeam1 & GamePointTeam2 at 1/14 - 0/14", () => {
+            expect(
+              getMatchWinState(
+                hardBatBestOf3Options,
+                {
+                  gamesWon: 1,
+                  pointsWon: 14,
+                },
+                {
+                  gamesWon: 0,
+                  pointsWon: 14,
+                },
+              ),
+            ).toBe(
+              MatchWinState.MatchPointTeam1 & MatchWinState.GamePointTeam2,
+            );
+          });
+
+          it("should be MatchPointTeam2 & GamePointTeam1 at 0/14 - 1/14", () => {
+            expect(
+              getMatchWinState(
+                hardBatBestOf3Options,
+                {
+                  gamesWon: 0,
+                  pointsWon: 14,
+                },
+                {
+                  gamesWon: 1,
+                  pointsWon: 14,
+                },
+              ),
+            ).toBe(
+              MatchWinState.MatchPointTeam2 & MatchWinState.GamePointTeam1,
+            );
+          });
+        });
+      });
+
+      describe("umpire", () => {
+        describe("clear by 2", () => {
+          it("should be NotWon at 0/9 - 0/9", () => {
+            const umpire = getNormalSinglesBestOf5Umpire();
+            scorePoints(umpire, true, 9);
+            scorePoints(umpire, false, 9);
+
+            expect(umpire.matchWinState).toBe(MatchWinState.NotWon);
+          });
+
+          it("should be NotWon at 1/0 - 0/0", () => {
+            const umpire = getNormalSinglesBestOf5Umpire();
+            scoreGames(umpire, true, 1);
+
+            expect(umpire.matchWinState).toBe(MatchWinState.NotWon);
+          });
+
+          it("should be NotWon at 0/10 - 0/10", () => {
+            const umpire = getNormalSinglesBestOf5Umpire();
+            scorePoints(umpire, true, 10);
+            scorePoints(umpire, false, 10);
+
+            expect(umpire.matchWinState).toBe(MatchWinState.NotWon);
+          });
+
+          it("should be NotWon at 0/11 - 0/11", () => {
+            const umpire = getNormalSinglesBestOf5Umpire();
+            scorePoints(umpire, true, 10);
+            scorePoints(umpire, false, 10);
+            umpire.pointScored(true);
+            umpire.pointScored(false);
+
+            expect(umpire.matchWinState).toBe(MatchWinState.NotWon);
+          });
+
+          it("should be GamePointTeam1 at 0/10 - 0/9", () => {
+            const umpire = getNormalSinglesBestOf5Umpire();
+            scorePoints(umpire, true, 10);
+            scorePoints(umpire, false, 9);
+
+            expect(umpire.matchWinState).toBe(MatchWinState.GamePointTeam1);
+          });
+
+          it("should be GamePointTeam2 at 0/9 - 0/10", () => {
+            const umpire = getNormalSinglesBestOf5Umpire();
+            scorePoints(umpire, true, 9);
+            scorePoints(umpire, false, 10);
+
+            expect(umpire.matchWinState).toBe(MatchWinState.GamePointTeam2);
+          });
+
+          it("should be GamePointTeam2 at 0/12 - 0/13", () => {
+            const umpire = getNormalSinglesBestOf5Umpire();
+            oneThenOtherScores(umpire, 12);
+            umpire.pointScored(false);
+
+            expect(umpire.matchWinState).toBe(MatchWinState.GamePointTeam2);
+          });
+
+          it("should be MatchPointTeam1 at 2/10 - 2/0", () => {
+            const umpire = getNormalSinglesBestOf5Umpire();
+            umpire.setServer("Team1Player1");
+            scoreGames(umpire, true, 2);
+            scoreGames(umpire, false, 2);
+            scorePoints(umpire, true, 10);
+
+            expect(umpire.matchWinState).toBe(MatchWinState.MatchPointTeam1);
+          });
+
+          it("should be MatchPointTeam2 at 0/0 - 2/10", () => {
+            const umpire = getNormalSinglesBestOf5Umpire();
+            umpire.setServer("Team1Player1");
+            scoreGames(umpire, false, 2);
+            scorePoints(umpire, false, 10);
+
+            expect(umpire.matchWinState).toBe(MatchWinState.MatchPointTeam2);
+          });
+
+          it("should be Team1Won at 3/0 - 0/0", () => {
+            const umpire = getNormalSinglesBestOf5Umpire();
+            umpire.setServer("Team1Player1");
+            scoreGames(umpire, true, 3);
+
+            expect(umpire.matchWinState).toBe(MatchWinState.Team1Won);
+          });
+
+          it("should be Team2Won at 0/0 - 3/0", () => {
+            const umpire = getNormalSinglesBestOf5Umpire();
+            umpire.setServer("Team1Player1");
+            scoreGames(umpire, false, 3);
+
+            expect(umpire.matchWinState).toBe(MatchWinState.Team2Won);
+          });
+        });
+        describe("not clear by 2", () => {
+          it("should be NotWon at 0/11 - 0/0", () => {
+            const bestOf = 3;
+            const umpire = getHardbatSinglesUmpire(bestOf);
+            scorePoints(umpire, true, 11);
+
+            expect(umpire.matchWinState).toBe(MatchWinState.NotWon);
+          });
+
+          it("should be GamePointTeam1 at 0/14 - 0/0", () => {
+            const bestOf = 3;
+            const umpire = getHardbatSinglesUmpire(bestOf);
+            scorePoints(umpire, true, 14);
+
+            expect(umpire.matchWinState).toBe(MatchWinState.GamePointTeam1);
+          });
+
+          it("should be GamePointTeam2 at 0/0 - 0/14", () => {
+            const bestOf = 3;
+            const umpire = getHardbatSinglesUmpire(bestOf);
+            scorePoints(umpire, false, 14);
+
+            expect(umpire.matchWinState).toBe(MatchWinState.GamePointTeam2);
+          });
+
+          it("should be GamePointTeam1 & GamePointTeam2 at 0/14 - 0/14", () => {
+            const bestOf = 3;
+            const umpire = getHardbatSinglesUmpire(bestOf);
+            scorePoints(umpire, false, 14);
+            scorePoints(umpire, true, 14);
+
+            expect(umpire.matchWinState).toBe(
+              MatchWinState.GamePointTeam1 & MatchWinState.GamePointTeam2,
+            );
+          });
+
+          it("should be MatchPointTeam1 & GamePointTeam2 at 1/14 - 0/14", () => {
+            const bestOf = 3;
+            const umpire = getHardbatSinglesUmpire(bestOf);
+            scorePoints(umpire, true, 15);
+            scorePoints(umpire, true, 14);
+            scorePoints(umpire, false, 14);
+
+            expect(umpire.matchWinState).toBe(
+              MatchWinState.MatchPointTeam1 & MatchWinState.GamePointTeam2,
+            );
+          });
+
+          it("should be MatchPointTeam2 & GamePointTeam1 at 0/14 - 1/14", () => {
+            const bestOf = 3;
+            const umpire = getHardbatSinglesUmpire(bestOf);
+            scorePoints(umpire, false, 15);
+            scorePoints(umpire, true, 14);
+            scorePoints(umpire, false, 14);
+
+            expect(umpire.matchWinState).toBe(
+              MatchWinState.MatchPointTeam2 & MatchWinState.GamePointTeam1,
+            );
+          });
+
+          it("should be MatchPointTeam1 & MatchPointTeam2 at 1/14 - 1/14", () => {
+            const bestOf = 3;
+            const umpire = getHardbatSinglesUmpire(bestOf);
+            scorePoints(umpire, false, 15);
+            scorePoints(umpire, true, 15);
+            scorePoints(umpire, true, 14);
+            scorePoints(umpire, false, 14);
+
+            expect(umpire.matchWinState).toBe(
+              MatchWinState.MatchPointTeam1 & MatchWinState.MatchPointTeam2,
+            );
+          });
+        });
+      });
     });
   });
 

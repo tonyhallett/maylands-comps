@@ -1,28 +1,9 @@
-export interface HandicapOptions {
-  team1Handicap: number;
-  team2Handicap: number;
-  upTo: number;
-}
-
-export const shiftHandicap = (
-  handicapOptions: HandicapOptions,
-): HandicapOptions => {
-  const minHandicap = Math.min(
-    handicapOptions.team1Handicap,
-    handicapOptions.team2Handicap,
-  );
-  const shift = minHandicap < 0 ? Math.abs(minHandicap) : 0;
-  const team1Handicap = handicapOptions.team1Handicap + shift;
-  const team2Handicap = handicapOptions.team2Handicap + shift;
-  const upTo = handicapOptions.upTo + shift;
-  return {
-    team1Handicap,
-    team2Handicap,
-    upTo,
-  };
-};
-
-const isEven = (value: number) => value % 2 === 0;
+import {
+  MatchWinState,
+  getMatchWinState,
+  isEven,
+  requiredGamesToWin,
+} from "./helpers";
 
 export type Team1Player = "Team1Player1" | "Team1Player2";
 export type Team2Player = "Team2Player1" | "Team2Player2";
@@ -51,10 +32,11 @@ export interface MatchState {
   isDoubles: boolean;
   bestOf: number;
 }
-interface CompetitionScoringOptions {
-  upTo: number;
+
+interface CompetitionOptions {
   team1StartGameScore: number;
   team2StartGameScore: number;
+  upTo: number;
   clearBy2: boolean;
   numServes: number;
 }
@@ -79,6 +61,17 @@ export interface PointHistory {
 export class Umpire {
   private doublesServiceCycle: [Player, Player][] = [];
   private _pointHistory: PointHistory[][] = [[]];
+  public get matchWinState(): MatchWinState {
+    return getMatchWinState(
+      {
+        bestOf: this.bestOf,
+        upTo: this._upTo,
+        clearBy2: this.clearBy2,
+      },
+      this._team1Score,
+      this._team2Score,
+    );
+  }
   public get pointHistory(): ReadonlyArray<ReadonlyArray<PointHistory>> {
     return this._pointHistory;
   }
@@ -136,7 +129,7 @@ export class Umpire {
   private clearBy2: boolean;
 
   constructor(
-    umpireOptions: CompetitionScoringOptions,
+    umpireOptions: CompetitionOptions,
     private readonly isDoubles: boolean,
     public readonly bestOf: number,
   ) {
@@ -426,7 +419,7 @@ export class Umpire {
     this._team1Score.pointsWon = this.team1StartGameScore;
     this._team2Score.pointsWon = this.team2StartGameScore;
 
-    if (teamScore.gamesWon !== this.requiredGamesToWin()) {
+    if (teamScore.gamesWon !== requiredGamesToWin(this.bestOf)) {
       this.switchEnds();
       this.setNextGameServiceState();
       this._pointHistory.push([]);
@@ -468,9 +461,5 @@ export class Umpire {
         this.switchServerReceiver();
       }
     }
-  }
-
-  private requiredGamesToWin(): number {
-    return Math.ceil(this.bestOf / 2);
   }
 }
