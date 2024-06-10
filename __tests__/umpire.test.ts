@@ -3,6 +3,8 @@ import {
   HandicapOptions,
   Player,
   PointHistory,
+  Team1Player,
+  Team2Player,
   TeamScore,
   Umpire,
   getPlayers,
@@ -433,14 +435,21 @@ describe("umpiring", () => {
       });
     });
 
+    const expectServerReceiver = (
+      umpire: Umpire,
+      expectedServer: Player,
+      expectedReceiver: Player,
+    ) => {
+      expect(umpire.server).toBe(expectedServer);
+      expect(umpire.receiver).toBe(expectedReceiver);
+    };
     const expectSinglesServerReceiver = (
       umpire: Umpire,
       team1Serving: boolean,
     ) => {
-      expect(umpire.server).toBe(
+      expectServerReceiver(
+        umpire,
         team1Serving ? "Team1Player1" : "Team2Player1",
-      );
-      expect(umpire.receiver).toBe(
         team1Serving ? "Team2Player1" : "Team1Player1",
       );
     };
@@ -607,6 +616,7 @@ describe("umpiring", () => {
           expect(umpire.server).toBeUndefined();
           expect(umpire.receiver).toBeUndefined();
         });
+
         it("should set the availableServers to the players in the team that did not serve at the beginning of the previous game", () => {
           const umpire = scoreFirstDoublesGame("Team1Player1", "Team2Player1");
           expect(umpire.availableServers).toEqual([
@@ -619,12 +629,42 @@ describe("umpiring", () => {
     });
 
     describe("setting doubles server at the begining of subsequent games", () => {
-      it("should set receiver according to the rules when set server", () => {
-        const umpire = scoreFirstDoublesGame("Team1Player1", "Team2Player1");
-        umpire.setServer("Team2Player1");
-        throw new Error("not implemented");
-        //expect(umpire.receiver).toBe(".....");
+      it("first receiver shall be the player who served to him or her in the preceding game - game 2 ( odd games played )", () => {
+        const test = (
+          server: Player,
+          receiver: Player,
+          nextServer: Player,
+          expectedNextReceiver: Player,
+        ) => {
+          const umpire = scoreFirstDoublesGame(server, receiver);
+          umpire.setServer(nextServer);
+          expect(umpire.receiver).toBe(expectedNextReceiver);
+        };
+        test("Team1Player1", "Team2Player1", "Team2Player1", "Team1Player1");
+        test("Team1Player1", "Team2Player1", "Team2Player2", "Team1Player2");
+        test("Team2Player1", "Team1Player1", "Team1Player1", "Team2Player1");
+        test("Team2Player1", "Team1Player1", "Team1Player2", "Team2Player2");
+        test("Team1Player1", "Team2Player2", "Team2Player1", "Team1Player2");
+        test("Team1Player1", "Team2Player2", "Team2Player2", "Team1Player1");
       });
+
+      it("first receiver shall be the player who served to him or her in the preceding game - game 3 ( even games played )", () => {
+        const test = (
+          server: Player,
+          receiver: Player,
+          nextServer: Player,
+          expectedNextReceiver: Player,
+        ) => {
+          const umpire = scoreFirstDoublesGame(server, receiver);
+          umpire.setServer(receiver);
+          scoreGames(umpire, true, 1);
+          umpire.setServer(nextServer);
+          expect(umpire.receiver).toBe(expectedNextReceiver);
+        };
+        test("Team1Player1", "Team2Player1", "Team1Player1", "Team2Player1");
+        test("Team1Player1", "Team2Player1", "Team1Player2", "Team2Player2");
+      });
+
       it("should throw of not an available server", () => {
         const umpire = scoreFirstDoublesGame("Team1Player1", "Team2Player1");
         expect(() => umpire.setServer("Team1Player1")).toThrow();
@@ -645,7 +685,78 @@ describe("umpiring", () => {
     });
 
     it("should switch doubles receivers at ends", () => {
-      throw new Error("not implemented");
+      const test = (
+        lastFirstServer: Team1Player,
+        expectedReceiver: Team2Player,
+      ) => {
+        const umpire = getNormalDoublesBestOf5Umpire();
+        umpire.setServer("Team1Player1");
+        umpire.setReceiver("Team2Player1");
+        //cycle
+        // Team1Player1 => Team2Player1
+        // Team2Player1 => Team1Player2
+        // Team1Player2 => Team2Player2
+        // Team2Player2 => Team1Player1
+        scoreGames(umpire, true, 1);
+
+        umpire.setServer("Team2Player1");
+        scoreGames(umpire, false, 1);
+
+        umpire.setServer("Team1Player1");
+        scoreGames(umpire, true, 1);
+
+        umpire.setServer("Team2Player1");
+        scoreGames(umpire, false, 1);
+
+        //now 2-2 - even games played back to original cycle
+        umpire.setServer(lastFirstServer);
+        scorePoints(umpire, true, 4);
+        const currentReceiver = umpire.receiver;
+        scorePoints(umpire, true, 1);
+        expect(umpire.receiver).not.toBe(currentReceiver);
+        expect(umpire.receiver).toBe(expectedReceiver);
+      };
+      test("Team1Player1", "Team2Player1");
+      test("Team1Player2", "Team2Player2");
+    });
+
+    it("after ends - previous receiver shall become the server and the partner of the previous server shall become the receiver", () => {
+      const umpire = getNormalDoublesBestOf5Umpire();
+      umpire.setServer("Team1Player1");
+      umpire.setReceiver("Team2Player1");
+
+      scoreGames(umpire, true, 1);
+
+      umpire.setServer("Team2Player1");
+      scoreGames(umpire, false, 1);
+
+      umpire.setServer("Team1Player1");
+      scoreGames(umpire, true, 1);
+
+      umpire.setServer("Team2Player1");
+      scoreGames(umpire, false, 1);
+
+      //cycle
+      // Team1Player1 => Team2Player1
+      // Team2Player1 => Team1Player2
+      // Team1Player2 => Team2Player2
+      // Team2Player2 => Team1Player1
+      umpire.setServer("Team1Player1");
+      scorePoints(umpire, true, 4);
+      expectServerReceiver(umpire, "Team1Player2", "Team2Player2");
+      scorePoints(umpire, true, 1);
+      // cycle changes
+      // Team1Player2 => Team2Player1
+      // Team2Player1 => Team1Player1
+      // Team1Player1 => Team2Player2
+      // Team2Player2 => Team1Player2
+      expectServerReceiver(umpire, "Team1Player2", "Team2Player1");
+      scorePoints(umpire, true, 1);
+      expectServerReceiver(umpire, "Team2Player1", "Team1Player1");
+      scorePoints(umpire, false, 2);
+      expectServerReceiver(umpire, "Team1Player1", "Team2Player2");
+      scorePoints(umpire, false, 2);
+      expectServerReceiver(umpire, "Team2Player2", "Team1Player2");
     });
   });
 });
