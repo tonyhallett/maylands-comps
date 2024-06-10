@@ -245,8 +245,14 @@ describe("umpiring", () => {
 
     it("should keep scores from previous games", () => {
       const umpire = getNormalSinglesBestOf5Umpire();
+      expect(umpire.gameScores).toHaveLength(0);
+
       scorePoints(umpire, true, 7);
+      expect(umpire.gameScores).toHaveLength(0);
       scoreGames(umpire, false, 1);
+      expect(umpire.gameScores).toEqual<Array<GameScore>>([
+        { team1Points: 7, team2Points: 11 },
+      ]);
 
       scorePoints(umpire, false, 6);
       scoreGames(umpire, true, 1);
@@ -254,6 +260,14 @@ describe("umpiring", () => {
       expect(umpire.gameScores).toEqual<Array<GameScore>>([
         { team1Points: 7, team2Points: 11 },
         { team1Points: 11, team2Points: 6 },
+      ]);
+
+      scoreGames(umpire, true, 2);
+      expect(umpire.gameScores).toEqual<Array<GameScore>>([
+        { team1Points: 7, team2Points: 11 },
+        { team1Points: 11, team2Points: 6 },
+        { team1Points: 11, team2Points: 0 },
+        { team1Points: 11, team2Points: 0 },
       ]);
     });
 
