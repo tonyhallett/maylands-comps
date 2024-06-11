@@ -16,6 +16,7 @@ export function PlayerChooser({
       <span> </span>
       {playerAndNames.map((playerAndName) => (
         <button
+          style={{ marginRight: 10 }}
           key={playerAndName.player}
           onClick={() => callback(playerAndName.player)}
         >

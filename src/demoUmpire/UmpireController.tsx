@@ -162,7 +162,14 @@ export function UmpireController({
         team1Player2Name={team1Player2Name}
         team2Player2Name={team2Player2Name}
       />
-
+      <button
+        onClick={() => {
+          umpire.switchEnds();
+          setMatchState(getMatchStateFromUmpire(umpire));
+        }}
+      >
+        Switch ends
+      </button>
       <UmpireView
         canScorePoint={canScorePoint}
         leftPlayer1Name={

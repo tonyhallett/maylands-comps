@@ -88,14 +88,14 @@ export function UmpireView({
               +
             </button>
           </th>
-          <th>
+          <th style={{ textAlign: "right" }}>
             <GamePoint
               point={leftScore.pointsWon}
               pointState={leftPointState}
             />
             <SetPoint point={leftScore.gamesWon} pointState={leftPointState} />
           </th>
-          <th>
+          <th style={{ textAlign: "left" }}>
             <SetPoint
               point={rightScore.gamesWon}
               pointState={rightPointState}
