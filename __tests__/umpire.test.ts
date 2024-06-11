@@ -167,6 +167,22 @@ describe("umpiring", () => {
       });
     });
 
+    it("should have game won at 12-10 normal rules", () => {
+      const umpire = getNormalSinglesBestOf5Umpire();
+
+      scorePoints(umpire, true, 10);
+      scorePoints(umpire, false, 12);
+
+      expect(umpire.team1Score).toEqual<TeamScore>({
+        gamesWon: 0,
+        pointsWon: 0,
+      });
+      expect(umpire.team2Score).toEqual<TeamScore>({
+        gamesWon: 1,
+        pointsWon: 0,
+      });
+    });
+
     it("should reset start game scores correctly", () => {
       const umpire = new Umpire(
         {
@@ -522,7 +538,7 @@ describe("umpiring", () => {
                   pointsWon: 14,
                 },
               ),
-            ).toBe(MatchWinState.GamePointTeam1 & MatchWinState.GamePointTeam2);
+            ).toBe(MatchWinState.GamePointTeam1 + MatchWinState.GamePointTeam2);
           });
 
           it("should be MatchPointTeam1 & GamePointTeam2 at 1/14 - 0/14", () => {
@@ -539,7 +555,7 @@ describe("umpiring", () => {
                 },
               ),
             ).toBe(
-              MatchWinState.MatchPointTeam1 & MatchWinState.GamePointTeam2,
+              MatchWinState.MatchPointTeam1 + MatchWinState.GamePointTeam2,
             );
           });
 
@@ -557,7 +573,25 @@ describe("umpiring", () => {
                 },
               ),
             ).toBe(
-              MatchWinState.MatchPointTeam2 & MatchWinState.GamePointTeam1,
+              MatchWinState.MatchPointTeam2 + MatchWinState.GamePointTeam1,
+            );
+          });
+
+          it("should be MatchPointTeam1 & MatchPointTeam2 at 1/14 - 1/14", () => {
+            const matchWinState = getMatchWinState(
+              hardBatBestOf3Options,
+              {
+                gamesWon: 1,
+                pointsWon: 14,
+              },
+              {
+                gamesWon: 1,
+                pointsWon: 14,
+              },
+            );
+
+            expect(matchWinState).toBe(
+              MatchWinState.MatchPointTeam1 + MatchWinState.MatchPointTeam2,
             );
           });
         });
@@ -689,7 +723,7 @@ describe("umpiring", () => {
             scorePoints(umpire, true, 14);
 
             expect(umpire.matchWinState).toBe(
-              MatchWinState.GamePointTeam1 & MatchWinState.GamePointTeam2,
+              MatchWinState.GamePointTeam1 + MatchWinState.GamePointTeam2,
             );
           });
 
@@ -701,7 +735,7 @@ describe("umpiring", () => {
             scorePoints(umpire, false, 14);
 
             expect(umpire.matchWinState).toBe(
-              MatchWinState.MatchPointTeam1 & MatchWinState.GamePointTeam2,
+              MatchWinState.MatchPointTeam1 + MatchWinState.GamePointTeam2,
             );
           });
 
@@ -713,7 +747,7 @@ describe("umpiring", () => {
             scorePoints(umpire, false, 14);
 
             expect(umpire.matchWinState).toBe(
-              MatchWinState.MatchPointTeam2 & MatchWinState.GamePointTeam1,
+              MatchWinState.MatchPointTeam2 + MatchWinState.GamePointTeam1,
             );
           });
 
@@ -726,7 +760,7 @@ describe("umpiring", () => {
             scorePoints(umpire, false, 14);
 
             expect(umpire.matchWinState).toBe(
-              MatchWinState.MatchPointTeam1 & MatchWinState.MatchPointTeam2,
+              MatchWinState.MatchPointTeam1 + MatchWinState.MatchPointTeam2,
             );
           });
         });
@@ -836,21 +870,73 @@ describe("umpiring", () => {
   });
 
   describe("serving", () => {
+    interface RemainingServesTest {
+      team1StartGameScore: number;
+      team2StartGameScore: number;
+      numServes: 2 | 5;
+      expectedRemainingServes: number;
+      description: string;
+    }
+    const remainingServesTests: RemainingServesTest[] = [
+      {
+        team1StartGameScore: 0,
+        team2StartGameScore: 0,
+        numServes: 2,
+        expectedRemainingServes: 2,
+        description: "0,0 2 = 2",
+      },
+      {
+        team1StartGameScore: 0,
+        team2StartGameScore: 0,
+        numServes: 5,
+        expectedRemainingServes: 5,
+        description: "0,0 5 = 5",
+      },
+      {
+        team1StartGameScore: 4,
+        team2StartGameScore: 7,
+        numServes: 5,
+        expectedRemainingServes: 4,
+        description: "4,7 5 = 4",
+      },
+      {
+        team1StartGameScore: 15,
+        team2StartGameScore: 8,
+        numServes: 5,
+        expectedRemainingServes: 2,
+        description: "15,8 5 = 2",
+      },
+      {
+        team1StartGameScore: 15,
+        team2StartGameScore: 8,
+        numServes: 2,
+        expectedRemainingServes: 1,
+        description: "15,8 2 = 1",
+      },
+    ];
     describe("initial state", () => {
-      it.each([2, 5])("should set remaining serves", (numServes) => {
-        const umpire = new Umpire(
-          {
-            clearBy2: true,
-            upTo: 11,
-            numServes,
-            team1StartGameScore: 0,
-            team2StartGameScore: 0,
-          },
-          false,
-          5,
-        );
-        expect(umpire.remainingServes).toBe(numServes);
-      });
+      it.each(remainingServesTests)(
+        "should set remaining serves",
+        ({
+          numServes,
+          team1StartGameScore,
+          team2StartGameScore,
+          expectedRemainingServes,
+        }) => {
+          const umpire = new Umpire(
+            {
+              clearBy2: true,
+              upTo: 31,
+              numServes,
+              team1StartGameScore,
+              team2StartGameScore,
+            },
+            false,
+            5,
+          );
+          expect(umpire.remainingServes).toBe(expectedRemainingServes);
+        },
+      );
 
       it("should have undefined server and receiver", () => {
         const umpire = getAnUmpire();
@@ -1097,6 +1183,32 @@ describe("umpiring", () => {
             expect(umpire.availableReceivers).toHaveLength(0);
 
             expectSinglesServerReceiver(umpire, team1ServeFirst);
+          },
+        );
+
+        it.each(remainingServesTests)(
+          "should set the start of game remaining serves $description",
+          ({
+            team1StartGameScore,
+            team2StartGameScore,
+            numServes,
+            expectedRemainingServes,
+          }) => {
+            const umpire = new Umpire(
+              {
+                clearBy2: true,
+                upTo: 31,
+                numServes,
+                team1StartGameScore,
+                team2StartGameScore,
+              },
+              false,
+              5,
+            );
+
+            scoreGames(umpire, true, 1, 31 - team1StartGameScore);
+
+            expect(umpire.remainingServes).toBe(expectedRemainingServes);
           },
         );
       });

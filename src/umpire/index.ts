@@ -140,10 +140,17 @@ export class Umpire {
     this.throwIfNotOdd(bestOf);
     this.throwIfNotMoreThan0(umpireOptions.numServes);
     this.numServes = umpireOptions.numServes;
-    this._remainingServes = umpireOptions.numServes;
+    this.setRemainingServesAtStartOfGame();
     this._upTo = umpireOptions.upTo;
     this._availableServers = getPlayers(this.isDoubles);
     this.clearBy2 = umpireOptions.clearBy2;
+  }
+
+  private setRemainingServesAtStartOfGame() {
+    const totalStartScores =
+      this.team1StartGameScore + this.team2StartGameScore;
+    this._remainingServes =
+      this.numServes - (totalStartScores % this.numServes);
   }
 
   private throwIfNotMoreThan0(numServes: number): void {
@@ -218,7 +225,7 @@ export class Umpire {
       }
     } else {
       this._receiver = this.getSinglesOpponent(this._initialServer);
-      this._remainingServes = this.numServes;
+      this.setRemainingServesAtStartOfGame();
     }
   }
 
@@ -233,7 +240,7 @@ export class Umpire {
       throw new Error("receiver is not an available receiver");
     }
 
-    this._remainingServes = this.numServes;
+    this.setRemainingServesAtStartOfGame();
   }
 
   switchEnds(): void {
@@ -397,8 +404,8 @@ export class Umpire {
   }
 
   private getGameWonState(): GameWonState {
-    const team1IsUpTo = this._team1Score.pointsWon === this._upTo;
-    const team2IsUpTo = this._team2Score.pointsWon === this._upTo;
+    const team1IsUpTo = this._team1Score.pointsWon >= this._upTo;
+    const team2IsUpTo = this._team2Score.pointsWon >= this._upTo;
     const isUpTo = team1IsUpTo || team2IsUpTo;
     if (!isUpTo) {
       return GameWonState.NotWon;
@@ -444,7 +451,7 @@ export class Umpire {
   }
 
   private setNextGameServiceState() {
-    this.resetRemainingServes();
+    this.setRemainingServesAtStartOfGame();
     const evenNumberOfGamesPlayed = isEven(this.gamesPlayed());
     if (this.isDoubles) {
       this._availableServers = this.getDoublesOpponents(

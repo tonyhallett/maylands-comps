@@ -50,7 +50,7 @@ export const getMatchWinState = (
         team2Score.gamesWon === reqGamesToWin - 1
           ? MatchWinState.MatchPointTeam2
           : MatchWinState.GamePointTeam2;
-      return team1MatchWinState & team2MatchWinState;
+      return team1MatchWinState + team2MatchWinState;
     } else {
       // there is a difference so one is nearer to winning regardless of clearBy2
       const team1Winning = team1Score.pointsWon > team2Score.pointsWon;
