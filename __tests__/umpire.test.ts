@@ -11,6 +11,7 @@ import {
   Team2Player,
   TeamScore,
   Umpire,
+  availableServerReceiverChoice,
   getPlayers,
 } from "../src/umpire/index";
 
@@ -110,6 +111,214 @@ describe("umpiring", () => {
           team1Handicap: 1,
           team2Handicap: 0,
           upTo: 33,
+        });
+      });
+    });
+  });
+
+  describe("availableServerReceiverChoice", () => {
+    describe("singles", () => {
+      it("should be no choice to make if the initial server is set", () => {
+        const choice = availableServerReceiverChoice(
+          false,
+          {
+            firstDoublesReceiver: undefined,
+            gameInitialServers: ["Team1Player1"],
+          },
+          1,
+        );
+        expect(choice.servers).toHaveLength(0);
+        expect(choice.firstGameDoublesReceivers).toHaveLength(0);
+      });
+
+      it("should have both players as available servers and no receivers if the initial server is not set", () => {
+        const choice = availableServerReceiverChoice(
+          false,
+          {
+            firstDoublesReceiver: undefined,
+            gameInitialServers: [],
+          },
+          1,
+        );
+        expect(choice.servers).toStrictEqual(["Team1Player1", "Team2Player1"]);
+        expect(choice.firstGameDoublesReceivers).toHaveLength(0);
+      });
+    });
+
+    describe("doubles", () => {
+      describe("first game", () => {
+        it("should have all players as available servers, no receivers if the initial server is not set", () => {
+          const choice = availableServerReceiverChoice(
+            true,
+            {
+              firstDoublesReceiver: undefined,
+              gameInitialServers: [],
+            },
+            1,
+          );
+          expect(choice.servers).toStrictEqual([
+            "Team1Player1",
+            "Team1Player2",
+            "Team2Player1",
+            "Team2Player2",
+          ]);
+          expect(choice.firstGameDoublesReceivers).toHaveLength(0);
+        });
+
+        describe("initial server set", () => {
+          it("should have no available servers if have set the initial server", () => {
+            const choice = availableServerReceiverChoice(
+              true,
+              {
+                firstDoublesReceiver: undefined,
+                gameInitialServers: ["Team1Player1"],
+              },
+              1,
+            );
+            expect(choice.servers).toHaveLength(0);
+          });
+
+          it("should have no choices if have set the initial server and receiver", () => {
+            const choice = availableServerReceiverChoice(
+              true,
+              {
+                firstDoublesReceiver: "Team2Player1",
+                gameInitialServers: ["Team1Player1"],
+              },
+              1,
+            );
+
+            expect(choice.firstGameDoublesReceivers).toHaveLength(0);
+          });
+
+          it("should require selecting the receiver from server opponents when not set", () => {
+            const choice = availableServerReceiverChoice(
+              true,
+              {
+                firstDoublesReceiver: undefined,
+                gameInitialServers: ["Team1Player1"],
+              },
+              1,
+            );
+
+            expect(choice.firstGameDoublesReceivers).toStrictEqual([
+              "Team2Player1",
+              "Team2Player2",
+            ]);
+
+            const choice2 = availableServerReceiverChoice(
+              true,
+              {
+                firstDoublesReceiver: undefined,
+                gameInitialServers: ["Team1Player2"],
+              },
+              1,
+            );
+
+            expect(choice2.firstGameDoublesReceivers).toStrictEqual([
+              "Team2Player1",
+              "Team2Player2",
+            ]);
+
+            const choice3 = availableServerReceiverChoice(
+              true,
+              {
+                firstDoublesReceiver: undefined,
+                gameInitialServers: ["Team2Player1"],
+              },
+              1,
+            );
+
+            expect(choice3.firstGameDoublesReceivers).toStrictEqual([
+              "Team1Player1",
+              "Team1Player2",
+            ]);
+
+            const choice4 = availableServerReceiverChoice(
+              true,
+              {
+                firstDoublesReceiver: undefined,
+                gameInitialServers: ["Team2Player2"],
+              },
+              1,
+            );
+
+            expect(choice4.firstGameDoublesReceivers).toStrictEqual([
+              "Team1Player1",
+              "Team1Player2",
+            ]);
+          });
+        });
+      });
+      describe("after the first game", () => {
+        it.each([2, 3])(
+          "should have no available receivers - game %p",
+          (gameNumber) => {
+            const choice = availableServerReceiverChoice(
+              true,
+              {
+                firstDoublesReceiver: "Team2Player1",
+                gameInitialServers: ["Team1Player1"],
+              },
+              gameNumber,
+            );
+            expect(choice.firstGameDoublesReceivers).toHaveLength(0);
+          },
+        );
+
+        it("should have no choices if initial server for the game has been set", () => {
+          const choice = availableServerReceiverChoice(
+            true,
+            {
+              firstDoublesReceiver: "Team2Player1",
+              gameInitialServers: ["Team1Player1", "Team2Player1"],
+            },
+            2,
+          );
+          expect(choice.servers).toHaveLength(0);
+        });
+        describe("initial server for game not set", () => {
+          it("should have availableServers for the opposition team of the team that served first in the previous game", () => {
+            const choice = availableServerReceiverChoice(
+              true,
+              {
+                firstDoublesReceiver: "Team2Player1",
+                gameInitialServers: ["Team1Player1"],
+              },
+              2,
+            );
+            expect(choice.servers).toEqual(["Team2Player1", "Team2Player2"]);
+
+            const choice2 = availableServerReceiverChoice(
+              true,
+              {
+                firstDoublesReceiver: "Team2Player1",
+                gameInitialServers: ["Team1Player2"],
+              },
+              2,
+            );
+            expect(choice2.servers).toEqual(["Team2Player1", "Team2Player2"]);
+
+            const choice3 = availableServerReceiverChoice(
+              true,
+              {
+                firstDoublesReceiver: "Team1Player1",
+                gameInitialServers: ["Team2Player1"],
+              },
+              2,
+            );
+            expect(choice3.servers).toEqual(["Team1Player1", "Team1Player2"]);
+
+            const choice4 = availableServerReceiverChoice(
+              true,
+              {
+                firstDoublesReceiver: "Team1Player1",
+                gameInitialServers: ["Team2Player2"],
+              },
+              2,
+            );
+            expect(choice4.servers).toEqual(["Team1Player1", "Team1Player2"]);
+          });
         });
       });
     });

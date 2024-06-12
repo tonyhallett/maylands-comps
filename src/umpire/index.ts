@@ -58,6 +58,59 @@ export interface PointHistory {
   date: Date;
 }
 
+export interface AvailableServerReceiverChoice {
+  servers: Player[];
+  firstGameDoublesReceivers: Player[];
+}
+
+export interface InitialServersReceiver {
+  gameInitialServers: Player[];
+  firstDoublesReceiver: Player | undefined; // as sufficient to determine the service cycle
+}
+
+export const availableServerReceiverChoice = (
+  isDoubles: boolean,
+  initialServersReceiver: InitialServersReceiver,
+  gameNumber: number,
+): AvailableServerReceiverChoice => {
+  const choice: AvailableServerReceiverChoice = {
+    firstGameDoublesReceivers: [],
+    servers: [],
+  };
+  if (isDoubles) {
+    // first game
+    if (initialServersReceiver.gameInitialServers.length === 0) {
+      choice.servers = [
+        "Team1Player1",
+        "Team1Player2",
+        "Team2Player1",
+        "Team2Player2",
+      ];
+      choice.firstGameDoublesReceivers = [];
+    } else {
+      if (gameNumber === 1) {
+        choice.firstGameDoublesReceivers =
+          initialServersReceiver.firstDoublesReceiver === undefined
+            ? getDoublesOpponents(initialServersReceiver.gameInitialServers[0])
+            : [];
+      } else {
+        const initialServerForGame =
+          initialServersReceiver.gameInitialServers[gameNumber - 1];
+        if (initialServerForGame === undefined) {
+          const initialServerFromPreviousGame =
+            initialServersReceiver.gameInitialServers[gameNumber - 2];
+          choice.servers = getDoublesOpponents(initialServerFromPreviousGame);
+        }
+      }
+    }
+  } else {
+    if (initialServersReceiver.gameInitialServers.length === 0) {
+      choice.servers = ["Team1Player1", "Team2Player1"];
+    }
+  }
+  return choice;
+};
+
 export class Umpire {
   get canUndoPoint(): boolean {
     return (
@@ -164,6 +217,7 @@ export class Umpire {
   public get availableReceivers(): ReadonlyArray<Player> {
     return this._availableReceivers;
   }
+
   private _team1Score: TeamScore = { gamesWon: 0, pointsWon: 0 };
   public get team1Score(): Readonly<TeamScore> {
     return { ...this._team1Score };
@@ -288,13 +342,13 @@ export class Umpire {
 
     if (this.isDoubles) {
       if (this.isFirstGame()) {
-        this._availableReceivers = this.getDoublesOpponents(player);
+        this._availableReceivers = getDoublesOpponents(player);
         this._receiver = undefined;
       } else {
         this._receiver = this.getServerOfReceiverInPreviousGame(this._server);
       }
     } else {
-      this._receiver = this.getSinglesOpponent(this._initialServer);
+      this._receiver = getSinglesOpponent(this._initialServer);
     }
   }
 
@@ -490,24 +544,10 @@ export class Umpire {
     }
   }
 
-  private getSinglesOpponent(player: Player) {
-    return player === "Team1Player1" ? "Team2Player1" : "Team1Player1";
-  }
-
-  private isTeam1(player: Player): boolean {
-    return player === "Team1Player1" || player === "Team1Player2";
-  }
-
-  private getDoublesOpponents(player: Player): Player[] {
-    return this.isTeam1(player)
-      ? ["Team2Player1", "Team2Player2"]
-      : ["Team1Player1", "Team1Player2"];
-  }
-
   private setNextGameServiceState() {
     const evenNumberOfGamesPlayed = isEven(this.gamesPlayed());
     if (this.isDoubles) {
-      this._availableServers = this.getDoublesOpponents(
+      this._availableServers = getDoublesOpponents(
         evenNumberOfGamesPlayed ? this._initialReceiver : this._initialServer,
       );
       this._availableReceivers = [];
@@ -515,7 +555,7 @@ export class Umpire {
       this._receiver = undefined;
     } else {
       this._server = this._initialServer;
-      this._receiver = this.getSinglesOpponent(this._server);
+      this._receiver = getSinglesOpponent(this._server);
 
       if (!evenNumberOfGamesPlayed) {
         this.switchServerReceiver();
@@ -523,3 +563,17 @@ export class Umpire {
     }
   }
 }
+
+const isTeam1 = (player: Player): boolean => {
+  return player === "Team1Player1" || player === "Team1Player2";
+};
+
+const getSinglesOpponent = (player: Player): Player => {
+  return player === "Team1Player1" ? "Team2Player1" : "Team1Player1";
+};
+
+const getDoublesOpponents = (player: Player): Player[] => {
+  return isTeam1(player)
+    ? ["Team2Player1", "Team2Player2"]
+    : ["Team1Player1", "Team1Player2"];
+};
