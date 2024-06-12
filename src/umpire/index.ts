@@ -59,6 +59,61 @@ export interface PointHistory {
 }
 
 export class Umpire {
+  get canUndoPoint(): boolean {
+    return (
+      this._pointHistory.length > 0 && this.getLastGamePointHistory().length > 0
+    );
+  }
+  undoPoint() {
+    if (this._pointHistory.length === 0) {
+      throw new Error("No points to undo");
+    }
+    if (this.isStartOfGame()) {
+      this.undoStartOfGameState();
+    } else {
+      this.undoMidGameState();
+    }
+
+    // don't need to undo the matchWinState/remainingServes as is calculated
+  }
+
+  private undoStartOfGameState() {
+    this._pointHistory.pop();
+    const lastGameScore = this._gameScores.pop();
+    const lastGamePointHistory = this.getLastGamePointHistory();
+    const lastPoint = lastGamePointHistory.pop();
+    const teamScoreToReduce = lastPoint.team1
+      ? this._team1Score
+      : this._team2Score;
+    teamScoreToReduce.gamesWon -= 1;
+    this._team1Score.pointsWon = lastGameScore.team1Points;
+    this._team2Score.pointsWon = lastGameScore.team2Points;
+    teamScoreToReduce.pointsWon -= 1;
+    this.switchEnds();
+  }
+
+  private undoMidGameState() {
+    const currentGamePointHistory = this.getLastGamePointHistory();
+    const lastPoint = currentGamePointHistory.pop();
+    if (this.isMidwayLastGame(lastPoint.team1)) {
+      this.switchEnds();
+    }
+    const teamScoreToReduce = lastPoint.team1
+      ? this._team1Score
+      : this._team2Score;
+    teamScoreToReduce.pointsWon -= 1;
+  }
+
+  private getLastGamePointHistory(): PointHistory[] {
+    return this._pointHistory[this._pointHistory.length - 1];
+  }
+
+  private isStartOfGame(): boolean {
+    return (
+      this._team1Score.pointsWon === this.team1StartGameScore &&
+      this._team2Score.pointsWon === this.team2StartGameScore
+    );
+  }
   private doublesServiceCycle: [Player, Player][] = [];
   private _pointHistory: PointHistory[][] = [[]];
   public get matchWinState(): MatchWinState {
@@ -119,9 +174,23 @@ export class Umpire {
     return { ...this._team2Score };
   }
 
-  private _remainingServes: number = 0;
+  private _remainingServesAtStartOfGame: number = 0;
   public get remainingServes(): number {
-    return this._remainingServes;
+    if (this.reachedAlternateServes()) {
+      return 1;
+    }
+    const totalPoints = this._team1Score.pointsWon + this._team2Score.pointsWon;
+    const pointsScored =
+      totalPoints - (this.team1StartGameScore + this.team2StartGameScore);
+    if (pointsScored < this._remainingServesAtStartOfGame) {
+      return this._remainingServesAtStartOfGame - pointsScored;
+    }
+    if (pointsScored === this._remainingServesAtStartOfGame) {
+      return this.numServes;
+    }
+    const pointsScoredAfterInitialServer =
+      pointsScored - this._remainingServesAtStartOfGame;
+    return this.numServes - (pointsScoredAfterInitialServer % this.numServes);
   }
   private numServes: number;
   private dateProvider: () => Date = () => new Date();
@@ -146,11 +215,11 @@ export class Umpire {
     this.clearBy2 = umpireOptions.clearBy2;
   }
 
-  private setRemainingServesAtStartOfGame() {
+  private setRemainingServesAtStartOfGame(): void {
     const totalStartScores =
       Math.abs(this.team1StartGameScore) + Math.abs(this.team2StartGameScore);
 
-    this._remainingServes =
+    this._remainingServesAtStartOfGame =
       this.numServes - (totalStartScores % this.numServes);
   }
 
@@ -226,7 +295,6 @@ export class Umpire {
       }
     } else {
       this._receiver = this.getSinglesOpponent(this._initialServer);
-      this.setRemainingServesAtStartOfGame();
     }
   }
 
@@ -240,8 +308,6 @@ export class Umpire {
     } else {
       throw new Error("receiver is not an available receiver");
     }
-
-    this.setRemainingServesAtStartOfGame();
   }
 
   switchEnds(): void {
@@ -285,10 +351,6 @@ export class Umpire {
     this.nextGame(gameWonState === GameWonState.Team1Won);
   }
 
-  private resetRemainingServes() {
-    this._remainingServes = this.numServes;
-  }
-
   // previous receiver shall become the server and the partner of the previous server shall become the receiver
   private nextDoublesServerReceiver(
     currentServer: Player,
@@ -297,10 +359,13 @@ export class Umpire {
     return [currentReceiver, this.getDoublesPartner(currentServer)];
   }
 
+  private shouldSwitchServerReceiver(): boolean {
+    return this.reachedAlternateServes()
+      ? true
+      : this.remainingServes === this.numServes;
+  }
   private setMidgameServiceState(): void {
-    this._remainingServes--;
-    if (this._remainingServes === 0) {
-      this.resetRemainingServes();
+    if (this.shouldSwitchServerReceiver()) {
       if (this.isDoubles) {
         const [newServer, newReceiver] = this.nextDoublesServerReceiver(
           this._server,
@@ -311,18 +376,6 @@ export class Umpire {
       } else {
         this.switchServerReceiver();
       }
-    }
-
-    /*
-      not sure how to proceed as the rules are clear for 11 play
-      "both players or pairs score 10 points... each player shall serve for only 1 point in turn.""
-
-      do I take this to mean when clearBy2 then go to 1 serve when both are upTo - 1 ???
-
-      when normal 11 this occurs on service change
-    */
-    if (this.reachedAlternateServes()) {
-      this._remainingServes = 1;
     }
   }
 
@@ -452,7 +505,6 @@ export class Umpire {
   }
 
   private setNextGameServiceState() {
-    this.setRemainingServesAtStartOfGame();
     const evenNumberOfGamesPlayed = isEven(this.gamesPlayed());
     if (this.isDoubles) {
       this._availableServers = this.getDoublesOpponents(

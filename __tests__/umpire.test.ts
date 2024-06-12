@@ -1375,4 +1375,357 @@ describe("umpiring", () => {
       expectServerReceiver(umpire, "Team2Player2", "Team1Player2");
     });
   });
+
+  describe("undoPoint", () => {
+    describe("scoring", () => {
+      it.each([true, false])(
+        "should reduce pointsWon by one when not start of a game",
+        (team2ScoresLast) => {
+          const umpire = getAnUmpire();
+          scorePoints(umpire, team2ScoresLast, 3);
+          scorePoints(umpire, !team2ScoresLast, 2);
+
+          umpire.undoPoint();
+          expect(umpire.team1Score.pointsWon).toBe(!team2ScoresLast ? 1 : 3);
+          expect(umpire.team2Score.pointsWon).toBe(team2ScoresLast ? 1 : 3);
+        },
+      );
+
+      it("should remove from point history when not start of game", () => {
+        const umpire = getAnUmpire();
+        scorePoints(umpire, true, 3);
+        scorePoints(umpire, false, 2);
+
+        umpire.undoPoint();
+
+        expect(umpire.pointHistory).toHaveLength(1);
+        const points = umpire.pointHistory[0].map((point) => point.team1);
+        expect(points).toStrictEqual([true, true, true, false]);
+      });
+
+      it("should have correct MatchWinState - from GamePointTeam1", () => {
+        const umpire = getNormalSinglesBestOf5Umpire();
+        scorePoints(umpire, true, 10);
+
+        expect(umpire.matchWinState).toBe(MatchWinState.GamePointTeam1);
+
+        umpire.undoPoint();
+
+        expect(umpire.matchWinState).toBe(MatchWinState.NotWon);
+      });
+
+      it("should reduce gamesWon by one when start of a game - team1 scores last", () => {
+        const umpire = getNormalSinglesBestOf5Umpire();
+        scorePoints(umpire, true, 10);
+        scorePoints(umpire, false, 1);
+        scorePoints(umpire, true, 1);
+        expect(umpire.gameScores).toHaveLength(1);
+        expect(umpire.pointHistory).toHaveLength(2);
+
+        umpire.undoPoint();
+
+        expect(umpire.team1Score).toEqual<TeamScore>({
+          gamesWon: 0,
+          pointsWon: 10,
+        });
+        expect(umpire.team2Score).toEqual<TeamScore>({
+          gamesWon: 0,
+          pointsWon: 1,
+        });
+        expect(umpire.gameScores).toHaveLength(0);
+        expect(umpire.pointHistory).toHaveLength(1);
+      });
+
+      it("should reduce gamesWon by one when start of a game - team2 scores last", () => {
+        const umpire = getNormalSinglesBestOf5Umpire();
+        scorePoints(umpire, false, 10);
+        scorePoints(umpire, true, 1);
+        scorePoints(umpire, false, 1);
+
+        umpire.undoPoint();
+
+        expect(umpire.team2Score).toEqual<TeamScore>({
+          gamesWon: 0,
+          pointsWon: 10,
+        });
+        expect(umpire.team1Score).toEqual<TeamScore>({
+          gamesWon: 0,
+          pointsWon: 1,
+        });
+        expect(umpire.gameScores).toHaveLength(0);
+      });
+    });
+
+    describe("remaining serves", () => {
+      interface RemainingServesCalculationTest {
+        team1StartGameScore: number;
+        team2StartGameScore: number;
+        team1Points: number;
+        team2Points: number;
+        numServes: 2 | 5;
+        expectedRemainingServes: number;
+        description: string;
+      }
+
+      const getRemainingServesAtStartOfGame = (
+        team1StartGameScore: number,
+        team2StartGameScore: number,
+        numServes: number,
+      ): number => {
+        const totalStartScores =
+          Math.abs(team1StartGameScore) + Math.abs(team2StartGameScore);
+
+        return numServes - (totalStartScores % numServes);
+      };
+      const getRemainingServes = (
+        team1StartGameScore: number,
+        team2StartGameScore: number,
+        team1Points: number,
+        team2Points: number,
+        numServes: number,
+      ) => {
+        const remainingServesAtStartOfGame = getRemainingServesAtStartOfGame(
+          team1StartGameScore,
+          team2StartGameScore,
+          numServes,
+        );
+        const totalPoints = team1Points + team2Points;
+        const pointsScored =
+          totalPoints - (team1StartGameScore + team2StartGameScore);
+        if (pointsScored < remainingServesAtStartOfGame) {
+          return remainingServesAtStartOfGame - pointsScored;
+        }
+        if (pointsScored === remainingServesAtStartOfGame) {
+          return numServes;
+        }
+        const pointsScoredAfterInitialServer =
+          pointsScored - remainingServesAtStartOfGame;
+        return numServes - (pointsScoredAfterInitialServer % numServes);
+      };
+
+      const remainingServesCalculationTests: RemainingServesCalculationTest[] =
+        [
+          // non handicap
+          {
+            team1StartGameScore: 0,
+            team2StartGameScore: 0,
+            numServes: 2,
+            expectedRemainingServes: 2,
+            team1Points: 0,
+            team2Points: 0,
+            description: "No points scored non handicap 2 serves",
+          },
+          {
+            team1StartGameScore: 0,
+            team2StartGameScore: 0,
+            numServes: 5,
+            expectedRemainingServes: 5,
+            team1Points: 0,
+            team2Points: 0,
+            description: "No points scored non handicap 5 serves",
+          },
+          {
+            team1StartGameScore: 0,
+            team2StartGameScore: 0,
+            numServes: 5,
+            expectedRemainingServes: 4,
+            team1Points: 1,
+            team2Points: 0,
+            description: "Point scored non handicap 5 serves",
+          },
+          {
+            team1StartGameScore: 0,
+            team2StartGameScore: 0,
+            numServes: 2,
+            expectedRemainingServes: 1,
+            team1Points: 1,
+            team2Points: 0,
+            description: "Point scored non handicap 2 serves",
+          },
+          {
+            team1StartGameScore: 0,
+            team2StartGameScore: 0,
+            numServes: 2,
+            expectedRemainingServes: 2,
+            team1Points: 1,
+            team2Points: 1,
+            description: "Num serves scored non handicap 2 serves",
+          },
+          {
+            team1StartGameScore: 0,
+            team2StartGameScore: 0,
+            numServes: 5,
+            expectedRemainingServes: 5,
+            team1Points: 3,
+            team2Points: 2,
+            description: "Num serves scored non handicap 5 serves",
+          },
+          {
+            team1StartGameScore: 0,
+            team2StartGameScore: 0,
+            numServes: 5,
+            expectedRemainingServes: 4,
+            team1Points: 4,
+            team2Points: 2,
+            description: "Num serves scored + 1 non handicap 5 serves",
+          },
+          // handicap
+          {
+            team1StartGameScore: 1,
+            team2StartGameScore: 0,
+            numServes: 5,
+            expectedRemainingServes: 4,
+            team1Points: 1,
+            team2Points: 0,
+            description: "Handicap 1,0 no points scored 5 serves",
+          },
+          {
+            team1StartGameScore: 0,
+            team2StartGameScore: 1,
+            numServes: 5,
+            expectedRemainingServes: 4,
+            team1Points: 0,
+            team2Points: 1,
+            description: "Handicap 0,1 no points scored 5 serves",
+          },
+          {
+            team1StartGameScore: 0,
+            team2StartGameScore: 2,
+            numServes: 5,
+            expectedRemainingServes: 3,
+            team1Points: 0,
+            team2Points: 2,
+            description: "Handicap 0,2 no points scored 5 serves",
+          },
+          {
+            team1StartGameScore: 0,
+            team2StartGameScore: 3,
+            numServes: 5,
+            expectedRemainingServes: 2,
+            team1Points: 0,
+            team2Points: 3,
+            description: "Handicap 0,3 no points scored 5 serves",
+          },
+          {
+            team1StartGameScore: 0,
+            team2StartGameScore: 4,
+            numServes: 5,
+            expectedRemainingServes: 1,
+            team1Points: 0,
+            team2Points: 4,
+            description: "Handicap 0,4 no points scored 5 serves",
+          },
+          {
+            team1StartGameScore: 0,
+            team2StartGameScore: 6,
+            numServes: 5,
+            expectedRemainingServes: 4,
+            team1Points: 0,
+            team2Points: 6,
+            description: "Handicap 0,6 no points scored 5 serves",
+          },
+          // negatives
+          {
+            team1StartGameScore: -1,
+            team2StartGameScore: 1,
+            numServes: 5,
+            expectedRemainingServes: 3,
+            team1Points: -1,
+            team2Points: 1,
+            description: "Handicap -1,1 no points scored 5 serves",
+          },
+          // ----------------------------------------------
+
+          // scoring points
+          {
+            team1StartGameScore: 0,
+            team2StartGameScore: 1,
+            numServes: 5,
+            expectedRemainingServes: 3,
+            team1Points: 1,
+            team2Points: 1,
+            description: "Handicap 0,1 one point scored 5 serves",
+          },
+          {
+            team1StartGameScore: 1,
+            team2StartGameScore: 0,
+            numServes: 5,
+            expectedRemainingServes: 2,
+            team1Points: 1,
+            team2Points: 2,
+            description: "Handicap 1,0 two points scored 5 serves",
+          },
+          {
+            team1StartGameScore: 4,
+            team2StartGameScore: 0,
+            numServes: 5,
+            expectedRemainingServes: 5,
+            team1Points: 4,
+            team2Points: 1,
+            description:
+              "Handicap 4,0 one point scored 5 serves - normal service resumes",
+          },
+        ];
+      it.each(remainingServesCalculationTests)(
+        "should calculate remaining serves $description",
+        (testParameters) => {
+          const remainingServes = getRemainingServes(
+            testParameters.team1StartGameScore,
+            testParameters.team2StartGameScore,
+            testParameters.team1Points,
+            testParameters.team2Points,
+            testParameters.numServes,
+          );
+          expect(remainingServes).toEqual(
+            testParameters.expectedRemainingServes,
+          );
+        },
+      );
+      // should be based solely on the number of points won and remaining serves at the start of the game
+      // which is either num serves or less than
+    });
+
+    describe("ends", () => {
+      it.each([true, false])(
+        "should switch ends if undo after game won %p",
+        (team1Left: boolean) => {
+          const umpire = getNormalSinglesBestOf5Umpire();
+          if (!team1Left) {
+            umpire.switchEnds();
+          }
+          expect(umpire.team1Left).toBe(team1Left);
+          scoreGames(umpire, true, 1);
+          expect(umpire.team1Left).toBe(!team1Left);
+
+          umpire.undoPoint();
+          expect(umpire.team1Left).toBe(team1Left);
+        },
+      );
+      it("should switch ends if have just switched ends in the decider", () => {
+        const umpire = getNormalSinglesBestOf5Umpire();
+        scoreGames(umpire, true, 2);
+        scoreGames(umpire, false, 2);
+        expect(umpire.team1Left).toBe(true);
+        scorePoints(umpire, true, 4);
+        expect(umpire.team1Left).toBe(true);
+        umpire.pointScored(true);
+        expect(umpire.team1Left).toBe(false);
+
+        umpire.undoPoint();
+        expect(umpire.team1Left).toBe(true);
+      });
+      it("should not switch ends after have switched ends in the decider", () => {
+        const umpire = getNormalSinglesBestOf5Umpire();
+        scoreGames(umpire, true, 2);
+        scoreGames(umpire, false, 2);
+        expect(umpire.team1Left).toBe(true);
+        scorePoints(umpire, true, 6);
+
+        expect(umpire.team1Left).toBe(false);
+
+        umpire.undoPoint();
+        expect(umpire.team1Left).toBe(false);
+      });
+    });
+  });
 });

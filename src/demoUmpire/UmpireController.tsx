@@ -18,6 +18,7 @@ interface MatchState {
   remainingServes: number;
   matchWinState: MatchWinState;
   gameScores: ReadonlyArray<GameScore>;
+  canUndoPoint: boolean;
 }
 
 function getServerReceiverName(
@@ -52,6 +53,7 @@ function getMatchStateFromUmpire(umpire: Umpire): MatchState {
     remainingServes: umpire.remainingServes,
     matchWinState: umpire.matchWinState,
     gameScores: umpire.gameScores,
+    canUndoPoint: umpire.canUndoPoint,
   };
 }
 
@@ -169,6 +171,15 @@ export function UmpireController({
         }}
       >
         Switch ends
+      </button>
+      <button
+        disabled={!matchState.canUndoPoint}
+        onClick={() => {
+          umpire.undoPoint();
+          setMatchState(getMatchStateFromUmpire(umpire));
+        }}
+      >
+        Undo
       </button>
       <UmpireView
         canScorePoint={canScorePoint}
