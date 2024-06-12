@@ -1169,14 +1169,16 @@ describe("umpiring", () => {
 
       it("should initialize available servers and receivers for singles", () => {
         const umpire = getNormalSinglesBestOf5Umpire();
-        expect(umpire.availableServers).toEqual(singlesPlayers);
-        expect(umpire.availableReceivers).toEqual([]);
+        const serviceReceiverChoice = umpire.serverReceiverChoice;
+        expect(serviceReceiverChoice.servers).toEqual(singlesPlayers);
+        expect(serviceReceiverChoice.firstGameDoublesReceivers).toEqual([]);
       });
 
       it("should initialize available servers and receivers for doubles", () => {
         const umpire = getNormalDoublesBestOf5Umpire();
-        expect(umpire.availableServers).toEqual(doublesPlayers);
-        expect(umpire.availableReceivers).toHaveLength(0);
+        const serviceReceiverChoice = umpire.serverReceiverChoice;
+        expect(serviceReceiverChoice.servers).toEqual(doublesPlayers);
+        expect(serviceReceiverChoice.firstGameDoublesReceivers).toHaveLength(0);
       });
     });
     describe("initial setting server", () => {
@@ -1190,8 +1192,11 @@ describe("umpiring", () => {
           (server, expectedReceiver) => {
             const umpire = getNormalSinglesBestOf5Umpire();
             umpire.setServer(server);
-            expect(umpire.availableServers).toHaveLength(0);
-            expect(umpire.availableReceivers).toHaveLength(0);
+            const serviceReceiverChoice = umpire.serverReceiverChoice;
+            expect(serviceReceiverChoice.servers).toHaveLength(0);
+            expect(
+              serviceReceiverChoice.firstGameDoublesReceivers,
+            ).toHaveLength(0);
             expect(umpire.server).toEqual(server);
             expect(umpire.receiver).toEqual(expectedReceiver);
           },
@@ -1210,8 +1215,11 @@ describe("umpiring", () => {
           (server, expectedReceivers) => {
             const umpire = getNormalDoublesBestOf5Umpire();
             umpire.setServer(server);
-            expect(umpire.availableServers).toHaveLength(0);
-            expect(umpire.availableReceivers).toEqual(expectedReceivers);
+            const serviceReceiverChoice = umpire.serverReceiverChoice;
+            expect(serviceReceiverChoice.servers).toHaveLength(0);
+            expect(serviceReceiverChoice.firstGameDoublesReceivers).toEqual(
+              expectedReceivers,
+            );
             expect(umpire.server).toEqual(server);
             expect(umpire.receiver).toBeUndefined();
           },
@@ -1387,8 +1395,11 @@ describe("umpiring", () => {
             expectSinglesServerReceiver(umpire, team1ServeFirst);
             scoreGames(umpire, true, 1);
 
-            expect(umpire.availableServers).toHaveLength(0);
-            expect(umpire.availableReceivers).toHaveLength(0);
+            const serviceReceiverChoice = umpire.serverReceiverChoice;
+            expect(serviceReceiverChoice.servers).toHaveLength(0);
+            expect(
+              serviceReceiverChoice.firstGameDoublesReceivers,
+            ).toHaveLength(0);
 
             expectSinglesServerReceiver(umpire, !team1ServeFirst);
           },
@@ -1401,9 +1412,11 @@ describe("umpiring", () => {
             umpire.setServer(team1ServeFirst ? "Team1Player1" : "Team2Player1");
             expectSinglesServerReceiver(umpire, team1ServeFirst);
             scoreGames(umpire, true, 2);
-
-            expect(umpire.availableServers).toHaveLength(0);
-            expect(umpire.availableReceivers).toHaveLength(0);
+            const serviceReceiverChoice = umpire.serverReceiverChoice;
+            expect(serviceReceiverChoice.servers).toHaveLength(0);
+            expect(
+              serviceReceiverChoice.firstGameDoublesReceivers,
+            ).toHaveLength(0);
 
             expectSinglesServerReceiver(umpire, team1ServeFirst);
           },
@@ -1444,11 +1457,14 @@ describe("umpiring", () => {
 
         it("should set the availableServers to the players in the team that did not serve at the beginning of the previous game", () => {
           const umpire = scoreFirstDoublesGame("Team1Player1", "Team2Player1");
-          expect(umpire.availableServers).toEqual([
+          const serviceReceiverChoice = umpire.serverReceiverChoice;
+          expect(serviceReceiverChoice.servers).toEqual([
             "Team2Player1",
             "Team2Player2",
           ]);
-          expect(umpire.availableReceivers).toHaveLength(0);
+          expect(serviceReceiverChoice.firstGameDoublesReceivers).toHaveLength(
+            0,
+          );
         });
       });
     });
@@ -1490,7 +1506,7 @@ describe("umpiring", () => {
         test("Team1Player1", "Team2Player1", "Team1Player2", "Team2Player2");
       });
 
-      it("should throw of not an available server", () => {
+      it("should throw if not an available server", () => {
         const umpire = scoreFirstDoublesGame("Team1Player1", "Team2Player1");
         expect(() => umpire.setServer("Team1Player1")).toThrow();
         expect(() => umpire.setServer("Team1Player2")).toThrow();
@@ -1502,8 +1518,9 @@ describe("umpiring", () => {
       umpire.setServer("Team1Player1");
       scoreGames(umpire, true, 3);
 
-      expect(umpire.availableServers).toHaveLength(0);
-      expect(umpire.availableReceivers).toHaveLength(0);
+      const serviceReceiverChoice = umpire.serverReceiverChoice;
+      expect(serviceReceiverChoice.servers).toHaveLength(0);
+      expect(serviceReceiverChoice.firstGameDoublesReceivers).toHaveLength(0);
 
       expect(umpire.server).toBeUndefined();
       expect(umpire.receiver).toBeUndefined();

@@ -18,33 +18,12 @@ export interface GameScore {
   team2Points: number;
 }
 
-export interface MatchState {
-  team1StartGameScore: number;
-  team2StartGameScore: number;
-  adjustedUpTo: number;
-  team1Left: boolean;
-  team1Score: TeamScore;
-  team2Score: TeamScore;
-  availableServers: Player[];
-  availableReceivers: Player[];
-  server: Player | undefined;
-  receiver: Player | undefined;
-  isDoubles: boolean;
-  bestOf: number;
-}
-
 interface CompetitionOptions {
   team1StartGameScore: number;
   team2StartGameScore: number;
   upTo: number;
   clearBy2: boolean;
   numServes: number;
-}
-
-export function getPlayers(isDoubles: boolean): Player[] {
-  return isDoubles
-    ? ["Team1Player1", "Team1Player2", "Team2Player1", "Team2Player2"]
-    : ["Team1Player1", "Team2Player1"];
 }
 
 enum GameWonState {
@@ -58,7 +37,7 @@ export interface PointHistory {
   date: Date;
 }
 
-export interface AvailableServerReceiverChoice {
+export interface ServerReceiverChoice {
   servers: Player[];
   firstGameDoublesReceivers: Player[];
 }
@@ -72,8 +51,8 @@ export const availableServerReceiverChoice = (
   isDoubles: boolean,
   initialServersReceiver: InitialServersReceiver,
   gameNumber: number,
-): AvailableServerReceiverChoice => {
-  const choice: AvailableServerReceiverChoice = {
+): ServerReceiverChoice => {
+  const choice: ServerReceiverChoice = {
     firstGameDoublesReceivers: [],
     servers: [],
   };
@@ -192,13 +171,15 @@ export class Umpire {
 
   private _upTo: number;
 
-  private _initialServer: Player | undefined;
   private _server: Player | undefined;
   public get server(): Player | undefined {
     return this._server;
   }
 
-  private _initialReceiver: Player | undefined;
+  private initialServersReceiver: InitialServersReceiver = {
+    gameInitialServers: [],
+    firstDoublesReceiver: undefined,
+  };
   private _receiver: Player | undefined;
   public get receiver(): Player | undefined {
     return this._receiver;
@@ -207,15 +188,12 @@ export class Umpire {
   public get team1Left(): boolean {
     return this._team1Left;
   }
-  private _availableServers: Player[];
-
-  public get availableServers(): ReadonlyArray<Player> {
-    return this._availableServers;
-  }
-
-  private _availableReceivers: Player[] = [];
-  public get availableReceivers(): ReadonlyArray<Player> {
-    return this._availableReceivers;
+  public get serverReceiverChoice(): ServerReceiverChoice {
+    return availableServerReceiverChoice(
+      this.isDoubles,
+      this.initialServersReceiver,
+      this.gamesPlayed() + 1,
+    );
   }
 
   private _team1Score: TeamScore = { gamesWon: 0, pointsWon: 0 };
@@ -265,7 +243,6 @@ export class Umpire {
     this.numServes = umpireOptions.numServes;
     this.setRemainingServesAtStartOfGame();
     this._upTo = umpireOptions.upTo;
-    this._availableServers = getPlayers(this.isDoubles);
     this.clearBy2 = umpireOptions.clearBy2;
   }
 
@@ -296,8 +273,8 @@ export class Umpire {
   private getDoublesServiceCycle(): [Player, Player][] {
     if (this.doublesServiceCycle.length == 0) {
       this.doublesServiceCycle.push([
-        this._initialServer,
-        this._initialReceiver,
+        this.initialServersReceiver.gameInitialServers[0],
+        this.initialServersReceiver.firstDoublesReceiver,
       ]);
       for (let i = 0; i < 3; i++) {
         const previousServer = this.doublesServiceCycle[i][0];
@@ -331,34 +308,29 @@ export class Umpire {
   }
 
   setServer(player: Player): void {
-    if (!this._availableServers.includes(player)) {
+    if (!this.serverReceiverChoice.servers.includes(player)) {
       throw new Error("Player not available");
     }
-    if (this.isFirstGame()) {
-      this._initialServer = player;
-    }
-    this._availableServers = [];
+    this.initialServersReceiver.gameInitialServers.push(player);
     this._server = player;
 
     if (this.isDoubles) {
       if (this.isFirstGame()) {
-        this._availableReceivers = getDoublesOpponents(player);
         this._receiver = undefined;
       } else {
         this._receiver = this.getServerOfReceiverInPreviousGame(this._server);
       }
     } else {
-      this._receiver = getSinglesOpponent(this._initialServer);
+      this._receiver = getSinglesOpponent(player);
     }
   }
 
   setReceiver(player: Player): void {
-    if (this._availableReceivers.includes(player)) {
+    if (this.serverReceiverChoice.firstGameDoublesReceivers.includes(player)) {
       this._receiver = player;
       if (this.isFirstGame()) {
-        this._initialReceiver = player;
+        this.initialServersReceiver.firstDoublesReceiver = player;
       }
-      this._availableReceivers = [];
     } else {
       throw new Error("receiver is not an available receiver");
     }
@@ -370,7 +342,7 @@ export class Umpire {
 
   changeOrderOfReceivingIfDoubles() {
     if (this.isDoubles) {
-      this._receiver = this.getDoublesPartner(this._receiver);
+      this._receiver = getDoublesPartner(this._receiver);
     }
   }
 
@@ -410,7 +382,7 @@ export class Umpire {
     currentServer: Player,
     currentReceiver: Player,
   ): [Player, Player] {
-    return [currentReceiver, this.getDoublesPartner(currentServer)];
+    return [currentReceiver, getDoublesPartner(currentServer)];
   }
 
   private shouldSwitchServerReceiver(): boolean {
@@ -430,19 +402,6 @@ export class Umpire {
       } else {
         this.switchServerReceiver();
       }
-    }
-  }
-
-  private getDoublesPartner(player: string): Player {
-    switch (player) {
-      case "Team1Player1":
-        return "Team1Player2";
-      case "Team1Player2":
-        return "Team1Player1";
-      case "Team2Player1":
-        return "Team2Player2";
-      case "Team2Player2":
-        return "Team2Player1";
     }
   }
 
@@ -545,19 +504,16 @@ export class Umpire {
   }
 
   private setNextGameServiceState() {
-    const evenNumberOfGamesPlayed = isEven(this.gamesPlayed());
     if (this.isDoubles) {
-      this._availableServers = getDoublesOpponents(
-        evenNumberOfGamesPlayed ? this._initialReceiver : this._initialServer,
-      );
-      this._availableReceivers = [];
       this._server = undefined;
       this._receiver = undefined;
     } else {
-      this._server = this._initialServer;
-      this._receiver = getSinglesOpponent(this._server);
-
-      if (!evenNumberOfGamesPlayed) {
+      const evenGamesPlayed = isEven(this.gamesPlayed());
+      const firstGameServer = this.initialServersReceiver.gameInitialServers[0];
+      const firstGameReceiver = getSinglesOpponent(firstGameServer);
+      this._server = firstGameServer;
+      this._receiver = firstGameReceiver;
+      if (!evenGamesPlayed) {
         this.switchServerReceiver();
       }
     }
@@ -576,4 +532,23 @@ const getDoublesOpponents = (player: Player): Player[] => {
   return isTeam1(player)
     ? ["Team2Player1", "Team2Player2"]
     : ["Team1Player1", "Team1Player2"];
+};
+
+export function getPlayers(isDoubles: boolean): Player[] {
+  return isDoubles
+    ? ["Team1Player1", "Team1Player2", "Team2Player1", "Team2Player2"]
+    : ["Team1Player1", "Team2Player1"];
+}
+
+export const getDoublesPartner = (player: string): Player => {
+  switch (player) {
+    case "Team1Player1":
+      return "Team1Player2";
+    case "Team1Player2":
+      return "Team1Player1";
+    case "Team2Player1":
+      return "Team2Player2";
+    case "Team2Player2":
+      return "Team2Player1";
+  }
 };
