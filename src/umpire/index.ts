@@ -315,9 +315,7 @@ export class Umpire {
     this._server = player;
 
     if (this.isDoubles) {
-      if (this.isFirstGame()) {
-        this._receiver = undefined;
-      } else {
+      if (!this.isFirstGame()) {
         this._receiver = this.getServerOfReceiverInPreviousGame(this._server);
       }
     } else {
@@ -325,12 +323,10 @@ export class Umpire {
     }
   }
 
-  setReceiver(player: Player): void {
+  setFirstGameDoublesReceiver(player: Player): void {
     if (this.serverReceiverChoice.firstGameDoublesReceivers.includes(player)) {
       this._receiver = player;
-      if (this.isFirstGame()) {
-        this.initialServersReceiver.firstDoublesReceiver = player;
-      }
+      this.initialServersReceiver.firstDoublesReceiver = player;
     } else {
       throw new Error("receiver is not an available receiver");
     }

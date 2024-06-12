@@ -159,7 +159,7 @@ export function UmpireController({
           if (isServer) {
             umpire.setServer(player);
           } else {
-            umpire.setReceiver(player);
+            umpire.setFirstGameDoublesReceiver(player);
           }
           setMatchStateFromUmpire();
         }}

@@ -1232,14 +1232,16 @@ describe("umpiring", () => {
         const umpire = getNormalDoublesBestOf5Umpire();
         umpire.setServer("Team1Player1");
 
-        umpire.setReceiver("Team2Player1");
+        umpire.setFirstGameDoublesReceiver("Team2Player1");
         expect(umpire.receiver).toEqual<Player>("Team2Player1");
       });
 
       it("should throw for singles", () => {
         const umpire = getNormalSinglesBestOf5Umpire();
         umpire.setServer("Team1Player1");
-        expect(() => umpire.setReceiver("Team2Player1")).toThrow();
+        expect(() =>
+          umpire.setFirstGameDoublesReceiver("Team2Player1"),
+        ).toThrow();
       });
     });
 
@@ -1356,7 +1358,7 @@ describe("umpiring", () => {
       it("previous receiver shall become the server and the partner of the previous server shall become the receiver.", () => {
         const umpire = getNormalDoublesBestOf5Umpire();
         umpire.setServer("Team1Player1");
-        umpire.setReceiver("Team2Player1");
+        umpire.setFirstGameDoublesReceiver("Team2Player1");
 
         scorePoints(umpire, true, 2);
         expect(umpire.server).toBe("Team2Player1");
@@ -1380,7 +1382,7 @@ describe("umpiring", () => {
     const scoreFirstDoublesGame = (server: Player, receiver: Player) => {
       const umpire = getNormalDoublesBestOf5Umpire();
       umpire.setServer(server);
-      umpire.setReceiver(receiver);
+      umpire.setFirstGameDoublesReceiver(receiver);
       scoreGames(umpire, true, 1);
       return umpire;
     };
@@ -1533,7 +1535,7 @@ describe("umpiring", () => {
       ) => {
         const umpire = getNormalDoublesBestOf5Umpire();
         umpire.setServer("Team1Player1");
-        umpire.setReceiver("Team2Player1");
+        umpire.setFirstGameDoublesReceiver("Team2Player1");
         //cycle
         // Team1Player1 => Team2Player1
         // Team2Player1 => Team1Player2
@@ -1565,7 +1567,7 @@ describe("umpiring", () => {
     it("after ends - previous receiver shall become the server and the partner of the previous server shall become the receiver", () => {
       const umpire = getNormalDoublesBestOf5Umpire();
       umpire.setServer("Team1Player1");
-      umpire.setReceiver("Team2Player1");
+      umpire.setFirstGameDoublesReceiver("Team2Player1");
 
       scoreGames(umpire, true, 1);
 
