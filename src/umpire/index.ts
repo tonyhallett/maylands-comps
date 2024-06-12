@@ -148,7 +148,8 @@ export class Umpire {
 
   private setRemainingServesAtStartOfGame() {
     const totalStartScores =
-      this.team1StartGameScore + this.team2StartGameScore;
+      Math.abs(this.team1StartGameScore) + Math.abs(this.team2StartGameScore);
+
     this._remainingServes =
       this.numServes - (totalStartScores % this.numServes);
   }

@@ -913,10 +913,24 @@ describe("umpiring", () => {
         expectedRemainingServes: 1,
         description: "15,8 2 = 1",
       },
+      {
+        team1StartGameScore: -5,
+        team2StartGameScore: 3,
+        numServes: 5,
+        expectedRemainingServes: 2,
+        description: "-5,3 5 = 2",
+      },
+      {
+        team1StartGameScore: 3,
+        team2StartGameScore: -5,
+        numServes: 5,
+        expectedRemainingServes: 2,
+        description: "3,-5 5 = 2",
+      },
     ];
     describe("initial state", () => {
       it.each(remainingServesTests)(
-        "should set remaining serves",
+        "should set remaining serves $description",
         ({
           numServes,
           team1StartGameScore,
@@ -1185,7 +1199,6 @@ describe("umpiring", () => {
             expectSinglesServerReceiver(umpire, team1ServeFirst);
           },
         );
-
         it.each(remainingServesTests)(
           "should set the start of game remaining serves $description",
           ({
