@@ -3,8 +3,8 @@ import { ServersReceiversChooser } from "./ServersReceiversChooser";
 import { PlayerNames } from ".";
 import { LeftRightMatchWinState, UmpireView } from "./UmpireView";
 import { MatchState, Player, Umpire } from "../umpire";
-import { MatchWinState } from "../umpire/helpers";
 import { HistoryView } from "./HistoryView";
+import { MatchWinState } from "../umpire/getMatchWinState";
 
 export interface UmpireControllerProps extends PlayerNames {
   umpire: Umpire;
