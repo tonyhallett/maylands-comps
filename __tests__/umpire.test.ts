@@ -5,6 +5,7 @@ import {
 } from "../src/umpire/helpers";
 import {
   GameScore,
+  MatchState,
   Player,
   PointHistory,
   Team1Player,
@@ -73,18 +74,16 @@ describe("umpiring", () => {
 
   describe("initialization", () => {
     it("should have match win state not won", () => {
-      expect(getAnUmpire().matchWinState).toBe(MatchWinState.NotWon);
+      expect(getAnUmpire().getMatchState().matchWinState).toBe(
+        MatchWinState.NotWon,
+      );
     });
     it("should have team1 left", () => {
-      expect(getAnUmpire().team1Left).toBe(true);
-    });
-
-    it.each([1, 3])("should have best of", (bestOf) => {
-      expect(getAnUmpire(bestOf).bestOf).toBe(bestOf);
+      expect(getAnUmpire().getMatchState().team1Left).toBe(true);
     });
 
     it("should initialize scoring", () => {
-      const umpire = new Umpire(
+      const matchState = new Umpire(
         {
           clearBy2: true,
           upTo: 11,
@@ -94,10 +93,16 @@ describe("umpiring", () => {
         },
         false,
         3,
-      );
+      ).getMatchState();
 
-      expect(umpire.team1Score).toStrictEqual({ gamesWon: 0, pointsWon: -1 });
-      expect(umpire.team2Score).toStrictEqual({ gamesWon: 0, pointsWon: -2 });
+      expect(matchState.team1Score).toStrictEqual({
+        gamesWon: 0,
+        pointsWon: -1,
+      });
+      expect(matchState.team2Score).toStrictEqual({
+        gamesWon: 0,
+        pointsWon: -2,
+      });
     });
 
     describe("handicap scoring", () => {
@@ -326,6 +331,7 @@ describe("umpiring", () => {
 
   const scorePoints = (umpire: Umpire, team1: boolean, n: number) => {
     [...Array(n)].forEach(() => umpire.pointScored(team1));
+    return umpire.getMatchState();
   };
   const oneThenOtherScores = (umpire: Umpire, n: number) => {
     for (let i = 0; i < n; i++) {
@@ -340,18 +346,19 @@ describe("umpiring", () => {
     gamePoints = 11,
   ) => {
     [...Array(n)].forEach(() => scorePoints(umpire, team1, gamePoints));
+    return umpire.getMatchState();
   };
 
   describe("scoring", () => {
     it.each([true, false])("should increment points", (team1Scores) => {
       const umpire = getAnUmpire();
-      umpire.pointScored(team1Scores);
+      const matchState = umpire.pointScored(team1Scores);
       const incrementedTeamScore = team1Scores
-        ? umpire.team1Score
-        : umpire.team2Score;
+        ? matchState.team1Score
+        : matchState.team2Score;
       const notIncrementedTeamScore = team1Scores
-        ? umpire.team2Score
-        : umpire.team1Score;
+        ? matchState.team2Score
+        : matchState.team1Score;
       expect(incrementedTeamScore).toEqual<TeamScore>({
         gamesWon: 0,
         pointsWon: 1,
@@ -365,12 +372,12 @@ describe("umpiring", () => {
     it("should increment games resetting points when game won", () => {
       const umpire = getNormalSinglesBestOf5Umpire();
       umpire.pointScored(false);
-      scoreGames(umpire, true, 1);
-      expect(umpire.team1Score).toEqual<TeamScore>({
+      const matchState = scoreGames(umpire, true, 1);
+      expect(matchState.team1Score).toEqual<TeamScore>({
         gamesWon: 1,
         pointsWon: 0,
       });
-      expect(umpire.team2Score).toEqual<TeamScore>({
+      expect(matchState.team2Score).toEqual<TeamScore>({
         gamesWon: 0,
         pointsWon: 0,
       });
@@ -380,13 +387,13 @@ describe("umpiring", () => {
       const umpire = getNormalSinglesBestOf5Umpire();
 
       scorePoints(umpire, true, 10);
-      scorePoints(umpire, false, 12);
+      const matchState = scorePoints(umpire, false, 12);
 
-      expect(umpire.team1Score).toEqual<TeamScore>({
+      expect(matchState.team1Score).toEqual<TeamScore>({
         gamesWon: 0,
         pointsWon: 0,
       });
-      expect(umpire.team2Score).toEqual<TeamScore>({
+      expect(matchState.team2Score).toEqual<TeamScore>({
         gamesWon: 1,
         pointsWon: 0,
       });
@@ -406,22 +413,28 @@ describe("umpiring", () => {
       );
 
       umpire.pointScored(true);
-      scorePoints(umpire, false, 33);
+      const matchState = scorePoints(umpire, false, 33);
 
-      expect(umpire.team1Score).toStrictEqual({ gamesWon: 0, pointsWon: -1 });
-      expect(umpire.team2Score).toStrictEqual({ gamesWon: 1, pointsWon: -2 });
+      expect(matchState.team1Score).toStrictEqual({
+        gamesWon: 0,
+        pointsWon: -1,
+      });
+      expect(matchState.team2Score).toStrictEqual({
+        gamesWon: 1,
+        pointsWon: -2,
+      });
     });
 
     it("should not win game if not clear by 2", () => {
       const clearBy2Umpire = getNormalSinglesBestOf5Umpire();
       scorePoints(clearBy2Umpire, true, 10);
       scorePoints(clearBy2Umpire, false, 10);
-      clearBy2Umpire.pointScored(true);
-      expect(clearBy2Umpire.team1Score).toStrictEqual({
+      let matchState = clearBy2Umpire.pointScored(true);
+      expect(matchState.team1Score).toStrictEqual({
         gamesWon: 0,
         pointsWon: 11,
       });
-      expect(clearBy2Umpire.team2Score).toStrictEqual({
+      expect(matchState.team2Score).toStrictEqual({
         gamesWon: 0,
         pointsWon: 10,
       });
@@ -429,12 +442,12 @@ describe("umpiring", () => {
       const notClearBy2Umpire = getHardbatSinglesUmpire();
       scorePoints(notClearBy2Umpire, true, 14);
       scorePoints(notClearBy2Umpire, false, 14);
-      notClearBy2Umpire.pointScored(false);
-      expect(notClearBy2Umpire.team1Score).toStrictEqual({
+      matchState = notClearBy2Umpire.pointScored(false);
+      expect(matchState.team1Score).toStrictEqual({
         gamesWon: 0,
         pointsWon: 0,
       });
-      expect(notClearBy2Umpire.team2Score).toStrictEqual({
+      expect(matchState.team2Score).toStrictEqual({
         gamesWon: 1,
         pointsWon: 0,
       });
@@ -449,20 +462,20 @@ describe("umpiring", () => {
       (umpire as unknown as { dateProvider: () => Date }).dateProvider = () => {
         return dates[dateIndex++];
       };
-      umpire.pointScored(true);
-      expect(umpire.pointHistory[0][0]).toEqual<PointHistory>({
+      let matchState = umpire.pointScored(true);
+      expect(matchState.pointHistory[0][0]).toEqual<PointHistory>({
         team1: true,
         date: dates[0],
       });
-      umpire.pointScored(false);
-      expect(umpire.pointHistory[0][1]).toEqual<PointHistory>({
+      matchState = umpire.pointScored(false);
+      expect(matchState.pointHistory[0][1]).toEqual<PointHistory>({
         team1: false,
         date: dates[1],
       });
       scorePoints(umpire, true, 10);
 
-      umpire.pointScored(true);
-      expect(umpire.pointHistory[1][0]).toEqual<PointHistory>({
+      matchState = umpire.pointScored(true);
+      expect(matchState.pointHistory[1][0]).toEqual<PointHistory>({
         team1: true,
         date: dates[12],
       });
@@ -470,25 +483,25 @@ describe("umpiring", () => {
 
     it("should keep scores from previous games", () => {
       const umpire = getNormalSinglesBestOf5Umpire();
-      expect(umpire.gameScores).toHaveLength(0);
+      expect(umpire.getMatchState().gameScores).toHaveLength(0);
 
-      scorePoints(umpire, true, 7);
-      expect(umpire.gameScores).toHaveLength(0);
-      scoreGames(umpire, false, 1);
-      expect(umpire.gameScores).toEqual<Array<GameScore>>([
+      let matchState = scorePoints(umpire, true, 7);
+      expect(matchState.gameScores).toHaveLength(0);
+      matchState = scoreGames(umpire, false, 1);
+      expect(matchState.gameScores).toEqual<Array<GameScore>>([
         { team1Points: 7, team2Points: 11 },
       ]);
 
       scorePoints(umpire, false, 6);
-      scoreGames(umpire, true, 1);
+      matchState = scoreGames(umpire, true, 1);
 
-      expect(umpire.gameScores).toEqual<Array<GameScore>>([
+      expect(matchState.gameScores).toEqual<Array<GameScore>>([
         { team1Points: 7, team2Points: 11 },
         { team1Points: 11, team2Points: 6 },
       ]);
 
-      scoreGames(umpire, true, 2);
-      expect(umpire.gameScores).toEqual<Array<GameScore>>([
+      matchState = scoreGames(umpire, true, 2);
+      expect(matchState.gameScores).toEqual<Array<GameScore>>([
         { team1Points: 7, team2Points: 11 },
         { team1Points: 11, team2Points: 6 },
         { team1Points: 11, team2Points: 0 },
@@ -811,24 +824,24 @@ describe("umpiring", () => {
           it("should be NotWon at 0/9 - 0/9", () => {
             const umpire = getNormalSinglesBestOf5Umpire();
             scorePoints(umpire, true, 9);
-            scorePoints(umpire, false, 9);
+            const matchState = scorePoints(umpire, false, 9);
 
-            expect(umpire.matchWinState).toBe(MatchWinState.NotWon);
+            expect(matchState.matchWinState).toBe(MatchWinState.NotWon);
           });
 
           it("should be NotWon at 1/0 - 0/0", () => {
             const umpire = getNormalSinglesBestOf5Umpire();
-            scoreGames(umpire, true, 1);
+            const matchState = scoreGames(umpire, true, 1);
 
-            expect(umpire.matchWinState).toBe(MatchWinState.NotWon);
+            expect(matchState.matchWinState).toBe(MatchWinState.NotWon);
           });
 
           it("should be NotWon at 0/10 - 0/10", () => {
             const umpire = getNormalSinglesBestOf5Umpire();
             scorePoints(umpire, true, 10);
-            scorePoints(umpire, false, 10);
+            const matchState = scorePoints(umpire, false, 10);
 
-            expect(umpire.matchWinState).toBe(MatchWinState.NotWon);
+            expect(matchState.matchWinState).toBe(MatchWinState.NotWon);
           });
 
           it("should be NotWon at 0/11 - 0/11", () => {
@@ -836,33 +849,33 @@ describe("umpiring", () => {
             scorePoints(umpire, true, 10);
             scorePoints(umpire, false, 10);
             umpire.pointScored(true);
-            umpire.pointScored(false);
+            const matchState = umpire.pointScored(false);
 
-            expect(umpire.matchWinState).toBe(MatchWinState.NotWon);
+            expect(matchState.matchWinState).toBe(MatchWinState.NotWon);
           });
 
           it("should be GamePointTeam1 at 0/10 - 0/9", () => {
             const umpire = getNormalSinglesBestOf5Umpire();
             scorePoints(umpire, true, 10);
-            scorePoints(umpire, false, 9);
+            const matchState = scorePoints(umpire, false, 9);
 
-            expect(umpire.matchWinState).toBe(MatchWinState.GamePointTeam1);
+            expect(matchState.matchWinState).toBe(MatchWinState.GamePointTeam1);
           });
 
           it("should be GamePointTeam2 at 0/9 - 0/10", () => {
             const umpire = getNormalSinglesBestOf5Umpire();
             scorePoints(umpire, true, 9);
-            scorePoints(umpire, false, 10);
+            const matchState = scorePoints(umpire, false, 10);
 
-            expect(umpire.matchWinState).toBe(MatchWinState.GamePointTeam2);
+            expect(matchState.matchWinState).toBe(MatchWinState.GamePointTeam2);
           });
 
           it("should be GamePointTeam2 at 0/12 - 0/13", () => {
             const umpire = getNormalSinglesBestOf5Umpire();
             oneThenOtherScores(umpire, 12);
-            umpire.pointScored(false);
+            const matchState = umpire.pointScored(false);
 
-            expect(umpire.matchWinState).toBe(MatchWinState.GamePointTeam2);
+            expect(matchState.matchWinState).toBe(MatchWinState.GamePointTeam2);
           });
 
           it("should be MatchPointTeam1 at 2/10 - 2/0", () => {
@@ -870,68 +883,72 @@ describe("umpiring", () => {
             umpire.setServer("Team1Player1");
             scoreGames(umpire, true, 2);
             scoreGames(umpire, false, 2);
-            scorePoints(umpire, true, 10);
+            const matchState = scorePoints(umpire, true, 10);
 
-            expect(umpire.matchWinState).toBe(MatchWinState.MatchPointTeam1);
+            expect(matchState.matchWinState).toBe(
+              MatchWinState.MatchPointTeam1,
+            );
           });
 
           it("should be MatchPointTeam2 at 0/0 - 2/10", () => {
             const umpire = getNormalSinglesBestOf5Umpire();
             umpire.setServer("Team1Player1");
             scoreGames(umpire, false, 2);
-            scorePoints(umpire, false, 10);
+            const matchState = scorePoints(umpire, false, 10);
 
-            expect(umpire.matchWinState).toBe(MatchWinState.MatchPointTeam2);
+            expect(matchState.matchWinState).toBe(
+              MatchWinState.MatchPointTeam2,
+            );
           });
 
           it("should be Team1Won at 3/0 - 0/0", () => {
             const umpire = getNormalSinglesBestOf5Umpire();
             umpire.setServer("Team1Player1");
-            scoreGames(umpire, true, 3);
+            const matchState = scoreGames(umpire, true, 3);
 
-            expect(umpire.matchWinState).toBe(MatchWinState.Team1Won);
+            expect(matchState.matchWinState).toBe(MatchWinState.Team1Won);
           });
 
           it("should be Team2Won at 0/0 - 3/0", () => {
             const umpire = getNormalSinglesBestOf5Umpire();
             umpire.setServer("Team1Player1");
-            scoreGames(umpire, false, 3);
+            const matchState = scoreGames(umpire, false, 3);
 
-            expect(umpire.matchWinState).toBe(MatchWinState.Team2Won);
+            expect(matchState.matchWinState).toBe(MatchWinState.Team2Won);
           });
         });
         describe("not clear by 2", () => {
           it("should be NotWon at 0/11 - 0/0", () => {
             const bestOf = 3;
             const umpire = getHardbatSinglesUmpire(bestOf);
-            scorePoints(umpire, true, 11);
+            const matchState = scorePoints(umpire, true, 11);
 
-            expect(umpire.matchWinState).toBe(MatchWinState.NotWon);
+            expect(matchState.matchWinState).toBe(MatchWinState.NotWon);
           });
 
           it("should be GamePointTeam1 at 0/14 - 0/0", () => {
             const bestOf = 3;
             const umpire = getHardbatSinglesUmpire(bestOf);
-            scorePoints(umpire, true, 14);
+            const matchState = scorePoints(umpire, true, 14);
 
-            expect(umpire.matchWinState).toBe(MatchWinState.GamePointTeam1);
+            expect(matchState.matchWinState).toBe(MatchWinState.GamePointTeam1);
           });
 
           it("should be GamePointTeam2 at 0/0 - 0/14", () => {
             const bestOf = 3;
             const umpire = getHardbatSinglesUmpire(bestOf);
-            scorePoints(umpire, false, 14);
+            const matchState = scorePoints(umpire, false, 14);
 
-            expect(umpire.matchWinState).toBe(MatchWinState.GamePointTeam2);
+            expect(matchState.matchWinState).toBe(MatchWinState.GamePointTeam2);
           });
 
           it("should be GamePointTeam1 & GamePointTeam2 at 0/14 - 0/14", () => {
             const bestOf = 3;
             const umpire = getHardbatSinglesUmpire(bestOf);
             scorePoints(umpire, false, 14);
-            scorePoints(umpire, true, 14);
+            const matchState = scorePoints(umpire, true, 14);
 
-            expect(umpire.matchWinState).toBe(
+            expect(matchState.matchWinState).toBe(
               MatchWinState.GamePointTeam1 + MatchWinState.GamePointTeam2,
             );
           });
@@ -941,9 +958,9 @@ describe("umpiring", () => {
             const umpire = getHardbatSinglesUmpire(bestOf);
             scorePoints(umpire, true, 15);
             scorePoints(umpire, true, 14);
-            scorePoints(umpire, false, 14);
+            const matchState = scorePoints(umpire, false, 14);
 
-            expect(umpire.matchWinState).toBe(
+            expect(matchState.matchWinState).toBe(
               MatchWinState.MatchPointTeam1 + MatchWinState.GamePointTeam2,
             );
           });
@@ -953,9 +970,9 @@ describe("umpiring", () => {
             const umpire = getHardbatSinglesUmpire(bestOf);
             scorePoints(umpire, false, 15);
             scorePoints(umpire, true, 14);
-            scorePoints(umpire, false, 14);
+            const matchState = scorePoints(umpire, false, 14);
 
-            expect(umpire.matchWinState).toBe(
+            expect(matchState.matchWinState).toBe(
               MatchWinState.MatchPointTeam2 + MatchWinState.GamePointTeam1,
             );
           });
@@ -966,9 +983,9 @@ describe("umpiring", () => {
             scorePoints(umpire, false, 15);
             scorePoints(umpire, true, 15);
             scorePoints(umpire, true, 14);
-            scorePoints(umpire, false, 14);
+            const matchState = scorePoints(umpire, false, 14);
 
-            expect(umpire.matchWinState).toBe(
+            expect(matchState.matchWinState).toBe(
               MatchWinState.MatchPointTeam1 + MatchWinState.MatchPointTeam2,
             );
           });
@@ -981,29 +998,26 @@ describe("umpiring", () => {
     it("should allow switching ends", () => {
       // should happen before match starts
       const umpire = getAnUmpire();
-      umpire.switchEnds();
-      expect(umpire.team1Left).toBe(false);
+      expect(umpire.switchEnds().team1Left).toBe(false);
     });
 
     it("should switch ends after game", () => {
       const umpire = getNormalSinglesBestOf5Umpire();
-      expect(umpire.team1Left).toBe(true);
       [...Array(10)].forEach(() => {
-        umpire.pointScored(true);
-        expect(umpire.team1Left).toBe(true);
+        const matchState = umpire.pointScored(true);
+        expect(matchState.team1Left).toBe(true);
       });
 
-      umpire.pointScored(true);
-      expect(umpire.team1Left).toBe(false);
+      const matchState = umpire.pointScored(true);
+      expect(matchState.team1Left).toBe(false);
     });
 
     const team1Ends = () => {
       const umpire = getNormalSinglesBestOf5Umpire();
-      expect(umpire.team1Left).toBe(true);
-      scoreGames(umpire, true, 2);
-      expect(umpire.team1Left).toBe(true);
-      scoreGames(umpire, false, 2);
-      expect(umpire.team1Left).toBe(true);
+      let matchState = scoreGames(umpire, true, 2);
+      expect(matchState.team1Left).toBe(true);
+      matchState = scoreGames(umpire, false, 2);
+      expect(matchState.team1Left).toBe(true);
       scorePoints(umpire, true, 5);
       return umpire;
     };
@@ -1012,27 +1026,27 @@ describe("umpiring", () => {
 
     it("should switch ends in the middle of the last game", () => {
       const umpire = team1Ends();
-      expectEndsInDecider(umpire.team1Left);
+      expectEndsInDecider(umpire.getMatchState().team1Left);
     });
 
     it("should not switch ends again when the ends team scores again", () => {
       const umpire = team1Ends();
-      umpire.pointScored(true);
-      expectEndsInDecider(umpire.team1Left);
+      const matchState = umpire.pointScored(true);
+      expectEndsInDecider(matchState.team1Left);
     });
 
     it("should not switch ends again when the other team scores", () => {
       const umpire = team1Ends();
-      umpire.pointScored(false);
-      expectEndsInDecider(umpire.team1Left);
+      const matchState = umpire.pointScored(false);
+      expectEndsInDecider(matchState.team1Left);
     });
 
     it("should not switch ends again when other team scores ends score", () => {
       const umpire = team1Ends();
-      umpire.pointScored(true);
-      expectEndsInDecider(umpire.team1Left);
-      scorePoints(umpire, false, 5);
-      expectEndsInDecider(umpire.team1Left);
+      let matchState = umpire.pointScored(true);
+      expectEndsInDecider(matchState.team1Left);
+      matchState = scorePoints(umpire, false, 5);
+      expectEndsInDecider(matchState.team1Left);
     });
 
     it("should switch ends in the last handicap game differently for each player", () => {
@@ -1049,20 +1063,19 @@ describe("umpiring", () => {
           3,
         );
 
-        expect(umpire.team1Left).toBe(true);
         scorePoints(umpire, true, 21);
-        scorePoints(umpire, false, 11);
+        const matchState = scorePoints(umpire, false, 11);
 
-        expect(umpire.team1Left).toBe(true);
+        expect(matchState.team1Left).toBe(true);
         return umpire;
       };
 
       const shouldSwitchEnds = (isTeam1: boolean, pointsToMidway: number) => {
         const umpire = oneGameEach();
-        scorePoints(umpire, isTeam1, pointsToMidway - 1);
-        expect(umpire.team1Left).toBe(true);
-        scorePoints(umpire, isTeam1, 1);
-        expect(umpire.team1Left).toBe(false);
+        let matchState = scorePoints(umpire, isTeam1, pointsToMidway - 1);
+        expect(matchState.team1Left).toBe(true);
+        matchState = scorePoints(umpire, isTeam1, 1);
+        expect(matchState.team1Left).toBe(false);
       };
 
       shouldSwitchEnds(true, 10);
@@ -1071,10 +1084,9 @@ describe("umpiring", () => {
 
     it("should not switch ends when the match is won", () => {
       const umpire = getNormalSinglesBestOf5Umpire();
-      expect(umpire.team1Left).toBe(true);
-      scoreGames(umpire, true, 3);
+      const matchState = scoreGames(umpire, true, 3);
 
-      expect(umpire.team1Left).toBe(true);
+      expect(matchState.team1Left).toBe(true);
     });
   });
 
@@ -1157,26 +1169,30 @@ describe("umpiring", () => {
             false,
             5,
           );
-          expect(umpire.remainingServes).toBe(expectedRemainingServes);
+          expect(umpire.getMatchState().remainingServes).toBe(
+            expectedRemainingServes,
+          );
         },
       );
 
       it("should have undefined server and receiver", () => {
-        const umpire = getAnUmpire();
-        expect(umpire.server).toBeUndefined();
-        expect(umpire.receiver).toBeUndefined();
+        const matchState = getAnUmpire().getMatchState();
+        expect(matchState.server).toBeUndefined();
+        expect(matchState.receiver).toBeUndefined();
       });
 
       it("should initialize available servers and receivers for singles", () => {
         const umpire = getNormalSinglesBestOf5Umpire();
-        const serviceReceiverChoice = umpire.serverReceiverChoice;
+        const serviceReceiverChoice =
+          umpire.getMatchState().serverReceiverChoice;
         expect(serviceReceiverChoice.servers).toEqual(singlesPlayers);
         expect(serviceReceiverChoice.firstGameDoublesReceivers).toEqual([]);
       });
 
       it("should initialize available servers and receivers for doubles", () => {
         const umpire = getNormalDoublesBestOf5Umpire();
-        const serviceReceiverChoice = umpire.serverReceiverChoice;
+        const serviceReceiverChoice =
+          umpire.getMatchState().serverReceiverChoice;
         expect(serviceReceiverChoice.servers).toEqual(doublesPlayers);
         expect(serviceReceiverChoice.firstGameDoublesReceivers).toHaveLength(0);
       });
@@ -1191,14 +1207,14 @@ describe("umpiring", () => {
           "should set the server and receiver",
           (server, expectedReceiver) => {
             const umpire = getNormalSinglesBestOf5Umpire();
-            umpire.setServer(server);
-            const serviceReceiverChoice = umpire.serverReceiverChoice;
+            const matchState = umpire.setServer(server);
+            const serviceReceiverChoice = matchState.serverReceiverChoice;
             expect(serviceReceiverChoice.servers).toHaveLength(0);
             expect(
               serviceReceiverChoice.firstGameDoublesReceivers,
             ).toHaveLength(0);
-            expect(umpire.server).toEqual(server);
-            expect(umpire.receiver).toEqual(expectedReceiver);
+            expect(matchState.server).toEqual(server);
+            expect(matchState.receiver).toEqual(expectedReceiver);
           },
         );
       });
@@ -1214,14 +1230,14 @@ describe("umpiring", () => {
           "should set the server and available receivers",
           (server, expectedReceivers) => {
             const umpire = getNormalDoublesBestOf5Umpire();
-            umpire.setServer(server);
-            const serviceReceiverChoice = umpire.serverReceiverChoice;
+            const matchState = umpire.setServer(server);
+            const serviceReceiverChoice = matchState.serverReceiverChoice;
             expect(serviceReceiverChoice.servers).toHaveLength(0);
             expect(serviceReceiverChoice.firstGameDoublesReceivers).toEqual(
               expectedReceivers,
             );
-            expect(umpire.server).toEqual(server);
-            expect(umpire.receiver).toBeUndefined();
+            expect(matchState.server).toEqual(server);
+            expect(matchState.receiver).toBeUndefined();
           },
         );
       });
@@ -1232,8 +1248,8 @@ describe("umpiring", () => {
         const umpire = getNormalDoublesBestOf5Umpire();
         umpire.setServer("Team1Player1");
 
-        umpire.setFirstGameDoublesReceiver("Team2Player1");
-        expect(umpire.receiver).toEqual<Player>("Team2Player1");
+        const matchState = umpire.setFirstGameDoublesReceiver("Team2Player1");
+        expect(matchState.receiver).toEqual<Player>("Team2Player1");
       });
 
       it("should throw for singles", () => {
@@ -1246,19 +1262,19 @@ describe("umpiring", () => {
     });
 
     const expectServerReceiver = (
-      umpire: Umpire,
+      matchState: MatchState,
       expectedServer: Player,
       expectedReceiver: Player,
     ) => {
-      expect(umpire.server).toBe(expectedServer);
-      expect(umpire.receiver).toBe(expectedReceiver);
+      expect(matchState.server).toBe(expectedServer);
+      expect(matchState.receiver).toBe(expectedReceiver);
     };
     const expectSinglesServerReceiver = (
-      umpire: Umpire,
+      matchState: MatchState,
       team1Serving: boolean,
     ) => {
       expectServerReceiver(
-        umpire,
+        matchState,
         team1Serving ? "Team1Player1" : "Team2Player1",
         team1Serving ? "Team2Player1" : "Team1Player1",
       );
@@ -1267,8 +1283,8 @@ describe("umpiring", () => {
     describe("midgame", () => {
       it("should decrement remaining serves", () => {
         const umpire = getAnUmpire();
-        umpire.pointScored(true);
-        expect(umpire.remainingServes).toBe(1);
+        const matchState = umpire.pointScored(true);
+        expect(matchState.remainingServes).toBe(1);
       });
 
       it.each([2, 5])(
@@ -1288,9 +1304,9 @@ describe("umpiring", () => {
 
           umpire.setServer("Team1Player1");
 
-          scorePoints(umpire, true, numServes);
+          const matchState = scorePoints(umpire, true, numServes);
 
-          expect(umpire.remainingServes).toBe(numServes);
+          expect(matchState.remainingServes).toBe(numServes);
         },
       );
 
@@ -1309,10 +1325,10 @@ describe("umpiring", () => {
 
         umpire.setServer("Team1Player1");
 
-        scorePoints(umpire, true, 10);
-        expect(umpire.remainingServes).toBe(2);
-        scorePoints(umpire, false, 10);
-        expect(umpire.remainingServes).toBe(1);
+        let matchState = scorePoints(umpire, true, 10);
+        expect(matchState.remainingServes).toBe(2);
+        matchState = scorePoints(umpire, false, 10);
+        expect(matchState.remainingServes).toBe(1);
       });
 
       it.each([2, 5])(
@@ -1331,28 +1347,28 @@ describe("umpiring", () => {
           );
 
           const expectInitial = () => {
-            expectSinglesServerReceiver(umpire, true);
+            expectSinglesServerReceiver(umpire.getMatchState(), true);
           };
           umpire.setServer("Team1Player1");
           expectInitial();
           scorePoints(umpire, true, 1);
           expectInitial();
-          scorePoints(umpire, true, numServes - 1);
-          expectSinglesServerReceiver(umpire, false);
+          const matchState = scorePoints(umpire, true, numServes - 1);
+          expectSinglesServerReceiver(matchState, false);
         },
       );
 
       it("should switch server / receiver on each point in normal singles from 10-10", () => {
         const umpire = getNormalSinglesBestOf5Umpire();
         umpire.setServer("Team1Player1");
-        expectSinglesServerReceiver(umpire, true);
+        expectSinglesServerReceiver(umpire.getMatchState(), true);
         scorePoints(umpire, true, 10);
         scorePoints(umpire, false, 10);
-        expectSinglesServerReceiver(umpire, true); // multiple of 4 !
+        expectSinglesServerReceiver(umpire.getMatchState(), true); // multiple of 4 !
         scorePoints(umpire, true, 1);
-        expectSinglesServerReceiver(umpire, false);
+        expectSinglesServerReceiver(umpire.getMatchState(), false);
         scorePoints(umpire, false, 1);
-        expectSinglesServerReceiver(umpire, true);
+        expectSinglesServerReceiver(umpire.getMatchState(), true);
       });
 
       it("previous receiver shall become the server and the partner of the previous server shall become the receiver.", () => {
@@ -1360,22 +1376,22 @@ describe("umpiring", () => {
         umpire.setServer("Team1Player1");
         umpire.setFirstGameDoublesReceiver("Team2Player1");
 
-        scorePoints(umpire, true, 2);
-        expect(umpire.server).toBe("Team2Player1");
-        expect(umpire.receiver).toBe("Team1Player2");
+        let matchState = scorePoints(umpire, true, 2);
+        expect(matchState.server).toBe("Team2Player1");
+        expect(matchState.receiver).toBe("Team1Player2");
 
-        scorePoints(umpire, true, 2);
-        expect(umpire.server).toBe("Team1Player2");
-        expect(umpire.receiver).toBe("Team2Player2");
+        matchState = scorePoints(umpire, true, 2);
+        expect(matchState.server).toBe("Team1Player2");
+        expect(matchState.receiver).toBe("Team2Player2");
 
-        scorePoints(umpire, true, 2);
-        expect(umpire.server).toBe("Team2Player2");
-        expect(umpire.receiver).toBe("Team1Player1");
+        matchState = scorePoints(umpire, true, 2);
+        expect(matchState.server).toBe("Team2Player2");
+        expect(matchState.receiver).toBe("Team1Player1");
 
         // cycle begins
-        scorePoints(umpire, true, 2);
-        expect(umpire.server).toBe("Team1Player1");
-        expect(umpire.receiver).toBe("Team2Player1");
+        matchState = scorePoints(umpire, true, 2);
+        expect(matchState.server).toBe("Team1Player1");
+        expect(matchState.receiver).toBe("Team2Player1");
       });
     });
 
@@ -1393,17 +1409,19 @@ describe("umpiring", () => {
           "should switch the initial server receiver after 1 game for singles",
           (team1ServeFirst) => {
             const umpire = getNormalSinglesBestOf5Umpire();
-            umpire.setServer(team1ServeFirst ? "Team1Player1" : "Team2Player1");
-            expectSinglesServerReceiver(umpire, team1ServeFirst);
-            scoreGames(umpire, true, 1);
+            let matchState = umpire.setServer(
+              team1ServeFirst ? "Team1Player1" : "Team2Player1",
+            );
+            expectSinglesServerReceiver(matchState, team1ServeFirst);
+            matchState = scoreGames(umpire, true, 1);
 
-            const serviceReceiverChoice = umpire.serverReceiverChoice;
+            const serviceReceiverChoice = matchState.serverReceiverChoice;
             expect(serviceReceiverChoice.servers).toHaveLength(0);
             expect(
               serviceReceiverChoice.firstGameDoublesReceivers,
             ).toHaveLength(0);
 
-            expectSinglesServerReceiver(umpire, !team1ServeFirst);
+            expectSinglesServerReceiver(matchState, !team1ServeFirst);
           },
         );
 
@@ -1411,16 +1429,18 @@ describe("umpiring", () => {
           "should revert back to the initial server receiver after 2 games for singles",
           (team1ServeFirst) => {
             const umpire = getNormalSinglesBestOf5Umpire();
-            umpire.setServer(team1ServeFirst ? "Team1Player1" : "Team2Player1");
-            expectSinglesServerReceiver(umpire, team1ServeFirst);
-            scoreGames(umpire, true, 2);
-            const serviceReceiverChoice = umpire.serverReceiverChoice;
+            let matchState = umpire.setServer(
+              team1ServeFirst ? "Team1Player1" : "Team2Player1",
+            );
+            expectSinglesServerReceiver(matchState, team1ServeFirst);
+            matchState = scoreGames(umpire, true, 2);
+            const serviceReceiverChoice = matchState.serverReceiverChoice;
             expect(serviceReceiverChoice.servers).toHaveLength(0);
             expect(
               serviceReceiverChoice.firstGameDoublesReceivers,
             ).toHaveLength(0);
 
-            expectSinglesServerReceiver(umpire, team1ServeFirst);
+            expectSinglesServerReceiver(matchState, team1ServeFirst);
           },
         );
         it.each(remainingServesTests)(
@@ -1443,9 +1463,14 @@ describe("umpiring", () => {
               5,
             );
 
-            scoreGames(umpire, true, 1, 31 - team1StartGameScore);
+            const matchState = scoreGames(
+              umpire,
+              true,
+              1,
+              31 - team1StartGameScore,
+            );
 
-            expect(umpire.remainingServes).toBe(expectedRemainingServes);
+            expect(matchState.remainingServes).toBe(expectedRemainingServes);
           },
         );
       });
@@ -1453,13 +1478,15 @@ describe("umpiring", () => {
       describe("doubles", () => {
         it("should set the server and receiver to undefined", () => {
           const umpire = scoreFirstDoublesGame("Team1Player1", "Team2Player1");
-          expect(umpire.server).toBeUndefined();
-          expect(umpire.receiver).toBeUndefined();
+          const matchState = umpire.getMatchState();
+          expect(matchState.server).toBeUndefined();
+          expect(matchState.receiver).toBeUndefined();
         });
 
         it("should set the availableServers to the players in the team that did not serve at the beginning of the previous game", () => {
           const umpire = scoreFirstDoublesGame("Team1Player1", "Team2Player1");
-          const serviceReceiverChoice = umpire.serverReceiverChoice;
+          const serviceReceiverChoice =
+            umpire.getMatchState().serverReceiverChoice;
           expect(serviceReceiverChoice.servers).toEqual([
             "Team2Player1",
             "Team2Player2",
@@ -1480,8 +1507,8 @@ describe("umpiring", () => {
           expectedNextReceiver: Player,
         ) => {
           const umpire = scoreFirstDoublesGame(server, receiver);
-          umpire.setServer(nextServer);
-          expect(umpire.receiver).toBe(expectedNextReceiver);
+          const matchState = umpire.setServer(nextServer);
+          expect(matchState.receiver).toBe(expectedNextReceiver);
         };
         test("Team1Player1", "Team2Player1", "Team2Player1", "Team1Player1");
         test("Team1Player1", "Team2Player1", "Team2Player2", "Team1Player2");
@@ -1501,8 +1528,8 @@ describe("umpiring", () => {
           const umpire = scoreFirstDoublesGame(server, receiver);
           umpire.setServer(receiver);
           scoreGames(umpire, true, 1);
-          umpire.setServer(nextServer);
-          expect(umpire.receiver).toBe(expectedNextReceiver);
+          const matchState = umpire.setServer(nextServer);
+          expect(matchState.receiver).toBe(expectedNextReceiver);
         };
         test("Team1Player1", "Team2Player1", "Team1Player1", "Team2Player1");
         test("Team1Player1", "Team2Player1", "Team1Player2", "Team2Player2");
@@ -1518,14 +1545,14 @@ describe("umpiring", () => {
     it("should have undefined server and receiver when match won", () => {
       const umpire = getNormalSinglesBestOf5Umpire();
       umpire.setServer("Team1Player1");
-      scoreGames(umpire, true, 3);
+      const matchState = scoreGames(umpire, true, 3);
 
-      const serviceReceiverChoice = umpire.serverReceiverChoice;
+      const serviceReceiverChoice = matchState.serverReceiverChoice;
       expect(serviceReceiverChoice.servers).toHaveLength(0);
       expect(serviceReceiverChoice.firstGameDoublesReceivers).toHaveLength(0);
 
-      expect(umpire.server).toBeUndefined();
-      expect(umpire.receiver).toBeUndefined();
+      expect(matchState.server).toBeUndefined();
+      expect(matchState.receiver).toBeUndefined();
     });
 
     it("should switch doubles receivers at ends", () => {
@@ -1554,11 +1581,11 @@ describe("umpiring", () => {
 
         //now 2-2 - even games played back to original cycle
         umpire.setServer(lastFirstServer);
-        scorePoints(umpire, true, 4);
-        const currentReceiver = umpire.receiver;
-        scorePoints(umpire, true, 1);
-        expect(umpire.receiver).not.toBe(currentReceiver);
-        expect(umpire.receiver).toBe(expectedReceiver);
+        const matchState = scorePoints(umpire, true, 4);
+        const currentReceiver = matchState.receiver;
+        const receiver = scorePoints(umpire, true, 1).receiver;
+        expect(receiver).not.toBe(currentReceiver);
+        expect(receiver).toBe(expectedReceiver);
       };
       test("Team1Player1", "Team2Player1");
       test("Team1Player2", "Team2Player2");
@@ -1586,25 +1613,30 @@ describe("umpiring", () => {
       // Team1Player2 => Team2Player2
       // Team2Player2 => Team1Player1
       umpire.setServer("Team1Player1");
-      scorePoints(umpire, true, 4);
-      expectServerReceiver(umpire, "Team1Player2", "Team2Player2");
-      scorePoints(umpire, true, 1);
+      let matchState = scorePoints(umpire, true, 4);
+      expectServerReceiver(matchState, "Team1Player2", "Team2Player2");
+      matchState = scorePoints(umpire, true, 1);
       // cycle changes
       // Team1Player2 => Team2Player1
       // Team2Player1 => Team1Player1
       // Team1Player1 => Team2Player2
       // Team2Player2 => Team1Player2
-      expectServerReceiver(umpire, "Team1Player2", "Team2Player1");
-      scorePoints(umpire, true, 1);
-      expectServerReceiver(umpire, "Team2Player1", "Team1Player1");
-      scorePoints(umpire, false, 2);
-      expectServerReceiver(umpire, "Team1Player1", "Team2Player2");
-      scorePoints(umpire, false, 2);
-      expectServerReceiver(umpire, "Team2Player2", "Team1Player2");
+      expectServerReceiver(matchState, "Team1Player2", "Team2Player1");
+      matchState = scorePoints(umpire, true, 1);
+      expectServerReceiver(matchState, "Team2Player1", "Team1Player1");
+      matchState = scorePoints(umpire, false, 2);
+      expectServerReceiver(matchState, "Team1Player1", "Team2Player2");
+      matchState = scorePoints(umpire, false, 2);
+      expectServerReceiver(matchState, "Team2Player2", "Team1Player2");
     });
   });
 
   describe("undoPoint", () => {
+    describe("canUndoPoint", () => {
+      it("todo", () => {
+        throw new Error("todo");
+      });
+    });
     describe("scoring", () => {
       it.each([true, false])(
         "should reduce pointsWon by one when not start of a game",
@@ -1613,9 +1645,11 @@ describe("umpiring", () => {
           scorePoints(umpire, team2ScoresLast, 3);
           scorePoints(umpire, !team2ScoresLast, 2);
 
-          umpire.undoPoint();
-          expect(umpire.team1Score.pointsWon).toBe(!team2ScoresLast ? 1 : 3);
-          expect(umpire.team2Score.pointsWon).toBe(team2ScoresLast ? 1 : 3);
+          const matchState = umpire.undoPoint();
+          expect(matchState.team1Score.pointsWon).toBe(
+            !team2ScoresLast ? 1 : 3,
+          );
+          expect(matchState.team2Score.pointsWon).toBe(team2ScoresLast ? 1 : 3);
         },
       );
 
@@ -1624,44 +1658,44 @@ describe("umpiring", () => {
         scorePoints(umpire, true, 3);
         scorePoints(umpire, false, 2);
 
-        umpire.undoPoint();
+        const matchState = umpire.undoPoint();
 
-        expect(umpire.pointHistory).toHaveLength(1);
-        const points = umpire.pointHistory[0].map((point) => point.team1);
+        expect(matchState.pointHistory).toHaveLength(1);
+        const points = matchState.pointHistory[0].map((point) => point.team1);
         expect(points).toStrictEqual([true, true, true, false]);
       });
 
       it("should have correct MatchWinState - from GamePointTeam1", () => {
         const umpire = getNormalSinglesBestOf5Umpire();
-        scorePoints(umpire, true, 10);
+        let matchState = scorePoints(umpire, true, 10);
 
-        expect(umpire.matchWinState).toBe(MatchWinState.GamePointTeam1);
+        expect(matchState.matchWinState).toBe(MatchWinState.GamePointTeam1);
 
-        umpire.undoPoint();
+        matchState = umpire.undoPoint();
 
-        expect(umpire.matchWinState).toBe(MatchWinState.NotWon);
+        expect(matchState.matchWinState).toBe(MatchWinState.NotWon);
       });
 
       it("should reduce gamesWon by one when start of a game - team1 scores last", () => {
         const umpire = getNormalSinglesBestOf5Umpire();
         scorePoints(umpire, true, 10);
         scorePoints(umpire, false, 1);
-        scorePoints(umpire, true, 1);
-        expect(umpire.gameScores).toHaveLength(1);
-        expect(umpire.pointHistory).toHaveLength(2);
+        let matchState = scorePoints(umpire, true, 1);
+        expect(matchState.gameScores).toHaveLength(1);
+        expect(matchState.pointHistory).toHaveLength(2);
 
-        umpire.undoPoint();
+        matchState = umpire.undoPoint();
 
-        expect(umpire.team1Score).toEqual<TeamScore>({
+        expect(matchState.team1Score).toEqual<TeamScore>({
           gamesWon: 0,
           pointsWon: 10,
         });
-        expect(umpire.team2Score).toEqual<TeamScore>({
+        expect(matchState.team2Score).toEqual<TeamScore>({
           gamesWon: 0,
           pointsWon: 1,
         });
-        expect(umpire.gameScores).toHaveLength(0);
-        expect(umpire.pointHistory).toHaveLength(1);
+        expect(matchState.gameScores).toHaveLength(0);
+        expect(matchState.pointHistory).toHaveLength(1);
       });
 
       it("should reduce gamesWon by one when start of a game - team2 scores last", () => {
@@ -1670,17 +1704,17 @@ describe("umpiring", () => {
         scorePoints(umpire, true, 1);
         scorePoints(umpire, false, 1);
 
-        umpire.undoPoint();
+        const matchState = umpire.undoPoint();
 
-        expect(umpire.team2Score).toEqual<TeamScore>({
+        expect(matchState.team2Score).toEqual<TeamScore>({
           gamesWon: 0,
           pointsWon: 10,
         });
-        expect(umpire.team1Score).toEqual<TeamScore>({
+        expect(matchState.team1Score).toEqual<TeamScore>({
           gamesWon: 0,
           pointsWon: 1,
         });
-        expect(umpire.gameScores).toHaveLength(0);
+        expect(matchState.gameScores).toHaveLength(0);
       });
     });
 
@@ -1921,38 +1955,38 @@ describe("umpiring", () => {
           if (!team1Left) {
             umpire.switchEnds();
           }
-          expect(umpire.team1Left).toBe(team1Left);
-          scoreGames(umpire, true, 1);
-          expect(umpire.team1Left).toBe(!team1Left);
+          expect(umpire.getMatchState().team1Left).toBe(team1Left);
+          let matchState = scoreGames(umpire, true, 1);
+          expect(matchState.team1Left).toBe(!team1Left);
 
-          umpire.undoPoint();
-          expect(umpire.team1Left).toBe(team1Left);
+          matchState = umpire.undoPoint();
+          expect(matchState.team1Left).toBe(team1Left);
         },
       );
       it("should switch ends if have just switched ends in the decider", () => {
         const umpire = getNormalSinglesBestOf5Umpire();
         scoreGames(umpire, true, 2);
-        scoreGames(umpire, false, 2);
-        expect(umpire.team1Left).toBe(true);
-        scorePoints(umpire, true, 4);
-        expect(umpire.team1Left).toBe(true);
-        umpire.pointScored(true);
-        expect(umpire.team1Left).toBe(false);
+        let matchState = scoreGames(umpire, false, 2);
+        expect(matchState.team1Left).toBe(true);
+        matchState = scorePoints(umpire, true, 4);
+        expect(matchState.team1Left).toBe(true);
+        matchState = umpire.pointScored(true);
+        expect(matchState.team1Left).toBe(false);
 
-        umpire.undoPoint();
-        expect(umpire.team1Left).toBe(true);
+        matchState = umpire.undoPoint();
+        expect(matchState.team1Left).toBe(true);
       });
       it("should not switch ends after have switched ends in the decider", () => {
         const umpire = getNormalSinglesBestOf5Umpire();
         scoreGames(umpire, true, 2);
-        scoreGames(umpire, false, 2);
-        expect(umpire.team1Left).toBe(true);
-        scorePoints(umpire, true, 6);
+        let matchState = scoreGames(umpire, false, 2);
+        expect(matchState.team1Left).toBe(true);
+        matchState = scorePoints(umpire, true, 6);
 
-        expect(umpire.team1Left).toBe(false);
+        expect(matchState.team1Left).toBe(false);
 
-        umpire.undoPoint();
-        expect(umpire.team1Left).toBe(false);
+        matchState = umpire.undoPoint();
+        expect(matchState.team1Left).toBe(false);
       });
     });
   });
