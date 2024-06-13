@@ -1,8 +1,17 @@
 import {
+  InitialServersDoublesReceiver,
+  availableServerReceiverChoice,
+} from "../src/umpire/availableServerReceiverChoice";
+import {
+  ServingState,
+  getServerReceiver,
+} from "../src/umpire/getServerReceiver";
+import { getInitialServerReceiverForGame } from "../src/umpire/getInitialServerReceiverForGame";
+import {
   MatchWinState,
   MatchWinStateOptions,
   getMatchWinState,
-} from "../src/umpire/helpers";
+} from "../src/umpire/getMatchWinState";
 import {
   GameScore,
   MatchState,
@@ -12,11 +21,10 @@ import {
   Team2Player,
   TeamScore,
   Umpire,
-  availableServerReceiverChoice,
-  getPlayers,
 } from "../src/umpire/index";
 
 import { HandicapOptions, shiftHandicap } from "../src/umpire/shiftHandicap";
+import { getPlayers } from "../src/umpire/playersHelpers";
 
 describe("umpiring", () => {
   const singlesPlayers = getPlayers(false);
@@ -95,13 +103,13 @@ describe("umpiring", () => {
         3,
       ).getMatchState();
 
-      expect(matchState.team1Score).toStrictEqual({
-        gamesWon: 0,
-        pointsWon: -1,
+      expect(matchState.team1Score).toStrictEqual<TeamScore>({
+        games: 0,
+        points: -1,
       });
-      expect(matchState.team2Score).toStrictEqual({
-        gamesWon: 0,
-        pointsWon: -2,
+      expect(matchState.team2Score).toStrictEqual<TeamScore>({
+        games: 0,
+        points: -2,
       });
     });
 
@@ -360,12 +368,12 @@ describe("umpiring", () => {
         ? matchState.team2Score
         : matchState.team1Score;
       expect(incrementedTeamScore).toEqual<TeamScore>({
-        gamesWon: 0,
-        pointsWon: 1,
+        games: 0,
+        points: 1,
       });
       expect(notIncrementedTeamScore).toEqual<TeamScore>({
-        gamesWon: 0,
-        pointsWon: 0,
+        games: 0,
+        points: 0,
       });
     });
 
@@ -374,12 +382,12 @@ describe("umpiring", () => {
       umpire.pointScored(false);
       const matchState = scoreGames(umpire, true, 1);
       expect(matchState.team1Score).toEqual<TeamScore>({
-        gamesWon: 1,
-        pointsWon: 0,
+        games: 1,
+        points: 0,
       });
       expect(matchState.team2Score).toEqual<TeamScore>({
-        gamesWon: 0,
-        pointsWon: 0,
+        games: 0,
+        points: 0,
       });
     });
 
@@ -390,12 +398,12 @@ describe("umpiring", () => {
       const matchState = scorePoints(umpire, false, 12);
 
       expect(matchState.team1Score).toEqual<TeamScore>({
-        gamesWon: 0,
-        pointsWon: 0,
+        games: 0,
+        points: 0,
       });
       expect(matchState.team2Score).toEqual<TeamScore>({
-        gamesWon: 1,
-        pointsWon: 0,
+        games: 1,
+        points: 0,
       });
     });
 
@@ -415,13 +423,13 @@ describe("umpiring", () => {
       umpire.pointScored(true);
       const matchState = scorePoints(umpire, false, 33);
 
-      expect(matchState.team1Score).toStrictEqual({
-        gamesWon: 0,
-        pointsWon: -1,
+      expect(matchState.team1Score).toStrictEqual<TeamScore>({
+        games: 0,
+        points: -1,
       });
-      expect(matchState.team2Score).toStrictEqual({
-        gamesWon: 1,
-        pointsWon: -2,
+      expect(matchState.team2Score).toStrictEqual<TeamScore>({
+        games: 1,
+        points: -2,
       });
     });
 
@@ -430,26 +438,26 @@ describe("umpiring", () => {
       scorePoints(clearBy2Umpire, true, 10);
       scorePoints(clearBy2Umpire, false, 10);
       let matchState = clearBy2Umpire.pointScored(true);
-      expect(matchState.team1Score).toStrictEqual({
-        gamesWon: 0,
-        pointsWon: 11,
+      expect(matchState.team1Score).toStrictEqual<TeamScore>({
+        games: 0,
+        points: 11,
       });
-      expect(matchState.team2Score).toStrictEqual({
-        gamesWon: 0,
-        pointsWon: 10,
+      expect(matchState.team2Score).toStrictEqual<TeamScore>({
+        games: 0,
+        points: 10,
       });
 
       const notClearBy2Umpire = getHardbatSinglesUmpire();
       scorePoints(notClearBy2Umpire, true, 14);
       scorePoints(notClearBy2Umpire, false, 14);
       matchState = notClearBy2Umpire.pointScored(false);
-      expect(matchState.team1Score).toStrictEqual({
-        gamesWon: 0,
-        pointsWon: 0,
+      expect(matchState.team1Score).toStrictEqual<TeamScore>({
+        games: 0,
+        points: 0,
       });
-      expect(matchState.team2Score).toStrictEqual({
-        gamesWon: 1,
-        pointsWon: 0,
+      expect(matchState.team2Score).toStrictEqual<TeamScore>({
+        games: 1,
+        points: 0,
       });
     });
 
@@ -522,12 +530,12 @@ describe("umpiring", () => {
               getMatchWinState(
                 normal11,
                 {
-                  gamesWon: 0,
-                  pointsWon: 0,
+                  games: 0,
+                  points: 0,
                 },
                 {
-                  gamesWon: 0,
-                  pointsWon: 0,
+                  games: 0,
+                  points: 0,
                 },
               ),
             ).toBe(MatchWinState.NotWon);
@@ -538,12 +546,12 @@ describe("umpiring", () => {
               getMatchWinState(
                 normal11,
                 {
-                  gamesWon: 0,
-                  pointsWon: 9,
+                  games: 0,
+                  points: 9,
                 },
                 {
-                  gamesWon: 0,
-                  pointsWon: 9,
+                  games: 0,
+                  points: 9,
                 },
               ),
             ).toBe(MatchWinState.NotWon);
@@ -554,12 +562,12 @@ describe("umpiring", () => {
               getMatchWinState(
                 normal11,
                 {
-                  gamesWon: 1,
-                  pointsWon: 0,
+                  games: 1,
+                  points: 0,
                 },
                 {
-                  gamesWon: 0,
-                  pointsWon: 0,
+                  games: 0,
+                  points: 0,
                 },
               ),
             ).toBe(MatchWinState.NotWon);
@@ -570,12 +578,12 @@ describe("umpiring", () => {
               getMatchWinState(
                 normal11,
                 {
-                  gamesWon: 0,
-                  pointsWon: 10,
+                  games: 0,
+                  points: 10,
                 },
                 {
-                  gamesWon: 0,
-                  pointsWon: 10,
+                  games: 0,
+                  points: 10,
                 },
               ),
             ).toBe(MatchWinState.NotWon);
@@ -586,12 +594,12 @@ describe("umpiring", () => {
               getMatchWinState(
                 normal11,
                 {
-                  gamesWon: 0,
-                  pointsWon: 11,
+                  games: 0,
+                  points: 11,
                 },
                 {
-                  gamesWon: 0,
-                  pointsWon: 11,
+                  games: 0,
+                  points: 11,
                 },
               ),
             ).toBe(MatchWinState.NotWon);
@@ -602,12 +610,12 @@ describe("umpiring", () => {
               getMatchWinState(
                 normal11,
                 {
-                  gamesWon: 0,
-                  pointsWon: 10,
+                  games: 0,
+                  points: 10,
                 },
                 {
-                  gamesWon: 0,
-                  pointsWon: 9,
+                  games: 0,
+                  points: 9,
                 },
               ),
             ).toBe(MatchWinState.GamePointTeam1);
@@ -618,12 +626,12 @@ describe("umpiring", () => {
               getMatchWinState(
                 normal11,
                 {
-                  gamesWon: 0,
-                  pointsWon: 9,
+                  games: 0,
+                  points: 9,
                 },
                 {
-                  gamesWon: 0,
-                  pointsWon: 10,
+                  games: 0,
+                  points: 10,
                 },
               ),
             ).toBe(MatchWinState.GamePointTeam2);
@@ -634,12 +642,12 @@ describe("umpiring", () => {
               getMatchWinState(
                 normal11,
                 {
-                  gamesWon: 2,
-                  pointsWon: 10,
+                  games: 2,
+                  points: 10,
                 },
                 {
-                  gamesWon: 0,
-                  pointsWon: 9,
+                  games: 0,
+                  points: 9,
                 },
               ),
             ).toBe(MatchWinState.MatchPointTeam1);
@@ -650,12 +658,12 @@ describe("umpiring", () => {
               getMatchWinState(
                 normal11,
                 {
-                  gamesWon: 0,
-                  pointsWon: 9,
+                  games: 0,
+                  points: 9,
                 },
                 {
-                  gamesWon: 2,
-                  pointsWon: 10,
+                  games: 2,
+                  points: 10,
                 },
               ),
             ).toBe(MatchWinState.MatchPointTeam2);
@@ -666,12 +674,12 @@ describe("umpiring", () => {
               getMatchWinState(
                 normal11,
                 {
-                  gamesWon: 3,
-                  pointsWon: 0,
+                  games: 3,
+                  points: 0,
                 },
                 {
-                  gamesWon: 0,
-                  pointsWon: 0,
+                  games: 0,
+                  points: 0,
                 },
               ),
             ).toBe(MatchWinState.Team1Won);
@@ -682,12 +690,12 @@ describe("umpiring", () => {
               getMatchWinState(
                 normal11,
                 {
-                  gamesWon: 0,
-                  pointsWon: 0,
+                  games: 0,
+                  points: 0,
                 },
                 {
-                  gamesWon: 3,
-                  pointsWon: 0,
+                  games: 3,
+                  points: 0,
                 },
               ),
             ).toBe(MatchWinState.Team2Won);
@@ -704,12 +712,12 @@ describe("umpiring", () => {
               getMatchWinState(
                 hardBatBestOf3Options,
                 {
-                  gamesWon: 0,
-                  pointsWon: 11,
+                  games: 0,
+                  points: 11,
                 },
                 {
-                  gamesWon: 0,
-                  pointsWon: 0,
+                  games: 0,
+                  points: 0,
                 },
               ),
             ).toBe(MatchWinState.NotWon);
@@ -720,12 +728,12 @@ describe("umpiring", () => {
               getMatchWinState(
                 hardBatBestOf3Options,
                 {
-                  gamesWon: 0,
-                  pointsWon: 14,
+                  games: 0,
+                  points: 14,
                 },
                 {
-                  gamesWon: 0,
-                  pointsWon: 0,
+                  games: 0,
+                  points: 0,
                 },
               ),
             ).toBe(MatchWinState.GamePointTeam1);
@@ -736,12 +744,12 @@ describe("umpiring", () => {
               getMatchWinState(
                 hardBatBestOf3Options,
                 {
-                  gamesWon: 0,
-                  pointsWon: 0,
+                  games: 0,
+                  points: 0,
                 },
                 {
-                  gamesWon: 0,
-                  pointsWon: 14,
+                  games: 0,
+                  points: 14,
                 },
               ),
             ).toBe(MatchWinState.GamePointTeam2);
@@ -752,12 +760,12 @@ describe("umpiring", () => {
               getMatchWinState(
                 hardBatBestOf3Options,
                 {
-                  gamesWon: 0,
-                  pointsWon: 14,
+                  games: 0,
+                  points: 14,
                 },
                 {
-                  gamesWon: 0,
-                  pointsWon: 14,
+                  games: 0,
+                  points: 14,
                 },
               ),
             ).toBe(MatchWinState.GamePointTeam1 + MatchWinState.GamePointTeam2);
@@ -768,12 +776,12 @@ describe("umpiring", () => {
               getMatchWinState(
                 hardBatBestOf3Options,
                 {
-                  gamesWon: 1,
-                  pointsWon: 14,
+                  games: 1,
+                  points: 14,
                 },
                 {
-                  gamesWon: 0,
-                  pointsWon: 14,
+                  games: 0,
+                  points: 14,
                 },
               ),
             ).toBe(
@@ -786,12 +794,12 @@ describe("umpiring", () => {
               getMatchWinState(
                 hardBatBestOf3Options,
                 {
-                  gamesWon: 0,
-                  pointsWon: 14,
+                  games: 0,
+                  points: 14,
                 },
                 {
-                  gamesWon: 1,
-                  pointsWon: 14,
+                  games: 1,
+                  points: 14,
                 },
               ),
             ).toBe(
@@ -803,12 +811,12 @@ describe("umpiring", () => {
             const matchWinState = getMatchWinState(
               hardBatBestOf3Options,
               {
-                gamesWon: 1,
-                pointsWon: 14,
+                games: 1,
+                points: 14,
               },
               {
-                gamesWon: 1,
-                pointsWon: 14,
+                games: 1,
+                points: 14,
               },
             );
 
@@ -1091,6 +1099,380 @@ describe("umpiring", () => {
   });
 
   describe("serving", () => {
+    interface ExpectedServerReceiver {
+      expectedServer: Player;
+      expectedReceiver: Player;
+    }
+    describe("getInitialServerReceiver function", () => {
+      interface GetInitialServerReceiverForGameTest
+        extends ExpectedServerReceiver {
+        description: string;
+        initialServersDoublesReceiver: InitialServersDoublesReceiver;
+        gameNumber: number;
+      }
+      const getInitialServerReceiverForGameTests: GetInitialServerReceiverForGameTest[] =
+        [
+          // singles
+          {
+            gameNumber: 1,
+            initialServersDoublesReceiver: {
+              firstDoublesReceiver: undefined,
+              gameInitialServers: ["Team1Player1"],
+            },
+            expectedServer: "Team1Player1",
+            expectedReceiver: "Team2Player1",
+            description: "singles game 1 - Team1Player1 serves game 1",
+          },
+          {
+            gameNumber: 1,
+            initialServersDoublesReceiver: {
+              firstDoublesReceiver: undefined,
+              gameInitialServers: ["Team2Player1"],
+            },
+            expectedServer: "Team2Player1",
+            expectedReceiver: "Team1Player1",
+            description: "singles game 1 - Team1Player2 serves game 1",
+          },
+          {
+            gameNumber: 2,
+            initialServersDoublesReceiver: {
+              firstDoublesReceiver: undefined,
+              gameInitialServers: ["Team1Player1"],
+            },
+            expectedServer: "Team2Player1",
+            expectedReceiver: "Team1Player1",
+            description: "singles game 2 - Team1Player1 serves game 1",
+          },
+          {
+            gameNumber: 2,
+            initialServersDoublesReceiver: {
+              firstDoublesReceiver: undefined,
+              gameInitialServers: ["Team2Player1"],
+            },
+            expectedServer: "Team1Player1",
+            expectedReceiver: "Team2Player1",
+            description: "singles game 2 - Team1Player2 serves game 1",
+          },
+          {
+            gameNumber: 3,
+            initialServersDoublesReceiver: {
+              firstDoublesReceiver: undefined,
+              gameInitialServers: ["Team1Player1"],
+            },
+            expectedServer: "Team1Player1",
+            expectedReceiver: "Team2Player1",
+            description: "singles game 3 - Team1Player1 serves game 1",
+          },
+          {
+            gameNumber: 3,
+            initialServersDoublesReceiver: {
+              firstDoublesReceiver: undefined,
+              gameInitialServers: ["Team2Player1"],
+            },
+            expectedServer: "Team2Player1",
+            expectedReceiver: "Team1Player1",
+            description: "singles game 3 - Team1Player2 serves game 1",
+          },
+          // doubles
+          {
+            gameNumber: 1,
+            initialServersDoublesReceiver: {
+              gameInitialServers: ["Team1Player1"],
+              firstDoublesReceiver: "Team2Player1",
+            },
+            expectedServer: "Team1Player1",
+            expectedReceiver: "Team2Player1",
+            description:
+              "doubles game 1 - Team1Player1 serves to first receiver",
+          },
+          {
+            gameNumber: 1,
+            initialServersDoublesReceiver: {
+              gameInitialServers: ["Team2Player2"],
+              firstDoublesReceiver: "Team1Player2",
+            },
+            expectedServer: "Team2Player2",
+            expectedReceiver: "Team1Player2",
+            description:
+              "doubles game 1 - Team2Player2 serves to first receiver",
+          },
+        ];
+      it.each(getInitialServerReceiverForGameTests)(
+        "should return the correct initial server and receiver - %description",
+        ({
+          initialServersDoublesReceiver,
+          gameNumber: ganeNumber,
+          expectedServer,
+          expectedReceiver,
+        }) => {
+          const { server, receiver } = getInitialServerReceiverForGame(
+            initialServersDoublesReceiver,
+            ganeNumber,
+          );
+          expect(server).toBe(expectedServer);
+          expect(receiver).toBe(expectedReceiver);
+        },
+      );
+    });
+    describe("getServerReceiver function", () => {
+      interface ServerReceiverTest
+        extends ServingState,
+          ExpectedServerReceiver {
+        description: string;
+      }
+      const tests: ServerReceiverTest[] = [
+        {
+          initialServer: "Team1Player1",
+          initialReceiver: "Team2Player1",
+          endsInfo: undefined, // singles
+          alternateServesAt: 10,
+          numServes: 2,
+          pointsWon: 0,
+          remainingServesAtStartOfGame: 2,
+          team1Points: 0,
+          team2Points: 0,
+          expectedServer: "Team1Player1",
+          expectedReceiver: "Team2Player1",
+          description: "Normal singles - no score",
+        },
+        {
+          initialServer: "Team2Player1",
+          initialReceiver: "Team1Player1",
+          endsInfo: undefined, // singles
+          alternateServesAt: 10,
+          numServes: 2,
+          pointsWon: 0,
+          remainingServesAtStartOfGame: 2,
+          team1Points: 0,
+          team2Points: 0,
+          expectedServer: "Team2Player1",
+          expectedReceiver: "Team1Player1",
+          description: "Normal singles ( team2 first) - no score",
+        },
+        {
+          initialServer: "Team1Player1",
+          initialReceiver: "Team2Player1",
+          endsInfo: undefined, // singles
+          alternateServesAt: 10,
+          numServes: 2,
+          pointsWon: 1,
+          remainingServesAtStartOfGame: 2,
+          team1Points: 1,
+          team2Points: 0,
+          expectedServer: "Team1Player1",
+          expectedReceiver: "Team2Player1",
+          description: "Normal singles - point scored",
+        },
+        {
+          initialServer: "Team1Player1",
+          initialReceiver: "Team2Player1",
+          endsInfo: undefined, // singles
+          alternateServesAt: 10,
+          numServes: 2,
+          pointsWon: 2,
+          remainingServesAtStartOfGame: 2,
+          team1Points: 2,
+          team2Points: 0,
+          expectedServer: "Team2Player1",
+          expectedReceiver: "Team1Player1",
+          description: "Normal singles - 2 points scored - alternate",
+        },
+        {
+          initialServer: "Team1Player1",
+          initialReceiver: "Team2Player1",
+          endsInfo: undefined, // singles
+          alternateServesAt: 10,
+          numServes: 2,
+          pointsWon: 3,
+          remainingServesAtStartOfGame: 2,
+          team1Points: 2,
+          team2Points: 1,
+          expectedServer: "Team2Player1",
+          expectedReceiver: "Team1Player1",
+          description: "Normal singles - 3 points scored",
+        },
+        {
+          initialServer: "Team1Player1",
+          initialReceiver: "Team2Player1",
+          endsInfo: undefined, // singles
+          alternateServesAt: 10,
+          numServes: 2,
+          pointsWon: 4,
+          remainingServesAtStartOfGame: 2,
+          team1Points: 2,
+          team2Points: 2,
+          expectedServer: "Team1Player1",
+          expectedReceiver: "Team2Player1",
+          description: "Normal singles - 4 points scored - original server",
+        },
+        // 5 points scored
+        {
+          initialServer: "Team1Player1",
+          initialReceiver: "Team2Player1",
+          endsInfo: undefined, // singles
+          alternateServesAt: 30,
+          numServes: 5,
+          pointsWon: 2,
+          remainingServesAtStartOfGame: 5,
+          team1Points: 0,
+          team2Points: 2,
+          expectedServer: "Team1Player1",
+          expectedReceiver: "Team2Player1",
+          description: "5 serves - 2 points scored - no change",
+        },
+        {
+          initialServer: "Team1Player1",
+          initialReceiver: "Team2Player1",
+          endsInfo: undefined, // singles
+          alternateServesAt: 30,
+          numServes: 5,
+          pointsWon: 5,
+          remainingServesAtStartOfGame: 5,
+          team1Points: 0,
+          team2Points: 5,
+          expectedServer: "Team2Player1",
+          expectedReceiver: "Team1Player1",
+          description: "5 serves - 5 points scored - alternate",
+        },
+        {
+          initialServer: "Team1Player1",
+          initialReceiver: "Team2Player1",
+          endsInfo: undefined, // singles
+          alternateServesAt: 30,
+          numServes: 5,
+          pointsWon: 10,
+          remainingServesAtStartOfGame: 5,
+          team1Points: 0,
+          team2Points: 10,
+          expectedServer: "Team1Player1",
+          expectedReceiver: "Team2Player1",
+          description: "5 serves - 10 points scored - original server",
+        },
+        // alternating singles
+        {
+          initialServer: "Team1Player1",
+          initialReceiver: "Team2Player1",
+          endsInfo: undefined, // singles
+          alternateServesAt: 10,
+          numServes: 2,
+          pointsWon: 19,
+          remainingServesAtStartOfGame: 2,
+          team1Points: 10,
+          team2Points: 9,
+          expectedServer: "Team2Player1",
+          expectedReceiver: "Team1Player1",
+          description: "Normal singles - 10 - 9 ( not alternating )",
+        },
+        {
+          initialServer: "Team1Player1",
+          initialReceiver: "Team2Player1",
+          endsInfo: undefined, // singles
+          alternateServesAt: 10,
+          numServes: 2,
+          pointsWon: 20,
+          remainingServesAtStartOfGame: 2,
+          team1Points: 10,
+          team2Points: 10,
+          expectedServer: "Team1Player1",
+          expectedReceiver: "Team2Player1",
+          description:
+            "Normal singles - 10 - 10 baseline ( multiple of 4, original )",
+        },
+        {
+          initialServer: "Team1Player1",
+          initialReceiver: "Team2Player1",
+          endsInfo: undefined, // singles
+          alternateServesAt: 10,
+          numServes: 2,
+          pointsWon: 21,
+          remainingServesAtStartOfGame: 2,
+          team1Points: 10,
+          team2Points: 11,
+          expectedServer: "Team2Player1",
+          expectedReceiver: "Team1Player1",
+          description: "Normal singles - 11 - 10 switch",
+        },
+        {
+          initialServer: "Team1Player1",
+          initialReceiver: "Team2Player1",
+          endsInfo: undefined, // singles
+          alternateServesAt: 10,
+          numServes: 2,
+          pointsWon: 22,
+          remainingServesAtStartOfGame: 2,
+          team1Points: 11,
+          team2Points: 11,
+          expectedServer: "Team2Player1",
+          expectedReceiver: "Team1Player1",
+          description: "Normal singles - 11 - 11 original",
+        },
+        // remaining serves at start of game
+        {
+          initialServer: "Team1Player1",
+          initialReceiver: "Team2Player1",
+          endsInfo: undefined, // singles
+          alternateServesAt: 10,
+          numServes: 2,
+          pointsWon: 0,
+          remainingServesAtStartOfGame: 1,
+          team1Points: 1,
+          team2Points: 0,
+          expectedServer: "Team1Player1",
+          expectedReceiver: "Team2Player1",
+          description: "Normal singles - no score - 1 remaining",
+        },
+        {
+          initialServer: "Team1Player1",
+          initialReceiver: "Team2Player1",
+          endsInfo: undefined, // singles
+          alternateServesAt: 10,
+          numServes: 2,
+          pointsWon: 1,
+          remainingServesAtStartOfGame: 1,
+          team1Points: 2,
+          team2Points: 0,
+          expectedServer: "Team2Player1",
+          expectedReceiver: "Team1Player1",
+          description: "Normal singles - one point - 1 remaining - switch",
+        },
+        {
+          initialServer: "Team1Player1",
+          initialReceiver: "Team2Player1",
+          endsInfo: undefined, // singles
+          alternateServesAt: 10,
+          numServes: 2,
+          pointsWon: 2,
+          remainingServesAtStartOfGame: 1,
+          team1Points: 3,
+          team2Points: 0,
+          expectedServer: "Team2Player1",
+          expectedReceiver: "Team1Player1",
+          description: "Normal singles - two points - 1 remaining - last serve",
+        },
+        {
+          initialServer: "Team1Player1",
+          initialReceiver: "Team2Player1",
+          endsInfo: undefined, // singles
+          alternateServesAt: 10,
+          numServes: 2,
+          pointsWon: 3,
+          remainingServesAtStartOfGame: 1,
+          team1Points: 3,
+          team2Points: 0,
+          expectedServer: "Team1Player1",
+          expectedReceiver: "Team2Player1",
+          description:
+            "Normal singles - three points - 1 remaining - back to original",
+        },
+      ];
+      it.each(tests)("$description", (testOptions) => {
+        const { expectedReceiver, expectedServer, ...servingState } =
+          testOptions;
+        const serverReceiver = getServerReceiver(servingState);
+        expect(serverReceiver.server).toBe(expectedServer);
+        expect(serverReceiver.receiver).toBe(expectedReceiver);
+      });
+    });
     interface RemainingServesTest {
       team1StartGameScore: number;
       team2StartGameScore: number;
@@ -1646,10 +2028,8 @@ describe("umpiring", () => {
           scorePoints(umpire, !team2ScoresLast, 2);
 
           const matchState = umpire.undoPoint();
-          expect(matchState.team1Score.pointsWon).toBe(
-            !team2ScoresLast ? 1 : 3,
-          );
-          expect(matchState.team2Score.pointsWon).toBe(team2ScoresLast ? 1 : 3);
+          expect(matchState.team1Score.points).toBe(!team2ScoresLast ? 1 : 3);
+          expect(matchState.team2Score.points).toBe(team2ScoresLast ? 1 : 3);
         },
       );
 
@@ -1687,12 +2067,12 @@ describe("umpiring", () => {
         matchState = umpire.undoPoint();
 
         expect(matchState.team1Score).toEqual<TeamScore>({
-          gamesWon: 0,
-          pointsWon: 10,
+          games: 0,
+          points: 10,
         });
         expect(matchState.team2Score).toEqual<TeamScore>({
-          gamesWon: 0,
-          pointsWon: 1,
+          games: 0,
+          points: 1,
         });
         expect(matchState.gameScores).toHaveLength(0);
         expect(matchState.pointHistory).toHaveLength(1);
@@ -1707,12 +2087,12 @@ describe("umpiring", () => {
         const matchState = umpire.undoPoint();
 
         expect(matchState.team2Score).toEqual<TeamScore>({
-          gamesWon: 0,
-          pointsWon: 10,
+          games: 0,
+          points: 10,
         });
         expect(matchState.team1Score).toEqual<TeamScore>({
-          gamesWon: 0,
-          pointsWon: 1,
+          games: 0,
+          points: 1,
         });
         expect(matchState.gameScores).toHaveLength(0);
       });

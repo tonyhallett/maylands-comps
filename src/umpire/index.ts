@@ -1,9 +1,13 @@
+import { isEven } from "./helpers";
+import { MatchWinState, getMatchWinState } from "./getMatchWinState";
+import { requiredGamesToWin } from "./requiredGamesToWin";
 import {
-  MatchWinState,
-  getMatchWinState,
-  isEven,
-  requiredGamesToWin,
-} from "./helpers";
+  InitialServersDoublesReceiver,
+  ServerReceiverChoice,
+  availableServerReceiverChoice,
+} from "./availableServerReceiverChoice";
+import { reachedAlternateServes } from "./reachedAlternateServes";
+import { getDoublesPartner, getSinglesOpponent } from "./playersHelpers";
 
 export interface MatchState {
   team1Left: boolean;
@@ -23,8 +27,8 @@ export type Team1Player = "Team1Player1" | "Team1Player2";
 export type Team2Player = "Team2Player1" | "Team2Player2";
 export type Player = Team1Player | Team2Player;
 export interface TeamScore {
-  gamesWon: number;
-  pointsWon: number;
+  games: number;
+  points: number;
 }
 
 export interface GameScore {
@@ -50,59 +54,6 @@ export interface PointHistory {
   team1: boolean;
   date: Date;
 }
-
-export interface ServerReceiverChoice {
-  servers: Player[];
-  firstGameDoublesReceivers: Player[];
-}
-
-export interface InitialServersReceiver {
-  gameInitialServers: Player[];
-  firstDoublesReceiver: Player | undefined; // as sufficient to determine the service cycle
-}
-
-export const availableServerReceiverChoice = (
-  isDoubles: boolean,
-  initialServersReceiver: InitialServersReceiver,
-  gameNumber: number,
-): ServerReceiverChoice => {
-  const choice: ServerReceiverChoice = {
-    firstGameDoublesReceivers: [],
-    servers: [],
-  };
-  if (isDoubles) {
-    // first game
-    if (initialServersReceiver.gameInitialServers.length === 0) {
-      choice.servers = [
-        "Team1Player1",
-        "Team1Player2",
-        "Team2Player1",
-        "Team2Player2",
-      ];
-      choice.firstGameDoublesReceivers = [];
-    } else {
-      if (gameNumber === 1) {
-        choice.firstGameDoublesReceivers =
-          initialServersReceiver.firstDoublesReceiver === undefined
-            ? getDoublesOpponents(initialServersReceiver.gameInitialServers[0])
-            : [];
-      } else {
-        const initialServerForGame =
-          initialServersReceiver.gameInitialServers[gameNumber - 1];
-        if (initialServerForGame === undefined) {
-          const initialServerFromPreviousGame =
-            initialServersReceiver.gameInitialServers[gameNumber - 2];
-          choice.servers = getDoublesOpponents(initialServerFromPreviousGame);
-        }
-      }
-    }
-  } else {
-    if (initialServersReceiver.gameInitialServers.length === 0) {
-      choice.servers = ["Team1Player1", "Team2Player1"];
-    }
-  }
-  return choice;
-};
 
 export class Umpire {
   private get canUndoPoint(): boolean {
@@ -132,10 +83,10 @@ export class Umpire {
     const teamScoreToReduce = lastPoint.team1
       ? this._team1Score
       : this._team2Score;
-    teamScoreToReduce.gamesWon -= 1;
-    this._team1Score.pointsWon = lastGameScore.team1Points;
-    this._team2Score.pointsWon = lastGameScore.team2Points;
-    teamScoreToReduce.pointsWon -= 1;
+    teamScoreToReduce.games -= 1;
+    this._team1Score.points = lastGameScore.team1Points;
+    this._team2Score.points = lastGameScore.team2Points;
+    teamScoreToReduce.points -= 1;
     this.switchEnds();
   }
 
@@ -148,7 +99,7 @@ export class Umpire {
     const teamScoreToReduce = lastPoint.team1
       ? this._team1Score
       : this._team2Score;
-    teamScoreToReduce.pointsWon -= 1;
+    teamScoreToReduce.points -= 1;
   }
 
   private getLastGamePointHistory(): PointHistory[] {
@@ -157,8 +108,8 @@ export class Umpire {
 
   private isStartOfGame(): boolean {
     return (
-      this._team1Score.pointsWon === this.team1StartGameScore &&
-      this._team2Score.pointsWon === this.team2StartGameScore
+      this._team1Score.points === this.team1StartGameScore &&
+      this._team2Score.points === this.team2StartGameScore
     );
   }
   private doublesServiceCycle: [Player, Player][] = [];
@@ -184,7 +135,7 @@ export class Umpire {
 
   private _server: Player | undefined;
 
-  private initialServersReceiver: InitialServersReceiver = {
+  private initialServersDoublesReceiver: InitialServersDoublesReceiver = {
     gameInitialServers: [],
     firstDoublesReceiver: undefined,
   };
@@ -194,17 +145,17 @@ export class Umpire {
   private get serverReceiverChoice(): ServerReceiverChoice {
     return availableServerReceiverChoice(
       this.isDoubles,
-      this.initialServersReceiver,
+      this.initialServersDoublesReceiver,
       this.gamesPlayed() + 1,
     );
   }
 
-  private _team1Score: TeamScore = { gamesWon: 0, pointsWon: 0 };
+  private _team1Score: TeamScore = { games: 0, points: 0 };
   private get team1Score(): Readonly<TeamScore> {
     return { ...this._team1Score };
   }
 
-  private _team2Score: TeamScore = { gamesWon: 0, pointsWon: 0 };
+  private _team2Score: TeamScore = { games: 0, points: 0 };
   private get team2Score(): Readonly<TeamScore> {
     return { ...this._team2Score };
   }
@@ -214,7 +165,7 @@ export class Umpire {
     if (this.reachedAlternateServes()) {
       return 1;
     }
-    const totalPoints = this._team1Score.pointsWon + this._team2Score.pointsWon;
+    const totalPoints = this._team1Score.points + this._team2Score.points;
     const pointsScored =
       totalPoints - (this.team1StartGameScore + this.team2StartGameScore);
     if (pointsScored < this._remainingServesAtStartOfGame) {
@@ -239,8 +190,8 @@ export class Umpire {
   ) {
     this.team1StartGameScore = umpireOptions.team1StartGameScore;
     this.team2StartGameScore = umpireOptions.team2StartGameScore;
-    this._team1Score.pointsWon = this.team1StartGameScore;
-    this._team2Score.pointsWon = this.team2StartGameScore;
+    this._team1Score.points = this.team1StartGameScore;
+    this._team2Score.points = this.team2StartGameScore;
     this.throwIfNotOdd(bestOf);
     this.throwIfNotMoreThan0(umpireOptions.numServes);
     this.numServes = umpireOptions.numServes;
@@ -286,14 +237,14 @@ export class Umpire {
   }
 
   private isFirstGame(): boolean {
-    return this._team1Score.gamesWon === 0 && this._team2Score.gamesWon === 0;
+    return this._team1Score.games === 0 && this._team2Score.games === 0;
   }
 
   private getDoublesServiceCycle(): [Player, Player][] {
     if (this.doublesServiceCycle.length == 0) {
       this.doublesServiceCycle.push([
-        this.initialServersReceiver.gameInitialServers[0],
-        this.initialServersReceiver.firstDoublesReceiver,
+        this.initialServersDoublesReceiver.gameInitialServers[0],
+        this.initialServersDoublesReceiver.firstDoublesReceiver,
       ]);
       for (let i = 0; i < 3; i++) {
         const previousServer = this.doublesServiceCycle[i][0];
@@ -330,7 +281,7 @@ export class Umpire {
     if (!this.serverReceiverChoice.servers.includes(player)) {
       throw new Error("Player not available");
     }
-    this.initialServersReceiver.gameInitialServers.push(player);
+    this.initialServersDoublesReceiver.gameInitialServers.push(player);
     this._server = player;
 
     if (this.isDoubles) {
@@ -346,7 +297,7 @@ export class Umpire {
   setFirstGameDoublesReceiver(player: Player): MatchState {
     if (this.serverReceiverChoice.firstGameDoublesReceivers.includes(player)) {
       this._receiver = player;
-      this.initialServersReceiver.firstDoublesReceiver = player;
+      this.initialServersDoublesReceiver.firstDoublesReceiver = player;
     } else {
       throw new Error("receiver is not an available receiver");
     }
@@ -371,7 +322,7 @@ export class Umpire {
       date,
     });
     const teamScore = team1 ? this._team1Score : this._team2Score;
-    teamScore.pointsWon += 1;
+    teamScore.points += 1;
 
     const gameWonState = this.getGameWonState();
     if (gameWonState === GameWonState.NotWon) {
@@ -428,9 +379,10 @@ export class Umpire {
 
   private reachedAlternateServes() {
     const reachPoints = this._upTo - 1;
-    return (
-      this._team1Score.pointsWon >= reachPoints &&
-      this._team2Score.pointsWon >= reachPoints
+    return reachedAlternateServes(
+      this._team1Score.points,
+      this._team2Score.points,
+      reachPoints,
     );
   }
 
@@ -469,23 +421,23 @@ export class Umpire {
     const team2MidwayPoints = this.getMidwayPoints(false);
     if (team1LastScored) {
       return this.scoredMidwayFirstTime(
-        this._team1Score.pointsWon,
+        this._team1Score.points,
         team1MidwayPoints,
-        this._team2Score.pointsWon,
+        this._team2Score.points,
         team2MidwayPoints,
       );
     } else {
       return this.scoredMidwayFirstTime(
-        this._team2Score.pointsWon,
+        this._team2Score.points,
         team2MidwayPoints,
-        this._team1Score.pointsWon,
+        this._team1Score.points,
         team1MidwayPoints,
       );
     }
   }
 
   private gamesPlayed(): number {
-    return this._team1Score.gamesWon + this._team2Score.gamesWon;
+    return this._team1Score.games + this._team2Score.games;
   }
 
   private isLastGame(): boolean {
@@ -493,14 +445,14 @@ export class Umpire {
   }
 
   private getGameWonState(): GameWonState {
-    const team1IsUpTo = this._team1Score.pointsWon >= this._upTo;
-    const team2IsUpTo = this._team2Score.pointsWon >= this._upTo;
+    const team1IsUpTo = this._team1Score.points >= this._upTo;
+    const team2IsUpTo = this._team2Score.points >= this._upTo;
     const isUpTo = team1IsUpTo || team2IsUpTo;
     if (!isUpTo) {
       return GameWonState.NotWon;
     }
     const pointsDifference = Math.abs(
-      this._team1Score.pointsWon - this._team2Score.pointsWon,
+      this._team1Score.points - this._team2Score.points,
     );
     const clearBy = this.clearBy2 ? 2 : 1;
     if (pointsDifference < clearBy) {
@@ -511,15 +463,15 @@ export class Umpire {
 
   private nextGame(team1Won: boolean): void {
     this._gameScores.push({
-      team1Points: this._team1Score.pointsWon,
-      team2Points: this._team2Score.pointsWon,
+      team1Points: this._team1Score.points,
+      team2Points: this._team2Score.points,
     });
     const teamScore = team1Won ? this._team1Score : this._team2Score;
-    teamScore.gamesWon += 1;
-    this._team1Score.pointsWon = this.team1StartGameScore;
-    this._team2Score.pointsWon = this.team2StartGameScore;
+    teamScore.games += 1;
+    this._team1Score.points = this.team1StartGameScore;
+    this._team2Score.points = this.team2StartGameScore;
 
-    if (teamScore.gamesWon !== requiredGamesToWin(this.bestOf)) {
+    if (teamScore.games !== requiredGamesToWin(this.bestOf)) {
       this.switchEnds();
       this.setNextGameServiceState();
       this._pointHistory.push([]);
@@ -535,7 +487,8 @@ export class Umpire {
       this._receiver = undefined;
     } else {
       const evenGamesPlayed = isEven(this.gamesPlayed());
-      const firstGameServer = this.initialServersReceiver.gameInitialServers[0];
+      const firstGameServer =
+        this.initialServersDoublesReceiver.gameInitialServers[0];
       const firstGameReceiver = getSinglesOpponent(firstGameServer);
       this._server = firstGameServer;
       this._receiver = firstGameReceiver;
@@ -545,36 +498,3 @@ export class Umpire {
     }
   }
 }
-
-const isTeam1 = (player: Player): boolean => {
-  return player === "Team1Player1" || player === "Team1Player2";
-};
-
-const getSinglesOpponent = (player: Player): Player => {
-  return player === "Team1Player1" ? "Team2Player1" : "Team1Player1";
-};
-
-const getDoublesOpponents = (player: Player): Player[] => {
-  return isTeam1(player)
-    ? ["Team2Player1", "Team2Player2"]
-    : ["Team1Player1", "Team1Player2"];
-};
-
-export function getPlayers(isDoubles: boolean): Player[] {
-  return isDoubles
-    ? ["Team1Player1", "Team1Player2", "Team2Player1", "Team2Player2"]
-    : ["Team1Player1", "Team2Player1"];
-}
-
-export const getDoublesPartner = (player: string): Player => {
-  switch (player) {
-    case "Team1Player1":
-      return "Team1Player2";
-    case "Team1Player2":
-      return "Team1Player1";
-    case "Team2Player1":
-      return "Team2Player2";
-    case "Team2Player2":
-      return "Team2Player1";
-  }
-};
