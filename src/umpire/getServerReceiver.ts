@@ -1,6 +1,7 @@
 import { ServerReceiver } from "./commonTypes";
 import { Player } from ".";
 import { reachedAlternateServes } from "./reachedAlternateServes";
+import { getDoublesServiceCycle } from "./playersHelpers";
 
 interface EndsInfo {
   isDecider: boolean;
@@ -31,7 +32,7 @@ export const getServerReceiver = ({
   team1Points,
   team2Points,
 }: ServingState): ServerReceiver => {
-  pointsWon = numServes - remainingServesAtStartOfGame + pointsWon;
+  let numServesTaken = numServes - remainingServesAtStartOfGame + pointsWon;
   let server = initialServer;
   let receiver = initialReceiver;
 
@@ -42,12 +43,12 @@ export const getServerReceiver = ({
       const alternateCount = alternateServesAt * 2;
       const additional = team1Points + team2Points - alternateCount;
       if (additional > 0) {
-        pointsWon -= additional;
+        numServesTaken -= additional;
         alternateSwitch = additional % 1 === 0;
       }
     }
     // should be able to use same principal for doubles - use 4 and look into the cycle AND ADJUST FOR ENDS
-    let switchServer = Math.floor(pointsWon / numServes) % 2 === 1;
+    let switchServer = Math.floor(numServesTaken / numServes) % 2 === 1;
     if (alternateSwitch) {
       switchServer = !switchServer;
     }
@@ -57,6 +58,11 @@ export const getServerReceiver = ({
     }
   } else {
     // todo
+    const serviceCycle = getDoublesServiceCycle(initialServer, initialReceiver);
+    const serviceCycleIndex = Math.floor(numServesTaken / numServes) % 4;
+    const serverReceiver = serviceCycle[serviceCycleIndex];
+    server = serverReceiver.server;
+    receiver = serverReceiver.receiver;
   }
 
   return {

@@ -1,4 +1,5 @@
 import { Player } from ".";
+import { ServerReceiver } from "./commonTypes";
 
 export const isTeam1 = (player: Player): boolean => {
   return player === "Team1Player1" || player === "Team1Player2";
@@ -31,4 +32,24 @@ export const getDoublesPartner = (player: string): Player => {
     case "Team2Player2":
       return "Team2Player1";
   }
+};
+
+export const getDoublesServiceCycle = (
+  initialServer: Player,
+  initialReceiver: Player,
+): ServerReceiver[] => {
+  const cycle: ServerReceiver[] = [
+    {
+      server: initialServer,
+      receiver: initialReceiver,
+    },
+  ];
+  for (let i = 0; i < 3; i++) {
+    const previous = cycle[i];
+    cycle.push({
+      server: previous.receiver,
+      receiver: getDoublesPartner(previous.server),
+    });
+  }
+  return cycle;
 };

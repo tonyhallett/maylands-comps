@@ -24,7 +24,11 @@ import {
 } from "../src/umpire/index";
 
 import { HandicapOptions, shiftHandicap } from "../src/umpire/shiftHandicap";
-import { getPlayers } from "../src/umpire/playersHelpers";
+import {
+  getDoublesServiceCycle,
+  getPlayers,
+} from "../src/umpire/playersHelpers";
+import { ServerReceiver } from "../src/umpire/commonTypes";
 
 describe("umpiring", () => {
   const singlesPlayers = getPlayers(false);
@@ -1103,7 +1107,7 @@ describe("umpiring", () => {
       expectedServer: Player;
       expectedReceiver: Player;
     }
-    describe("getInitialServerReceiver function", () => {
+    describe("getInitialServerReceiverForGame function", () => {
       interface GetInitialServerReceiverForGameTest
         extends ExpectedServerReceiver {
         description: string;
@@ -1173,7 +1177,7 @@ describe("umpiring", () => {
             expectedReceiver: "Team1Player1",
             description: "singles game 3 - Team1Player2 serves game 1",
           },
-          // doubles
+          // doubles first game
           {
             gameNumber: 1,
             initialServersDoublesReceiver: {
@@ -1196,9 +1200,99 @@ describe("umpiring", () => {
             description:
               "doubles game 1 - Team2Player2 serves to first receiver",
           },
+          // even game
+          {
+            gameNumber: 2,
+            initialServersDoublesReceiver: {
+              gameInitialServers: ["Team1Player1", "Team2Player1"],
+              firstDoublesReceiver: "Team2Player1",
+            },
+            expectedServer: "Team2Player1",
+            expectedReceiver: "Team1Player1",
+            description:
+              "doubles game 2 - Team1Player1 => Team2Player1, Team2Player1 =>  Team1Player1",
+          },
+          {
+            gameNumber: 2,
+            initialServersDoublesReceiver: {
+              gameInitialServers: ["Team1Player1", "Team2Player2"],
+              firstDoublesReceiver: "Team2Player1",
+            },
+            expectedServer: "Team2Player2",
+            expectedReceiver: "Team1Player2",
+            description:
+              "doubles game 2 - Team1Player1 => Team2Player1, Team2Player2 => Team1Player2",
+          },
+          // other first receiver
+          {
+            gameNumber: 2,
+            initialServersDoublesReceiver: {
+              gameInitialServers: ["Team1Player1", "Team2Player1"],
+              firstDoublesReceiver: "Team2Player2",
+            },
+            expectedServer: "Team2Player1",
+            expectedReceiver: "Team1Player2",
+            description:
+              "doubles game 2 - Team1Player1 => Team2Player2, Team2Player1 => Team1Player2",
+          },
+
+          // other team player as first server
+          {
+            gameNumber: 2,
+            initialServersDoublesReceiver: {
+              gameInitialServers: ["Team1Player2", "Team2Player1"],
+              firstDoublesReceiver: "Team2Player2",
+            },
+            expectedServer: "Team2Player1",
+            expectedReceiver: "Team1Player1",
+            description:
+              "doubles game 2 - Team1Player2 => Team2Player2, Team2Player2 => Team1Player1",
+          },
+          {
+            gameNumber: 2,
+            initialServersDoublesReceiver: {
+              gameInitialServers: ["Team1Player2", "Team2Player2"],
+              firstDoublesReceiver: "Team2Player2",
+            },
+            expectedServer: "Team2Player2",
+            expectedReceiver: "Team1Player2",
+            description:
+              "doubles game 2 - Team1Player2 => Team2Player2, Team2Player2 => Team1Player2",
+          },
+          // odd game - back to original cycle
+          {
+            gameNumber: 3,
+            initialServersDoublesReceiver: {
+              gameInitialServers: [
+                "Team1Player1",
+                "Team2Player2",
+                "Team1Player1",
+              ],
+              firstDoublesReceiver: "Team2Player2",
+            },
+            expectedServer: "Team1Player1",
+            expectedReceiver: "Team2Player2",
+            description:
+              "doubles game 2 - Team1Player2 => Team2Player2,.. Team1Player1 => Team2Player2",
+          },
+          {
+            gameNumber: 3,
+            initialServersDoublesReceiver: {
+              gameInitialServers: [
+                "Team1Player1",
+                "Team2Player2",
+                "Team1Player2",
+              ],
+              firstDoublesReceiver: "Team2Player2",
+            },
+            expectedServer: "Team1Player2",
+            expectedReceiver: "Team2Player1",
+            description:
+              "doubles game 2 - Team1Player2 => Team2Player2,.. Team1Player2 => Team2Player1",
+          },
         ];
       it.each(getInitialServerReceiverForGameTests)(
-        "should return the correct initial server and receiver - %description",
+        "should return the correct initial server and receiver - $description",
         ({
           initialServersDoublesReceiver,
           gameNumber: ganeNumber,
@@ -1214,6 +1308,68 @@ describe("umpiring", () => {
         },
       );
     });
+
+    describe("getDoublesServiceCycle function", () => {
+      interface GetDoublesServiceCycleTest {
+        initialServer: Player;
+        initialReceiver: Player;
+        expectedCycle: ServerReceiver[];
+      }
+      const getDoublesServiceCycleTests: GetDoublesServiceCycleTest[] = [
+        {
+          initialServer: "Team1Player1",
+          initialReceiver: "Team2Player1",
+          expectedCycle: [
+            {
+              server: "Team1Player1",
+              receiver: "Team2Player1",
+            },
+            {
+              server: "Team2Player1",
+              receiver: "Team1Player2",
+            },
+            {
+              server: "Team1Player2",
+              receiver: "Team2Player2",
+            },
+            {
+              server: "Team2Player2",
+              receiver: "Team1Player1",
+            },
+          ],
+        },
+        {
+          initialServer: "Team2Player2",
+          initialReceiver: "Team1Player1",
+          expectedCycle: [
+            {
+              server: "Team2Player2",
+              receiver: "Team1Player1",
+            },
+            {
+              server: "Team1Player1",
+              receiver: "Team2Player1",
+            },
+            {
+              server: "Team2Player1",
+              receiver: "Team1Player2",
+            },
+            {
+              server: "Team1Player2",
+              receiver: "Team2Player2",
+            },
+          ],
+        },
+      ];
+      it.each(getDoublesServiceCycleTests)(
+        "should return the correct service cycle",
+        ({ initialServer, initialReceiver, expectedCycle }) => {
+          const cycle = getDoublesServiceCycle(initialServer, initialReceiver);
+          expect(cycle).toEqual(expectedCycle);
+        },
+      );
+    });
+
     describe("getServerReceiver function", () => {
       interface ServerReceiverTest
         extends ServingState,
@@ -1463,6 +1619,133 @@ describe("umpiring", () => {
           expectedReceiver: "Team2Player1",
           description:
             "Normal singles - three points - 1 remaining - back to original",
+        },
+        // doubles
+        {
+          initialServer: "Team2Player2",
+          initialReceiver: "Team1Player1",
+          endsInfo: {
+            isDecider: false,
+            team1MidwayPoints: 5,
+            team2MidwayPoints: 5,
+          },
+          alternateServesAt: 10,
+          numServes: 2,
+          pointsWon: 0,
+          remainingServesAtStartOfGame: 2,
+          team1Points: 0,
+          team2Points: 0,
+          expectedServer: "Team2Player2",
+          expectedReceiver: "Team1Player1",
+          description: "Normal doubles - no score",
+        },
+        {
+          initialServer: "Team2Player2",
+          initialReceiver: "Team1Player1",
+          endsInfo: {
+            isDecider: false,
+            team1MidwayPoints: 5,
+            team2MidwayPoints: 5,
+          },
+          alternateServesAt: 10,
+          numServes: 2,
+          pointsWon: 1,
+          remainingServesAtStartOfGame: 2,
+          team1Points: 1,
+          team2Points: 0,
+          expectedServer: "Team2Player2",
+          expectedReceiver: "Team1Player1",
+          description: "Normal doubles - point scored",
+        },
+        {
+          initialServer: "Team2Player2",
+          initialReceiver: "Team1Player1",
+          endsInfo: {
+            isDecider: false,
+            team1MidwayPoints: 5,
+            team2MidwayPoints: 5,
+          },
+          alternateServesAt: 10,
+          numServes: 2,
+          pointsWon: 2,
+          remainingServesAtStartOfGame: 2,
+          team1Points: 2,
+          team2Points: 0,
+          expectedServer: "Team1Player1",
+          expectedReceiver: "Team2Player1",
+          description: "Normal doubles - first service change",
+        },
+        {
+          initialServer: "Team2Player2",
+          initialReceiver: "Team1Player1",
+          endsInfo: {
+            isDecider: false,
+            team1MidwayPoints: 5,
+            team2MidwayPoints: 5,
+          },
+          alternateServesAt: 10,
+          numServes: 2,
+          pointsWon: 3,
+          remainingServesAtStartOfGame: 2,
+          team1Points: 3,
+          team2Points: 0,
+          expectedServer: "Team1Player1",
+          expectedReceiver: "Team2Player1",
+          description: "Normal doubles - 3 points scored",
+        },
+        {
+          initialServer: "Team2Player2",
+          initialReceiver: "Team1Player1",
+          endsInfo: {
+            isDecider: false,
+            team1MidwayPoints: 5,
+            team2MidwayPoints: 5,
+          },
+          alternateServesAt: 10,
+          numServes: 2,
+          pointsWon: 4,
+          remainingServesAtStartOfGame: 2,
+          team1Points: 4,
+          team2Points: 0,
+          expectedServer: "Team2Player1",
+          expectedReceiver: "Team1Player2",
+          description: "Normal doubles - second change of serve",
+        },
+        {
+          initialServer: "Team2Player2",
+          initialReceiver: "Team1Player1",
+          endsInfo: {
+            isDecider: false,
+            team1MidwayPoints: 5,
+            team2MidwayPoints: 5,
+          },
+          alternateServesAt: 10,
+          numServes: 2,
+          pointsWon: 6,
+          remainingServesAtStartOfGame: 2,
+          team1Points: 6,
+          team2Points: 0,
+          expectedServer: "Team1Player2",
+          expectedReceiver: "Team2Player2",
+          description: "Normal doubles - third change of serve",
+        },
+        {
+          initialServer: "Team2Player2",
+          initialReceiver: "Team1Player1",
+          endsInfo: {
+            isDecider: false,
+            team1MidwayPoints: 5,
+            team2MidwayPoints: 5,
+          },
+          alternateServesAt: 10,
+          numServes: 2,
+          pointsWon: 8,
+          remainingServesAtStartOfGame: 2,
+          team1Points: 8,
+          team2Points: 0,
+          expectedServer: "Team2Player2",
+          expectedReceiver: "Team1Player1",
+          description: "Normal doubles - fourth change of serve - original",
         },
       ];
       it.each(tests)("$description", (testOptions) => {
