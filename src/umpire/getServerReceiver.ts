@@ -1,17 +1,13 @@
 import { ServerReceiver } from "./commonTypes";
 import { Player } from ".";
 import { reachedAlternateServes } from "./reachedAlternateServes";
-import { getDoublesServiceCycle } from "./playersHelpers";
+import { getDoublesPartner, getServiceCycle } from "./playersHelpers";
 
-interface EndsInfo {
-  isDecider: boolean;
-  team1MidwayPoints: number;
-  team2MidwayPoints: number;
-}
+export type DoublesEndPoints = "NotEnds" | number;
 export interface ServingState {
   initialServer: Player;
   initialReceiver: Player;
-  endsInfo: EndsInfo | undefined; // undefined for singles
+  doublesEndsPoints: DoublesEndPoints | undefined; // undefined for singles
   team1Points: number;
   team2Points: number;
   pointsWon: number;
@@ -20,11 +16,19 @@ export interface ServingState {
   numServes: number;
 }
 
+export const shiftInCycle = (
+  index: number,
+  cycleLength: number,
+  shift: number,
+): number => {
+  return (index + shift) % cycleLength;
+};
+
 // this is once the server and receiver have been chosen
 export const getServerReceiver = ({
   initialServer,
   initialReceiver,
-  endsInfo,
+  doublesEndsPoints,
   pointsWon,
   remainingServesAtStartOfGame,
   numServes,
@@ -32,41 +36,42 @@ export const getServerReceiver = ({
   team1Points,
   team2Points,
 }: ServingState): ServerReceiver => {
-  let numServesTaken = numServes - remainingServesAtStartOfGame + pointsWon;
-  let server = initialServer;
-  let receiver = initialReceiver;
-
-  const singles = endsInfo === undefined;
-  if (singles) {
-    let alternateSwitch = false;
-    if (reachedAlternateServes(team1Points, team2Points, alternateServesAt)) {
-      const alternateCount = alternateServesAt * 2;
-      const additional = team1Points + team2Points - alternateCount;
-      if (additional > 0) {
-        numServesTaken -= additional;
-        alternateSwitch = additional % 1 === 0;
-      }
-    }
-    // should be able to use same principal for doubles - use 4 and look into the cycle AND ADJUST FOR ENDS
-    let switchServer = Math.floor(numServesTaken / numServes) % 2 === 1;
-    if (alternateSwitch) {
-      switchServer = !switchServer;
-    }
-    if (switchServer) {
-      server = initialReceiver;
-      receiver = initialServer;
-    }
-  } else {
-    // todo
-    const serviceCycle = getDoublesServiceCycle(initialServer, initialReceiver);
-    const serviceCycleIndex = Math.floor(numServesTaken / numServes) % 4;
-    const serverReceiver = serviceCycle[serviceCycleIndex];
-    server = serverReceiver.server;
-    receiver = serverReceiver.receiver;
+  const hasHadEnds = Number.isInteger(doublesEndsPoints);
+  let numServesTakenSinceStartOfCycle =
+    numServes - remainingServesAtStartOfGame + pointsWon;
+  if (hasHadEnds) {
+    numServesTakenSinceStartOfCycle -= doublesEndsPoints as number;
   }
 
-  return {
-    server,
-    receiver,
-  };
+  const serviceCycle = getServiceCycle(
+    initialServer,
+    hasHadEnds ? getDoublesPartner(initialReceiver) : initialReceiver,
+    doublesEndsPoints !== undefined,
+  );
+  const serviceCycleLength = serviceCycle.length;
+
+  let numAlternatingServesTaken = 0;
+  if (reachedAlternateServes(team1Points, team2Points, alternateServesAt)) {
+    const alternateCount = alternateServesAt * 2;
+    numAlternatingServesTaken = team1Points + team2Points - alternateCount;
+    numServesTakenSinceStartOfCycle -= numAlternatingServesTaken;
+  }
+
+  let cycleShift = numAlternatingServesTaken;
+  if (hasHadEnds) {
+    let switchedCycleShift =
+      Math.floor((doublesEndsPoints as number) / numServes) % 4;
+    switchedCycleShift = Math.abs(switchedCycleShift - 4);
+    cycleShift += switchedCycleShift;
+  }
+  const startCycleIndex =
+    Math.floor(numServesTakenSinceStartOfCycle / numServes) %
+    serviceCycleLength;
+  const cycleIndex = shiftInCycle(
+    startCycleIndex,
+    serviceCycleLength,
+    cycleShift,
+  );
+  // still have to adjust for ends
+  return serviceCycle[cycleIndex];
 };

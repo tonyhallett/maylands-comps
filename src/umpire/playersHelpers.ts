@@ -53,3 +53,29 @@ export const getDoublesServiceCycle = (
   }
   return cycle;
 };
+
+export const getSinglesServiceCycle = (
+  initialServer: Player,
+  initialReceiver: Player,
+): ServerReceiver[] => {
+  return [
+    {
+      server: initialServer,
+      receiver: initialReceiver,
+    },
+    {
+      server: initialReceiver,
+      receiver: initialServer,
+    },
+  ];
+};
+
+export const getServiceCycle = (
+  initialServer: Player,
+  initialReceiver: Player,
+  isDoubles: boolean,
+): ServerReceiver[] => {
+  return isDoubles
+    ? getDoublesServiceCycle(initialServer, initialReceiver)
+    : getSinglesServiceCycle(initialServer, initialReceiver);
+};

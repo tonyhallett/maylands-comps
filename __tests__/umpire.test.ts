@@ -5,6 +5,7 @@ import {
 import {
   ServingState,
   getServerReceiver,
+  shiftInCycle,
 } from "../src/umpire/getServerReceiver";
 import { getInitialServerReceiverForGame } from "../src/umpire/getInitialServerReceiverForGame";
 import {
@@ -1103,6 +1104,12 @@ describe("umpiring", () => {
   });
 
   describe("serving", () => {
+    test("shiftInCycle", () => {
+      expect(shiftInCycle(0, 2, 1)).toBe(1);
+      expect(shiftInCycle(0, 2, 2)).toBe(0);
+      expect(shiftInCycle(1, 2, 1)).toBe(0);
+      expect(shiftInCycle(1, 2, 2)).toBe(1);
+    });
     interface ExpectedServerReceiver {
       expectedServer: Player;
       expectedReceiver: Player;
@@ -1380,7 +1387,7 @@ describe("umpiring", () => {
         {
           initialServer: "Team1Player1",
           initialReceiver: "Team2Player1",
-          endsInfo: undefined, // singles
+          doublesEndsPoints: undefined, // singles
           alternateServesAt: 10,
           numServes: 2,
           pointsWon: 0,
@@ -1394,7 +1401,7 @@ describe("umpiring", () => {
         {
           initialServer: "Team2Player1",
           initialReceiver: "Team1Player1",
-          endsInfo: undefined, // singles
+          doublesEndsPoints: undefined, // singles
           alternateServesAt: 10,
           numServes: 2,
           pointsWon: 0,
@@ -1408,7 +1415,7 @@ describe("umpiring", () => {
         {
           initialServer: "Team1Player1",
           initialReceiver: "Team2Player1",
-          endsInfo: undefined, // singles
+          doublesEndsPoints: undefined, // singles
           alternateServesAt: 10,
           numServes: 2,
           pointsWon: 1,
@@ -1422,7 +1429,7 @@ describe("umpiring", () => {
         {
           initialServer: "Team1Player1",
           initialReceiver: "Team2Player1",
-          endsInfo: undefined, // singles
+          doublesEndsPoints: undefined, // singles
           alternateServesAt: 10,
           numServes: 2,
           pointsWon: 2,
@@ -1436,7 +1443,7 @@ describe("umpiring", () => {
         {
           initialServer: "Team1Player1",
           initialReceiver: "Team2Player1",
-          endsInfo: undefined, // singles
+          doublesEndsPoints: undefined, // singles
           alternateServesAt: 10,
           numServes: 2,
           pointsWon: 3,
@@ -1450,7 +1457,7 @@ describe("umpiring", () => {
         {
           initialServer: "Team1Player1",
           initialReceiver: "Team2Player1",
-          endsInfo: undefined, // singles
+          doublesEndsPoints: undefined, // singles
           alternateServesAt: 10,
           numServes: 2,
           pointsWon: 4,
@@ -1465,7 +1472,7 @@ describe("umpiring", () => {
         {
           initialServer: "Team1Player1",
           initialReceiver: "Team2Player1",
-          endsInfo: undefined, // singles
+          doublesEndsPoints: undefined, // singles
           alternateServesAt: 30,
           numServes: 5,
           pointsWon: 2,
@@ -1479,7 +1486,7 @@ describe("umpiring", () => {
         {
           initialServer: "Team1Player1",
           initialReceiver: "Team2Player1",
-          endsInfo: undefined, // singles
+          doublesEndsPoints: undefined, // singles
           alternateServesAt: 30,
           numServes: 5,
           pointsWon: 5,
@@ -1493,7 +1500,7 @@ describe("umpiring", () => {
         {
           initialServer: "Team1Player1",
           initialReceiver: "Team2Player1",
-          endsInfo: undefined, // singles
+          doublesEndsPoints: undefined, // singles
           alternateServesAt: 30,
           numServes: 5,
           pointsWon: 10,
@@ -1508,7 +1515,7 @@ describe("umpiring", () => {
         {
           initialServer: "Team1Player1",
           initialReceiver: "Team2Player1",
-          endsInfo: undefined, // singles
+          doublesEndsPoints: undefined, // singles
           alternateServesAt: 10,
           numServes: 2,
           pointsWon: 19,
@@ -1522,7 +1529,7 @@ describe("umpiring", () => {
         {
           initialServer: "Team1Player1",
           initialReceiver: "Team2Player1",
-          endsInfo: undefined, // singles
+          doublesEndsPoints: undefined, // singles
           alternateServesAt: 10,
           numServes: 2,
           pointsWon: 20,
@@ -1537,7 +1544,7 @@ describe("umpiring", () => {
         {
           initialServer: "Team1Player1",
           initialReceiver: "Team2Player1",
-          endsInfo: undefined, // singles
+          doublesEndsPoints: undefined, // singles
           alternateServesAt: 10,
           numServes: 2,
           pointsWon: 21,
@@ -1551,22 +1558,22 @@ describe("umpiring", () => {
         {
           initialServer: "Team1Player1",
           initialReceiver: "Team2Player1",
-          endsInfo: undefined, // singles
+          doublesEndsPoints: undefined, // singles
           alternateServesAt: 10,
           numServes: 2,
           pointsWon: 22,
           remainingServesAtStartOfGame: 2,
           team1Points: 11,
           team2Points: 11,
-          expectedServer: "Team2Player1",
-          expectedReceiver: "Team1Player1",
+          expectedServer: "Team1Player1",
+          expectedReceiver: "Team2Player1",
           description: "Normal singles - 11 - 11 original",
         },
         // remaining serves at start of game
         {
           initialServer: "Team1Player1",
           initialReceiver: "Team2Player1",
-          endsInfo: undefined, // singles
+          doublesEndsPoints: undefined, // singles
           alternateServesAt: 10,
           numServes: 2,
           pointsWon: 0,
@@ -1580,7 +1587,7 @@ describe("umpiring", () => {
         {
           initialServer: "Team1Player1",
           initialReceiver: "Team2Player1",
-          endsInfo: undefined, // singles
+          doublesEndsPoints: undefined, // singles
           alternateServesAt: 10,
           numServes: 2,
           pointsWon: 1,
@@ -1594,7 +1601,7 @@ describe("umpiring", () => {
         {
           initialServer: "Team1Player1",
           initialReceiver: "Team2Player1",
-          endsInfo: undefined, // singles
+          doublesEndsPoints: undefined, // singles
           alternateServesAt: 10,
           numServes: 2,
           pointsWon: 2,
@@ -1608,7 +1615,7 @@ describe("umpiring", () => {
         {
           initialServer: "Team1Player1",
           initialReceiver: "Team2Player1",
-          endsInfo: undefined, // singles
+          doublesEndsPoints: undefined, // singles
           alternateServesAt: 10,
           numServes: 2,
           pointsWon: 3,
@@ -1624,11 +1631,7 @@ describe("umpiring", () => {
         {
           initialServer: "Team2Player2",
           initialReceiver: "Team1Player1",
-          endsInfo: {
-            isDecider: false,
-            team1MidwayPoints: 5,
-            team2MidwayPoints: 5,
-          },
+          doublesEndsPoints: "NotEnds",
           alternateServesAt: 10,
           numServes: 2,
           pointsWon: 0,
@@ -1642,11 +1645,7 @@ describe("umpiring", () => {
         {
           initialServer: "Team2Player2",
           initialReceiver: "Team1Player1",
-          endsInfo: {
-            isDecider: false,
-            team1MidwayPoints: 5,
-            team2MidwayPoints: 5,
-          },
+          doublesEndsPoints: "NotEnds",
           alternateServesAt: 10,
           numServes: 2,
           pointsWon: 1,
@@ -1660,11 +1659,7 @@ describe("umpiring", () => {
         {
           initialServer: "Team2Player2",
           initialReceiver: "Team1Player1",
-          endsInfo: {
-            isDecider: false,
-            team1MidwayPoints: 5,
-            team2MidwayPoints: 5,
-          },
+          doublesEndsPoints: "NotEnds",
           alternateServesAt: 10,
           numServes: 2,
           pointsWon: 2,
@@ -1678,11 +1673,7 @@ describe("umpiring", () => {
         {
           initialServer: "Team2Player2",
           initialReceiver: "Team1Player1",
-          endsInfo: {
-            isDecider: false,
-            team1MidwayPoints: 5,
-            team2MidwayPoints: 5,
-          },
+          doublesEndsPoints: "NotEnds",
           alternateServesAt: 10,
           numServes: 2,
           pointsWon: 3,
@@ -1693,59 +1684,105 @@ describe("umpiring", () => {
           expectedReceiver: "Team2Player1",
           description: "Normal doubles - 3 points scored",
         },
+        // doubles ends
         {
-          initialServer: "Team2Player2",
-          initialReceiver: "Team1Player1",
-          endsInfo: {
-            isDecider: false,
-            team1MidwayPoints: 5,
-            team2MidwayPoints: 5,
-          },
-          alternateServesAt: 10,
-          numServes: 2,
-          pointsWon: 4,
-          remainingServesAtStartOfGame: 2,
-          team1Points: 4,
-          team2Points: 0,
-          expectedServer: "Team2Player1",
-          expectedReceiver: "Team1Player2",
-          description: "Normal doubles - second change of serve",
-        },
-        {
-          initialServer: "Team2Player2",
-          initialReceiver: "Team1Player1",
-          endsInfo: {
-            isDecider: false,
-            team1MidwayPoints: 5,
-            team2MidwayPoints: 5,
-          },
-          alternateServesAt: 10,
-          numServes: 2,
-          pointsWon: 6,
-          remainingServesAtStartOfGame: 2,
-          team1Points: 6,
-          team2Points: 0,
-          expectedServer: "Team1Player2",
-          expectedReceiver: "Team2Player2",
-          description: "Normal doubles - third change of serve",
-        },
-        {
-          initialServer: "Team2Player2",
-          initialReceiver: "Team1Player1",
-          endsInfo: {
-            isDecider: false,
-            team1MidwayPoints: 5,
-            team2MidwayPoints: 5,
-          },
+          initialServer: "Team1Player1",
+          initialReceiver: "Team2Player1",
+          doublesEndsPoints: 8,
           alternateServesAt: 10,
           numServes: 2,
           pointsWon: 8,
           remainingServesAtStartOfGame: 2,
-          team1Points: 8,
-          team2Points: 0,
+          team1Points: 5,
+          team2Points: 3,
+          expectedServer: "Team1Player1",
+          expectedReceiver: "Team2Player2",
+          description: "Normal doubles - at ends at 8",
+        },
+        {
+          initialServer: "Team1Player1",
+          initialReceiver: "Team2Player1",
+          doublesEndsPoints: 8,
+          alternateServesAt: 10,
+          numServes: 2,
+          pointsWon: 9,
+          remainingServesAtStartOfGame: 2,
+          team1Points: 5,
+          team2Points: 4,
+          expectedServer: "Team1Player1",
+          expectedReceiver: "Team2Player2",
+          description: "Normal doubles - ends at 8, points won 9",
+        },
+        {
+          initialServer: "Team1Player1",
+          initialReceiver: "Team2Player1",
+          doublesEndsPoints: 8,
+          alternateServesAt: 10,
+          numServes: 2,
+          pointsWon: 10,
+          remainingServesAtStartOfGame: 2,
+          team1Points: 5,
+          team2Points: 5,
           expectedServer: "Team2Player2",
+          expectedReceiver: "Team1Player2",
+          description: "Normal doubles - ends at 8, points won 10",
+        },
+        {
+          initialServer: "Team1Player1",
+          initialReceiver: "Team2Player1",
+          doublesEndsPoints: 8,
+          alternateServesAt: 10,
+          numServes: 2,
+          pointsWon: 11,
+          remainingServesAtStartOfGame: 2,
+          team1Points: 5,
+          team2Points: 6,
+          expectedServer: "Team2Player2",
+          expectedReceiver: "Team1Player2",
+          description: "Normal doubles - ends at 8, points won 11",
+        },
+
+        {
+          initialServer: "Team1Player1",
+          initialReceiver: "Team2Player1",
+          doublesEndsPoints: 11,
+          alternateServesAt: 10,
+          numServes: 2,
+          pointsWon: 11,
+          remainingServesAtStartOfGame: 2,
+          team1Points: 8,
+          team2Points: 3,
+          expectedServer: "Team2Player1",
           expectedReceiver: "Team1Player1",
-          description: "Normal doubles - fourth change of serve - original",
+          description: "Normal doubles - at ends at 11",
+        },
+        {
+          initialServer: "Team1Player1",
+          initialReceiver: "Team2Player1",
+          doublesEndsPoints: 5,
+          alternateServesAt: 10,
+          numServes: 2,
+          pointsWon: 5,
+          remainingServesAtStartOfGame: 2,
+          team1Points: 5,
+          team2Points: 0,
+          expectedServer: "Team1Player2",
+          expectedReceiver: "Team2Player1",
+          description: "Normal doubles - at ends at 5",
+        },
+        {
+          initialServer: "Team1Player1",
+          initialReceiver: "Team2Player1",
+          doublesEndsPoints: 7,
+          alternateServesAt: 10,
+          numServes: 2,
+          pointsWon: 7,
+          remainingServesAtStartOfGame: 2,
+          team1Points: 5,
+          team2Points: 2,
+          expectedServer: "Team2Player2",
+          expectedReceiver: "Team1Player2",
+          description: "Normal doubles - at ends at 7",
         },
       ];
       it.each(tests)("$description", (testOptions) => {
@@ -1756,6 +1793,7 @@ describe("umpiring", () => {
         expect(serverReceiver.receiver).toBe(expectedReceiver);
       });
     });
+
     interface RemainingServesTest {
       team1StartGameScore: number;
       team2StartGameScore: number;
@@ -1997,7 +2035,7 @@ describe("umpiring", () => {
       });
 
       it.each([2, 5])(
-        "should switch server / receiver in singles",
+        "should switch server / receiver in singles - after serving all serves ( %p )",
         (numServes) => {
           const umpire = new Umpire(
             {
@@ -2019,6 +2057,7 @@ describe("umpiring", () => {
           scorePoints(umpire, true, 1);
           expectInitial();
           const matchState = scorePoints(umpire, true, numServes - 1);
+
           expectSinglesServerReceiver(matchState, false);
         },
       );
