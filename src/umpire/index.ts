@@ -7,7 +7,6 @@ import {
   availableServerReceiverChoice,
 } from "./availableServerReceiverChoice";
 import { reachedAlternateServes } from "./reachedAlternateServes";
-import { getDoublesPartner, getSinglesOpponent } from "./playersHelpers";
 import { ServerReceiver } from "./commonTypes";
 import { getInitialServerReceiverForGame } from "./getInitialServerReceiverForGame";
 import {
@@ -100,10 +99,10 @@ export class Umpire {
   }
 
   private undoMidGameState() {
-    // todo - possibly reset the doublesEndsPointsScored
     const lastPoint = this.removeLastPointHistory();
     if (this.isMidwayLastGame(lastPoint.team1)) {
       this.switchEnds();
+      this.doublesEndsPointsScored = "NotEnds";
     }
     const teamScoreToReduce = lastPoint.team1
       ? this._team1Score
@@ -126,7 +125,6 @@ export class Umpire {
       this._team2Score.points === this.team2StartGameScore
     );
   }
-  private doublesServiceCycle: [Player, Player][] = [];
   private _pointHistory: PointHistory[][] = [[]];
 
   private get matchWinState(): MatchWinState {
@@ -147,13 +145,10 @@ export class Umpire {
 
   private _upTo: number;
 
-  private _server: Player | undefined;
-
   private initialServersDoublesReceiver: InitialServersDoublesReceiver = {
     gameInitialServers: [],
     firstDoublesReceiver: undefined,
   };
-  private _receiver: Player | undefined;
   private _team1Left: boolean = true;
 
   private get serverReceiverChoice(): ServerReceiverChoice {
@@ -304,67 +299,16 @@ export class Umpire {
     }
   }
 
-  private isFirstGame(): boolean {
-    return this._team1Score.games === 0 && this._team2Score.games === 0;
-  }
-
-  private getDoublesServiceCycle(): [Player, Player][] {
-    if (this.doublesServiceCycle.length == 0) {
-      this.doublesServiceCycle.push([
-        this.initialServersDoublesReceiver.gameInitialServers[0],
-        this.initialServersDoublesReceiver.firstDoublesReceiver,
-      ]);
-      for (let i = 0; i < 3; i++) {
-        const previousServer = this.doublesServiceCycle[i][0];
-        const previousReceiver = this.doublesServiceCycle[i][1];
-        this.doublesServiceCycle.push(
-          this.nextDoublesServerReceiver(previousServer, previousReceiver),
-        );
-      }
-    }
-    return this.doublesServiceCycle;
-  }
-
-  // first receiver shall be the player who served to him or her in the preceding game
-  private getServerOfReceiverInPreviousGame(receiver: Player): Player {
-    const serviceCycle = this.getDoublesServiceCycle();
-    const gamesPlayed = this.gamesPlayed();
-    const evenGamesPlayed = isEven(gamesPlayed);
-    if (evenGamesPlayed) {
-      for (let i = 0; i < serviceCycle.length; i++) {
-        if (serviceCycle[i][0] === receiver) {
-          return serviceCycle[i][1];
-        }
-      }
-    } else {
-      for (let i = 0; i < serviceCycle.length; i++) {
-        if (serviceCycle[i][1] === receiver) {
-          return serviceCycle[i][0];
-        }
-      }
-    }
-  }
-
   setServer(player: Player): MatchState {
     if (!this.serverReceiverChoice.servers.includes(player)) {
       throw new Error("Player not available");
     }
     this.initialServersDoublesReceiver.gameInitialServers.push(player);
-    this._server = player;
-
-    if (this.isDoubles) {
-      if (!this.isFirstGame()) {
-        this._receiver = this.getServerOfReceiverInPreviousGame(this._server);
-      }
-    } else {
-      this._receiver = getSinglesOpponent(player);
-    }
     return this.getMatchState();
   }
 
   setFirstGameDoublesReceiver(player: Player): MatchState {
     if (this.serverReceiverChoice.firstGameDoublesReceivers.includes(player)) {
-      this._receiver = player;
       this.initialServersDoublesReceiver.firstDoublesReceiver = player;
     } else {
       throw new Error("receiver is not an available receiver");
@@ -375,12 +319,6 @@ export class Umpire {
   switchEnds(): MatchState {
     this._team1Left = !this._team1Left;
     return this.getMatchState();
-  }
-
-  private changeOrderOfReceivingIfDoubles() {
-    if (this.isDoubles) {
-      this._receiver = getDoublesPartner(this._receiver);
-    }
   }
 
   pointScored(team1: boolean): MatchState {
@@ -426,45 +364,9 @@ export class Umpire {
   }
 
   private pointScoredAndNotWon(team1: boolean) {
-    this.setMidgameServiceState();
-    /*
-        last possible game of a doubles match - 
-        pair due to receive next shall change their order of receiving when first one pair scores 5 points.
-      */
-
     const isMidwayLastGame = this.isMidwayLastGame(team1); // todo affects server and receiver for doubles
     if (isMidwayLastGame) {
       this.switchEnds();
-      this.changeOrderOfReceivingIfDoubles();
-    }
-  }
-
-  // previous receiver shall become the server and the partner of the previous server shall become the receiver
-  private nextDoublesServerReceiver(
-    currentServer: Player,
-    currentReceiver: Player,
-  ): [Player, Player] {
-    return [currentReceiver, getDoublesPartner(currentServer)];
-  }
-
-  private shouldSwitchServerReceiver(): boolean {
-    return this.reachedAlternateServes()
-      ? true
-      : this.remainingServes === this.numServes;
-  }
-
-  private setMidgameServiceState(): void {
-    if (this.shouldSwitchServerReceiver()) {
-      if (this.isDoubles) {
-        const [newServer, newReceiver] = this.nextDoublesServerReceiver(
-          this._server,
-          this._receiver,
-        );
-        this._server = newServer;
-        this._receiver = newReceiver;
-      } else {
-        this.switchServerReceiver();
-      }
     }
   }
 
@@ -475,12 +377,6 @@ export class Umpire {
       this._team2Score.points,
       reachPoints,
     );
-  }
-
-  private switchServerReceiver() {
-    const currentServer = this._server;
-    this._server = this._receiver;
-    this._receiver = currentServer;
   }
 
   private isMidwayLastGame(team1LastScored: boolean): boolean {
@@ -562,28 +458,7 @@ export class Umpire {
 
     if (teamScore.games !== requiredGamesToWin(this.bestOf)) {
       this.switchEnds();
-      this.setNextGameServiceState();
       this._pointHistory.push([]);
-    } else {
-      this._server = undefined;
-      this._receiver = undefined;
-    }
-  }
-
-  private setNextGameServiceState() {
-    if (this.isDoubles) {
-      this._server = undefined;
-      this._receiver = undefined;
-    } else {
-      const evenGamesPlayed = isEven(this.gamesPlayed());
-      const firstGameServer =
-        this.initialServersDoublesReceiver.gameInitialServers[0];
-      const firstGameReceiver = getSinglesOpponent(firstGameServer);
-      this._server = firstGameServer;
-      this._receiver = firstGameReceiver;
-      if (!evenGamesPlayed) {
-        this.switchServerReceiver();
-      }
     }
   }
 }

@@ -1773,6 +1773,20 @@ describe("umpiring", () => {
         {
           initialServer: "Team1Player1",
           initialReceiver: "Team2Player1",
+          doublesEndsPoints: 5,
+          alternateServesAt: 10,
+          numServes: 2,
+          pointsWon: 6,
+          remainingServesAtStartOfGame: 2,
+          team1Points: 5,
+          team2Points: 0,
+          expectedServer: "Team2Player1",
+          expectedReceiver: "Team1Player1",
+          description: "Normal doubles - ends at 5, points 6",
+        },
+        {
+          initialServer: "Team1Player1",
+          initialReceiver: "Team2Player1",
           doublesEndsPoints: 7,
           alternateServesAt: 10,
           numServes: 2,
@@ -2299,7 +2313,6 @@ describe("umpiring", () => {
       const umpire = getNormalDoublesBestOf5Umpire();
       umpire.setServer("Team1Player1");
       umpire.setFirstGameDoublesReceiver("Team2Player1");
-
       scoreGames(umpire, true, 1);
 
       umpire.setServer("Team2Player1");
@@ -2314,22 +2327,26 @@ describe("umpiring", () => {
       //cycle
       // Team1Player1 => Team2Player1
       // Team2Player1 => Team1Player2
-      // Team1Player2 => Team2Player2
+      // Team1Player2 => Team2Player2  scoring at ends
       // Team2Player2 => Team1Player1
       umpire.setServer("Team1Player1");
       let matchState = scorePoints(umpire, true, 4);
-      expectServerReceiver(matchState, "Team1Player2", "Team2Player2");
+      expectServerReceiver(matchState, "Team1Player2", "Team2Player2"); //1st serve
+
       matchState = scorePoints(umpire, true, 1);
       // cycle changes
       // Team1Player2 => Team2Player1
       // Team2Player1 => Team1Player1
       // Team1Player1 => Team2Player2
       // Team2Player2 => Team1Player2
-      expectServerReceiver(matchState, "Team1Player2", "Team2Player1");
+      expectServerReceiver(matchState, "Team1Player2", "Team2Player1"); //2nd serve - switched
+
       matchState = scorePoints(umpire, true, 1);
-      expectServerReceiver(matchState, "Team2Player1", "Team1Player1");
+      expectServerReceiver(matchState, "Team2Player1", "Team1Player1"); //FAILING
+
       matchState = scorePoints(umpire, false, 2);
       expectServerReceiver(matchState, "Team1Player1", "Team2Player2");
+
       matchState = scorePoints(umpire, false, 2);
       expectServerReceiver(matchState, "Team2Player2", "Team1Player2");
     });
@@ -2337,8 +2354,13 @@ describe("umpiring", () => {
 
   describe("undoPoint", () => {
     describe("canUndoPoint", () => {
-      it("todo", () => {
-        throw new Error("todo");
+      it("cannot undo at the beginning", () => {
+        expect(getAnUmpire().getMatchState().canUndoPoint).toBe(false);
+      });
+      it("cannot undo when point has been scored", () => {
+        const umpire = getAnUmpire();
+        const matchState = umpire.pointScored(true);
+        expect(matchState.canUndoPoint).toBe(true);
       });
     });
     describe("scoring", () => {

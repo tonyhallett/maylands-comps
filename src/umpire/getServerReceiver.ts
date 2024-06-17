@@ -40,7 +40,11 @@ export const getServerReceiver = ({
   let numServesTakenSinceStartOfCycle =
     numServes - remainingServesAtStartOfGame + pointsWon;
   if (hasHadEnds) {
-    numServesTakenSinceStartOfCycle -= doublesEndsPoints as number;
+    const doublesEndsPointsNumber = doublesEndsPoints as number;
+    numServesTakenSinceStartOfCycle -= doublesEndsPointsNumber;
+    if (doublesEndsPointsNumber % 2 === 1) {
+      numServesTakenSinceStartOfCycle += 1;
+    }
   }
 
   const serviceCycle = getServiceCycle(
@@ -72,6 +76,5 @@ export const getServerReceiver = ({
     serviceCycleLength,
     cycleShift,
   );
-  // still have to adjust for ends
   return serviceCycle[cycleIndex];
 };
