@@ -1,10 +1,13 @@
 import { useState } from "react";
 import { ServersReceiversChooser } from "./ServersReceiversChooser";
 import { PlayerNames } from ".";
-import { LeftRightMatchWinState, UmpireView } from "./UmpireView";
+import { LeftRightMatchWinState, MatchView } from "./MatchView";
 import { MatchState, Player, Umpire } from "../umpire";
 import { HistoryView } from "./HistoryView";
 import { MatchWinState } from "../umpire/getMatchWinState";
+import { Box, Card } from "@mui/material";
+import { EndsSnackbar } from "./EndsSnackbar";
+import { UmpireToolbar } from "./UmpireToolbar";
 
 export interface UmpireControllerProps extends PlayerNames {
   umpire: Umpire;
@@ -116,7 +119,11 @@ export function UmpireController({
     );
   };
   return (
-    <div style={{ marginTop: 20 }}>
+    <>
+      <EndsSnackbar
+        isEnds={matchState.isEnds}
+        isDoubles={team1Player2Name !== undefined}
+      />
       <ServersReceiversChooser
         availableReceivers={serverReceiverChoice.firstGameDoublesReceivers}
         availableServers={serverReceiverChoice.servers}
@@ -134,57 +141,61 @@ export function UmpireController({
         team1Player2Name={team1Player2Name}
         team2Player2Name={team2Player2Name}
       />
-      <button
-        onClick={() => {
-          setMatchState(umpire.switchEnds());
-        }}
-      >
-        Switch ends
-      </button>
-      <button
-        disabled={!matchState.canUndoPoint}
-        onClick={() => {
-          setMatchState(umpire.undoPoint());
-        }}
-      >
-        Undo
-      </button>
-      <UmpireView
-        canScorePoint={canScorePoint}
-        leftPlayer1Name={
-          matchState.team1Left ? team1Player1Name : team2Player1Name
-        }
-        leftPlayer2Name={
-          matchState.team1Left ? team1Player2Name : team2Player2Name
-        }
-        rightPlayer1Name={
-          !matchState.team1Left ? team1Player1Name : team2Player1Name
-        }
-        rightPlayer2Name={
-          !matchState.team1Left ? team1Player2Name : team2Player2Name
-        }
-        leftScore={
-          matchState.team1Left ? matchState.team1Score : matchState.team2Score
-        }
-        rightScore={
-          !matchState.team1Left ? matchState.team1Score : matchState.team2Score
-        }
-        matchWinState={getLeftMatchWinState(
-          matchState.matchWinState,
-          matchState.team1Left,
-        )}
-        receiverName={getNameOfServerReceiver(false)}
-        serverName={getNameOfServerReceiver(true)}
-        remainingServes={matchState.remainingServes}
-        scorePoint={(isLeft) => {
-          const isTeam1 = matchState.team1Left === isLeft;
-          setMatchState(umpire.pointScored(isTeam1));
-        }}
-      />
-      <HistoryView
-        team1Left={matchState.team1Left}
-        gameScores={matchState.gameScores}
-      />
-    </div>
+      <div style={{ width: 400 }}>
+        <Card variant="outlined">
+          <Box p={1}>
+            <MatchView
+              leftPlayer1Name={
+                matchState.team1Left ? team1Player1Name : team2Player1Name
+              }
+              leftPlayer2Name={
+                matchState.team1Left ? team1Player2Name : team2Player2Name
+              }
+              rightPlayer1Name={
+                !matchState.team1Left ? team1Player1Name : team2Player1Name
+              }
+              rightPlayer2Name={
+                !matchState.team1Left ? team1Player2Name : team2Player2Name
+              }
+              leftScore={
+                matchState.team1Left
+                  ? matchState.team1Score
+                  : matchState.team2Score
+              }
+              rightScore={
+                !matchState.team1Left
+                  ? matchState.team1Score
+                  : matchState.team2Score
+              }
+              matchWinState={getLeftMatchWinState(
+                matchState.matchWinState,
+                matchState.team1Left,
+              )}
+              receiverName={getNameOfServerReceiver(false)}
+              serverName={getNameOfServerReceiver(true)}
+              remainingServes={matchState.remainingServes}
+            />
+            <UmpireToolbar
+              canUndoPoint={matchState.canUndoPoint}
+              undoPoint={() => setMatchState(umpire.undoPoint())}
+              canScorePoint={canScorePoint}
+              scorePoint={(isLeft) => {
+                const isTeam1 = matchState.team1Left === isLeft;
+                setMatchState(umpire.pointScored(isTeam1));
+              }}
+              switchEnds={() => setMatchState(umpire.switchEnds())}
+              canResetServerReceiver={matchState.canResetServerReceiver}
+              resetServerReceiver={() =>
+                setMatchState(umpire.resetServerReceiver())
+              }
+            />
+          </Box>
+        </Card>
+        <HistoryView
+          team1Left={matchState.team1Left}
+          gameScores={matchState.gameScores}
+        />
+      </div>
+    </>
   );
 }

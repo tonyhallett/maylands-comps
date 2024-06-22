@@ -1,7 +1,7 @@
 import { PlayerNames } from ".";
 import { Player } from "../umpire";
 import { mapNames } from "./mapNames";
-import { PlayerChooser } from "./PlayerChooser";
+import { PlayerChooserDialog } from "./PlayerChooserDialog";
 
 export interface ServersReceiversChooserProps extends PlayerNames {
   availableServers: readonly Player[];
@@ -17,7 +17,7 @@ export function ServersReceiversChooser({
 }: ServersReceiversChooserProps) {
   if (availableServers.length > 0) {
     return (
-      <PlayerChooser
+      <PlayerChooserDialog
         title="Choose server"
         playerAndNames={mapNames(availableServers, playerNames)}
         callback={(player) => chosenCallback(player, true)}
@@ -26,7 +26,7 @@ export function ServersReceiversChooser({
   }
   if (availableReceivers.length > 0) {
     return (
-      <PlayerChooser
+      <PlayerChooserDialog
         title="Choose receiver"
         playerAndNames={mapNames(availableReceivers, playerNames)}
         callback={(player) => chosenCallback(player, false)}

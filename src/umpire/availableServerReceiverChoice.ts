@@ -1,14 +1,15 @@
 import { Player } from ".";
-import { getDoublesOpponents } from "./playersHelpers";
+import { Team, getDoublesOpponents } from "./playersHelpers";
 
 export interface InitialServersDoublesReceiver {
   gameInitialServers: Player[];
   firstDoublesReceiver: Player | undefined; // as sufficient to determine the service cycle
 }
+type EmptyArray<T> = T[] & { length: 0 };
 
 export interface ServerReceiverChoice {
   servers: Player[];
-  firstGameDoublesReceivers: Player[];
+  firstGameDoublesReceivers: Team | EmptyArray<Player>;
 }
 
 export const availableServerReceiverChoice = (

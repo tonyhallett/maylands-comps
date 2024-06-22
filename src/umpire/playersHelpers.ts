@@ -8,8 +8,9 @@ export const isTeam1 = (player: Player): boolean => {
 export const getSinglesOpponent = (player: Player): Player => {
   return player === "Team1Player1" ? "Team2Player1" : "Team1Player1";
 };
+export type Team = [Player, Player];
 
-export const getDoublesOpponents = (player: Player): Player[] => {
+export const getDoublesOpponents = (player: Player): Team => {
   return isTeam1(player)
     ? ["Team2Player1", "Team2Player2"]
     : ["Team1Player1", "Team1Player2"];

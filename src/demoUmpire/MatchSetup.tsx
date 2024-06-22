@@ -1,6 +1,13 @@
 import { SetStateAction, useState } from "react";
 import { HandicapOptions, shiftHandicap } from "../umpire/shiftHandicap";
 import { MatchOptions } from "./UmpireManager";
+import Select from "@mui/material/Select";
+import MenuItem from "@mui/material/MenuItem";
+import InputLabel from "@mui/material/InputLabel";
+import FormControl from "@mui/material/FormControl";
+import { Checkbox, FormControlLabel, IconButton } from "@mui/material";
+import AddIcon from "@mui/icons-material/Add";
+import RemoveIcon from "@mui/icons-material/Remove";
 
 export interface HandicapOption {
   handicap: number;
@@ -67,75 +74,78 @@ export function MatchSetup({
   };
 
   return (
-    <div style={{ width: 250, border: "black", borderWidth: 1 }}>
-      <div style={{ marginTop: 10, marginBottom: 10 }}>
-        <label>Select competition</label>
-        <select
-          style={{ marginLeft: 5 }}
-          value={selectedComp}
-          onChange={(e) => setSelectedComp(e.target.value as CompetitionType)}
-        >
-          <option value="normal">Normal</option>
-          <option value="hardbat">Hardbat</option>
-          <option value="handicap">Handicap</option>
-        </select>
-
+    <div>
+      <div>
+        <FormControl>
+          <InputLabel id="select-competition-label">Competition</InputLabel>
+          <Select
+            labelId="select-competition-label"
+            value={selectedComp}
+            onChange={(e) => setSelectedComp(e.target.value as CompetitionType)}
+          >
+            <MenuItem value="normal">Normal</MenuItem>
+            <MenuItem value="hardbat">Hardbat</MenuItem>
+            <MenuItem value="handicap">Handicap</MenuItem>
+          </Select>
+        </FormControl>
         {selectedComp === "handicap" ? (
           <>
-            <label style={{ display: "block" }}>
-              Shift negatives
-              <input
-                style={{ marginLeft: 10 }}
-                type="checkbox"
-                checked={shiftHandicapScore}
-                onChange={() => setShiftHandicap(!shiftHandicapScore)}
-              />
-            </label>
+            <FormControlLabel
+              style={{ display: "block" }}
+              control={
+                <Checkbox
+                  checked={shiftHandicapScore}
+                  onChange={() => setShiftHandicap(!shiftHandicapScore)}
+                />
+              }
+              label="Shift negatives"
+            />
+
             <div>Handicaps</div>
             <table>
               <tbody>
                 <tr>
                   <td>{handicap1.handicap}</td>
                   <td>
-                    <button
+                    <IconButton
                       onClick={() =>
                         changeHandicap(true, handicap1, setHandicap1)
                       }
                       disabled={handicap1.cannotIncrement}
                     >
-                      +
-                    </button>
+                      <AddIcon />
+                    </IconButton>
                   </td>
                   <td>
-                    <button
+                    <IconButton
                       onClick={() =>
                         changeHandicap(false, handicap1, setHandicap1)
                       }
                     >
-                      -
-                    </button>
+                      <RemoveIcon />
+                    </IconButton>
                   </td>
                 </tr>
                 <tr>
                   <td>{handicap2.handicap}</td>
                   <td>
-                    <button
+                    <IconButton
                       onClick={() =>
                         changeHandicap(true, handicap2, setHandicap2)
                       }
                       disabled={handicap2.cannotIncrement}
                     >
-                      +
-                    </button>
+                      <AddIcon />
+                    </IconButton>
                   </td>
                   <td>
-                    <button
+                    <IconButton
                       onClick={() =>
                         changeHandicap(false, handicap2, setHandicap2)
                       }
                     >
-                      -
-                    </button>
+                      <RemoveIcon />
+                    </IconButton>
                   </td>
                 </tr>
               </tbody>
@@ -144,18 +154,19 @@ export function MatchSetup({
         ) : null}
       </div>
 
-      <label style={{ display: "block", marginBottom: 10 }}>
-        Doubles
-        <input
-          type="checkbox"
-          checked={isDoubles}
-          onChange={() => setIsDoubles(!isDoubles)}
-        />
-      </label>
+      <FormControlLabel
+        control={
+          <Checkbox
+            checked={isDoubles}
+            onChange={() => setIsDoubles(!isDoubles)}
+          />
+        }
+        label="Doubles"
+      />
 
       <label style={{ display: "block", marginBottom: 10 }}>
         Best of {bestOfOption.bestOf}{" "}
-        <button
+        <IconButton
           onClick={() =>
             setBestOfOption({
               canDecrement: true,
@@ -163,9 +174,9 @@ export function MatchSetup({
             })
           }
         >
-          +
-        </button>{" "}
-        <button
+          <AddIcon />
+        </IconButton>
+        <IconButton
           disabled={!bestOfOption.canDecrement}
           onClick={() => {
             const newBestOf = bestOfOption.bestOf - 2;
@@ -175,10 +186,11 @@ export function MatchSetup({
             });
           }}
         >
-          -
-        </button>
+          <RemoveIcon />
+        </IconButton>
       </label>
-      <button
+      <IconButton
+        style={{ margin: "0 auto", display: "block", color: "white" }}
         onClick={() => {
           // todo - different sub type
           const newMatchOptions: MatchOptions = {
@@ -236,8 +248,10 @@ export function MatchSetup({
           setMatchOptions(newMatchOptions);
         }}
       >
-        Start match
-      </button>
+        <div style={{ fontSize: 24, fontFamily: "Noto Color Emoji variant0" }}>
+          🏓
+        </div>
+      </IconButton>
     </div>
   );
 }

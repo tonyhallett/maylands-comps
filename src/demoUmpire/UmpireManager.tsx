@@ -1,6 +1,7 @@
 import { Umpire } from "../umpire";
 import { PlayerNames } from ".";
 import { UmpireController } from "./UmpireController";
+import { Typography } from "@mui/material";
 
 export interface MatchOptions extends PlayerNames {
   upTo: number;
@@ -38,9 +39,8 @@ export function UmpireManager(props: { options: MatchOptions }) {
   );
 
   return (
-    <div style={{ marginTop: 30 }}>
-      <hr />
-      <div>{competitionDescription}</div>
+    <div>
+      <Typography variant="h5">{competitionDescription}</Typography>
       <UmpireController umpire={umpire} {...playerNames} />
     </div>
   );

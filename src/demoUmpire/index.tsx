@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { MatchOptions, UmpireManager } from "./UmpireManager";
-import { MatchSetup } from "./MatchSetup";
+import DraggableMatchSetup from "./DraggableMatchSetup";
 
 export interface PlayerNames {
   team1Player1Name: string;
@@ -16,15 +16,14 @@ export function DemoUmpire() {
   );
 
   return (
-    <div>
-      <MatchSetup
+    <>
+      <DraggableMatchSetup
         setMatchOptions={(matchOptions) => {
           setMatchOptions(matchOptions);
           setDemoKey(demoKey + 1);
         }}
       />
-
       {matchOptions && <UmpireManager key={demoKey} options={matchOptions} />}
-    </div>
+    </>
   );
 }
