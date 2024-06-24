@@ -6,8 +6,9 @@ import { MatchState, Player, Umpire } from "../umpire";
 import { HistoryView } from "./HistoryView";
 import { MatchWinState } from "../umpire/getMatchWinState";
 import { Box, Card } from "@mui/material";
-import { EndsSnackbar } from "./EndsSnackbar";
+import { EndsDialog } from "./EndsDialog";
 import { UmpireToolbar } from "./UmpireToolbar";
+import { InitialEndsDialog } from "./InitialEndsDialog";
 
 export interface UmpireControllerProps extends PlayerNames {
   umpire: Umpire;
@@ -101,9 +102,12 @@ export function UmpireController({
   const [matchState, setMatchState] = useState<MatchState>(
     umpire.getMatchState(),
   );
-
+  const [initialEndsSet, setInitialEndsSet] = useState(false);
   const serverReceiverChoice = matchState.serverReceiverChoice;
-
+  const showInitialEndsDialog =
+    !initialEndsSet &&
+    serverReceiverChoice.servers.length === 0 &&
+    serverReceiverChoice.firstGameDoublesReceivers.length === 0;
   const canScorePoint =
     serverReceiverChoice.servers.length === 0 &&
     serverReceiverChoice.firstGameDoublesReceivers.length === 0 &&
@@ -120,7 +124,13 @@ export function UmpireController({
   };
   return (
     <>
-      <EndsSnackbar
+      {showInitialEndsDialog && (
+        <InitialEndsDialog
+          ok={() => setInitialEndsSet(true)}
+          switchEnds={() => setMatchState(umpire.switchEnds())}
+        />
+      )}
+      <EndsDialog
         isEnds={matchState.isEnds}
         isDoubles={team1Player2Name !== undefined}
       />
@@ -183,11 +193,13 @@ export function UmpireController({
                 const isTeam1 = matchState.team1Left === isLeft;
                 setMatchState(umpire.pointScored(isTeam1));
               }}
-              switchEnds={() => setMatchState(umpire.switchEnds())}
               canResetServerReceiver={matchState.canResetServerReceiver}
-              resetServerReceiver={() =>
-                setMatchState(umpire.resetServerReceiver())
-              }
+              resetServerReceiver={() => {
+                setMatchState(umpire.resetServerReceiver());
+                if (matchState.gameScores.length === 0) {
+                  setInitialEndsSet(false);
+                }
+              }}
             />
           </Box>
         </Card>

@@ -1,7 +1,8 @@
-import { Box, Button, Dialog, DialogTitle } from "@mui/material";
+import { Button, Dialog, Stack } from "@mui/material";
 import DialogContent from "@mui/material/DialogContent";
 import { Player } from "../umpire";
 import { PlayerAndName } from "./mapNames";
+import ServerReceiverEndsDialogTitle from "./ServerReceiverEndsDialogTitle";
 
 export function PlayerChooserDialog({
   playerAndNames,
@@ -14,21 +15,20 @@ export function PlayerChooserDialog({
 }) {
   return (
     <Dialog open>
-      <DialogTitle>{title}</DialogTitle>
+      <ServerReceiverEndsDialogTitle title={title} />
       <DialogContent>
-        {playerAndNames.map((playerAndName) => (
-          <Box key={playerAndName.player} p={1}>
+        <Stack spacing={1}>
+          {playerAndNames.map((playerAndName) => (
             <Button
-              style={{
-                width: "100%",
-              }}
+              key={playerAndName.name}
+              fullWidth
               variant="contained"
               onClick={() => callback(playerAndName.player)}
             >
               {playerAndName.name}
             </Button>
-          </Box>
-        ))}
+          ))}
+        </Stack>
       </DialogContent>
     </Dialog>
   );
