@@ -1,7 +1,17 @@
-import { Box, Card, Divider, IconButton } from "@mui/material";
-import { BatButton } from "./BatButton";
+import { Box, Card, Divider, IconButton, useTheme } from "@mui/material";
+import { BatButton, BatButtonProps } from "./BatButton";
 import ServerReceiverEndsIcon from "../ServerReceiverEndsIcon";
+import { getContrastingPaletteColor } from "./getContrastingPaletteColor";
 
+type CarbonBatButtonProps = Omit<
+  BatButtonProps,
+  "bladeFillColor1" | "bladeFillColor2"
+>;
+function CarbonBatButton(props: CarbonBatButtonProps) {
+  return (
+    <BatButton bladeFillColor1="#3ce86a" bladeFillColor2="#A9A9A9" {...props} />
+  );
+}
 export interface UmpireToolbarProps {
   canScorePoint: boolean;
   scorePoint: (isLeft: boolean) => void;
@@ -11,12 +21,6 @@ export interface UmpireToolbarProps {
   resetServerReceiver: () => void;
 }
 
-const green = "#3ce86a";
-const lightGray = "#D3D3D3";
-const gray = "#808080";
-const darkGray = "#A9A9A9";
-const orangeRed = "#FF4500";
-
 export function UmpireToolbar({
   canUndoPoint,
   undoPoint,
@@ -25,6 +29,25 @@ export function UmpireToolbar({
   canResetServerReceiver,
   resetServerReceiver,
 }: UmpireToolbarProps) {
+  const theme = useTheme();
+  // todo - color cannot be a named color
+  const getRubberFillColor = (enabled: boolean, color: string) => {
+    return enabled ? color : theme.palette.action.disabled;
+  };
+  const contrastingSuccessColor = getContrastingPaletteColor(
+    theme.palette.success,
+    theme.palette.mode === "dark",
+  );
+
+  const contrastingErrorColor = getContrastingPaletteColor(
+    theme.palette.error,
+    theme.palette.mode === "dark",
+  );
+
+  const scoreRubberFillColor = getRubberFillColor(
+    canScorePoint,
+    contrastingSuccessColor,
+  );
   return (
     <Card variant="outlined">
       <Box sx={{ display: "flex", justifyContent: "center" }}>
@@ -37,29 +60,26 @@ export function UmpireToolbar({
       </Box>
       <Divider />
       <div style={{ display: "flex", justifyContent: "space-between" }}>
-        <BatButton
+        <CarbonBatButton
           enabled={canScorePoint}
           clicked={() => scorePoint(true)}
-          rubberFillColor={canScorePoint ? green : lightGray}
-          bladeFillColor1={gray}
-          bladeFillColor2={darkGray}
+          rubberFillColor={scoreRubberFillColor}
         />
 
-        <BatButton
+        <CarbonBatButton
           enabled={canUndoPoint}
           clicked={() => undoPoint()}
-          rubberFillColor={canUndoPoint ? orangeRed : lightGray}
-          bladeFillColor1={gray}
-          bladeFillColor2={darkGray}
+          rubberFillColor={getRubberFillColor(
+            canUndoPoint,
+            contrastingErrorColor,
+          )}
           flip
           showBall={false}
         />
-        <BatButton
+        <CarbonBatButton
           enabled={canScorePoint}
           clicked={() => scorePoint(false)}
-          rubberFillColor={canScorePoint ? green : lightGray}
-          bladeFillColor1={gray}
-          bladeFillColor2={darkGray}
+          rubberFillColor={scoreRubberFillColor}
         />
       </div>
     </Card>

@@ -12,7 +12,7 @@ export default function ServerReceiverEndsIcon() {
         strokeWidth={1.5}
       >
         <line x1={2} x2={2} y1={2} y2={22} />
-        <circle cx="11" cy="12" r="6" fill="white" />
+        <circle cx="11" cy="12" r="6" fill="currentColor" />
         <line x1={20} x2={20} y1={2} y2={22} />
       </svg>
     </SvgIcon>

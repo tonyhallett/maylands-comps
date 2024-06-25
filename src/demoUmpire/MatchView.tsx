@@ -1,6 +1,8 @@
 import { TeamScore } from "../umpire";
 import { TeamView } from "./TeamView";
 import { MatchScore, PointState } from "./MatchScore";
+import { Box } from "@mui/material";
+import { TeamPointsFontSizes } from "./TeamPoints";
 
 export enum LeftRightMatchWinState {
   NotWon = 0,
@@ -29,7 +31,8 @@ export type MatchViewProps = {
   serverName: string;
   receiverName: string;
   remainingServes: number;
-} & ServerReceiverInfo;
+} & ServerReceiverInfo &
+  TeamPointsFontSizes;
 
 function getPointState(
   leftRightMatchWinState: LeftRightMatchWinState,
@@ -74,6 +77,8 @@ export function MatchView({
   leftScore,
   rightScore,
   matchWinState,
+  gamePointFontSize,
+  setPointFontSize,
 }: MatchViewProps) {
   const leftPointState = getPointState(matchWinState, true);
   const rightPointState = getPointState(matchWinState, false);
@@ -89,14 +94,16 @@ export function MatchView({
         rightScore={rightScore}
         leftPointState={leftPointState}
         rightPointState={rightPointState}
+        gamePointFontSize={gamePointFontSize}
+        setPointFontSize={setPointFontSize}
       />
-      <div
-        style={{
-          marginTop: 10,
-          width: "100%",
-        }}
-      >
-        <div style={{ display: "inline-block", width: "50%" }}>
+      <Box mt={1} sx={{ width: "100%" }}>
+        <div
+          style={{
+            display: "inline-block",
+            width: "50%",
+          }}
+        >
           <TeamView
             player1={{
               prefix: getPlayerServerReceiverPrefix({
@@ -146,7 +153,7 @@ export function MatchView({
             }
           />
         </div>
-      </div>
+      </Box>
     </>
   );
 }

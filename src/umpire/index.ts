@@ -131,8 +131,8 @@ export class Umpire {
 
   private isStartOfGame(): boolean {
     return (
-      this._team1Score.points === this.team1StartGameScore &&
-      this._team2Score.points === this.team2StartGameScore
+      this._team1Score.points === this._team1StartGameScore &&
+      this._team2Score.points === this._team2StartGameScore
     );
   }
   private _pointHistory: PointHistory[][] = [[]];
@@ -150,8 +150,14 @@ export class Umpire {
   }
 
   private _gameScores: GameScore[] = [];
-  private team1StartGameScore: number;
-  private team2StartGameScore: number;
+  private _team1StartGameScore: number;
+  private _team2StartGameScore: number;
+  public get team1StartGameScore(): number {
+    return this._team1StartGameScore;
+  }
+  public get team2StartGameScore(): number {
+    return this._team2StartGameScore;
+  }
 
   private _upTo: number;
 
@@ -181,7 +187,9 @@ export class Umpire {
 
   private getPointsScored() {
     const totalPoints = this._team1Score.points + this._team2Score.points;
-    return totalPoints - (this.team1StartGameScore + this.team2StartGameScore);
+    return (
+      totalPoints - (this._team1StartGameScore + this._team2StartGameScore)
+    );
   }
 
   private _remainingServesAtStartOfGame: number = 0;
@@ -212,10 +220,10 @@ export class Umpire {
     private readonly isDoubles: boolean,
     private readonly bestOf: number,
   ) {
-    this.team1StartGameScore = umpireOptions.team1StartGameScore;
-    this.team2StartGameScore = umpireOptions.team2StartGameScore;
-    this._team1Score.points = this.team1StartGameScore;
-    this._team2Score.points = this.team2StartGameScore;
+    this._team1StartGameScore = umpireOptions.team1StartGameScore;
+    this._team2StartGameScore = umpireOptions.team2StartGameScore;
+    this._team1Score.points = this._team1StartGameScore;
+    this._team2Score.points = this._team2StartGameScore;
     this.throwIfNotOdd(bestOf);
     this.throwIfNotMoreThan0(umpireOptions.numServes);
     this.numServes = umpireOptions.numServes;
@@ -257,8 +265,8 @@ export class Umpire {
           team2Points: this.team2Score.points,
           pointsWon:
             this.team1Score.points -
-            this.team1StartGameScore +
-            (this.team2Score.points - this.team2StartGameScore),
+            this._team1StartGameScore +
+            (this.team2Score.points - this._team2StartGameScore),
           alternateServesAt: this._upTo - 1,
           remainingServesAtStartOfGame: this._remainingServesAtStartOfGame,
           numServes: this.numServes,
@@ -311,7 +319,7 @@ export class Umpire {
 
   private setRemainingServesAtStartOfGame(): void {
     const totalStartScores =
-      Math.abs(this.team1StartGameScore) + Math.abs(this.team2StartGameScore);
+      Math.abs(this._team1StartGameScore) + Math.abs(this._team2StartGameScore);
 
     this._remainingServesAtStartOfGame =
       this.numServes - (totalStartScores % this.numServes);
@@ -443,8 +451,8 @@ export class Umpire {
 
   private getMidwayPoints(team1: boolean): number {
     const startGameScore = team1
-      ? this.team1StartGameScore
-      : this.team2StartGameScore;
+      ? this._team1StartGameScore
+      : this._team2StartGameScore;
     const pointsToWin = this._upTo - startGameScore;
     return startGameScore + Math.floor(pointsToWin / 2);
   }
@@ -511,8 +519,8 @@ export class Umpire {
     });
     const teamScore = team1Won ? this._team1Score : this._team2Score;
     teamScore.games += 1;
-    this._team1Score.points = this.team1StartGameScore;
-    this._team2Score.points = this.team2StartGameScore;
+    this._team1Score.points = this._team1StartGameScore;
+    this._team2Score.points = this._team2StartGameScore;
 
     if (teamScore.games !== requiredGamesToWin(this.bestOf)) {
       this.switchEnds();

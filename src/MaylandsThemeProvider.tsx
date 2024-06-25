@@ -17,12 +17,13 @@ const LinkBehavior = forwardRef<
 
 const theme = createTheme({
   palette: {
-    primary: {
+    mode: "dark",
+    /* primary: {
       main: "#271A45",
     },
     secondary: {
       main: "#99CC99",
-    },
+    }, */
   },
   components: {
     MuiLink: {

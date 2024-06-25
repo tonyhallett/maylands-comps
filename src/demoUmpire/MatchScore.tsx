@@ -1,6 +1,6 @@
 import { Card } from "@mui/material";
 import { TeamScore } from "../umpire";
-import { TeamPoints } from "./TeamPoints";
+import { TeamPoints, TeamPointsFontSizes } from "./TeamPoints";
 
 export enum PointState {
   Normal,
@@ -14,7 +14,9 @@ export function MatchScore({
   rightScore,
   leftPointState,
   rightPointState,
-}: {
+  gamePointFontSize,
+  setPointFontSize,
+}: TeamPointsFontSizes & {
   leftScore: TeamScore;
   rightScore: TeamScore;
   leftPointState: PointState;
@@ -27,11 +29,15 @@ export function MatchScore({
           teamScore={leftScore}
           pointState={leftPointState}
           isLeft={true}
+          gamePointFontSize={gamePointFontSize}
+          setPointFontSize={setPointFontSize}
         />
         <TeamPoints
           teamScore={rightScore}
           pointState={rightPointState}
           isLeft={false}
+          gamePointFontSize={gamePointFontSize}
+          setPointFontSize={setPointFontSize}
         />
       </div>
     </Card>

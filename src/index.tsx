@@ -9,6 +9,7 @@ import { Box, CssBaseline, Link, Typography } from "@mui/material";
 import MGLogo from "./MGLogo";
 import DemoSetAndPointTopAlignment from "./fontDemos/DemoSetAndPointTopAlignment";
 import MaylandsThemeProvider from "./MaylandsThemeProvider";
+import DemoScoringCharts from "./demoUmpire/DemoScoringCharts";
 
 const router = createBrowserRouter([
   {
@@ -21,6 +22,9 @@ const router = createBrowserRouter([
           Scoring demo
         </Link>
         <Link href="playerviewdemo">Player view demo</Link>
+        <Link style={{ display: "block" }} href="demoscoringcharts">
+          Demo scoring charts
+        </Link>
       </Box>
     ),
   },
@@ -35,6 +39,10 @@ const router = createBrowserRouter([
   {
     path: "playerviewdemo",
     element: <DemoSetAndPointTopAlignment />,
+  },
+  {
+    path: "demoscoringcharts",
+    element: <DemoScoringCharts />,
   },
 ]);
 

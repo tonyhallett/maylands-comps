@@ -9,7 +9,7 @@ interface BatSVGProps {
   flip?: boolean;
 }
 
-interface BatButtonProps extends BatSVGProps {
+export interface BatButtonProps extends BatSVGProps {
   enabled: boolean;
   clicked: () => void;
 }
@@ -18,7 +18,7 @@ export function BatButton({ enabled, clicked, ...svgProps }: BatButtonProps) {
   return (
     <Box m={1}>
       <IconButton
-        style={{ color: "white" }}
+        /* style={{ color: "white" }} */
         disabled={!enabled}
         onClick={clicked}
       >

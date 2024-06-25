@@ -135,6 +135,10 @@ export function UmpireController({
         isDoubles={team1Player2Name !== undefined}
       />
       <ServersReceiversChooser
+        showTosser={
+          serverReceiverChoice.servers.length > 0 &&
+          matchState.gameScores.length === 0
+        }
         availableReceivers={serverReceiverChoice.firstGameDoublesReceivers}
         availableServers={serverReceiverChoice.servers}
         chosenCallback={(player, isServer) => {
@@ -151,63 +155,78 @@ export function UmpireController({
         team1Player2Name={team1Player2Name}
         team2Player2Name={team2Player2Name}
       />
-      <div style={{ width: 400 }}>
-        <Card variant="outlined">
-          <Box p={1}>
-            <MatchView
-              leftPlayer1Name={
-                matchState.team1Left ? team1Player1Name : team2Player1Name
+      <Card variant="outlined">
+        <Box p={1}>
+          <MatchView
+            leftPlayer1Name={
+              matchState.team1Left ? team1Player1Name : team2Player1Name
+            }
+            leftPlayer2Name={
+              matchState.team1Left ? team1Player2Name : team2Player2Name
+            }
+            rightPlayer1Name={
+              !matchState.team1Left ? team1Player1Name : team2Player1Name
+            }
+            rightPlayer2Name={
+              !matchState.team1Left ? team1Player2Name : team2Player2Name
+            }
+            leftScore={
+              matchState.team1Left
+                ? matchState.team1Score
+                : matchState.team2Score
+            }
+            rightScore={
+              !matchState.team1Left
+                ? matchState.team1Score
+                : matchState.team2Score
+            }
+            matchWinState={getLeftMatchWinState(
+              matchState.matchWinState,
+              matchState.team1Left,
+            )}
+            receiverName={getNameOfServerReceiver(false)}
+            serverName={getNameOfServerReceiver(true)}
+            remainingServes={matchState.remainingServes}
+            gamePointFontSize={40}
+            setPointFontSize={80}
+          />
+          <UmpireToolbar
+            canUndoPoint={matchState.canUndoPoint}
+            undoPoint={() => setMatchState(umpire.undoPoint())}
+            canScorePoint={canScorePoint}
+            scorePoint={(isLeft) => {
+              const isTeam1 = matchState.team1Left === isLeft;
+              setMatchState(umpire.pointScored(isTeam1));
+            }}
+            canResetServerReceiver={matchState.canResetServerReceiver}
+            resetServerReceiver={() => {
+              setMatchState(umpire.resetServerReceiver());
+              if (matchState.gameScores.length === 0) {
+                setInitialEndsSet(false);
               }
-              leftPlayer2Name={
-                matchState.team1Left ? team1Player2Name : team2Player2Name
-              }
-              rightPlayer1Name={
-                !matchState.team1Left ? team1Player1Name : team2Player1Name
-              }
-              rightPlayer2Name={
-                !matchState.team1Left ? team1Player2Name : team2Player2Name
-              }
-              leftScore={
-                matchState.team1Left
-                  ? matchState.team1Score
-                  : matchState.team2Score
-              }
-              rightScore={
-                !matchState.team1Left
-                  ? matchState.team1Score
-                  : matchState.team2Score
-              }
-              matchWinState={getLeftMatchWinState(
-                matchState.matchWinState,
-                matchState.team1Left,
-              )}
-              receiverName={getNameOfServerReceiver(false)}
-              serverName={getNameOfServerReceiver(true)}
-              remainingServes={matchState.remainingServes}
-            />
-            <UmpireToolbar
-              canUndoPoint={matchState.canUndoPoint}
-              undoPoint={() => setMatchState(umpire.undoPoint())}
-              canScorePoint={canScorePoint}
-              scorePoint={(isLeft) => {
-                const isTeam1 = matchState.team1Left === isLeft;
-                setMatchState(umpire.pointScored(isTeam1));
-              }}
-              canResetServerReceiver={matchState.canResetServerReceiver}
-              resetServerReceiver={() => {
-                setMatchState(umpire.resetServerReceiver());
-                if (matchState.gameScores.length === 0) {
-                  setInitialEndsSet(false);
-                }
-              }}
-            />
-          </Box>
-        </Card>
-        <HistoryView
-          team1Left={matchState.team1Left}
-          gameScores={matchState.gameScores}
-        />
-      </div>
+            }}
+          />
+        </Box>
+      </Card>
+      <HistoryView
+        team1StartScore={umpire.team1StartGameScore}
+        team2StartScore={umpire.team2StartGameScore}
+        gameWon={gameWon(matchState.matchWinState)}
+        currentGameScore={{
+          team1Points: matchState.team1Score.points,
+          team2Points: matchState.team2Score.points,
+        }}
+        team1Left={matchState.team1Left}
+        gameScores={matchState.gameScores}
+        pointHistory={matchState.pointHistory}
+      />
     </>
+  );
+}
+
+function gameWon(matchWinState: MatchWinState) {
+  return (
+    matchWinState === MatchWinState.Team1Won ||
+    matchWinState === MatchWinState.Team2Won
   );
 }
