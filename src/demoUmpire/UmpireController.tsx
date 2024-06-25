@@ -187,8 +187,8 @@ export function UmpireController({
             receiverName={getNameOfServerReceiver(false)}
             serverName={getNameOfServerReceiver(true)}
             remainingServes={matchState.remainingServes}
-            gamePointFontSize={40}
-            setPointFontSize={80}
+            gamePointFontSize={80}
+            setPointFontSize={40}
           />
           <UmpireToolbar
             canUndoPoint={matchState.canUndoPoint}
