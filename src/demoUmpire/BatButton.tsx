@@ -18,7 +18,7 @@ export function BatButton({ enabled, clicked, ...svgProps }: BatButtonProps) {
   return (
     <Box m={1}>
       <IconButton
-        /* style={{ color: "white" }} */
+        sx={{ border: 1, borderRadius: 1 }}
         disabled={!enabled}
         onClick={clicked}
       >

@@ -1,17 +1,19 @@
-import { Box, Card, Divider, IconButton, useTheme } from "@mui/material";
-import { BatButton, BatButtonProps } from "./BatButton";
+import {
+  Box,
+  Card,
+  Divider,
+  IconButton,
+  Popover,
+  Typography,
+  useTheme,
+} from "@mui/material";
 import ServerReceiverEndsIcon from "../ServerReceiverEndsIcon";
 import { getContrastingPaletteColor } from "./getContrastingPaletteColor";
+import RuleIcon from "@mui/icons-material/Rule";
+import { useState } from "react";
+import { MatchOptions } from "../umpire";
+import { CarbonBatButton } from "./CarbonBatButton";
 
-type CarbonBatButtonProps = Omit<
-  BatButtonProps,
-  "bladeFillColor1" | "bladeFillColor2"
->;
-function CarbonBatButton(props: CarbonBatButtonProps) {
-  return (
-    <BatButton bladeFillColor1="#3ce86a" bladeFillColor2="#A9A9A9" {...props} />
-  );
-}
 export interface UmpireToolbarProps {
   canScorePoint: boolean;
   scorePoint: (isLeft: boolean) => void;
@@ -19,6 +21,23 @@ export interface UmpireToolbarProps {
   undoPoint: () => void;
   canResetServerReceiver: boolean;
   resetServerReceiver: () => void;
+  rules: RulesViewProps;
+}
+
+type RulesViewProps = Omit<
+  MatchOptions,
+  "team1StartGameScore" | "team2StartGameScore"
+>;
+function RulesView({ clearBy2, numServes, upTo, bestOf }: RulesViewProps) {
+  const clearBy = clearBy2 ? 2 : 1;
+  return (
+    <Box p={1} border={1} borderRadius={1}>
+      <Typography>{`Best of ${bestOf}`}</Typography>
+      <Typography>{`Up to ${upTo}`}</Typography>
+      <Typography>{`${numServes} serves`}</Typography>
+      <Typography>{`Clear by ${clearBy}`}</Typography>
+    </Box>
+  );
 }
 
 export function UmpireToolbar({
@@ -28,8 +47,20 @@ export function UmpireToolbar({
   scorePoint,
   canResetServerReceiver,
   resetServerReceiver,
+  rules,
 }: UmpireToolbarProps) {
   const theme = useTheme();
+  const [anchorEl, setAnchorEl] = useState<HTMLButtonElement | null>(null);
+
+  const rulesClicked = (event: React.MouseEvent<HTMLButtonElement>) => {
+    setAnchorEl(event.currentTarget);
+  };
+
+  const rulesPopoverClosed = () => {
+    setAnchorEl(null);
+  };
+
+  const open = Boolean(anchorEl);
   // todo - color cannot be a named color
   const getRubberFillColor = (enabled: boolean, color: string) => {
     return enabled ? color : theme.palette.action.disabled;
@@ -49,39 +80,59 @@ export function UmpireToolbar({
     contrastingSuccessColor,
   );
   return (
-    <Card variant="outlined">
-      <Box sx={{ display: "flex", justifyContent: "center" }}>
-        <IconButton
-          disabled={!canResetServerReceiver}
-          onClick={() => resetServerReceiver()}
-        >
-          <ServerReceiverEndsIcon />
-        </IconButton>
-      </Box>
-      <Divider />
-      <div style={{ display: "flex", justifyContent: "space-between" }}>
-        <CarbonBatButton
-          enabled={canScorePoint}
-          clicked={() => scorePoint(true)}
-          rubberFillColor={scoreRubberFillColor}
-        />
+    <>
+      <Popover
+        open={open}
+        anchorEl={anchorEl}
+        onClose={rulesPopoverClosed}
+        anchorOrigin={{
+          vertical: "bottom",
+          horizontal: "left",
+        }}
+      >
+        <RulesView {...rules} />
+      </Popover>
+      <Card variant="outlined">
+        <Box sx={{ display: "flex", justifyContent: "center" }}>
+          <IconButton
+            sx={{ border: 1, borderRadius: 1, m: 1 }}
+            disabled={!canResetServerReceiver}
+            onClick={() => resetServerReceiver()}
+          >
+            <ServerReceiverEndsIcon />
+          </IconButton>
+          <IconButton
+            sx={{ border: 1, borderRadius: 1, m: 1 }}
+            onClick={rulesClicked}
+          >
+            <RuleIcon />
+          </IconButton>
+        </Box>
+        <Divider />
+        <div style={{ display: "flex", justifyContent: "space-between" }}>
+          <CarbonBatButton
+            enabled={canScorePoint}
+            clicked={() => scorePoint(true)}
+            rubberFillColor={scoreRubberFillColor}
+          />
 
-        <CarbonBatButton
-          enabled={canUndoPoint}
-          clicked={() => undoPoint()}
-          rubberFillColor={getRubberFillColor(
-            canUndoPoint,
-            contrastingErrorColor,
-          )}
-          flip
-          showBall={false}
-        />
-        <CarbonBatButton
-          enabled={canScorePoint}
-          clicked={() => scorePoint(false)}
-          rubberFillColor={scoreRubberFillColor}
-        />
-      </div>
-    </Card>
+          <CarbonBatButton
+            enabled={canUndoPoint}
+            clicked={() => undoPoint()}
+            rubberFillColor={getRubberFillColor(
+              canUndoPoint,
+              contrastingErrorColor,
+            )}
+            flip
+            showBall={false}
+          />
+          <CarbonBatButton
+            enabled={canScorePoint}
+            clicked={() => scorePoint(false)}
+            rubberFillColor={scoreRubberFillColor}
+          />
+        </div>
+      </Card>
+    </>
   );
 }

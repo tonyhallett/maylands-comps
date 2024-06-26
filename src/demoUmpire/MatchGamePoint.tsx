@@ -6,10 +6,12 @@ export function MatchGamePoint({
   point,
   pointState,
   fontSize,
+  isRight,
 }: {
   point: number;
   pointState: PointState;
   fontSize: number;
+  isRight: boolean;
 }) {
   const theme = useTheme();
   const isGameOrMatchPoint =
@@ -21,6 +23,11 @@ export function MatchGamePoint({
         theme.palette.mode === "dark",
       )
     : undefined;
+  let rightNegative = "";
+  if (isRight && point < 0) {
+    point = Math.abs(point);
+    rightNegative = "-";
+  }
   return (
     <span
       style={{
@@ -30,6 +37,7 @@ export function MatchGamePoint({
       }}
     >
       {point}
+      {rightNegative}
     </span>
   );
 }

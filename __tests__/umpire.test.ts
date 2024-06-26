@@ -44,9 +44,9 @@ describe("umpiring", () => {
         numServes: 2,
         team1StartGameScore: 0,
         team2StartGameScore: 0,
+        bestOf,
       },
       false,
-      bestOf,
     );
   const getNormalSinglesBestOf5Umpire = () =>
     new Umpire(
@@ -56,9 +56,9 @@ describe("umpiring", () => {
         numServes: 2,
         team1StartGameScore: 0,
         team2StartGameScore: 0,
+        bestOf: 5,
       },
       false,
-      5,
     );
 
   const getNormalDoublesBestOf5Umpire = () =>
@@ -69,9 +69,9 @@ describe("umpiring", () => {
         numServes: 2,
         team1StartGameScore: 0,
         team2StartGameScore: 0,
+        bestOf: 5,
       },
       true,
-      5,
     );
   const getHardbatSinglesUmpire = (bestOf = 3) => {
     return new Umpire(
@@ -81,9 +81,9 @@ describe("umpiring", () => {
         numServes: 5,
         team1StartGameScore: 0,
         team2StartGameScore: 0,
+        bestOf,
       },
       false,
-      bestOf,
     );
   };
 
@@ -105,9 +105,9 @@ describe("umpiring", () => {
           numServes: 2,
           team1StartGameScore: -1,
           team2StartGameScore: -2,
+          bestOf: 3,
         },
         false,
-        3,
       ).getMatchState();
 
       expect(matchState.team1Score).toStrictEqual<TeamScore>({
@@ -493,9 +493,9 @@ describe("umpiring", () => {
           numServes: 2,
           team1StartGameScore: -1,
           team2StartGameScore: -2,
+          bestOf: 3,
         },
         false,
-        3,
       );
 
       umpire.pointScored(true);
@@ -1159,9 +1159,9 @@ describe("umpiring", () => {
             numServes: 2,
             team1StartGameScore: 10,
             team2StartGameScore: 20,
+            bestOf: 3,
           },
           false,
-          3,
         );
 
         scorePoints(umpire, true, 21);
@@ -1970,9 +1970,9 @@ describe("umpiring", () => {
               numServes,
               team1StartGameScore,
               team2StartGameScore,
+              bestOf: 5,
             },
             false,
-            5,
           );
           expect(umpire.getMatchState().remainingServes).toBe(
             expectedRemainingServes,
@@ -2123,9 +2123,9 @@ describe("umpiring", () => {
               numServes,
               team1StartGameScore: 0,
               team2StartGameScore: 0,
+              bestOf: 5,
             },
             false,
-            5,
           );
 
           umpire.setServer("Team1Player1");
@@ -2144,9 +2144,9 @@ describe("umpiring", () => {
             numServes: 2,
             team1StartGameScore: 0,
             team2StartGameScore: 0,
+            bestOf: 5,
           },
           false,
-          5,
         );
 
         umpire.setServer("Team1Player1");
@@ -2167,9 +2167,9 @@ describe("umpiring", () => {
               numServes,
               team1StartGameScore: 0,
               team2StartGameScore: 0,
+              bestOf: 5,
             },
             false,
-            5,
           );
 
           const expectInitial = () => {
@@ -2285,9 +2285,9 @@ describe("umpiring", () => {
                 numServes,
                 team1StartGameScore,
                 team2StartGameScore,
+                bestOf: 5,
               },
               false,
-              5,
             );
 
             const matchState = scoreGames(
@@ -2370,9 +2370,14 @@ describe("umpiring", () => {
     });
 
     it("should have undefined server and receiver when match won", () => {
-      const umpire = getNormalSinglesBestOf5Umpire();
+      const umpire = getNormalDoublesBestOf5Umpire();
       umpire.setServer("Team1Player1");
-      const matchState = scoreGames(umpire, true, 3);
+      umpire.setFirstGameDoublesReceiver("Team2Player1");
+      scoreGames(umpire, true, 1);
+      umpire.setServer("Team2Player1");
+      scoreGames(umpire, true, 1);
+      umpire.setServer("Team1Player1");
+      const matchState = scoreGames(umpire, true, 1);
 
       const serviceReceiverChoice = matchState.serverReceiverChoice;
       expect(serviceReceiverChoice.servers).toHaveLength(0);

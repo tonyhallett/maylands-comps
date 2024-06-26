@@ -43,12 +43,16 @@ export interface GameScore {
   team2Points: number;
 }
 
-interface CompetitionOptions {
-  team1StartGameScore: number;
-  team2StartGameScore: number;
+export interface CompetitionRules {
   upTo: number;
   clearBy2: boolean;
   numServes: number;
+}
+
+export interface MatchOptions extends CompetitionRules {
+  team1StartGameScore: number;
+  team2StartGameScore: number;
+  bestOf: number;
 }
 
 enum GameWonState {
@@ -142,7 +146,7 @@ export class Umpire {
       {
         bestOf: this.bestOf,
         upTo: this._upTo,
-        clearBy2: this.clearBy2,
+        clearBy2: this._clearBy2,
       },
       this._team1Score,
       this._team2Score,
@@ -160,6 +164,9 @@ export class Umpire {
   }
 
   private _upTo: number;
+  public get upTo() {
+    return this._upTo;
+  }
 
   private initialServersDoublesReceiver: InitialServersDoublesReceiver = {
     gameInitialServers: [],
@@ -202,34 +209,41 @@ export class Umpire {
       return this._remainingServesAtStartOfGame - pointsScored;
     }
     if (pointsScored === this._remainingServesAtStartOfGame) {
-      return this.numServes;
+      return this._numServes;
     }
     const pointsScoredAfterInitialServer =
       pointsScored - this._remainingServesAtStartOfGame;
-    return this.numServes - (pointsScoredAfterInitialServer % this.numServes);
+    return this._numServes - (pointsScoredAfterInitialServer % this._numServes);
   }
-  private numServes: number;
+  private _numServes: number;
+  public get numServes() {
+    return this._numServes;
+  }
   private dateProvider: () => Date = () => new Date();
 
-  private clearBy2: boolean;
+  private _clearBy2: boolean;
+  public get clearBy2() {
+    return this._clearBy2;
+  }
   private team1MidwayPoints: number;
   private team2MidwayPoints: number;
   private doublesEndsPointsScored: DoublesEndPointsScored | undefined;
+  public readonly bestOf: number;
   constructor(
-    umpireOptions: CompetitionOptions,
+    matchOptions: MatchOptions,
     private readonly isDoubles: boolean,
-    private readonly bestOf: number,
   ) {
-    this._team1StartGameScore = umpireOptions.team1StartGameScore;
-    this._team2StartGameScore = umpireOptions.team2StartGameScore;
+    this._team1StartGameScore = matchOptions.team1StartGameScore;
+    this._team2StartGameScore = matchOptions.team2StartGameScore;
     this._team1Score.points = this._team1StartGameScore;
     this._team2Score.points = this._team2StartGameScore;
-    this.throwIfNotOdd(bestOf);
-    this.throwIfNotMoreThan0(umpireOptions.numServes);
-    this.numServes = umpireOptions.numServes;
+    this.bestOf = matchOptions.bestOf;
+    this.throwIfNotOdd(this.bestOf);
+    this.throwIfNotMoreThan0(matchOptions.numServes);
+    this._numServes = matchOptions.numServes;
     this.setRemainingServesAtStartOfGame();
-    this._upTo = umpireOptions.upTo;
-    this.clearBy2 = umpireOptions.clearBy2;
+    this._upTo = matchOptions.upTo;
+    this._clearBy2 = matchOptions.clearBy2;
     this.team1MidwayPoints = this.getMidwayPoints(true);
     this.team2MidwayPoints = this.getMidwayPoints(false);
     this.doublesEndsPointsScored = this.isDoubles ? "NotEnds" : undefined;
@@ -269,7 +283,7 @@ export class Umpire {
             (this.team2Score.points - this._team2StartGameScore),
           alternateServesAt: this._upTo - 1,
           remainingServesAtStartOfGame: this._remainingServesAtStartOfGame,
-          numServes: this.numServes,
+          numServes: this._numServes,
         });
       }
     }
@@ -285,7 +299,17 @@ export class Umpire {
 
   public getMatchState(): MatchState {
     const matchWinState = this.matchWinState;
-    const serverReceiverChoice = this.serverReceiverChoice;
+    const matchWon = this.matchWon(matchWinState);
+    let serverReceiverChoice: ServerReceiverChoice;
+    if (matchWon) {
+      serverReceiverChoice = {
+        servers: [],
+        firstGameDoublesReceivers: [],
+      };
+    } else {
+      serverReceiverChoice = this.serverReceiverChoice;
+    }
+
     const remainingServes = this.remainingServes;
 
     const lastGamePointHistory = this.getLastGamePointHistory();
@@ -322,7 +346,7 @@ export class Umpire {
       Math.abs(this._team1StartGameScore) + Math.abs(this._team2StartGameScore);
 
     this._remainingServesAtStartOfGame =
-      this.numServes - (totalStartScores % this.numServes);
+      this._numServes - (totalStartScores % this._numServes);
   }
 
   private throwIfNotMoreThan0(numServes: number): void {
@@ -505,7 +529,7 @@ export class Umpire {
     const pointsDifference = Math.abs(
       this._team1Score.points - this._team2Score.points,
     );
-    const clearBy = this.clearBy2 ? 2 : 1;
+    const clearBy = this._clearBy2 ? 2 : 1;
     if (pointsDifference < clearBy) {
       return GameWonState.NotWon;
     }

@@ -1,29 +1,19 @@
-import { Umpire } from "../umpire";
+import { MatchOptions, Umpire } from "../umpire";
 import { PlayerNames } from ".";
 import { UmpireController } from "./UmpireController";
-import { Typography } from "@mui/material";
 
-export interface MatchOptions extends PlayerNames {
-  upTo: number;
-  bestOf: number;
+export interface UmpireManagerOptions extends PlayerNames, MatchOptions {
   team1StartGameScore: number;
   team2StartGameScore: number;
-
-  numServes: number;
-  competitionDescription: string;
-  isDoubles: boolean;
-  clearBy2: boolean;
 }
-export function UmpireManager(props: { options: MatchOptions }) {
+export function UmpireManager(props: { options: UmpireManagerOptions }) {
   const {
     bestOf,
-    isDoubles,
     clearBy2,
     numServes,
     upTo,
     team1StartGameScore,
     team2StartGameScore,
-    competitionDescription,
     ...playerNames
   } = props.options;
   const umpire = new Umpire(
@@ -33,15 +23,10 @@ export function UmpireManager(props: { options: MatchOptions }) {
       upTo,
       team1StartGameScore,
       team2StartGameScore,
+      bestOf,
     },
-    isDoubles,
-    bestOf,
+    playerNames.team1Player2Name !== undefined,
   );
 
-  return (
-    <div>
-      <Typography variant="h5">{competitionDescription}</Typography>
-      <UmpireController umpire={umpire} {...playerNames} />
-    </div>
-  );
+  return <UmpireController umpire={umpire} {...playerNames} />;
 }

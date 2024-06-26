@@ -21,6 +21,7 @@ export function TeamPoints({
 }) {
   const gamePoint = (
     <MatchGamePoint
+      isRight={!isLeft}
       fontSize={gamePointFontSize}
       point={teamScore.points}
       pointState={pointState}

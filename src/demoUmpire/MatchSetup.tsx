@@ -1,13 +1,20 @@
 import { SetStateAction, useState } from "react";
 import { HandicapOptions, shiftHandicap } from "../umpire/shiftHandicap";
-import { MatchOptions } from "./UmpireManager";
+import { UmpireManagerOptions } from "./UmpireManager";
 import Select from "@mui/material/Select";
 import MenuItem from "@mui/material/MenuItem";
 import InputLabel from "@mui/material/InputLabel";
 import FormControl from "@mui/material/FormControl";
-import { Checkbox, FormControlLabel, IconButton } from "@mui/material";
+import {
+  Checkbox,
+  FormControlLabel,
+  IconButton,
+  useTheme,
+} from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
 import RemoveIcon from "@mui/icons-material/Remove";
+import { CarbonBatButton } from "./CarbonBatButton";
+import { getContrastingPaletteColor } from "./getContrastingPaletteColor";
 
 export interface HandicapOption {
   handicap: number;
@@ -19,22 +26,10 @@ export interface BestOfOption {
   canDecrement: boolean;
 }
 
-function getCompetitionDescriptionSuffix(
-  isDoubles: boolean,
-  upTo: number,
-  clearBy2: boolean,
-  bestOf: number,
-  numServes: number,
-) {
-  const singlesOrDoubles = isDoubles ? "Doubles" : "Singles";
-  const clearByDescription = clearBy2 ? "" : " ( not 2 difference )";
-  return `${singlesOrDoubles}, Best of ${bestOf}, Up to ${upTo}${clearByDescription}, ${numServes} serves`;
-}
-
 export function MatchSetup({
   setMatchOptions,
 }: {
-  setMatchOptions: (matchOptions: MatchOptions) => void;
+  setMatchOptions: (matchOptions: UmpireManagerOptions) => void;
 }) {
   const [handicap1, setHandicap1] = useState<HandicapOption>({
     cannotIncrement: false,
@@ -52,6 +47,11 @@ export function MatchSetup({
     bestOf: 3,
     canDecrement: true,
   });
+  const theme = useTheme();
+  const contrastingSuccessColor = getContrastingPaletteColor(
+    theme.palette.success,
+    theme.palette.mode === "dark",
+  );
 
   const changeHandicap = (
     increment: boolean,
@@ -189,25 +189,23 @@ export function MatchSetup({
           <RemoveIcon />
         </IconButton>
       </label>
-      <IconButton
-        style={{ margin: "0 auto", display: "block", color: "white" }}
-        onClick={() => {
+      <CarbonBatButton
+        rubberFillColor={contrastingSuccessColor}
+        enabled
+        clicked={() => {
           // todo - different sub type
-          const newMatchOptions: MatchOptions = {
+          const newMatchOptions: UmpireManagerOptions = {
             bestOf: bestOfOption.bestOf,
             upTo: 11,
             team1StartGameScore: 0,
             team2StartGameScore: 0,
             numServes: 2,
-            competitionDescription: "",
-            isDoubles,
             team1Player1Name: "A Bonnici",
             team2Player1Name: "T Hallett",
             team1Player2Name: isDoubles ? "D Brown" : undefined,
             team2Player2Name: isDoubles ? "R Hucker" : undefined,
             clearBy2: false,
           };
-          let prefix = "";
           switch (selectedComp) {
             case "handicap":
               // eslint-disable-next-line no-case-declarations
@@ -225,33 +223,18 @@ export function MatchSetup({
               newMatchOptions.team2StartGameScore =
                 handicapOptions.team2Handicap;
               newMatchOptions.numServes = 5;
-              prefix = "Handicap";
-
               break;
             case "hardbat":
               newMatchOptions.upTo = 15;
               newMatchOptions.numServes = 5;
-              prefix = "Hardbat";
               break;
             case "normal":
               newMatchOptions.clearBy2 = true;
           }
-          const suffix = getCompetitionDescriptionSuffix(
-            isDoubles,
-            newMatchOptions.upTo,
-            newMatchOptions.clearBy2,
-            newMatchOptions.bestOf,
-            newMatchOptions.numServes,
-          );
-          newMatchOptions.competitionDescription =
-            prefix === "" ? suffix : `${prefix} ${suffix}`;
+
           setMatchOptions(newMatchOptions);
         }}
-      >
-        <div style={{ fontSize: 24, fontFamily: "Noto Color Emoji variant0" }}>
-          🏓
-        </div>
-      </IconButton>
+      />
     </div>
   );
 }

@@ -205,6 +205,12 @@ export function UmpireController({
                 setInitialEndsSet(false);
               }
             }}
+            rules={{
+              bestOf: umpire.bestOf,
+              clearBy2: umpire.clearBy2,
+              upTo: umpire.upTo,
+              numServes: umpire.numServes,
+            }}
           />
         </Box>
       </Card>

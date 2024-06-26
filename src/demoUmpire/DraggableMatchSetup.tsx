@@ -1,12 +1,12 @@
 import { MatchSetup } from "./MatchSetup";
-import { MatchOptions } from "./UmpireManager";
+import { UmpireManagerOptions } from "./UmpireManager";
 import { CardContent } from "@mui/material";
 import { DraggableCard } from "./DraggableCard";
 
 export default function DraggableMatchSetup({
   setMatchOptions,
 }: {
-  setMatchOptions: (matchOptions: MatchOptions) => void;
+  setMatchOptions: (matchOptions: UmpireManagerOptions) => void;
 }) {
   return (
     <DraggableCard
