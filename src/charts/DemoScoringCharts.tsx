@@ -1,8 +1,16 @@
 import Box from "@mui/material/Box/Box";
 import Button from "@mui/material/Button/Button";
-import { MarkElement, ShowMarkParams } from "@mui/x-charts";
-import { LineChart, MarkElementProps } from "@mui/x-charts/LineChart";
+import { ShowMarkParams } from "@mui/x-charts";
 import { useRef, useState } from "react";
+import { SmarterLineChart } from "./SmarterLineChart";
+import { ParallelXAxisLine } from "../demoUmpire/ParallelXAxisLine";
+import { SmarterMarkElementSlotProps } from "./SmarterMarkElement";
+import { fillArrayWithIndices } from "../demoUmpire/fillArray";
+import { FormControlLabel, Switch } from "@mui/material";
+import {
+  SeriesValueFormatter,
+  SeriesValueFormatterContext,
+} from "@mui/x-charts/internals";
 
 enum ScoreState {
   Normal = 0,
@@ -24,21 +32,6 @@ function HasNotScored11(scores: Score[]) {
   if (scores.length === 0) return true;
   const lastScore = scores[scores.length - 1];
   return lastScore.team1 < 11 && lastScore.team2 < 11;
-}
-
-interface SmarterMarkElementSlotProps {
-  getColor?: (seriesId, dataIndex: number) => MarkElementProps["color"];
-  getShape?: (seriesId, dataIndex: number) => MarkElementProps["shape"];
-}
-interface SmarterMarkElementProps
-  extends MarkElementProps,
-    SmarterMarkElementSlotProps {}
-export function SmarterMarkElement(props: SmarterMarkElementProps) {
-  const { getColor, getShape, ...rest } = props;
-  const color = getColor?.(props.id, props.dataIndex) ?? props.color;
-  const shape = getShape?.(props.id, props.dataIndex) ?? props.shape;
-
-  return <MarkElement {...rest} color={color} shape={shape} />;
 }
 
 const teamStartScores: Score = {
@@ -63,12 +56,11 @@ const getScoreState = (
 
   return ScoreState.Normal;
 };
+
 export default function DemoScoringCharts() {
   const scoreRef = useRef<Score>(teamStartScores);
-  const [scores, setScores] = useState<Score[]>([
-    /* { team1: 0, team2: 0 } */
-  ]);
-
+  const [scores, setScores] = useState<Score[]>([]);
+  const [reversed, setReversed] = useState(true);
   // will want to mark server / receiver ?
   function pointScored(team1: boolean) {
     const score = scoreRef.current;
@@ -117,18 +109,34 @@ export default function DemoScoringCharts() {
     },
   };
 
+  const atOrPastGamePoint =
+    scoreRef.current.team1 >= 10 || scoreRef.current.team2 >= 10;
+
+  const toolTipSeriesValueFormatter: SeriesValueFormatter<number> = (
+    value: number,
+    dataIndex: SeriesValueFormatterContext,
+  ) => {
+    dataIndex.dataIndex;
+    const score = chartScores[dataIndex.dataIndex];
+    return `${score.team1} - ${score.team2}`;
+  };
   return (
     <div>
       <Button onClick={() => pointScored(true)}>Team 1</Button>
       <Button onClick={() => [pointScored(false)]}>Team 2</Button>
+      <FormControlLabel
+        control={
+          <Switch checked={reversed} onChange={() => setReversed(!reversed)} />
+        }
+        label="Reverse"
+      />
       <Box sx={{ width: "100%", height: 400 }}>
-        <LineChart
-          slots={{
-            mark: SmarterMarkElement,
-          }}
+        <SmarterLineChart
           slotProps={{
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            mark: smarterMarkElementProps as any,
+            mark: smarterMarkElementProps,
+          }}
+          tooltip={{
+            trigger: "item",
           }}
           yAxis={
             HasNotScored11(scores)
@@ -144,34 +152,55 @@ export default function DemoScoringCharts() {
             {
               id: "x-axis",
               scaleType: "point",
-              data: fillArrayWithIndexes(chartScores.length),
-              valueFormatter: () => "",
-              disableTicks: true,
+              data: fillArrayWithIndices(chartScores.length),
+              label: "Points scored",
+              reverse: reversed,
             },
           ]}
           series={[
             {
+              id: "Team1",
               data: chartScores.map((score) =>
                 score === undefined ? undefined : score.team1,
               ),
-              label: "Team 1",
               curve: "linear",
               showMark(showMarkParams) {
                 return showMarkIfScored(true, showMarkParams);
               },
+              valueFormatter: toolTipSeriesValueFormatter,
+              label(location) {
+                if (location === "legend") {
+                  return "Team 1";
+                }
+                return "Team 1 Won Point";
+              },
             },
             {
+              id: "Team2",
               data: chartScores.map((score) =>
                 score === undefined ? undefined : score.team2,
               ),
-              label: "Team 2",
+              label(location) {
+                if (location === "legend") {
+                  return "Team 2";
+                }
+                return "Team 2 Won Point";
+              },
               curve: "linear",
               showMark(showMarkParams) {
                 return showMarkIfScored(false, showMarkParams);
               },
+              valueFormatter: toolTipSeriesValueFormatter,
             },
           ]}
-        />
+        >
+          <ParallelXAxisLine
+            y={10}
+            stroke={atOrPastGamePoint ? "red" : "white"}
+            strokeWidth={1}
+            strokeDasharray={"5 15"}
+          />
+        </SmarterLineChart>
       </Box>
     </div>
   );
@@ -184,15 +213,4 @@ function getAtLeast11Scores(scores: Score[]) {
     scores.push(undefined);
   }
   return scores;
-}
-
-function fillArrayWithIndexes(numItems: number) {
-  return fillArray(numItems, (i) => i);
-}
-
-function fillArray<T>(
-  numItems: number,
-  valueProvider: (index: number) => T,
-): T[] {
-  return new Array(numItems).fill(0).map((_, i) => valueProvider(i));
 }

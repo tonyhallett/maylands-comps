@@ -9,7 +9,7 @@ import { Box, CssBaseline, Link, Typography } from "@mui/material";
 import MGLogo from "./MGLogo";
 import DemoSetAndPointTopAlignment from "./fontDemos/DemoSetAndPointTopAlignment";
 import MaylandsThemeProvider from "./MaylandsThemeProvider";
-import DemoScoringCharts from "./demoUmpire/DemoScoringCharts";
+import DemoScoringCharts from "./charts/DemoScoringCharts";
 
 const router = createBrowserRouter([
   {
