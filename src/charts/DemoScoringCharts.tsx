@@ -1,16 +1,27 @@
 import Box from "@mui/material/Box/Box";
 import Button from "@mui/material/Button/Button";
-import { ShowMarkParams } from "@mui/x-charts";
+import {
+  ChartsAxisContentProps,
+  ShowMarkParams,
+  mangoFusionPalette,
+} from "@mui/x-charts";
 import { useRef, useState } from "react";
 import { SmarterLineChart } from "./SmarterLineChart";
 import { ParallelXAxisLine } from "../demoUmpire/ParallelXAxisLine";
 import { SmarterMarkElementSlotProps } from "./SmarterMarkElement";
 import { fillArrayWithIndices } from "../demoUmpire/fillArray";
-import { FormControlLabel, Switch } from "@mui/material";
-import {
-  SeriesValueFormatter,
-  SeriesValueFormatterContext,
-} from "@mui/x-charts/internals";
+import { FormControlLabel, Switch, Typography, styled } from "@mui/material";
+
+export const ChartsTooltipPaper = styled("div", {
+  name: "MuiChartsTooltip",
+  slot: "Container",
+})(({ theme }) => ({
+  boxShadow: theme.shadows[1],
+  backgroundColor: theme.palette.background.paper,
+  color: theme.palette.text.primary,
+  transition: theme.transitions.create("box-shadow"),
+  borderRadius: theme.shape.borderRadius,
+}));
 
 enum ScoreState {
   Normal = 0,
@@ -56,6 +67,45 @@ const getScoreState = (
 
   return ScoreState.Normal;
 };
+
+interface CustomChartAxisTooltipContentData {
+  points: Points;
+}
+// remember that want to show nothing when undefined scores ( are nulls different )
+interface CustomChartAxisTooltipContentPropsFromSlots {
+  getData: (dataIndex: number) => CustomChartAxisTooltipContentData;
+}
+interface CustomChartAxisTooltipContentProps
+  extends ChartsAxisContentProps,
+    CustomChartAxisTooltipContentPropsFromSlots {}
+interface CustomChartAxisTooltipContentSlotProps
+  extends CustomChartAxisTooltipContentPropsFromSlots,
+    Partial<ChartsAxisContentProps> {}
+export function CustomChartAxisTooltipContent({
+  series,
+  dataIndex,
+  getData,
+  classes,
+  sx,
+}: CustomChartAxisTooltipContentProps) {
+  const data = getData(dataIndex);
+  if (data.points === undefined) return null;
+  // know team1 is first
+  const colors = series.map((series) => series.color);
+  return (
+    <Box p={1}>
+      <ChartsTooltipPaper sx={sx} className={classes.root}>
+        <Typography display="inline" color={colors[0]}>
+          {data.points.team1}
+        </Typography>
+        <Typography display="inline"> - </Typography>
+        <Typography display="inline" color={colors[1]}>
+          {data.points.team2}
+        </Typography>
+      </ChartsTooltipPaper>
+    </Box>
+  );
+}
 
 export default function DemoScoringCharts() {
   const scoreRef = useRef<Score>(teamStartScores);
@@ -104,7 +154,7 @@ export default function DemoScoringCharts() {
     getShape(seriesId, dataIndex) {
       const chartScore = chartScores[dataIndex];
       if (chartScore.scoreState === ScoreState.GameWon) {
-        return "star";
+        return "wye";
       }
     },
   };
@@ -112,14 +162,14 @@ export default function DemoScoringCharts() {
   const atOrPastGamePoint =
     scoreRef.current.team1 >= 10 || scoreRef.current.team2 >= 10;
 
-  const toolTipSeriesValueFormatter: SeriesValueFormatter<number> = (
-    value: number,
-    dataIndex: SeriesValueFormatterContext,
-  ) => {
-    dataIndex.dataIndex;
-    const score = chartScores[dataIndex.dataIndex];
-    return `${score.team1} - ${score.team2}`;
-  };
+  const customChartAxisTooltipContentSlotProps: CustomChartAxisTooltipContentSlotProps =
+    {
+      getData(dataIndex) {
+        return {
+          points: chartScores[dataIndex],
+        };
+      },
+    };
   return (
     <div>
       <Button onClick={() => pointScored(true)}>Team 1</Button>
@@ -132,22 +182,58 @@ export default function DemoScoringCharts() {
       />
       <Box sx={{ width: "100%", height: 400 }}>
         <SmarterLineChart
+          grid={{
+            horizontal: true,
+            vertical: false,
+          }}
+          colors={mangoFusionPalette}
+          slots={{ axisContent: CustomChartAxisTooltipContent }}
           slotProps={{
             mark: smarterMarkElementProps,
+            axisContent: customChartAxisTooltipContentSlotProps,
           }}
           tooltip={{
-            trigger: "item",
+            trigger: "axis",
           }}
-          yAxis={
+          yAxis={[
             HasNotScored11(scores)
-              ? [
-                  {
-                    max: 11,
-                    label: "Game points",
+              ? {
+                  max: 11,
+                  tickMaxStep: 1,
+                  label: "Game points",
+                  valueFormatter(value, context) {
+                    if (context.location === "tooltip") return undefined;
+                    const currentScore = scoreRef.current;
+                    const bothAt10 =
+                      currentScore.team1 === 10 && currentScore.team2 === 10;
+                    const gpValue = bothAt10 ? 11 : 10;
+                    if (value === gpValue) {
+                      return "GP";
+                    }
+                    return value.toString();
                   },
-                ]
-              : undefined
-          }
+                }
+              : {
+                  label: "Game points",
+                  valueFormatter(value, context) {
+                    if (context.location === "tooltip") return undefined;
+                    const currentScoreState = scoreRef.current.scoreState;
+                    const atGamePoint =
+                      currentScoreState == ScoreState.GamePointTeam1 ||
+                      currentScoreState == ScoreState.GamePointTeam2;
+                    if (atGamePoint) {
+                      const maxPoints = Math.max(
+                        scoreRef.current.team1,
+                        scoreRef.current.team2,
+                      );
+                      if (value === maxPoints) {
+                        return "GP";
+                      }
+                    }
+                    return value.toString();
+                  },
+                },
+          ]}
           xAxis={[
             {
               id: "x-axis",
@@ -167,30 +253,19 @@ export default function DemoScoringCharts() {
               showMark(showMarkParams) {
                 return showMarkIfScored(true, showMarkParams);
               },
-              valueFormatter: toolTipSeriesValueFormatter,
-              label(location) {
-                if (location === "legend") {
-                  return "Team 1";
-                }
-                return "Team 1 Won Point";
-              },
+
+              label: "Team 1",
             },
             {
               id: "Team2",
               data: chartScores.map((score) =>
                 score === undefined ? undefined : score.team2,
               ),
-              label(location) {
-                if (location === "legend") {
-                  return "Team 2";
-                }
-                return "Team 2 Won Point";
-              },
+              label: "Team 2",
               curve: "linear",
               showMark(showMarkParams) {
                 return showMarkIfScored(false, showMarkParams);
               },
-              valueFormatter: toolTipSeriesValueFormatter,
             },
           ]}
         >

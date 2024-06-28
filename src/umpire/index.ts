@@ -148,8 +148,8 @@ export class Umpire {
         upTo: this._upTo,
         clearBy2: this._clearBy2,
       },
-      this._team1Score,
-      this._team2Score,
+      this.team1Score,
+      this.team2Score,
     );
   }
 
