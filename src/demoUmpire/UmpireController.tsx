@@ -12,6 +12,7 @@ import { InitialEndsDialog } from "./InitialEndsDialog";
 
 export interface UmpireControllerProps extends PlayerNames {
   umpire: Umpire;
+  matchStateChanged?: () => void;
 } //todo
 
 function getServerReceiverName(
@@ -98,11 +99,18 @@ export function UmpireController({
   team2Player1Name,
   team1Player2Name,
   team2Player2Name,
+  matchStateChanged,
 }: UmpireControllerProps) {
   const [matchState, setMatchState] = useState<MatchState>(
     umpire.getMatchState(),
   );
   const [initialEndsSet, setInitialEndsSet] = useState(false);
+  const setNewMatchState = (matchState: MatchState) => {
+    setMatchState(matchState);
+    if (matchStateChanged) {
+      matchStateChanged();
+    }
+  };
   const serverReceiverChoice = matchState.serverReceiverChoice;
   const showInitialEndsDialog =
     !initialEndsSet &&
@@ -127,7 +135,7 @@ export function UmpireController({
       {showInitialEndsDialog && (
         <InitialEndsDialog
           ok={() => setInitialEndsSet(true)}
-          switchEnds={() => setMatchState(umpire.switchEnds())}
+          switchEnds={() => setNewMatchState(umpire.switchEnds())}
         />
       )}
       <EndsDialog
@@ -148,7 +156,7 @@ export function UmpireController({
           } else {
             matchState = umpire.setFirstGameDoublesReceiver(player);
           }
-          setMatchState(matchState);
+          setNewMatchState(matchState);
         }}
         team1Player1Name={team1Player1Name}
         team2Player1Name={team2Player1Name}
@@ -192,15 +200,15 @@ export function UmpireController({
           />
           <UmpireToolbar
             canUndoPoint={matchState.canUndoPoint}
-            undoPoint={() => setMatchState(umpire.undoPoint())}
+            undoPoint={() => setNewMatchState(umpire.undoPoint())}
             canScorePoint={canScorePoint}
             scorePoint={(isLeft) => {
               const isTeam1 = matchState.team1Left === isLeft;
-              setMatchState(umpire.pointScored(isTeam1));
+              setNewMatchState(umpire.pointScored(isTeam1));
             }}
             canResetServerReceiver={matchState.canResetServerReceiver}
             resetServerReceiver={() => {
-              setMatchState(umpire.resetServerReceiver());
+              setNewMatchState(umpire.resetServerReceiver());
               if (matchState.gameScores.length === 0) {
                 setInitialEndsSet(false);
               }

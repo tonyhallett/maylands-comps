@@ -14,11 +14,14 @@ import {
   getServerReceiver,
 } from "./getServerReceiver";
 
-export interface MatchState {
-  canResetServerReceiver: boolean;
-  team1Left: boolean;
+export interface TeamScores {
   team1Score: TeamScore;
   team2Score: TeamScore;
+}
+
+export interface MatchState extends TeamScores {
+  canResetServerReceiver: boolean;
+  team1Left: boolean;
   server: Player | undefined;
   receiver: Player | undefined;
   remainingServes: number;
@@ -69,6 +72,16 @@ export interface PointHistory {
   matchState: MatchWinState;
 }
 
+interface SaveGameState extends TeamScores {
+  isDoubles: boolean;
+  pointHistory: PointHistory[][];
+  gameScores: GameScore[];
+  team1Left: boolean;
+  initialServersDoublesReceiver: InitialServersDoublesReceiver;
+  doublesEndsPointsScored: DoublesEndPointsScored | undefined;
+}
+export interface SaveState extends MatchOptions, SaveGameState {}
+
 export class Umpire {
   private get canUndoPoint(): boolean {
     let canUndo = false;
@@ -97,6 +110,7 @@ export class Umpire {
   private undoStartOfGameState() {
     this.undoGameWinScore();
     this.switchEnds();
+    this.initialServersDoublesReceiver.gameInitialServers.pop();
   }
 
   private undoGameWinScore() {
@@ -228,25 +242,84 @@ export class Umpire {
   private team1MidwayPoints: number;
   private team2MidwayPoints: number;
   private doublesEndsPointsScored: DoublesEndPointsScored | undefined;
+  private isDoubles: boolean;
   public readonly bestOf: number;
+  constructor(matchOptions: MatchOptions, isDoubles: boolean);
+  constructor(saveState: SaveState);
   constructor(
-    matchOptions: MatchOptions,
-    private readonly isDoubles: boolean,
+    saveStateOrMatchOptions: SaveState | MatchOptions,
+    isDoubles?: boolean,
   ) {
+    let matchOptions: MatchOptions;
+    if (isDoubles === undefined) {
+      const saveState = saveStateOrMatchOptions as SaveState;
+      isDoubles = saveState.isDoubles;
+      matchOptions = {
+        team1StartGameScore: saveState.team1StartGameScore,
+        team2StartGameScore: saveState.team2StartGameScore,
+        bestOf: saveState.bestOf,
+        upTo: saveState.upTo,
+        clearBy2: saveState.clearBy2,
+        numServes: saveState.numServes,
+      };
+      const saveGameState: Omit<SaveGameState, "isDoubles"> = {
+        pointHistory: saveState.pointHistory,
+        gameScores: saveState.gameScores,
+        team1Score: saveState.team1Score,
+        team2Score: saveState.team2Score,
+        team1Left: saveState.team1Left,
+        initialServersDoublesReceiver: saveState.initialServersDoublesReceiver,
+        doublesEndsPointsScored: saveState.doublesEndsPointsScored,
+      };
+      this._pointHistory = saveGameState.pointHistory;
+      this._gameScores = saveGameState.gameScores;
+      this._team1Score = saveGameState.team1Score;
+      this._team2Score = saveGameState.team2Score;
+      this._team1Left = saveGameState.team1Left;
+      this.initialServersDoublesReceiver =
+        saveGameState.initialServersDoublesReceiver;
+      this.doublesEndsPointsScored = saveGameState.doublesEndsPointsScored;
+    } else {
+      matchOptions = saveStateOrMatchOptions as MatchOptions;
+
+      this._team1Score.points = matchOptions.team1StartGameScore;
+      this._team2Score.points = matchOptions.team2StartGameScore;
+    }
+    this.isDoubles = isDoubles;
     this._team1StartGameScore = matchOptions.team1StartGameScore;
     this._team2StartGameScore = matchOptions.team2StartGameScore;
-    this._team1Score.points = this._team1StartGameScore;
-    this._team2Score.points = this._team2StartGameScore;
-    this.bestOf = matchOptions.bestOf;
+
     this.throwIfNotOdd(this.bestOf);
+    this.bestOf = matchOptions.bestOf;
+
     this.throwIfNotMoreThan0(matchOptions.numServes);
     this._numServes = matchOptions.numServes;
     this.setRemainingServesAtStartOfGame();
+
     this._upTo = matchOptions.upTo;
     this._clearBy2 = matchOptions.clearBy2;
     this.team1MidwayPoints = this.getMidwayPoints(true);
     this.team2MidwayPoints = this.getMidwayPoints(false);
     this.doublesEndsPointsScored = this.isDoubles ? "NotEnds" : undefined;
+  }
+
+  getSaveState(): SaveState {
+    return {
+      isDoubles: this.isDoubles,
+      pointHistory: this._pointHistory,
+      gameScores: this._gameScores,
+      team1Score: this._team1Score,
+      team2Score: this._team2Score,
+      team1StartGameScore: this._team1StartGameScore,
+      team2StartGameScore: this._team2StartGameScore,
+      bestOf: this.bestOf,
+      upTo: this._upTo,
+      clearBy2: this._clearBy2,
+      numServes: this._numServes,
+      initialServersDoublesReceiver: this.initialServersDoublesReceiver,
+      doublesEndsPointsScored: this.doublesEndsPointsScored,
+      team1Left: this._team1Left,
+    };
   }
 
   private getServerReceiver(

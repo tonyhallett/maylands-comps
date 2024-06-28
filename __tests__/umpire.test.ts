@@ -2561,6 +2561,27 @@ describe("umpiring", () => {
       });
     });
 
+    it("should suggest server when undo game winning point in doubles and then win game", () => {
+      const umpire = getNormalDoublesBestOf5Umpire();
+      umpire.setServer("Team1Player1");
+      umpire.setFirstGameDoublesReceiver("Team2Player1");
+      scoreGames(umpire, true, 1);
+      umpire.setServer("Team2Player1");
+      let matchState = umpire.undoPoint();
+
+      expect(matchState.server).toBeDefined();
+      expect(matchState.receiver).toBeDefined();
+      expect(matchState.serverReceiverChoice.servers).toHaveLength(0);
+
+      matchState = umpire.pointScored(true);
+      expect(matchState.server).toBeUndefined();
+      expect(matchState.receiver).toBeUndefined();
+      expect(matchState.serverReceiverChoice.servers).toEqual([
+        "Team2Player1",
+        "Team2Player2",
+      ]);
+    });
+
     describe("remaining serves", () => {
       interface RemainingServesCalculationTest {
         team1StartGameScore: number;
