@@ -10,8 +10,7 @@ import MGLogo from "./MGLogo";
 import DemoSetAndPointTopAlignment from "./fontDemos/DemoSetAndPointTopAlignment";
 import MaylandsThemeProvider from "./MaylandsThemeProvider";
 import DemoScoringCharts from "./charts/DemoScoringCharts";
-import FreeScoring from "./freeScoring";
-import { FreeScoringMatch } from "./freeScoring/FreeScoringMatch";
+import freeScoringRoute from "./freeScoring/route";
 
 const router = createBrowserRouter([
   {
@@ -49,14 +48,7 @@ const router = createBrowserRouter([
     path: "demoscoringcharts",
     element: <DemoScoringCharts />,
   },
-  {
-    path: "freescoring",
-    element: <FreeScoring />,
-  },
-  {
-    path: "/freeScoring/:matchId",
-    element: <FreeScoringMatch />,
-  },
+  freeScoringRoute,
 ]);
 
 createRoot(document.getElementById("root")).render(

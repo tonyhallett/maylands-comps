@@ -1,5 +1,5 @@
 import { Box, DialogTitle } from "@mui/material";
-import ServerReceiverEndsIcon from "../ServerReceiverEndsIcon";
+import ServerReceiverIcon from "../ServerReceiverIcon";
 
 export default function ServerReceiverEndsDialogTitle({
   title,
@@ -11,7 +11,7 @@ export default function ServerReceiverEndsDialogTitle({
       <Box sx={{ display: "inline" }} mr={1}>
         {title}
       </Box>
-      <ServerReceiverEndsIcon />
+      <ServerReceiverIcon />
     </DialogTitle>
   );
 }

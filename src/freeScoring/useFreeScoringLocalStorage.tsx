@@ -1,5 +1,5 @@
 import { useLocalStorage } from "usehooks-ts";
-import { FreeScoringMatchState } from ".";
+import { FreeScoringMatchState } from "./FreeScoringMatches";
 
 export function useFreeScoringLocalStorage(
   initialValue: FreeScoringMatchState[],

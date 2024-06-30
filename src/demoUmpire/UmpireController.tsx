@@ -8,7 +8,6 @@ import { MatchWinState } from "../umpire/getMatchWinState";
 import { Box, Card } from "@mui/material";
 import { EndsDialog } from "./EndsDialog";
 import { UmpireToolbar } from "./UmpireToolbar";
-import { InitialEndsDialog } from "./InitialEndsDialog";
 
 export interface UmpireControllerProps extends PlayerNames {
   umpire: Umpire;
@@ -104,7 +103,6 @@ export function UmpireController({
   const [matchState, setMatchState] = useState<MatchState>(
     umpire.getMatchState(),
   );
-  const [initialEndsSet, setInitialEndsSet] = useState(false);
   const setNewMatchState = (matchState: MatchState) => {
     setMatchState(matchState);
     if (matchStateChanged) {
@@ -112,10 +110,7 @@ export function UmpireController({
     }
   };
   const serverReceiverChoice = matchState.serverReceiverChoice;
-  const showInitialEndsDialog =
-    !initialEndsSet &&
-    serverReceiverChoice.servers.length === 0 &&
-    serverReceiverChoice.firstGameDoublesReceivers.length === 0;
+
   const canScorePoint =
     serverReceiverChoice.servers.length === 0 &&
     serverReceiverChoice.firstGameDoublesReceivers.length === 0 &&
@@ -132,12 +127,6 @@ export function UmpireController({
   };
   return (
     <>
-      {showInitialEndsDialog && (
-        <InitialEndsDialog
-          ok={() => setInitialEndsSet(true)}
-          switchEnds={() => setNewMatchState(umpire.switchEnds())}
-        />
-      )}
       <EndsDialog
         isEnds={matchState.isEnds}
         isDoubles={team1Player2Name !== undefined}
@@ -209,15 +198,15 @@ export function UmpireController({
             canResetServerReceiver={matchState.canResetServerReceiver}
             resetServerReceiver={() => {
               setNewMatchState(umpire.resetServerReceiver());
-              if (matchState.gameScores.length === 0) {
-                setInitialEndsSet(false);
-              }
             }}
             rules={{
               bestOf: umpire.bestOf,
               clearBy2: umpire.clearBy2,
               upTo: umpire.upTo,
               numServes: umpire.numServes,
+            }}
+            switchEnds={() => {
+              setNewMatchState(umpire.switchEnds());
             }}
           />
         </Box>

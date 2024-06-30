@@ -1,6 +1,6 @@
 import { SvgIcon } from "@mui/material";
 
-export default function ServerReceiverEndsIcon() {
+export default function ServerReceiverIcon() {
   return (
     <SvgIcon>
       <svg

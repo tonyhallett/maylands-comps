@@ -7,7 +7,8 @@ import {
   Typography,
   useTheme,
 } from "@mui/material";
-import ServerReceiverEndsIcon from "../ServerReceiverEndsIcon";
+import ServerReceiverIcon from "../ServerReceiverIcon";
+import EndsIcon from "../EndsIcon";
 import { getContrastingPaletteColor } from "./getContrastingPaletteColor";
 import RuleIcon from "@mui/icons-material/Rule";
 import { useState } from "react";
@@ -22,6 +23,7 @@ export interface UmpireToolbarProps {
   canResetServerReceiver: boolean;
   resetServerReceiver: () => void;
   rules: RulesViewProps;
+  switchEnds: () => void;
 }
 
 type RulesViewProps = Omit<
@@ -48,6 +50,7 @@ export function UmpireToolbar({
   canResetServerReceiver,
   resetServerReceiver,
   rules,
+  switchEnds,
 }: UmpireToolbarProps) {
   const theme = useTheme();
   const [anchorEl, setAnchorEl] = useState<HTMLButtonElement | null>(null);
@@ -99,7 +102,13 @@ export function UmpireToolbar({
             disabled={!canResetServerReceiver}
             onClick={() => resetServerReceiver()}
           >
-            <ServerReceiverEndsIcon />
+            <ServerReceiverIcon />
+          </IconButton>
+          <IconButton
+            sx={{ border: 1, borderRadius: 1, m: 1 }}
+            onClick={() => switchEnds()}
+          >
+            <EndsIcon />
           </IconButton>
           <IconButton
             sx={{ border: 1, borderRadius: 1, m: 1 }}

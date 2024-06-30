@@ -14,6 +14,7 @@ export function FreeScoringMatch() {
     (matchState) => matchState.id === matchId,
   );
   const {
+    // to consider https://eslint.org/docs/rules/no-unused-vars#ignorerestsiblings
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     id,
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -35,7 +36,9 @@ export function FreeScoringMatch() {
         const saveState = umpireRef.current.getSaveState();
         setFreeScoringMatchStates(
           freeScoringMatchStates.map((state) => {
-            return state.id === matchId ? { ...state, ...saveState } : state;
+            return state.id === matchId
+              ? { ...state, ...saveState, lastUsed: new Date().getTime() }
+              : state;
           }),
         );
       }}
