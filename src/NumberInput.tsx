@@ -5,6 +5,36 @@ import {
   numberInputClasses,
 } from "@mui/base/Unstable_NumberInput";
 import { styled } from "@mui/system";
+import ArrowUp from "@mui/icons-material/ArrowDropUp";
+import ArrowDown from "@mui/icons-material/ArrowDropDown";
+type IconType = typeof ArrowUp;
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type ActualNumberIncrementButtonProps = any;
+
+function NumberIncrementButton(props: ActualNumberIncrementButtonProps) {
+  return <MobileFriendlyButton {...props} iconType={ArrowUp} />;
+}
+
+function NumberDecrementButton(props: ActualNumberIncrementButtonProps) {
+  return <MobileFriendlyButton {...props} iconType={ArrowDown} />;
+}
+
+//https://github.com/mui/material-ui/issues/39275
+function MobileFriendlyButton(
+  props: ActualNumberIncrementButtonProps & { iconType: IconType },
+) {
+  const { iconType, ...other } = props;
+  const ComponentType = iconType;
+  return (
+    <ComponentType
+      color={props.disabled ? "disabled" : undefined}
+      fontSize="small"
+      {...other}
+      onMouseDown={(evt) => evt.preventDefault()}
+    />
+  );
+}
 
 const NumberInput = React.forwardRef(function CustomNumberInput(
   props: NumberInputProps,
@@ -15,15 +45,14 @@ const NumberInput = React.forwardRef(function CustomNumberInput(
       slots={{
         root: StyledInputRoot,
         input: StyledInputElement,
-        incrementButton: StyledButton,
-        decrementButton: StyledButton,
+        incrementButton: NumberIncrementButton,
+        decrementButton: NumberDecrementButton,
       }}
       slotProps={{
-        incrementButton: {
-          children: "▴",
-        },
-        decrementButton: {
-          children: "▾",
+        ...props.slotProps,
+        input: {
+          ...props.slotProps?.input,
+          inputMode: "numeric", // https://github.com/mui/base-ui/issues/40
         },
       }}
       {...props}
@@ -104,7 +133,7 @@ const StyledInputElement = styled("input")(
 `,
 );
 
-const StyledButton = styled("button")(
+/* const StyledButton = styled("button")(
   ({ theme }) => `
   display: flex;
   flex-flow: row nowrap;
@@ -169,4 +198,4 @@ const StyledButton = styled("button")(
     transform: translateY(-1px);
   }
 `,
-);
+); */

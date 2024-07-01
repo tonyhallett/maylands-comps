@@ -8,13 +8,12 @@ import {
   useTheme,
 } from "@mui/material";
 import ServerReceiverIcon from "../ServerReceiverIcon";
-import EndsIcon from "../EndsIcon";
 import { getContrastingPaletteColor } from "./getContrastingPaletteColor";
 import RuleIcon from "@mui/icons-material/Rule";
 import { useState } from "react";
 import { MatchOptions } from "../umpire";
 import { CarbonBatButton } from "./CarbonBatButton";
-
+import EndsIcon from "@mui/icons-material/TransferWithinAStation";
 export interface UmpireToolbarProps {
   canScorePoint: boolean;
   scorePoint: (isLeft: boolean) => void;

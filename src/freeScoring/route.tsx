@@ -7,9 +7,8 @@ import CreateFreeScoringPlayer from "./CreateFreeScoringPlayer";
 import Box from "@mui/material/Box/Box";
 import FreeScoringPlayers from "./FreeScoringPlayers";
 import store from "store2";
-import { FreeScoringPlayer } from "./FreeScoringPlayer";
 import CreateMatch, { CreateMatchOptions } from "./CreateMatch";
-import { FreeScoringTeam } from "./FreeScoringTeam";
+import { FreeScoringPlayer, FreeScoringTeam } from "./types";
 import { Umpire } from "../umpire";
 import CreateFreeScoringDoubles from "./CreateFreeScoringDoubles";
 
@@ -23,18 +22,21 @@ export interface FreeScoringPlayersAndTeamsLoaderData
   extends FreeScoringPlayersLoaderData,
     FreeScoringTeamsLoaderData {}
 
-const getFreeScoringPlayers = () => {
-  return store.get("freeScoringPlayers", []) as FreeScoringPlayer[];
-};
-const getFreeScoringTeams = () => {
-  return store.get("freeScoringTeams", []) as FreeScoringTeam[];
-};
-const getFreeScoringPlayersAndTeams = () => {
+const getFreeScoringPlayers = (): FreeScoringPlayersLoaderData => {
   return {
-    players: getFreeScoringPlayers(),
-    teams: getFreeScoringTeams(),
+    players: store.get("freeScoringPlayers", []) as FreeScoringPlayer[],
   };
 };
+const getFreeScoringTeams = (): FreeScoringTeamsLoaderData => {
+  return { teams: store.get("freeScoringTeams", []) as FreeScoringTeam[] };
+};
+const getFreeScoringPlayersAndTeams =
+  (): FreeScoringPlayersAndTeamsLoaderData => {
+    return {
+      ...getFreeScoringPlayers(),
+      ...getFreeScoringTeams(),
+    };
+  };
 
 export type CreateFreeScoringTeamOptions = Omit<FreeScoringTeam, "id">;
 
@@ -99,6 +101,9 @@ const route: RouteObject = {
           [],
         );
         return redirect("/freescoring/players");
+      },
+      loader: () => {
+        return getFreeScoringPlayers();
       },
     },
     {

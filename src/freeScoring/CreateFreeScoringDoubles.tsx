@@ -4,18 +4,34 @@ import Select from "@mui/material/Select/Select";
 import { useState } from "react";
 import { useSubmit } from "react-router-dom";
 import { useLoaderDataT } from "./useLoaderDataT";
-import { FreeScoringPlayer } from "./FreeScoringPlayer";
 import MenuItem from "@mui/material/MenuItem/MenuItem";
 import Button from "@mui/material/Button/Button";
 import NumberInput from "../NumberInput";
-import { CreateFreeScoringTeamOptions } from "./route";
+import {
+  CreateFreeScoringTeamOptions,
+  FreeScoringPlayersAndTeamsLoaderData,
+} from "./route";
+import { FreeScoringPlayer, FreeScoringTeam } from "./types";
+
+function playersAlreadyInDoublesTeam(
+  player1Id: number,
+  player2Id: number,
+  teams: FreeScoringTeam[],
+): boolean {
+  return teams.some((team) => {
+    const player1InTeam =
+      team.player1.id === player1Id || team.player2.id === player1Id;
+    const player2InTeam =
+      team.player1.id === player2Id || team.player2.id === player2Id;
+    return player1InTeam && player2InTeam;
+  });
+}
 
 export default function CreateFreeScoringDoubles() {
   const [handicap, setHandicap] = useState(0);
 
-  const { players } = useLoaderDataT<{
-    players: FreeScoringPlayer[];
-  }>();
+  const { players, teams } =
+    useLoaderDataT<FreeScoringPlayersAndTeamsLoaderData>();
   const [selectedPlayerId, setSelectedPlayerId] = useState<number | undefined>(
     players.length > 0 ? players[0].id : undefined,
   );
@@ -27,7 +43,12 @@ export default function CreateFreeScoringDoubles() {
     selectedPlayers.length === 0
       ? true
       : selectedPlayers.length === 1
-        ? selectedPlayers[0].id !== selectedPlayerId
+        ? selectedPlayers[0].id !== selectedPlayerId &&
+          !playersAlreadyInDoublesTeam(
+            selectedPlayers[0].id,
+            selectedPlayerId,
+            teams,
+          )
         : false;
   const canAddTeam = selectedPlayers.length === 2;
   return (

@@ -3,12 +3,14 @@ import { useState } from "react";
 import NumberInput from "../NumberInput";
 import { Form } from "react-router-dom";
 import Button from "@mui/material/Button/Button";
+import { FreeScoringPlayersLoaderData } from "./route";
+import { useLoaderDataT } from "./useLoaderDataT";
 
 export default function CreateFreeScoringPlayer() {
-  // will use this to warn about name clashes
-  //const { players } = useLoaderDataT<{ players: FreeScoringPlayer[] }>();
+  const { players } = useLoaderDataT<FreeScoringPlayersLoaderData>();
   const [name, setName] = useState("");
   const [handicap, setHandicap] = useState(0);
+  const duplicateName = players.some((player) => player.name === name);
   return (
     <Form method="post">
       <TextField
@@ -19,6 +21,8 @@ export default function CreateFreeScoringPlayer() {
           setName(event.target.value);
         }}
         variant="outlined"
+        error={duplicateName}
+        helperText={duplicateName ? "Name already exists" : ""}
       />
       <NumberInput
         slotProps={{
@@ -31,7 +35,10 @@ export default function CreateFreeScoringPlayer() {
         value={handicap}
         onChange={(event, val) => setHandicap(val)}
       />
-      <Button disabled={name.trim().length === 0} type="submit">
+      <Button
+        disabled={name.trim().length === 0 || duplicateName}
+        type="submit"
+      >
         Create
       </Button>
     </Form>

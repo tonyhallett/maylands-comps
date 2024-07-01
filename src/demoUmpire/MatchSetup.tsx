@@ -11,8 +11,8 @@ import {
   IconButton,
   useTheme,
 } from "@mui/material";
-import AddIcon from "@mui/icons-material/Add";
-import RemoveIcon from "@mui/icons-material/Remove";
+import IncrementIcon from "@mui/icons-material/Add";
+import DecrementIcon from "@mui/icons-material/Remove";
 import { CarbonBatButton } from "./CarbonBatButton";
 import { getContrastingPaletteColor } from "./getContrastingPaletteColor";
 
@@ -113,7 +113,7 @@ export function MatchSetup({
                       }
                       disabled={handicap1.cannotIncrement}
                     >
-                      <AddIcon />
+                      <IncrementIcon />
                     </IconButton>
                   </td>
                   <td>
@@ -122,7 +122,7 @@ export function MatchSetup({
                         changeHandicap(false, handicap1, setHandicap1)
                       }
                     >
-                      <RemoveIcon />
+                      <DecrementIcon />
                     </IconButton>
                   </td>
                 </tr>
@@ -135,7 +135,7 @@ export function MatchSetup({
                       }
                       disabled={handicap2.cannotIncrement}
                     >
-                      <AddIcon />
+                      <IncrementIcon />
                     </IconButton>
                   </td>
                   <td>
@@ -144,7 +144,7 @@ export function MatchSetup({
                         changeHandicap(false, handicap2, setHandicap2)
                       }
                     >
-                      <RemoveIcon />
+                      <DecrementIcon />
                     </IconButton>
                   </td>
                 </tr>
@@ -174,7 +174,7 @@ export function MatchSetup({
             })
           }
         >
-          <AddIcon />
+          <IncrementIcon />
         </IconButton>
         <IconButton
           disabled={!bestOfOption.canDecrement}
@@ -186,7 +186,7 @@ export function MatchSetup({
             });
           }}
         >
-          <RemoveIcon />
+          <DecrementIcon />
         </IconButton>
       </label>
       <CarbonBatButton

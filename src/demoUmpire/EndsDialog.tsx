@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
-import { Alert, Dialog } from "@mui/material";
-import SwitchAccountIcon from "@mui/icons-material/SwitchAccount";
+import { Alert, Dialog, Typography } from "@mui/material";
+//import SwitchReceiversIcon from "@mui/icons-material/SwitchAccount";
+import SwitchReceiversIcon from "@mui/icons-material/SocialDistance";
 
 export interface EndsDialogProps {
   isEnds: boolean;
@@ -21,8 +22,10 @@ export function EndsDialog({ isEnds, isDoubles }: EndsDialogProps) {
         setShowDialog(false);
       }}
     >
-      <Alert icon={<SwitchAccountIcon />} severity="info">
-        Ends ! {isDoubles ? "Switch receivers" : ""}.
+      <Alert icon={<SwitchReceiversIcon fontSize="large" />} severity="info">
+        <Typography variant="h5">
+          Ends ! {isDoubles ? "Switch receivers" : ""}
+        </Typography>
       </Alert>
     </Dialog>
   );
