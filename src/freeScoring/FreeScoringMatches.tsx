@@ -7,6 +7,7 @@ import { useCallback, useMemo } from "react";
 import { useLoaderDataT } from "./useLoaderDataT";
 import { FreeScoringMatchStatesLoaderData } from "./route";
 import { useDeleteJson } from "./usePostJson";
+import DeleteIcon from "@mui/icons-material/Delete";
 
 export interface PlayerIds {
   team1Player1Id: number;
@@ -103,6 +104,7 @@ export default function FreeScoringMatches() {
   return (
     <>
       <Button
+        startIcon={<DeleteIcon />}
         onClick={() => {
           deleteJSON(
             matchStates.map((matchState) => matchState.id),
@@ -112,7 +114,7 @@ export default function FreeScoringMatches() {
           );
         }}
       >
-        Clear Matches
+        Delete Matches
       </Button>
       <DataGrid autosizeOnMount rows={rows} columns={columns}></DataGrid>
     </>

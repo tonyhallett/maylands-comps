@@ -333,6 +333,7 @@ function FreeScoringIndex() {
               activeColor={activeColor}
               inactiveColor="white"
               to="matches"
+              end
               icon={
                 <BatSVG
                   showBall={false}
@@ -342,10 +343,27 @@ function FreeScoringIndex() {
                 />
               }
             />
+
+            <DynamicLinkIcon
+              activeColor={activeColor}
+              inactiveColor="white"
+              to="matches/create"
+              end
+              icon={
+                <BatSVG
+                  showBall={false}
+                  bladeFillColor1="currentColor"
+                  bladeFillColor2="currentColor"
+                  rubberFillColor="currentColor"
+                />
+              }
+            />
+
             <DynamicLinkIcon
               activeColor={activeColor}
               inactiveColor="white"
               to="players"
+              end
               icon={<PersonIcon />}
             />
 
@@ -353,6 +371,7 @@ function FreeScoringIndex() {
               activeColor={activeColor}
               inactiveColor="white"
               to="players/create"
+              end
               icon={<PersonAddIcon />}
             />
 
@@ -360,19 +379,18 @@ function FreeScoringIndex() {
               activeColor={activeColor}
               inactiveColor="white"
               to="teams"
+              end
               icon={<GroupIcon />}
             />
             <DynamicLinkIcon
               activeColor={activeColor}
               inactiveColor="white"
               to="players/createdoubles"
+              end
               icon={<GroupAddIcon />}
             />
           </Stack>
           <Box display={"flex"} flex={1} justifyContent="flex-end">
-            {/*  <Box flex={"1"}>
-              <span></span>
-            </Box> */}
             <Box
               width={64}
               borderRadius={1}
