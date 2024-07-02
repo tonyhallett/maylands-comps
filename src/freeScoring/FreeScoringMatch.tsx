@@ -1,18 +1,14 @@
-import { useParams } from "react-router-dom";
-import { useFreeScoringLocalStorage } from "./useFreeScoringLocalStorage";
 import { Umpire } from "../umpire";
 import { UmpireController } from "../demoUmpire/UmpireController";
 import { useRef } from "react";
+import { useLoaderDataT } from "./useLoaderDataT";
+import { FreeScoringMatchState } from "./FreeScoringMatches";
+import { usePostJson } from "./usePostJson";
 
 export function FreeScoringMatch() {
-  const { matchId } = useParams();
   const umpireRef = useRef<Umpire>();
-  const [freeScoringMatchStates, setFreeScoringMatchStates] =
-    useFreeScoringLocalStorage([]);
-  // better to just index by field - for now
-  const matchState = freeScoringMatchStates.find(
-    (matchState) => matchState.id === matchId,
-  );
+  const matchState = useLoaderDataT<FreeScoringMatchState>();
+  const postJson = usePostJson();
   const {
     // to consider https://eslint.org/docs/rules/no-unused-vars#ignorerestsiblings
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -34,13 +30,13 @@ export function FreeScoringMatch() {
     <UmpireController
       matchStateChanged={() => {
         const saveState = umpireRef.current.getSaveState();
-        setFreeScoringMatchStates(
-          freeScoringMatchStates.map((state) => {
-            return state.id === matchId
-              ? { ...state, ...saveState, lastUsed: new Date().getTime() }
-              : state;
-          }),
-        );
+        const updatedMatchState = {
+          ...matchState,
+          ...saveState,
+          lastUsed: new Date().getTime(),
+        };
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        postJson(updatedMatchState as any);
       }}
       umpire={umpireRef.current}
       team1Player1Name={team1Player1Name}

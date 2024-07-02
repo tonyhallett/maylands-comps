@@ -2,7 +2,6 @@ import FormControl from "@mui/material/FormControl/FormControl";
 import InputLabel from "@mui/material/InputLabel/InputLabel";
 import Select from "@mui/material/Select/Select";
 import { useState } from "react";
-import { useSubmit } from "react-router-dom";
 import { useLoaderDataT } from "./useLoaderDataT";
 import MenuItem from "@mui/material/MenuItem/MenuItem";
 import Button from "@mui/material/Button/Button";
@@ -12,6 +11,7 @@ import {
   FreeScoringPlayersAndTeamsLoaderData,
 } from "./route";
 import { FreeScoringPlayer, FreeScoringTeam } from "./types";
+import { usePostJson } from "./usePostJson";
 
 function playersAlreadyInDoublesTeam(
   player1Id: number,
@@ -38,7 +38,7 @@ export default function CreateFreeScoringDoubles() {
   const [selectedPlayers, setSelectedPlayers] = useState<FreeScoringPlayer[]>(
     [],
   );
-  const submit = useSubmit();
+  const postJson = usePostJson();
   const canAddPlayer =
     selectedPlayers.length === 0
       ? true
@@ -83,11 +83,6 @@ export default function CreateFreeScoringDoubles() {
         <div key={player.id}>{player.name}</div>
       ))}
       <NumberInput
-        slotProps={{
-          input: {
-            name: "handicap",
-          },
-        }}
         aria-label="Player handicao"
         placeholder="Handicap"
         value={handicap}
@@ -101,10 +96,7 @@ export default function CreateFreeScoringDoubles() {
             handicap,
           };
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          submit(freeScoringTeam as any, {
-            method: "POST",
-            encType: "application/json",
-          });
+          postJson(freeScoringTeam as any);
         }}
         disabled={!canAddTeam}
       >

@@ -4,10 +4,6 @@ import Checkbox from "@mui/material/Checkbox/Checkbox";
 import { useState } from "react";
 import { useSubmit } from "react-router-dom";
 import Button from "@mui/material/Button/Button";
-import IconButton from "@mui/material/IconButton/IconButton";
-import IncrementIcon from "@mui/icons-material/Add";
-import DecrementIcon from "@mui/icons-material/Remove";
-import NumberInput from "../NumberInput";
 import FormControl from "@mui/material/FormControl/FormControl";
 import InputLabel from "@mui/material/InputLabel/InputLabel";
 import Select from "@mui/material/Select/Select";
@@ -16,20 +12,9 @@ import { FreeScoringPlayer, FreeScoringTeam } from "./types";
 import { shiftHandicap } from "../umpire/shiftHandicap";
 import { MatchOptions } from "../umpire";
 import { PlayerNameAndIds } from "./FreeScoringMatches";
-import { Alert, Box, Typography } from "@mui/material";
-
-function LabelledNumberInput(props: {
-  label: string;
-  numberInputProps: React.ComponentProps<typeof NumberInput>;
-}) {
-  const { label, numberInputProps } = props;
-  return (
-    <Box sx={{ display: "flex", alignItems: "center" }}>
-      <NumberInput {...numberInputProps} />
-      <Typography ml={1}>{label}</Typography>
-    </Box>
-  );
-}
+import { Alert } from "@mui/material";
+import * as NumberField from "@base_ui/react/NumberField";
+import { LabelledNumberInput } from "./LabelledNumberInput";
 
 export interface BestOfOption {
   bestOf: number;
@@ -92,11 +77,7 @@ export default function CreateMatch() {
   const [selectedPlayerOrTeams, setSelectedPlayerOrTeams] = useState<
     SelectedPlayerOrTeam[]
   >([]);
-  const [bestOfX, setBestOf] = useState(5);
-  const [bestOfOption, setBestOfOption] = useState<BestOfOption>({
-    bestOf: 5,
-    canDecrement: true,
-  });
+  const [bestOf, setBestOf] = useState(5);
 
   const insufficientTeamsForDoubles = isDoubles && teams.length < 2;
   const doublesCheckBox = (
@@ -149,8 +130,69 @@ export default function CreateMatch() {
     selectedPlayerOrTeams.length === 2 &&
     numServes > 0 &&
     upTo > 0 &&
-    bestOfX > 0 &&
-    bestOfX % 2 === 1;
+    bestOf > 0 &&
+    bestOf % 2 === 1;
+
+  const _submit = (play: boolean) => {
+    const { calculatedUpTo, team1StartGameScore, team2StartGameScore } =
+      getStartScores(
+        isHandicap,
+        upTo,
+        shiftHandicapScore,
+        selectedPlayerOrTeams,
+      );
+    const matchOptions: MatchOptions = {
+      upTo: calculatedUpTo,
+      bestOf,
+      clearBy2,
+      numServes,
+      team1StartGameScore,
+      team2StartGameScore,
+    };
+    const ids = selectedPlayerOrTeams.map((p) => p.id);
+    let playerNameAndIds: PlayerNameAndIds;
+    if (isDoubles) {
+      const selectedTeams = teams.filter((team) => ids.includes(team.id));
+      playerNameAndIds = {
+        team1Player1Name: selectedTeams[0].player1.name,
+        team1Player1Id: selectedTeams[0].player1.id,
+        team1Player2Name: selectedTeams[0].player2.name,
+        team1Player2Id: selectedTeams[0].player2.id,
+        team2Player1Name: selectedTeams[1].player1.name,
+        team2Player1Id: selectedTeams[1].player1.id,
+        team2Player2Name: selectedTeams[1].player2.name,
+        team2Player2Id: selectedTeams[1].player2.id,
+      };
+    } else {
+      const selectedPlayers = players.filter((player) =>
+        ids.includes(player.id),
+      );
+      playerNameAndIds = {
+        team1Player1Name: selectedPlayers[0].name,
+        team1Player1Id: selectedPlayers[0].id,
+        team2Player1Name: selectedPlayers[1].name,
+        team2Player1Id: selectedPlayers[1].id,
+        team1Player2Id: undefined,
+        team1Player2Name: undefined,
+        team2Player2Id: undefined,
+        team2Player2Name: undefined,
+      };
+    }
+    const createMatchOptions: CreateMatchOptions = {
+      ...matchOptions,
+      ...playerNameAndIds,
+      play,
+    };
+    submit(
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      createMatchOptions as any,
+      {
+        method: "post",
+        encType: "application/json",
+      },
+    );
+  };
+
   return (
     <>
       {doublesCheckBox}
@@ -247,33 +289,7 @@ export default function CreateMatch() {
         }
         label="Shift negatives"
       />
-      <Box mb={1}>
-        <Typography display={"inline"}>
-          Best of {bestOfOption.bestOf}{" "}
-        </Typography>
-        <IconButton
-          onClick={() =>
-            setBestOfOption({
-              canDecrement: true,
-              bestOf: bestOfOption.bestOf + 2,
-            })
-          }
-        >
-          <IncrementIcon />
-        </IconButton>
-        <IconButton
-          disabled={!bestOfOption.canDecrement}
-          onClick={() => {
-            const newBestOf = bestOfOption.bestOf - 2;
-            setBestOfOption({
-              canDecrement: newBestOf !== 1,
-              bestOf: newBestOf,
-            });
-          }}
-        >
-          <DecrementIcon />
-        </IconButton>
-      </Box>
+
       <FormControlLabel
         style={{ display: "block" }}
         control={
@@ -300,27 +316,37 @@ export default function CreateMatch() {
           "aria-label": "Up to",
           placeholder: "Up to",
           value: upTo,
-          min: 11,
+          min: 1,
           onChange: (event, val) => setUpTo(val),
         }}
       />
+      <NumberField.Root min={1} value={upTo} onChange={setUpTo}>
+        <NumberField.Group>
+          <NumberField.Decrement>&minus;</NumberField.Decrement>
+          <NumberField.Input />
+          <NumberField.Increment>+</NumberField.Increment>
+        </NumberField.Group>
+      </NumberField.Root>
 
       <LabelledNumberInput
         label="Best of"
         numberInputProps={{
           "aria-label": "Best of",
           placeholder: "Best of",
-          value: bestOfX,
+          value: bestOf,
           min: 1,
           onChange: (event, val) => {
             if (val !== null) {
               /*
                 this "fixes" broken behaviour with step
+                https://github.com/mui/base-ui/issues/471   my issue
+                This can occur for typing as well as buttons.
+                Using previous value to work with buttons.
+
               */
-              const preVal = bestOfX;
               const isEven = val % 2 === 0;
               if (isEven) {
-                if (val > preVal) {
+                if (val > bestOf) {
                   val = val + 1;
                 } else {
                   val = val - 1;
@@ -334,67 +360,27 @@ export default function CreateMatch() {
 
       <Button
         onClick={() => {
-          const { calculatedUpTo, team1StartGameScore, team2StartGameScore } =
-            getStartScores(
-              isHandicap,
-              upTo,
-              shiftHandicapScore,
-              selectedPlayerOrTeams,
-            );
-          const createMatchOptions: MatchOptions = {
-            upTo: calculatedUpTo,
-            bestOf: bestOfOption.bestOf,
-            clearBy2,
-            numServes,
-            team1StartGameScore,
-            team2StartGameScore,
-          };
-          const ids = selectedPlayerOrTeams.map((p) => p.id);
-          let playerNameAndIds: PlayerNameAndIds;
-          if (isDoubles) {
-            const selectedTeams = teams.filter((team) => ids.includes(team.id));
-            playerNameAndIds = {
-              team1Player1Name: selectedTeams[0].player1.name,
-              team1Player1Id: selectedTeams[0].player1.id,
-              team1Player2Name: selectedTeams[0].player2.name,
-              team1Player2Id: selectedTeams[0].player2.id,
-              team2Player1Name: selectedTeams[1].player1.name,
-              team2Player1Id: selectedTeams[1].player1.id,
-              team2Player2Name: selectedTeams[1].player2.name,
-              team2Player2Id: selectedTeams[1].player2.id,
-            };
-          } else {
-            const selectedPlayers = players.filter((player) =>
-              ids.includes(player.id),
-            );
-            playerNameAndIds = {
-              team1Player1Name: selectedPlayers[0].name,
-              team1Player1Id: selectedPlayers[0].id,
-              team2Player1Name: selectedPlayers[1].name,
-              team2Player1Id: selectedPlayers[1].id,
-              team1Player2Id: undefined,
-              team1Player2Name: undefined,
-              team2Player2Id: undefined,
-              team2Player2Name: undefined,
-            };
-          }
-
-          submit(
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            { ...createMatchOptions, ...playerNameAndIds } as any,
-            {
-              method: "post",
-              encType: "application/json",
-            },
-          );
+          _submit(false);
         }}
         disabled={!canCreateMatch}
         type="submit"
       >
         Create
       </Button>
+
+      <Button
+        onClick={() => {
+          _submit(true);
+        }}
+        disabled={!canCreateMatch}
+        type="submit"
+      >
+        Play
+      </Button>
     </>
   );
 }
 
-export interface CreateMatchOptions extends MatchOptions, PlayerNameAndIds {}
+export interface CreateMatchOptions extends MatchOptions, PlayerNameAndIds {
+  play: boolean;
+}

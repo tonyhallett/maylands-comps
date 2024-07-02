@@ -3,8 +3,10 @@ import { SaveState } from "../umpire";
 import { DataGrid, GridColDef } from "@mui/x-data-grid";
 import { Button } from "@mui/material";
 import { useNavigate } from "react-router-dom";
-import { useFreeScoringLocalStorage } from "./useFreeScoringLocalStorage";
 import { useCallback, useMemo } from "react";
+import { useLoaderDataT } from "./useLoaderDataT";
+import { FreeScoringMatchStatesLoaderData } from "./route";
+import { useDeleteJson } from "./usePostJson";
 
 export interface PlayerIds {
   team1Player1Id: number;
@@ -19,11 +21,9 @@ export interface FreeScoringMatchState extends SaveState, PlayerNameAndIds {
 }
 
 export default function FreeScoringMatches() {
+  const { matchStates } = useLoaderDataT<FreeScoringMatchStatesLoaderData>();
   const navigate = useNavigate();
-  // might use read only version
-  const [freeScoringMatchStates, setFreeScoringMatchStates] =
-    useFreeScoringLocalStorage([]);
-
+  const deleteJSON = useDeleteJson();
   const navigateToMatch = useCallback(
     (id: string) => {
       navigate(`../match/${id}`);
@@ -38,7 +38,7 @@ export default function FreeScoringMatches() {
         width: 80,
         getActions: (params) => [
           <Button
-            key={params.id}
+            key={0}
             onClick={() => {
               // todo - remove the cast
               navigateToMatch(params.id as string);
@@ -48,6 +48,7 @@ export default function FreeScoringMatches() {
           </Button>,
         ],
       },
+      { field: "players", headerName: "Players" },
       { field: "score", headerName: "Score" },
       { field: "upTo", headerName: "Up to" },
       { field: "clearBy2", headerName: "Clear by 2" },
@@ -64,7 +65,21 @@ export default function FreeScoringMatches() {
     ],
     [navigateToMatch],
   );
-  const rows = freeScoringMatchStates.map((matchState) => {
+  const getInitials = (name: string) => {
+    return name
+      .split(" ")
+      .map((word) => word[0])
+      .join("");
+  };
+  const getTeamVs = (player1Name: string, player2Name: string) => {
+    const player1Initials = getInitials(player1Name);
+    if (player2Name) {
+      const player2Initials = getInitials(player2Name);
+      return `${player1Initials} & ${player2Initials}`;
+    }
+    return player1Initials;
+  };
+  const rows = matchStates.map((matchState) => {
     const isHandicap =
       matchState.team1StartGameScore !== 0 ||
       matchState.team2StartGameScore !== 0;
@@ -82,13 +97,19 @@ export default function FreeScoringMatches() {
       /* team2StartScore: matchState.team2StartGameScore, */
       team2Player1Name: matchState.team2Player1Name,
       team2Player2Name: matchState.team2Player2Name,
+      players: `${getTeamVs(matchState.team1Player1Name, matchState.team1Player2Name)} vs ${getTeamVs(matchState.team2Player1Name, matchState.team2Player2Name)}`,
     };
   });
   return (
     <>
       <Button
         onClick={() => {
-          setFreeScoringMatchStates([]);
+          deleteJSON(
+            matchStates.map((matchState) => matchState.id),
+            {
+              action: `../matches/delete`,
+            },
+          );
         }}
       >
         Clear Matches

@@ -28,7 +28,7 @@ export function BatButton({ enabled, clicked, ...svgProps }: BatButtonProps) {
   );
 }
 
-function BatSVG({
+export function BatSVG({
   rubberFillColor,
   showBall = true,
   bladeFillColor1,
