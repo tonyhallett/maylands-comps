@@ -239,8 +239,14 @@ export class Umpire {
   public get clearBy2() {
     return this._clearBy2;
   }
-  private team1MidwayPoints: number;
-  private team2MidwayPoints: number;
+  private _team1MidwayPoints: number;
+  public get team1MidwayPoints() {
+    return this._team1MidwayPoints;
+  }
+  private _team2MidwayPoints: number;
+  public get team2MidwayPoints() {
+    return this._team2MidwayPoints;
+  }
   private doublesEndsPointsScored: DoublesEndPointsScored | undefined;
   private isDoubles: boolean;
   public readonly bestOf: number;
@@ -298,8 +304,8 @@ export class Umpire {
 
     this._upTo = matchOptions.upTo;
     this._clearBy2 = matchOptions.clearBy2;
-    this.team1MidwayPoints = this.getMidwayPoints(true);
-    this.team2MidwayPoints = this.getMidwayPoints(false);
+    this._team1MidwayPoints = this.getMidwayPoints(true);
+    this._team2MidwayPoints = this.getMidwayPoints(false);
     this.doublesEndsPointsScored = this.isDoubles ? "NotEnds" : undefined;
   }
 
@@ -570,16 +576,16 @@ export class Umpire {
     if (team1LastScored) {
       return this.scoredMidwayFirstTime(
         this._team1Score.points,
-        this.team1MidwayPoints,
+        this._team1MidwayPoints,
         this._team2Score.points,
-        this.team2MidwayPoints,
+        this._team2MidwayPoints,
       );
     } else {
       return this.scoredMidwayFirstTime(
         this._team2Score.points,
-        this.team2MidwayPoints,
+        this._team2MidwayPoints,
         this._team1Score.points,
-        this.team1MidwayPoints,
+        this._team1MidwayPoints,
       );
     }
   }

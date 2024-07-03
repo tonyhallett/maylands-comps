@@ -1,4 +1,4 @@
-import { BatButton, BatButtonProps } from "./BatButton";
+import { BatButton, BatButtonProps } from "../../commonIcons/BatButton";
 
 export type CarbonBatButtonProps = Omit<
   BatButtonProps,

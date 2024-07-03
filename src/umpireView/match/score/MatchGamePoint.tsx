@@ -1,6 +1,6 @@
 import { useTheme } from "@mui/material";
 import { PointState } from "./MatchScore";
-import { getContrastingPaletteColor } from "./getContrastingPaletteColor";
+import { getContrastingPaletteColor } from "../../../themeHelpers/getContrastingPaletteColor";
 
 export function MatchGamePoint({
   point,

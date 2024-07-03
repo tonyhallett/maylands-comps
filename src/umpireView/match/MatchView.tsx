@@ -1,8 +1,8 @@
-import { TeamScore } from "../umpire";
-import { TeamView } from "./TeamView";
-import { MatchScore, PointState } from "./MatchScore";
+import { TeamScore } from "../../umpire";
+import { TeamView } from "../team/TeamView";
+import { MatchScore, PointState } from "./score/MatchScore";
 import { Box } from "@mui/material";
-import { TeamPointsFontSizes } from "./TeamPoints";
+import { TeamPointsFontSizes } from "./score/TeamPoints";
 
 export enum LeftRightMatchWinState {
   NotWon = 0,

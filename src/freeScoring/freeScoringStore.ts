@@ -1,6 +1,6 @@
 import store, { StoreBase } from "store2";
 import { FreeScoringPlayer, FreeScoringTeam } from "./types";
-import { FreeScoringMatchState } from "./FreeScoringMatches";
+import { FreeScoringMatchSaveState } from "./FreeScoringMatches";
 
 const freeScoringPlayersStoreKey = "freeScoringPlayers";
 const freeScoringTeamsStoreKey = "freeScoringTeams";
@@ -20,16 +20,18 @@ export const storeTransact = <T>(
 };
 
 export const storeTransactMatchStates = (
-  callback: StoreTransactCallback<FreeScoringMatchState[]>,
+  callback: StoreTransactCallback<FreeScoringMatchSaveState[]>,
 ) =>
   storeTransact(
     freeScoringMatchStatesStoreKey,
     callback,
-    [] as FreeScoringMatchState[],
+    [] as FreeScoringMatchSaveState[],
   );
 
-export const getFreeScoringMatchStates = () => {
-  return storeGetArray<FreeScoringMatchState>(freeScoringMatchStatesStoreKey);
+export const getFreeScoringMatchSaveStates = () => {
+  return storeGetArray<FreeScoringMatchSaveState>(
+    freeScoringMatchStatesStoreKey,
+  );
 };
 
 export const getFreeScoringPlayers = () => {

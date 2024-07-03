@@ -1,7 +1,7 @@
 import { useRef } from "react";
 import { useFullscreen2dCanvas } from "../canvasHelpers/useFullscreen2dCanvas";
 import { TeamScore } from "../umpire";
-import { LeftRightMatchWinState } from "./MatchView";
+import { LeftRightMatchWinState } from "../umpireView/match/MatchView";
 
 interface PlayerViewProps {
   leftScore: TeamScore;

@@ -1,11 +1,11 @@
 import { DataGrid, GridColDef } from "@mui/x-data-grid";
 import { FreeScoringPlayersLoaderData } from "./route";
-import { useLoaderDataT } from "./useLoaderDataT";
+import { useLoaderDataT } from "./hooks/useLoaderDataT";
 import { IconButton } from "@mui/material";
 import { useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import EditIcon from "@mui/icons-material/Edit";
-import { CarbonBatButton } from "../demoUmpire/CarbonBatButton";
+import { CurrentColorBatButton } from "./CurrentColorBatButton";
 
 export default function FreeScoringPlayers() {
   const { players } = useLoaderDataT<FreeScoringPlayersLoaderData>();
@@ -25,14 +25,13 @@ export default function FreeScoringPlayers() {
           >
             <EditIcon />
           </IconButton>,
-          <CarbonBatButton
+          <CurrentColorBatButton
             key={1}
-            rubberFillColor="#808080"
             enabled={true}
             clicked={() => {
               navigate(`../playermatches/${params.id}`);
             }}
-          ></CarbonBatButton>,
+          ></CurrentColorBatButton>,
         ],
       },
       {

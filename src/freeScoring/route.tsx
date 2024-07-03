@@ -1,5 +1,11 @@
-import { Outlet, RouteObject, redirect } from "react-router-dom";
+import {
+  LoaderFunction,
+  Outlet,
+  RouteObject,
+  redirect,
+} from "react-router-dom";
 import FreeScoringMatches, {
+  FreeScoringMatchSaveState,
   FreeScoringMatchState,
 } from "./FreeScoringMatches";
 import { FreeScoringMatch } from "./FreeScoringMatch";
@@ -7,14 +13,13 @@ import CreateFreeScoringPlayer from "./CreateFreeScoringPlayer";
 import Box from "@mui/material/Box/Box";
 import FreeScoringPlayers from "./FreeScoringPlayers";
 
-import CreateMatch, { CreateMatchOptions } from "./CreateMatch";
+import CreateMatch, { CreateMatchOptionsRequest } from "./CreateMatch";
 import { FreeScoringPlayer, FreeScoringTeam } from "./types";
-import { Umpire } from "../umpire";
 import CreateFreeScoringDoubles from "./CreateFreeScoringDoubles";
 import EditPlayer from "./EditPlayer";
 import FreeScoringTeams from "./FreeScoringTeams";
 import {
-  getFreeScoringMatchStates,
+  getFreeScoringMatchSaveStates,
   getFreeScoringPlayers,
   getFreeScoringTeams,
   storeTransactMatchStates,
@@ -27,17 +32,32 @@ import PersonIcon from "@mui/icons-material/Person";
 import PersonAddIcon from "@mui/icons-material/PersonAdd";
 import DynamicLinkIcon from "./DynamicLinkIcon";
 import { AppBar, Stack, Toolbar } from "@mui/material";
-import { BatSVG } from "../demoUmpire/BatButton";
-import MGLogo from "../MGLogo2";
+import { BatIcon } from "../commonIcons/BatIcon";
+import MGLogo from "../MaylandsTheming/MGLogo";
+import { CurrentColorBatIcon } from "./CurrentColorBatIcon";
+import { PlayerNames } from "../umpireView/UmpireController";
+import { createStoredMatch } from "./createStoredMatch";
+import { initializePlayersTeamsMatches } from "./mgTournaments";
 
+initializePlayersTeamsMatches();
+
+interface FreeScoringTeamWithNames extends FreeScoringTeam {
+  player1Name: string;
+  player2Name: string;
+}
+
+export interface CreateMatchLoaderData {
+  players: FreeScoringPlayer[];
+  teams: FreeScoringTeamWithNames[];
+}
 export interface FreeScoringPlayersLoaderData {
   players: ReturnType<typeof getFreeScoringPlayers>;
 }
 export interface FreeScoringTeamsLoaderData {
-  teams: ReturnType<typeof getFreeScoringTeams>;
+  teams: FreeScoringTeamWithNames[];
 }
 export interface FreeScoringMatchStatesLoaderData {
-  matchStates: ReturnType<typeof getFreeScoringMatchStates>;
+  matchStates: FreeScoringMatchState[];
 }
 export interface FreeScoringPlayersAndTeamsLoaderData
   extends FreeScoringPlayersLoaderData,
@@ -45,18 +65,85 @@ export interface FreeScoringPlayersAndTeamsLoaderData
 
 const getFreeScoringPlayersAndTeams =
   (): FreeScoringPlayersAndTeamsLoaderData => {
+    const players = getFreeScoringPlayers();
+
+    function getPlayerName(playerId: number): string {
+      const player = players.find((p) => p.id === playerId);
+      return player ? player.name : "";
+    }
+    const teams = getFreeScoringTeams().map((team) => {
+      return {
+        ...team,
+        player1Name: getPlayerName(team.player1Id),
+        player2Name: getPlayerName(team.player2Id),
+      };
+    });
     return {
-      players: getFreeScoringPlayers(),
-      teams: getFreeScoringTeams(),
+      players,
+      teams,
     };
   };
 
+const getFreeScoringMatchStates = (): FreeScoringMatchState[] => {
+  const players = getFreeScoringPlayers();
+  const matchSaveStates = getFreeScoringMatchSaveStates();
+  return matchSaveStates.map((matchState) => {
+    const playerNames: PlayerNames = {
+      team1Player1Name: players.find(
+        (player) => player.id === matchState.team1Player1Id,
+      )?.name,
+
+      team1Player2Name:
+        matchState.team1Player2Id === undefined
+          ? undefined
+          : players.find((player) => player.id === matchState.team1Player2Id)
+              ?.name,
+      team2Player1Name: players.find(
+        (player) => player.id === matchState.team2Player1Id,
+      )?.name,
+      team2Player2Name:
+        matchState.team2Player2Id === undefined
+          ? undefined
+          : players.find((player) => player.id === matchState.team2Player2Id)
+              ?.name,
+    };
+    const freeScoringMatchState: FreeScoringMatchState = {
+      ...matchState,
+      ...playerNames,
+    };
+    return freeScoringMatchState;
+  });
+};
+
 export type CreateFreeScoringTeamOptions = Omit<FreeScoringTeam, "id">;
+
+function redirectIfNotANumber(
+  param: string,
+  loader: (num: number) => ReturnType<LoaderFunction>,
+) {
+  const num = Number(param);
+  if (isNaN(num)) {
+    return redirect("/freescoring/badrequest");
+  }
+  return loader(num);
+}
+
+function redirectTo404() {
+  return redirect("/freescoring/notfound");
+}
 
 const route: RouteObject = {
   path: "freescoring",
   element: <FreeScoringIndex />,
   children: [
+    {
+      path: "badrequest",
+      element: <Box>Bad request</Box>,
+    },
+    {
+      path: "notfound",
+      element: <Box>Not found</Box>,
+    },
     {
       path: "matches",
       loader: () => {
@@ -71,44 +158,46 @@ const route: RouteObject = {
     {
       path: "playermatches/:playerId",
       loader: ({ params }) => {
-        const playerId = Number(params.playerId);
-        const matchStates = getFreeScoringMatchStates();
-        const playerMatches = matchStates.filter(
-          (matchState) =>
-            matchState.team1Player1Id === playerId ||
-            matchState.team1Player2Id === playerId ||
-            matchState.team2Player1Id === playerId ||
-            matchState.team2Player2Id === playerId,
-        );
-        const loaderData: FreeScoringMatchStatesLoaderData = {
-          matchStates: playerMatches,
-        };
-        return loaderData;
+        return redirectIfNotANumber(params.playerId, (playerId) => {
+          const matchStates = getFreeScoringMatchStates();
+          const playerMatches = matchStates.filter(
+            (matchState) =>
+              matchState.team1Player1Id === playerId ||
+              matchState.team1Player2Id === playerId ||
+              matchState.team2Player1Id === playerId ||
+              matchState.team2Player2Id === playerId,
+          );
+          const loaderData: FreeScoringMatchStatesLoaderData = {
+            matchStates: playerMatches,
+          };
+          return loaderData;
+        });
       },
       element: <FreeScoringMatches />,
     },
     {
       path: "teammatches/:teamId",
       loader: ({ params }) => {
-        const teams = getFreeScoringTeams();
-        const teamId = Number(params.teamId);
-        const team = teams.find((team) => team.id === teamId);
-        const loaderData: FreeScoringMatchStatesLoaderData = {
-          matchStates: [],
-        };
-        if (team) {
-          const matchStates = getFreeScoringMatchStates();
-          loaderData.matchStates = matchStates.filter((matchState) => {
-            return (
-              (matchState.team1Player1Id === team.player1.id &&
-                matchState.team1Player2Id === team.player2.id) ||
-              (matchState.team2Player1Id === team.player1.id &&
-                matchState.team2Player2Id === team.player2.id)
-            );
-          });
+        return redirectIfNotANumber(params.teamId, (teamId) => {
+          const teams = getFreeScoringTeams();
+          const team = teams.find((team) => team.id === teamId);
+          const loaderData: FreeScoringMatchStatesLoaderData = {
+            matchStates: [],
+          };
+          if (team) {
+            const matchStates = getFreeScoringMatchStates();
+            loaderData.matchStates = matchStates.filter((matchState) => {
+              return (
+                (matchState.team1Player1Id === team.player1Id &&
+                  matchState.team1Player2Id === team.player2Id) ||
+                (matchState.team2Player1Id === team.player1Id &&
+                  matchState.team2Player2Id === team.player2Id)
+              );
+            });
 
-          return loaderData;
-        }
+            return loaderData;
+          }
+        });
       },
       element: <FreeScoringMatches />,
     },
@@ -129,13 +218,14 @@ const route: RouteObject = {
       element: <FreeScoringMatch />,
       loader: ({ params }) => {
         const matchStates = getFreeScoringMatchStates();
-        const matchState = matchStates.find(
+        const matchState: FreeScoringMatchState = matchStates.find(
           (matchState) => matchState.id === params.matchId,
         );
         return matchState;
       },
       action: async ({ request }) => {
-        const updatedMatchState: FreeScoringMatchState = await request.json();
+        const updatedMatchState: FreeScoringMatchSaveState =
+          await request.json();
 
         storeTransactMatchStates((matchStates) => {
           const index = matchStates.findIndex(
@@ -168,55 +258,29 @@ const route: RouteObject = {
       path: "players/edit/:playerId",
       element: <EditPlayer />,
       loader: ({ params }) => {
-        const players = getFreeScoringPlayers();
-        const player = players.find(
-          (player) => player.id === Number(params.playerId),
-        );
-        return {
-          player,
-        };
+        return redirectIfNotANumber(params.playerId, (playerId) => {
+          const players = getFreeScoringPlayers();
+          const player = players.find((player) => player.id === playerId);
+          if (player === undefined) {
+            return redirectTo404();
+          }
+          return {
+            player,
+          };
+        });
       },
       action: async ({ request }) => {
         const updatedPlayer: FreeScoringPlayer = await request.json();
-        let playerNameChanged = false;
         storeTransactPlayers((players) => {
           const player = players.find(
             (player) => player.id === updatedPlayer.id,
           );
           if (player) {
-            playerNameChanged = player.name !== updatedPlayer.name;
             player.name = updatedPlayer.name;
             player.handicap = updatedPlayer.handicap;
           }
         });
-        if (playerNameChanged) {
-          storeTransactTeams((teams) => {
-            teams.forEach((team) => {
-              if (team.player1.id === updatedPlayer.id) {
-                team.player1.name = updatedPlayer.name;
-              }
-              if (team.player2.id === updatedPlayer.id) {
-                team.player2.name = updatedPlayer.name;
-              }
-            });
-          });
-          storeTransactMatchStates((matchStates) => {
-            matchStates.forEach((match) => {
-              if (match.team1Player1Id === updatedPlayer.id) {
-                match.team1Player1Name = updatedPlayer.name;
-              }
-              if (match.team1Player2Id === updatedPlayer.id) {
-                match.team1Player2Name = updatedPlayer.name;
-              }
-              if (match.team2Player1Id === updatedPlayer.id) {
-                match.team2Player1Name = updatedPlayer.name;
-              }
-              if (match.team2Player2Id === updatedPlayer.id) {
-                match.team2Player2Name = updatedPlayer.name;
-              }
-            });
-          });
-        }
+
         return redirect("/freescoring/players");
       },
     },
@@ -225,7 +289,7 @@ const route: RouteObject = {
       element: <FreeScoringTeams />,
       loader: () => {
         const loaderData: FreeScoringTeamsLoaderData = {
-          teams: getFreeScoringTeams(),
+          teams: getFreeScoringPlayersAndTeams().teams,
         };
         return loaderData;
       },
@@ -275,44 +339,29 @@ const route: RouteObject = {
       path: "matches/create",
       element: <CreateMatch />,
       loader: () => {
+        function getPlayerName(playerId: number): string {
+          const player = players.find((p) => p.id === playerId);
+          return player ? player.name : "";
+        }
+
         // todo use the Response
-        return getFreeScoringPlayersAndTeams();
+        const { players, teams } = getFreeScoringPlayersAndTeams();
+        const loaderData: CreateMatchLoaderData = {
+          players,
+          teams: teams.map((team) => {
+            return {
+              ...team,
+              player1Name: getPlayerName(team.player1Id),
+              player2Name: getPlayerName(team.player2Id),
+            };
+          }),
+        };
+        return loaderData;
       },
       action: async ({ request }) => {
-        const {
-          team1Player1Id,
-          team1Player1Name,
-          team1Player2Id,
-          team1Player2Name,
-          team2Player2Id,
-          team2Player1Id,
-          team2Player2Name,
-          team2Player1Name,
-          play,
-          ...matchOptions
-        }: CreateMatchOptions = await request.json();
-        const lastUsed = new Date().getTime();
-        const id = lastUsed.toString();
-
-        const umpire = new Umpire(matchOptions, team1Player2Id !== undefined);
-        const saveState = umpire.getSaveState();
-        const freeScoringMatchState: FreeScoringMatchState = {
-          id,
-          lastUsed,
-          ...saveState,
-          team1Player1Id,
-          team1Player1Name,
-          team1Player2Id,
-          team1Player2Name,
-          team2Player1Id,
-          team2Player1Name,
-          team2Player2Id,
-          team2Player2Name,
-        };
-
-        storeTransactMatchStates((freeScoringMatchStates) => {
-          freeScoringMatchStates.push(freeScoringMatchState);
-        });
+        const { play, ...createMatchOptions }: CreateMatchOptionsRequest =
+          await request.json();
+        const id = createStoredMatch(createMatchOptions);
 
         return redirect(
           play ? `/freescoring/match/${id}` : "/freescoring/matches",
@@ -335,7 +384,7 @@ function FreeScoringIndex() {
               to="matches"
               end
               icon={
-                <BatSVG
+                <BatIcon
                   showBall={false}
                   bladeFillColor1="currentColor"
                   bladeFillColor2="currentColor"
@@ -349,14 +398,7 @@ function FreeScoringIndex() {
               inactiveColor="white"
               to="matches/create"
               end
-              icon={
-                <BatSVG
-                  showBall={false}
-                  bladeFillColor1="currentColor"
-                  bladeFillColor2="currentColor"
-                  rubberFillColor="currentColor"
-                />
-              }
+              icon={<CurrentColorBatIcon />}
             />
 
             <DynamicLinkIcon
@@ -398,7 +440,7 @@ function FreeScoringIndex() {
               p={1}
               bgcolor={"white"}
             >
-              <MGLogo />
+              <MGLogo showRibbonText={false} />
             </Box>
           </Box>
         </Toolbar>

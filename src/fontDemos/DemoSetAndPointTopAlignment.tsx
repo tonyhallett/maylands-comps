@@ -6,7 +6,7 @@ import { useMonospaceFontSelection } from "./useMonospaceFontSelection";
 import Slider from "@mui/material/Slider";
 import TextField from "@mui/material/TextField";
 import { CardContent, Typography } from "@mui/material";
-import { DraggableCard } from "../demoUmpire/DraggableCard";
+import { DraggableCard } from "../demoHelpers/DraggableCard";
 
 // not concerned with horizontal positioning
 export default function DemoSetAndPointTopAlignment() {

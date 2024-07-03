@@ -1,4 +1,4 @@
-import { TeamScore } from "../umpire";
+import { TeamScore } from "../../../umpire";
 import { MatchGamePoint } from "./MatchGamePoint";
 import { MatchSetPoint } from "./MatchSetPoint";
 import { PointState } from "./MatchScore";

@@ -5,6 +5,7 @@ import {
   Link as RouterLink,
   LinkProps as RouterLinkProps,
 } from "react-router-dom";
+
 // eslint-disable-next-line react/display-name
 const LinkBehavior = forwardRef<
   HTMLAnchorElement,
@@ -18,12 +19,6 @@ const LinkBehavior = forwardRef<
 const theme = createTheme({
   palette: {
     mode: "dark",
-    /* primary: {
-      main: "#271A45",
-    },
-    secondary: {
-      main: "#99CC99",
-    }, */
   },
   components: {
     MuiLink: {

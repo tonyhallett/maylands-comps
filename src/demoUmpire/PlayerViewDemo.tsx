@@ -1,5 +1,5 @@
 import PlayerView from "./PlayerView";
-import { LeftRightMatchWinState } from "./MatchView";
+import { LeftRightMatchWinState } from "../umpireView/match/MatchView";
 
 export default function PlayerViewDemo() {
   return (

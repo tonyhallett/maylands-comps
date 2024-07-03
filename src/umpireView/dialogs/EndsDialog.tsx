@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
 import { Alert, Dialog, Typography } from "@mui/material";
-//import SwitchReceiversIcon from "@mui/icons-material/SwitchAccount";
 import SwitchReceiversIcon from "@mui/icons-material/SocialDistance";
 
 export interface EndsDialogProps {

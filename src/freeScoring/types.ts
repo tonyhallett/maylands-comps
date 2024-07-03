@@ -1,6 +1,6 @@
 export interface FreeScoringTeam {
-  player1: FreeScoringPlayer;
-  player2: FreeScoringPlayer;
+  player1Id: number;
+  player2Id: number;
   handicap: number;
   id: number;
 }

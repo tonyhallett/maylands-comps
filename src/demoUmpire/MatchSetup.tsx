@@ -13,8 +13,8 @@ import {
 } from "@mui/material";
 import IncrementIcon from "@mui/icons-material/Add";
 import DecrementIcon from "@mui/icons-material/Remove";
-import { CarbonBatButton } from "./CarbonBatButton";
-import { getContrastingPaletteColor } from "./getContrastingPaletteColor";
+import { CarbonBatButton } from "../umpireView/iconButtons/CarbonBatButton";
+import { getContrastingPaletteColor } from "../themeHelpers/getContrastingPaletteColor";
 
 export interface HandicapOption {
   handicap: number;

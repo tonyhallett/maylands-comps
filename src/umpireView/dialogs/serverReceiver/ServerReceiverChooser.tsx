@@ -1,5 +1,5 @@
-import { PlayerNames } from ".";
-import { Player } from "../umpire";
+import { Player } from "../../../umpire";
+import { PlayerNames } from "../../UmpireController";
 import { mapNames } from "./mapNames";
 import { PlayerChooserDialog } from "./PlayerChooserDialog";
 
@@ -10,7 +10,7 @@ export interface ServersReceiversChooserProps extends PlayerNames {
   chosenCallback: (player: Player, isServer: boolean) => void;
 }
 
-export function ServersReceiversChooser({
+export function ServerReceiverChooser({
   availableReceivers,
   availableServers,
   chosenCallback,

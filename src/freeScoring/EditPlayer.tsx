@@ -1,9 +1,9 @@
 import { Button, TextField } from "@mui/material";
-import { useLoaderDataT } from "./useLoaderDataT";
+import { useLoaderDataT } from "./hooks/useLoaderDataT";
 import { FreeScoringPlayer } from "./types";
 import { useState } from "react";
 import { LabelledNumberInput } from "./LabelledNumberInput";
-import { usePostJson } from "./usePostJson";
+import { usePostJson } from "./hooks/usePostJson";
 
 export default function EditPlayer() {
   const { player } = useLoaderDataT<{ player: FreeScoringPlayer }>();

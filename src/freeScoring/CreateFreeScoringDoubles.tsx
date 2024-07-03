@@ -2,7 +2,7 @@ import FormControl from "@mui/material/FormControl/FormControl";
 import InputLabel from "@mui/material/InputLabel/InputLabel";
 import Select from "@mui/material/Select/Select";
 import { useState } from "react";
-import { useLoaderDataT } from "./useLoaderDataT";
+import { useLoaderDataT } from "./hooks/useLoaderDataT";
 import MenuItem from "@mui/material/MenuItem/MenuItem";
 import Button from "@mui/material/Button/Button";
 import NumberInput from "../NumberInput";
@@ -11,7 +11,7 @@ import {
   FreeScoringPlayersAndTeamsLoaderData,
 } from "./route";
 import { FreeScoringPlayer, FreeScoringTeam } from "./types";
-import { usePostJson } from "./usePostJson";
+import { usePostJson } from "./hooks/usePostJson";
 
 function playersAlreadyInDoublesTeam(
   player1Id: number,
@@ -20,9 +20,9 @@ function playersAlreadyInDoublesTeam(
 ): boolean {
   return teams.some((team) => {
     const player1InTeam =
-      team.player1.id === player1Id || team.player2.id === player1Id;
+      team.player1Id === player1Id || team.player2Id === player1Id;
     const player2InTeam =
-      team.player1.id === player2Id || team.player2.id === player2Id;
+      team.player1Id === player2Id || team.player2Id === player2Id;
     return player1InTeam && player2InTeam;
   });
 }
@@ -91,8 +91,8 @@ export default function CreateFreeScoringDoubles() {
       <Button
         onClick={() => {
           const freeScoringTeam: CreateFreeScoringTeamOptions = {
-            player1: selectedPlayers[0],
-            player2: selectedPlayers[1],
+            player1Id: selectedPlayers[0].id,
+            player2Id: selectedPlayers[1].id,
             handicap,
           };
           // eslint-disable-next-line @typescript-eslint/no-explicit-any

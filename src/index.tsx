@@ -6,9 +6,9 @@ import "@fontsource/roboto/400.css";
 import "@fontsource/roboto/500.css";
 import "@fontsource/roboto/700.css";
 import { Box, CssBaseline, Link, Typography } from "@mui/material";
-import MGLogo from "./MGLogo";
+import MGLogo from "./MaylandsTheming/MGSVGLogo";
 import DemoSetAndPointTopAlignment from "./fontDemos/DemoSetAndPointTopAlignment";
-import MaylandsThemeProvider from "./MaylandsThemeProvider";
+import MaylandsThemeProvider from "./MaylandsTheming/MaylandsThemeProvider";
 import DemoScoringCharts from "./charts/DemoScoringCharts";
 import freeScoringRoute from "./freeScoring/route";
 

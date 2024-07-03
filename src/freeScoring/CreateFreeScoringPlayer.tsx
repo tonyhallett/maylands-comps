@@ -4,7 +4,7 @@ import NumberInput from "../NumberInput";
 import { Form } from "react-router-dom";
 import Button from "@mui/material/Button/Button";
 import { FreeScoringPlayersLoaderData } from "./route";
-import { useLoaderDataT } from "./useLoaderDataT";
+import { useLoaderDataT } from "./hooks/useLoaderDataT";
 
 export default function CreateFreeScoringPlayer() {
   const { players } = useLoaderDataT<FreeScoringPlayersLoaderData>();

@@ -7,9 +7,9 @@ import {
 } from "@mui/x-charts";
 import { useRef, useState } from "react";
 import { SmarterLineChart } from "./SmarterLineChart";
-import { ParallelXAxisLine } from "../demoUmpire/ParallelXAxisLine";
+import { ParallelXAxisLine } from "./ParallelXAxisLine";
 import { SmarterMarkElementSlotProps } from "./SmarterMarkElement";
-import { fillArrayWithIndices } from "../demoUmpire/fillArray";
+import { fillArrayWithIndices } from "./fillArray";
 import { FormControlLabel, Switch, Typography, styled } from "@mui/material";
 
 export const ChartsTooltipPaper = styled("div", {

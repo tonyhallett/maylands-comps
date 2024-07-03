@@ -1,40 +1,20 @@
-import { Box, IconButton, SvgIcon, lighten } from "@mui/material";
+import { SvgIcon, lighten } from "@mui/material";
 import { CSSProperties } from "react";
 
-interface BatSVGProps {
+export interface BatIconProps {
   rubberFillColor: CSSProperties["fill"]; // #FF4F28
   bladeFillColor1: CSSProperties["fill"]; // #FDD083
   bladeFillColor2: CSSProperties["fill"]; // #F3A25A
   showBall?: boolean;
   flip?: boolean;
 }
-
-export interface BatButtonProps extends BatSVGProps {
-  enabled: boolean;
-  clicked: () => void;
-}
-
-export function BatButton({ enabled, clicked, ...svgProps }: BatButtonProps) {
-  return (
-    <Box m={1}>
-      <IconButton
-        sx={{ border: 1, borderRadius: 1 }}
-        disabled={!enabled}
-        onClick={clicked}
-      >
-        <BatSVG {...svgProps} />
-      </IconButton>
-    </Box>
-  );
-}
-
-export function BatSVG({
+export function BatIcon({
   rubberFillColor,
   showBall = true,
   bladeFillColor1,
   bladeFillColor2,
   flip = false,
-}: BatSVGProps) {
+}: BatIconProps) {
   return (
     <SvgIcon>
       <svg

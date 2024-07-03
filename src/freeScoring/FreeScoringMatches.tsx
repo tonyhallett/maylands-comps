@@ -1,13 +1,14 @@
-import { PlayerNames } from "../demoUmpire"; // todo moveout
 import { SaveState } from "../umpire";
 import { DataGrid, GridColDef } from "@mui/x-data-grid";
-import { Button } from "@mui/material";
+import { Button, Dialog, DialogActions, DialogTitle } from "@mui/material";
 import { useNavigate } from "react-router-dom";
-import { useCallback, useMemo } from "react";
-import { useLoaderDataT } from "./useLoaderDataT";
+import { useCallback, useMemo, useState } from "react";
+import { useLoaderDataT } from "./hooks/useLoaderDataT";
 import { FreeScoringMatchStatesLoaderData } from "./route";
-import { useDeleteJson } from "./usePostJson";
+import { useDeleteJson } from "./hooks/usePostJson";
 import DeleteIcon from "@mui/icons-material/Delete";
+import { PlayerNames } from "../umpireView/UmpireController";
+import { getTeamVs } from "../umpireView/helpers";
 
 export interface PlayerIds {
   team1Player1Id: number;
@@ -16,13 +17,20 @@ export interface PlayerIds {
   team2Player2Id?: number;
 }
 export interface PlayerNameAndIds extends PlayerNames, PlayerIds {}
-export interface FreeScoringMatchState extends SaveState, PlayerNameAndIds {
+
+export interface FreeScoringMatchSaveState extends SaveState, PlayerIds {
   id: string;
   lastUsed: number;
+  umpire: string;
+  title: string;
 }
+export interface FreeScoringMatchState
+  extends FreeScoringMatchSaveState,
+    PlayerNames {}
 
 export default function FreeScoringMatches() {
   const { matchStates } = useLoaderDataT<FreeScoringMatchStatesLoaderData>();
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const navigate = useNavigate();
   const deleteJSON = useDeleteJson();
   const navigateToMatch = useCallback(
@@ -49,7 +57,9 @@ export default function FreeScoringMatches() {
           </Button>,
         ],
       },
+      { field: "title", headerName: "Title" },
       { field: "players", headerName: "Players" },
+      { field: "umpire", headerName: "Umpire" },
       { field: "score", headerName: "Score" },
       { field: "upTo", headerName: "Up to" },
       { field: "clearBy2", headerName: "Clear by 2" },
@@ -66,26 +76,15 @@ export default function FreeScoringMatches() {
     ],
     [navigateToMatch],
   );
-  const getInitials = (name: string) => {
-    return name
-      .split(" ")
-      .map((word) => word[0])
-      .join("");
-  };
-  const getTeamVs = (player1Name: string, player2Name: string) => {
-    const player1Initials = getInitials(player1Name);
-    if (player2Name) {
-      const player2Initials = getInitials(player2Name);
-      return `${player1Initials} & ${player2Initials}`;
-    }
-    return player1Initials;
-  };
+
   const rows = matchStates.map((matchState) => {
     const isHandicap =
       matchState.team1StartGameScore !== 0 ||
       matchState.team2StartGameScore !== 0;
     return {
       id: matchState.id,
+      title: matchState.title,
+      umpire: matchState.umpire,
       upTo: matchState.upTo,
       clearBy2: matchState.clearBy2,
       numServes: matchState.numServes,
@@ -103,18 +102,39 @@ export default function FreeScoringMatches() {
   });
   return (
     <>
+      <Dialog open={showDeleteDialog}>
+        <DialogTitle>Delete all matches?</DialogTitle>
+        <DialogActions>
+          <Button
+            onClick={() => {
+              deleteJSON(
+                matchStates.map((matchState) => matchState.id),
+                {
+                  action: `../matches/delete`,
+                },
+              );
+              setShowDeleteDialog(false);
+            }}
+          >
+            Confirm
+          </Button>
+          <Button
+            autoFocus
+            onClick={() => {
+              setShowDeleteDialog(false);
+            }}
+          >
+            Cancel
+          </Button>
+        </DialogActions>
+      </Dialog>
       <Button
         startIcon={<DeleteIcon />}
         onClick={() => {
-          deleteJSON(
-            matchStates.map((matchState) => matchState.id),
-            {
-              action: `../matches/delete`,
-            },
-          );
+          setShowDeleteDialog(true);
         }}
       >
-        Delete Matches
+        Delete All Matches
       </Button>
       <DataGrid autosizeOnMount rows={rows} columns={columns}></DataGrid>
     </>

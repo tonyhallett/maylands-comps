@@ -1,10 +1,6 @@
-import { Player } from "../umpire";
-import { PlayerNames } from ".";
-
-export interface PlayerAndName {
-  player: Player;
-  name: string;
-}
+import { Player } from "../../../umpire";
+import { PlayerNames } from "../../UmpireController";
+import { PlayerAndName } from "./PlayerAndName";
 
 export function mapNames(
   players: readonly Player[],

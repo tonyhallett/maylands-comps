@@ -1,4 +1,4 @@
-import { GameScore, PointHistory } from "../umpire";
+import { GameScore, PointHistory } from "../../umpire";
 
 export function HistoryView({
   // eslint-disable-next-line @typescript-eslint/no-unused-vars

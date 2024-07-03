@@ -1,6 +1,5 @@
 import { MatchOptions, Umpire } from "../umpire";
-import { PlayerNames } from ".";
-import { UmpireController } from "./UmpireController";
+import { UmpireController, PlayerNames } from "../umpireView/UmpireController";
 
 export interface UmpireManagerOptions extends PlayerNames, MatchOptions {
   team1StartGameScore: number;

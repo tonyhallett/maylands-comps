@@ -4,16 +4,15 @@ import {
   Divider,
   IconButton,
   Popover,
-  Typography,
   useTheme,
 } from "@mui/material";
-import ServerReceiverIcon from "../ServerReceiverIcon";
-import { getContrastingPaletteColor } from "./getContrastingPaletteColor";
+import ServerReceiverIcon from "../icons/ServerReceiverIcon";
+import { getContrastingPaletteColor } from "../../themeHelpers/getContrastingPaletteColor";
 import RuleIcon from "@mui/icons-material/Rule";
 import { useState } from "react";
-import { MatchOptions } from "../umpire";
-import { CarbonBatButton } from "./CarbonBatButton";
+import { CarbonBatButton } from "../iconButtons/CarbonBatButton";
 import EndsIcon from "@mui/icons-material/TransferWithinAStation";
+import { RulesView, RulesViewProps } from "./RulesView";
 export interface UmpireToolbarProps {
   canScorePoint: boolean;
   scorePoint: (isLeft: boolean) => void;
@@ -23,22 +22,6 @@ export interface UmpireToolbarProps {
   resetServerReceiver: () => void;
   rules: RulesViewProps;
   switchEnds: () => void;
-}
-
-type RulesViewProps = Omit<
-  MatchOptions,
-  "team1StartGameScore" | "team2StartGameScore"
->;
-function RulesView({ clearBy2, numServes, upTo, bestOf }: RulesViewProps) {
-  const clearBy = clearBy2 ? 2 : 1;
-  return (
-    <Box p={1} border={1} borderRadius={1}>
-      <Typography>{`Best of ${bestOf}`}</Typography>
-      <Typography>{`Up to ${upTo}`}</Typography>
-      <Typography>{`${numServes} serves`}</Typography>
-      <Typography>{`Clear by ${clearBy}`}</Typography>
-    </Box>
-  );
 }
 
 export function UmpireToolbar({

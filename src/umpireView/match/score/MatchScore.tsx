@@ -1,5 +1,5 @@
 import { Card } from "@mui/material";
-import { TeamScore } from "../umpire";
+import { TeamScore } from "../../../umpire";
 import { TeamPoints, TeamPointsFontSizes } from "./TeamPoints";
 
 export enum PointState {

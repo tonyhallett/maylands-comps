@@ -1,19 +1,10 @@
 import { useNavigate } from "react-router-dom";
-import { CarbonBatButton } from "../demoUmpire/CarbonBatButton";
 import { FreeScoringTeamsLoaderData } from "./route";
-import { useLoaderDataT } from "./useLoaderDataT";
+import { useLoaderDataT } from "./hooks/useLoaderDataT";
 import { DataGrid, GridColDef } from "@mui/x-data-grid";
 import { useMemo } from "react";
-{
-  /* <IconButton
-            key={0}
-            onClick={() => {
-              navigate(`../players/edit/${params.id}`);
-            }}
-          >
-            <EditIcon />
-          </IconButton>, */
-}
+import { CurrentColorBatButton } from "./CurrentColorBatButton";
+
 export default function FreeScoringTeams() {
   const { teams } = useLoaderDataT<FreeScoringTeamsLoaderData>();
   const navigate = useNavigate();
@@ -24,14 +15,13 @@ export default function FreeScoringTeams() {
         type: "actions",
         width: 80,
         getActions: (params) => [
-          <CarbonBatButton
+          <CurrentColorBatButton
             key={1}
-            rubberFillColor="#808080"
             enabled={true}
             clicked={() => {
               navigate(`../teammatches/${params.id}`);
             }}
-          ></CarbonBatButton>,
+          ></CurrentColorBatButton>,
         ],
       },
       {
@@ -52,8 +42,8 @@ export default function FreeScoringTeams() {
   const teamRows = teams.map((team) => {
     return {
       id: team.id,
-      player1Name: team.player1.name,
-      player2Name: team.player2.name,
+      player1Name: team.player1Name,
+      player2Name: team.player2Name,
       handicap: team.handicap,
     };
   });

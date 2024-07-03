@@ -1,4 +1,4 @@
-import { useLoaderDataT } from "./useLoaderDataT";
+import { useLoaderDataT } from "./hooks/useLoaderDataT";
 import FormControlLabel from "@mui/material/FormControlLabel/FormControlLabel";
 import Checkbox from "@mui/material/Checkbox/Checkbox";
 import { useState } from "react";
@@ -8,13 +8,13 @@ import FormControl from "@mui/material/FormControl/FormControl";
 import InputLabel from "@mui/material/InputLabel/InputLabel";
 import Select from "@mui/material/Select/Select";
 import MenuItem from "@mui/material/MenuItem/MenuItem";
-import { FreeScoringPlayer, FreeScoringTeam } from "./types";
 import { shiftHandicap } from "../umpire/shiftHandicap";
 import { MatchOptions } from "../umpire";
-import { PlayerNameAndIds } from "./FreeScoringMatches";
+import { PlayerIds, PlayerNameAndIds } from "./FreeScoringMatches";
 import { Alert } from "@mui/material";
 import * as NumberField from "@base_ui/react/NumberField";
 import { LabelledNumberInput } from "./LabelledNumberInput";
+import { CreateMatchLoaderData } from "./route";
 
 export interface BestOfOption {
   bestOf: number;
@@ -58,10 +58,7 @@ function getStartScores(
 
 export default function CreateMatch() {
   const submit = useSubmit();
-  const { players, teams } = useLoaderDataT<{
-    players: FreeScoringPlayer[];
-    teams: FreeScoringTeam[];
-  }>();
+  const { players, teams } = useLoaderDataT<CreateMatchLoaderData>();
   const [selectedPlayerId, setSelectedPlayerId] = useState<number | undefined>(
     players.length > 0 ? players[0].id : undefined,
   );
@@ -118,10 +115,10 @@ export default function CreateMatch() {
   if (isDoubles && canAdd && selectedPlayerOrTeams.length > 0) {
     const selectedTeam = teams.find((t) => t.id === selectedId);
     const addedTeam = teams.find((t) => t.id === selectedPlayerOrTeams[0].id);
-    const addedTeamPlayerIds = [addedTeam.player1.id, addedTeam.player2.id];
+    const addedTeamPlayerIds = [addedTeam.player1Id, addedTeam.player2Id];
     const duplicatePlayers = [
-      selectedTeam.player1.id,
-      selectedTeam.player2.id,
+      selectedTeam.player1Id,
+      selectedTeam.player2Id,
     ].some((id) => addedTeamPlayerIds.includes(id));
     canAdd = !duplicatePlayers;
   }
@@ -154,14 +151,14 @@ export default function CreateMatch() {
     if (isDoubles) {
       const selectedTeams = teams.filter((team) => ids.includes(team.id));
       playerNameAndIds = {
-        team1Player1Name: selectedTeams[0].player1.name,
-        team1Player1Id: selectedTeams[0].player1.id,
-        team1Player2Name: selectedTeams[0].player2.name,
-        team1Player2Id: selectedTeams[0].player2.id,
-        team2Player1Name: selectedTeams[1].player1.name,
-        team2Player1Id: selectedTeams[1].player1.id,
-        team2Player2Name: selectedTeams[1].player2.name,
-        team2Player2Id: selectedTeams[1].player2.id,
+        team1Player1Name: selectedTeams[0].player1Name,
+        team1Player1Id: selectedTeams[0].player1Id,
+        team1Player2Name: selectedTeams[0].player2Name,
+        team1Player2Id: selectedTeams[0].player2Id,
+        team2Player1Name: selectedTeams[1].player1Name,
+        team2Player1Id: selectedTeams[1].player1Id,
+        team2Player2Name: selectedTeams[1].player2Name,
+        team2Player2Id: selectedTeams[1].player2Id,
       };
     } else {
       const selectedPlayers = players.filter((player) =>
@@ -178,10 +175,12 @@ export default function CreateMatch() {
         team2Player2Name: undefined,
       };
     }
-    const createMatchOptions: CreateMatchOptions = {
+    const createMatchOptions: CreateMatchOptionsRequest = {
       ...matchOptions,
       ...playerNameAndIds,
       play,
+      umpire: "Umpire",
+      title: "Title",
     };
     submit(
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -223,7 +222,7 @@ export default function CreateMatch() {
           >
             {teams.map((team) => (
               <MenuItem key={team.id} value={team.id}>
-                {team.player1.name} & {team.player2.name}
+                {`${team.player1Name} & ${team.player2Name}`}
               </MenuItem>
             ))}
           </Select>
@@ -238,7 +237,7 @@ export default function CreateMatch() {
                 ...selectedPlayerOrTeams,
                 {
                   id: team.id,
-                  name: `${team.player1.name} & ${team.player2.name}`,
+                  name: `${team.player1Name} & ${team.player2Name}`,
                   handicap: team.handicap,
                 },
               ]);
@@ -380,7 +379,11 @@ export default function CreateMatch() {
     </>
   );
 }
+export interface CreateMatchOptions extends MatchOptions, PlayerIds {
+  umpire: string;
+  title: string;
+}
 
-export interface CreateMatchOptions extends MatchOptions, PlayerNameAndIds {
+export interface CreateMatchOptionsRequest extends CreateMatchOptions {
   play: boolean;
 }
