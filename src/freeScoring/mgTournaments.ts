@@ -389,7 +389,7 @@ function initializeMatches() {
         upTo: 31,
         clearBy2: false,
         numServes: 5,
-        bestOf: 3,
+        bestOf: 5,
         team1StartGameScore: team1.handicap,
         team2StartGameScore: team2.handicap,
         team1Player1Id: team1.player1Id,

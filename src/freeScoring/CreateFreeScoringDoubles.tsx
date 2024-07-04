@@ -1,17 +1,17 @@
-import FormControl from "@mui/material/FormControl/FormControl";
-import InputLabel from "@mui/material/InputLabel/InputLabel";
-import Select from "@mui/material/Select/Select";
 import { useState } from "react";
 import { useLoaderDataT } from "./hooks/useLoaderDataT";
 import MenuItem from "@mui/material/MenuItem/MenuItem";
 import Button from "@mui/material/Button/Button";
-import NumberInput from "../NumberInput";
+import DeleteIcon from "@mui/icons-material/Delete";
 import {
   CreateFreeScoringTeamOptions,
   FreeScoringPlayersAndTeamsLoaderData,
 } from "./route";
 import { FreeScoringPlayer, FreeScoringTeam } from "./types";
 import { usePostJson } from "./hooks/usePostJson";
+import { LabelledNumberInput } from "./LabelledNumberInput";
+import { Box, IconButton, TextField } from "@mui/material";
+import { MarginDivider } from "./MarginDivider";
 
 function playersAlreadyInDoublesTeam(
   player1Id: number,
@@ -53,21 +53,21 @@ export default function CreateFreeScoringDoubles() {
   const canAddTeam = selectedPlayers.length === 2;
   return (
     <div>
-      <FormControl sx={{ display: "block", mb: 1 }}>
-        <InputLabel id="select-player-label">Select player</InputLabel>
-        <Select
+      <Box mb={1}>
+        <TextField
+          fullWidth
+          select
+          label="Select player"
           onChange={(evt) => setSelectedPlayerId(Number(evt.target.value))}
           value={selectedPlayerId}
-          autoWidth
-          labelId="select-player-label"
         >
           {players.map((player) => (
             <MenuItem key={player.id} value={player.id}>
               {player.name}
             </MenuItem>
           ))}
-        </Select>
-      </FormControl>
+        </TextField>
+      </Box>
       <Button
         onClick={() => {
           const player = players.find((p) => p.id === selectedPlayerId);
@@ -79,15 +79,33 @@ export default function CreateFreeScoringDoubles() {
       >
         Add Player
       </Button>
-      {selectedPlayers.map((player) => (
-        <div key={player.id}>{player.name}</div>
-      ))}
-      <NumberInput
-        aria-label="Player handicao"
-        placeholder="Handicap"
-        value={handicap}
-        onChange={(event, val) => setHandicap(val)}
+      <Box mt={1} mb={1} minHeight={80}>
+        {selectedPlayers.map((player) => (
+          <div key={player.id}>
+            <IconButton
+              onClick={() => {
+                setSelectedPlayers(
+                  selectedPlayers.filter((p) => p.id !== player.id),
+                );
+              }}
+            >
+              <DeleteIcon />
+            </IconButton>
+            <span key={player.id}>{player.name}</span>
+          </div>
+        ))}
+      </Box>
+      <MarginDivider />
+      <LabelledNumberInput
+        label="Handicap"
+        numberInputProps={{
+          "aria-label": "Player handicap",
+          placeholder: "Handicap",
+          value: handicap,
+          onChange: (event, val) => setHandicap(val),
+        }}
       />
+      <MarginDivider />
       <Button
         onClick={() => {
           const freeScoringTeam: CreateFreeScoringTeamOptions = {
@@ -100,7 +118,7 @@ export default function CreateFreeScoringDoubles() {
         }}
         disabled={!canAddTeam}
       >
-        Add Team
+        Create team
       </Button>
     </div>
   );

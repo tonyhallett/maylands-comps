@@ -1,9 +1,27 @@
-import { CSSProperties, PropsWithChildren, ReactNode, useState } from "react";
+import {
+  CSSProperties,
+  PropsWithChildren,
+  ReactNode,
+  useMemo,
+  useState,
+} from "react";
 import { keyframes } from "@mui/system";
 import { Box } from "@mui/material";
+import { Keyframes } from "@emotion/react";
 
-const rotations = 8;
+interface FlipKeyframes {
+  flipHeads: Keyframes;
+  flipTails: Keyframes;
+}
+
+// in case it is an issue that the keyframes are being created on every render
+const keyframesLookup = new Map<number, FlipKeyframes>();
 function getFlipKeyframes(numRotations: number) {
+  const cached = keyframesLookup.get(numRotations);
+  if (cached) {
+    return cached;
+  }
+
   const flipHeads = keyframes`
     from {
         transform: rotateY(0deg);
@@ -21,49 +39,10 @@ function getFlipKeyframes(numRotations: number) {
         transform: rotateY(${(numRotations + 1) * 180}deg);
   }
 `;
-  return { flipHeads, flipTails };
-}
+  const keyFrames = { flipHeads, flipTails };
 
-const { flipHeads, flipTails } = getFlipKeyframes(rotations);
-
-interface CoinSidesUrls {
-  headsSideUrl: string;
-  tailsSideUrl: string;
-}
-
-const coinSidesUrls: CoinSidesUrls[] = [
-  {
-    tailsSideUrl:
-      "https://www.royalmint.com/globalassets/__rebrand/_structure/shop/editions/_historic-coins/_product-image/hisgssf-george-i-silver-shillings-reverse.jpg",
-    headsSideUrl:
-      "https://www.royalmint.com/globalassets/__rebrand/_structure/shop/editions/_historic-coins/_product-image/hisgssf-george-i-silver-shillings-obverse.jpg",
-  },
-  // unfortunately has white surround
-  /* {
-    headsSideUrl:
-      "https://www.royalmint.com/globalassets/consumer/_campaigns/2023/coronation/product-images/50p/uk23k50bu_50p_brilliant_uncirculated_coin_obverse.jpg",
-    tailsSideUrl:
-      "https://www.royalmint.com/globalassets/consumer/_campaigns/2023/coronation/product-images/50p/uk23k50bu_50p_brilliant_uncirculated_coin_reverse.jpg",
-  }, */
-  {
-    headsSideUrl:
-      "https://www.royalmint.com/globalassets/bullion/images/products/coronation/bkcc23gt-obverse.png",
-    tailsSideUrl:
-      "https://www.royalmint.com/globalassets/bullion/images/products/coronation/bkcc23gt-reverse.png",
-  },
-];
-
-export function ClickKingTosser() {
-  const coinSides = coinSidesUrls[1];
-  return (
-    <ClickCoinTosser
-      width={96}
-      height={96}
-      headsSide={<img width={96} height={96} src={coinSides.headsSideUrl} />}
-      tailsSide={<img width={96} height={96} src={coinSides.tailsSideUrl} />}
-      flipDurationMilliseconds={2500}
-    />
-  );
+  keyframesLookup.set(numRotations, keyFrames);
+  return keyFrames;
 }
 
 export function ClickCoinTosser({
@@ -72,8 +51,13 @@ export function ClickCoinTosser({
   width,
   height,
   flipDurationMilliseconds,
-}: CoinSides & { flipDurationMilliseconds: number }) {
+  numRotations,
+}: CoinSides & { flipDurationMilliseconds: number; numRotations: number }) {
   const [tossState, toss] = useCoinToss();
+  const { flipHeads, flipTails } = useMemo(
+    () => getFlipKeyframes(numRotations),
+    [numRotations],
+  );
   return (
     <div onClick={toss}>
       <Coin
@@ -84,32 +68,17 @@ export function ClickCoinTosser({
         width={width}
         height={height}
         flipDurationMilliseconds={flipDurationMilliseconds}
+        flipHeads={flipHeads}
+        flipTails={flipTails}
       />
     </div>
-  );
-}
-
-export function Tosser({ headsSide, tailsSide, width, height }: CoinSides) {
-  const [tossState, toss] = useCoinToss();
-  return (
-    <>
-      <button onClick={toss}>Toss</button>
-      <Coin
-        key={Math.random()}
-        tossState={tossState}
-        headsSide={headsSide}
-        tailsSide={tailsSide}
-        width={width}
-        height={height}
-        flipDurationMilliseconds={2000}
-      />
-    </>
   );
 }
 
 interface Toss {
   heads: boolean;
 }
+
 function useCoinToss() {
   const [tossState, setTossState] = useState<Toss | undefined>(undefined);
   const toss = () => {
@@ -132,9 +101,13 @@ function Coin({
   width,
   height,
   flipDurationMilliseconds,
+  flipHeads,
+  flipTails,
 }: {
   tossState: Toss;
   flipDurationMilliseconds: number;
+  flipHeads: Keyframes;
+  flipTails: Keyframes;
 } & CoinSides) {
   return (
     <Box
@@ -157,6 +130,7 @@ function Coin({
 interface SideProps {
   isTop: boolean;
 }
+
 function Side({ children, isTop }: PropsWithChildren<SideProps>) {
   return (
     <div

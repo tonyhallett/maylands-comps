@@ -1,4 +1,4 @@
-// @ts-expect-error - this is a hack to get the svg file to be included in the bundle
+// @ts-expect-error - parcel
 import svg from "bundle-text:./MG Logo Clean.svg";
 
 export default function MGLogo({ width }: { width: number }) {

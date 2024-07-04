@@ -1,9 +1,10 @@
-import { Button, TextField } from "@mui/material";
+import { Box, Button, TextField } from "@mui/material";
 import { useLoaderDataT } from "./hooks/useLoaderDataT";
 import { FreeScoringPlayer } from "./types";
 import { useState } from "react";
 import { LabelledNumberInput } from "./LabelledNumberInput";
 import { usePostJson } from "./hooks/usePostJson";
+import { MarginDivider } from "./MarginDivider";
 
 export default function EditPlayer() {
   const { player } = useLoaderDataT<{ player: FreeScoringPlayer }>();
@@ -17,13 +18,15 @@ export default function EditPlayer() {
 
   return (
     <>
-      <TextField
-        onChange={(evt) =>
-          setNewPlayer({ ...newPlayer, name: evt.target.value })
-        }
-        value={newPlayer.name}
-        label="Name"
-      />
+      <Box mb={1}>
+        <TextField
+          onChange={(evt) =>
+            setNewPlayer({ ...newPlayer, name: evt.target.value })
+          }
+          value={newPlayer.name}
+          label="Name"
+        />
+      </Box>
       <LabelledNumberInput
         label="Handicap"
         numberInputProps={{
@@ -34,7 +37,7 @@ export default function EditPlayer() {
             setNewPlayer({ ...newPlayer, handicap: val }),
         }}
       />
-
+      <MarginDivider />
       <Button
         onClick={() =>
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -42,7 +45,7 @@ export default function EditPlayer() {
         }
         disabled={!canSubmit}
       >
-        Submit
+        Update player
       </Button>
     </>
   );

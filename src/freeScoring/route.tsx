@@ -19,6 +19,7 @@ import CreateFreeScoringDoubles from "./CreateFreeScoringDoubles";
 import EditPlayer from "./EditPlayer";
 import FreeScoringTeams from "./FreeScoringTeams";
 import {
+  clearFreeScoringData,
   getFreeScoringMatchSaveStates,
   getFreeScoringPlayers,
   getFreeScoringTeams,
@@ -33,11 +34,13 @@ import PersonAddIcon from "@mui/icons-material/PersonAdd";
 import DynamicLinkIcon from "./DynamicLinkIcon";
 import { AppBar, Stack, Toolbar } from "@mui/material";
 import { BatIcon } from "../commonIcons/BatIcon";
-import MGLogo from "../MaylandsTheming/MGLogo";
-import { CurrentColorBatIcon } from "./CurrentColorBatIcon";
+//import MGLogo from "../MaylandsTheming/MGLogo";
+import { BatPlusIcon } from "./CurrentColorBatIcon";
 import { PlayerNames } from "../umpireView/UmpireController";
 import { createStoredMatch } from "./createStoredMatch";
 import { initializePlayersTeamsMatches } from "./mgTournaments";
+import { useTheme } from "@emotion/react";
+import { BestOfMatchEdit, EditMatch } from "./EditMatch";
 
 initializePlayersTeamsMatches();
 
@@ -214,6 +217,38 @@ const route: RouteObject = {
       },
     },
     {
+      path: "clearstorage",
+      loader: () => {
+        clearFreeScoringData();
+        return redirect("/freescoring/matches");
+      },
+    },
+    {
+      path: "matches/edit/:matchId",
+      element: <EditMatch />,
+      loader: ({ params }) => {
+        const matchId = params.matchId;
+        const matchStates = getFreeScoringMatchStates();
+        const matchState = matchStates.find(
+          (matchState) => matchState.id === matchId,
+        );
+        return matchState;
+      },
+      action: async ({ request }) => {
+        const bestOfMatchEdit: BestOfMatchEdit = await request.json();
+        storeTransactMatchStates((matchStates) => {
+          const matchState = matchStates.find(
+            (matchState) => matchState.id === bestOfMatchEdit.id,
+          );
+          if (matchState) {
+            matchState.bestOf = bestOfMatchEdit.bestOf;
+          }
+        });
+
+        return redirect("/freescoring/matches");
+      },
+    },
+    {
       path: "match/:matchId",
       element: <FreeScoringMatch />,
       loader: ({ params }) => {
@@ -372,82 +407,85 @@ const route: RouteObject = {
 };
 
 function FreeScoringIndex() {
-  const activeColor = "yellow";
+  const theme = useTheme();
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const activeColor = (theme as any).palette.primary.main;
   return (
     <Box p={1}>
-      <AppBar position="static">
-        <Toolbar>
-          <Stack direction="row" spacing={1}>
-            <DynamicLinkIcon
-              activeColor={activeColor}
-              inactiveColor="white"
-              to="matches"
-              end
-              icon={
-                <BatIcon
-                  showBall={false}
-                  bladeFillColor1="currentColor"
-                  bladeFillColor2="currentColor"
-                  rubberFillColor="currentColor"
-                />
-              }
-            />
+      <Box mb={2}>
+        <AppBar position="static">
+          <Toolbar>
+            <Stack direction="row" spacing={1}>
+              <DynamicLinkIcon
+                activeColor={activeColor}
+                inactiveColor="white"
+                to="matches"
+                end
+                icon={
+                  <BatIcon
+                    showBall={false}
+                    bladeFillColor1="currentColor"
+                    bladeFillColor2="currentColor"
+                    rubberFillColor="currentColor"
+                  />
+                }
+              />
 
-            <DynamicLinkIcon
-              activeColor={activeColor}
-              inactiveColor="white"
-              to="matches/create"
-              end
-              icon={<CurrentColorBatIcon />}
-            />
+              <DynamicLinkIcon
+                activeColor={activeColor}
+                inactiveColor="white"
+                to="matches/create"
+                end
+                icon={<BatPlusIcon />}
+              />
 
-            <DynamicLinkIcon
-              activeColor={activeColor}
-              inactiveColor="white"
-              to="players"
-              end
-              icon={<PersonIcon />}
-            />
+              <DynamicLinkIcon
+                activeColor={activeColor}
+                inactiveColor="white"
+                to="players"
+                end
+                icon={<PersonIcon />}
+              />
 
-            <DynamicLinkIcon
-              activeColor={activeColor}
-              inactiveColor="white"
-              to="players/create"
-              end
-              icon={<PersonAddIcon />}
-            />
+              <DynamicLinkIcon
+                activeColor={activeColor}
+                inactiveColor="white"
+                to="players/create"
+                end
+                icon={<PersonAddIcon />}
+              />
 
-            <DynamicLinkIcon
-              activeColor={activeColor}
-              inactiveColor="white"
-              to="teams"
-              end
-              icon={<GroupIcon />}
-            />
-            <DynamicLinkIcon
-              activeColor={activeColor}
-              inactiveColor="white"
-              to="players/createdoubles"
-              end
-              icon={<GroupAddIcon />}
-            />
-          </Stack>
-          <Box display={"flex"} flex={1} justifyContent="flex-end">
-            <Box
-              width={64}
-              borderRadius={1}
-              flexGrow={0}
-              p={1}
-              bgcolor={"white"}
-            >
-              <MGLogo showRibbonText={false} />
-            </Box>
-          </Box>
-        </Toolbar>
-      </AppBar>
-      <Box mb={1}>
-        <Outlet />
+              <DynamicLinkIcon
+                activeColor={activeColor}
+                inactiveColor="white"
+                to="teams"
+                end
+                icon={<GroupIcon />}
+              />
+              <DynamicLinkIcon
+                activeColor={activeColor}
+                inactiveColor="white"
+                to="players/createdoubles"
+                end
+                icon={<GroupAddIcon />}
+              />
+            </Stack>
+            {/* <Box display={"flex"} flex={1} justifyContent="flex-end">
+              <Box
+                width={64}
+                borderRadius={1}
+                flexGrow={0}
+                p={1}
+                bgcolor={"white"}
+              >
+                <MGLogo showRibbonText={false} />
+              </Box>
+            </Box> */}
+          </Toolbar>
+        </AppBar>
       </Box>
+
+      <Outlet />
     </Box>
   );
 }

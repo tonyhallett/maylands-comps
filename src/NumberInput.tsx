@@ -63,14 +63,6 @@ const NumberInput = React.forwardRef(function CustomNumberInput(
 
 export default NumberInput;
 
-const blue = {
-  100: "#DAECFF",
-  200: "#80BFFF",
-  400: "#3399FF",
-  500: "#007FFF",
-  600: "#0072E5",
-};
-
 const grey = {
   50: "#F3F6F9",
   100: "#E5EAF2",
@@ -83,14 +75,13 @@ const grey = {
   800: "#303740",
   900: "#1C2025",
 };
-
 const StyledInputRoot = styled("div")(
   ({ theme }) => `
-  font-family: 'IBM Plex Sans', sans-serif;
+  
   font-weight: 400;
-  border-radius: 8px;
-  color: ${theme.palette.mode === "dark" ? grey[300] : grey[900]};
-  background: ${theme.palette.mode === "dark" ? grey[900] : "#fff"};
+  border-radius: ${theme.shape.borderRadius}px;
+  color: ${theme.palette.text.primary};
+  background: 'rgba(255, 255, 255, 0.09)';
   border: 1px solid ${theme.palette.mode === "dark" ? grey[700] : grey[200]};
   box-shadow: 0px 2px 2px ${theme.palette.mode === "dark" ? grey[900] : grey[50]};
   display: grid;
@@ -101,12 +92,11 @@ const StyledInputRoot = styled("div")(
   padding: 4px;
 
   &.${numberInputClasses.focused} {
-    border-color: ${blue[400]};
-    box-shadow: 0 0 0 3px ${theme.palette.mode === "dark" ? blue[600] : blue[200]};
+    border-color: ${theme.palette.text.primary};
   }
 
   &:hover {
-    border-color: ${blue[400]};
+    border-color: ${theme.palette.text.primary};
   }
 
   // firefox

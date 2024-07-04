@@ -4,11 +4,12 @@ import { useLoaderDataT } from "./hooks/useLoaderDataT";
 import { DataGrid, GridColDef } from "@mui/x-data-grid";
 import { useMemo } from "react";
 import { CurrentColorBatButton } from "./CurrentColorBatButton";
+import { Box } from "@mui/material";
 
 export default function FreeScoringTeams() {
   const { teams } = useLoaderDataT<FreeScoringTeamsLoaderData>();
   const navigate = useNavigate();
-  const playersColumns: GridColDef[] = useMemo<GridColDef<unknown>[]>(
+  const teamsColumns: GridColDef[] = useMemo<GridColDef<unknown>[]>(
     () => [
       {
         field: "actions",
@@ -26,14 +27,17 @@ export default function FreeScoringTeams() {
       },
       {
         field: "player1Name",
+        width: 150,
         headerName: "Player 1",
       },
       {
+        width: 150,
         field: "player2Name",
         headerName: "Player 2",
       },
       {
         field: "handicap",
+        width: 130,
         headerName: "Handicap",
       },
     ],
@@ -49,13 +53,22 @@ export default function FreeScoringTeams() {
   });
 
   return (
-    <>
-      <DataGrid
-        autosizeOnMount
-        rows={teamRows}
-        columns={playersColumns}
-      ></DataGrid>
-      <div>{`Num teams ${teams.length}`}</div>
-    </>
+    <DataGrid
+      autoHeight
+      rows={teamRows}
+      columns={teamsColumns}
+      slots={{
+        noRowsOverlay: () => (
+          <Box
+            display="flex"
+            justifyContent="center"
+            alignItems="center"
+            height="100%"
+          >
+            No teams
+          </Box>
+        ),
+      }}
+    />
   );
 }

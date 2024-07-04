@@ -5,6 +5,7 @@ export interface BatIconProps {
   rubberFillColor: CSSProperties["fill"]; // #FF4F28
   bladeFillColor1: CSSProperties["fill"]; // #FDD083
   bladeFillColor2: CSSProperties["fill"]; // #F3A25A
+  rubberStrokeColor?: CSSProperties["stroke"];
   showBall?: boolean;
   flip?: boolean;
 }
@@ -13,6 +14,7 @@ export function BatIcon({
   showBall = true,
   bladeFillColor1,
   bladeFillColor2,
+  rubberStrokeColor = "none",
   flip = false,
 }: BatIconProps) {
   return (
@@ -47,6 +49,8 @@ export function BatIcon({
         <path
           style={{
             fill: rubberFillColor,
+            stroke: rubberStrokeColor,
+            strokeWidth: 8,
           }}
           d="M31.79,66.95l36.68,26.79c0,0,10.24,1.25,17.06-2.22s14.5-8.67,21.91-22.39
     c7.66-14.19,14.72-40.22-10.53-56.33s-47.77,3.95-54.35,11.73s-12.64,17-13.17,28.01C28.9,62.48,31.79,66.95,31.79,66.95z"

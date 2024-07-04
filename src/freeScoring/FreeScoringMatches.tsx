@@ -1,6 +1,13 @@
 import { SaveState } from "../umpire";
 import { DataGrid, GridColDef } from "@mui/x-data-grid";
-import { Button, Dialog, DialogActions, DialogTitle } from "@mui/material";
+import {
+  Box,
+  Button,
+  Dialog,
+  DialogActions,
+  DialogTitle,
+  IconButton,
+} from "@mui/material";
 import { useNavigate } from "react-router-dom";
 import { useCallback, useMemo, useState } from "react";
 import { useLoaderDataT } from "./hooks/useLoaderDataT";
@@ -9,6 +16,7 @@ import { useDeleteJson } from "./hooks/usePostJson";
 import DeleteIcon from "@mui/icons-material/Delete";
 import { PlayerNames } from "../umpireView/UmpireController";
 import { getTeamVs } from "../umpireView/helpers";
+import EditIcon from "@mui/icons-material/Edit";
 
 export interface PlayerIds {
   team1Player1Id: number;
@@ -44,7 +52,7 @@ export default function FreeScoringMatches() {
       {
         field: "actions",
         type: "actions",
-        width: 80,
+        width: 120,
         getActions: (params) => [
           <Button
             key={0}
@@ -55,26 +63,34 @@ export default function FreeScoringMatches() {
           >
             Play
           </Button>,
+          <IconButton
+            key={1}
+            onClick={() => {
+              navigate(`../matches/edit/${params.id}`);
+            }}
+          >
+            <EditIcon />
+          </IconButton>,
         ],
       },
-      { field: "title", headerName: "Title" },
-      { field: "players", headerName: "Players" },
-      { field: "umpire", headerName: "Umpire" },
-      { field: "score", headerName: "Score" },
-      { field: "upTo", headerName: "Up to" },
+      { field: "title", headerName: "Title", width: 240 },
+      { field: "players", headerName: "Players", width: 150 },
+      { field: "umpire", headerName: "Umpire", width: 120 },
+      { field: "score", headerName: "Score", width: 120 },
+      /* { field: "upTo", headerName: "Up to" },
       { field: "clearBy2", headerName: "Clear by 2" },
       { field: "numServes", headerName: "Num Serves" },
       { field: "bestOf", headerName: "Best of" },
-      { field: "isHandicap", headerName: "Is Handicap" },
+      { field: "isHandicap", headerName: "Is Handicap" }, */
       /* { field: "team1StartScore", headerName: "Team1 Start score" }, */
-      { field: "team1Player1Name", headerName: "Team1 Player 1" },
-      { field: "team1Player2Name", headerName: "Team1 Player 2" },
+      /* { field: "team1Player1Name", headerName: "Team1 Player 1" },
+      { field: "team1Player2Name", headerName: "Team1 Player 2" }, */
 
       /* { field: "team2StartScore", headerName: "Team2 Start score" }, */
-      { field: "team2Player1Name", headerName: "Team2 Player 1" },
-      { field: "team2Player2Name", headerName: "Team2 Player 2" },
+      /* { field: "team2Player1Name", headerName: "Team2 Player 1" },
+      { field: "team2Player2Name", headerName: "Team2 Player 2" }, */
     ],
-    [navigateToMatch],
+    [navigateToMatch, navigate],
   );
 
   const rows = matchStates.map((matchState) => {
@@ -136,7 +152,23 @@ export default function FreeScoringMatches() {
       >
         Delete All Matches
       </Button>
-      <DataGrid autosizeOnMount rows={rows} columns={columns}></DataGrid>
+      <DataGrid
+        slots={{
+          noRowsOverlay: () => (
+            <Box
+              display="flex"
+              justifyContent="center"
+              alignItems="center"
+              height="100%"
+            >
+              No matches
+            </Box>
+          ),
+        }}
+        autoHeight
+        rows={rows}
+        columns={columns}
+      />
     </>
   );
 }

@@ -2,7 +2,7 @@ import { Box, Button, Dialog, DialogTitle, Stack } from "@mui/material";
 import DialogContent from "@mui/material/DialogContent";
 import { Player } from "../../../umpire";
 import { PlayerAndName } from "./PlayerAndName";
-import { ClickKingTosser } from "../../../demoUmpire/DemoTosser";
+import { ClickKingTosser } from "./Tosser/ClickKingTosser";
 import ServerReceiverIcon from "../../icons/ServerReceiverIcon";
 
 export function PlayerChooserDialog({

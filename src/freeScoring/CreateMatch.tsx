@@ -4,22 +4,15 @@ import Checkbox from "@mui/material/Checkbox/Checkbox";
 import { useState } from "react";
 import { useSubmit } from "react-router-dom";
 import Button from "@mui/material/Button/Button";
-import FormControl from "@mui/material/FormControl/FormControl";
-import InputLabel from "@mui/material/InputLabel/InputLabel";
-import Select from "@mui/material/Select/Select";
 import MenuItem from "@mui/material/MenuItem/MenuItem";
 import { shiftHandicap } from "../umpire/shiftHandicap";
 import { MatchOptions } from "../umpire";
 import { PlayerIds, PlayerNameAndIds } from "./FreeScoringMatches";
-import { Alert } from "@mui/material";
-import * as NumberField from "@base_ui/react/NumberField";
+import { Alert, Box, IconButton, TextField } from "@mui/material";
 import { LabelledNumberInput } from "./LabelledNumberInput";
 import { CreateMatchLoaderData } from "./route";
-
-export interface BestOfOption {
-  bestOf: number;
-  canDecrement: boolean;
-}
+import { MarginDivider } from "./MarginDivider";
+import DeleteIcon from "@mui/icons-material/Delete";
 
 interface SelectedPlayerOrTeam {
   id: number;
@@ -65,9 +58,11 @@ export default function CreateMatch() {
   const [selectedTeamId, setSelectedTeamId] = useState<number | undefined>(
     teams.length > 0 ? teams[0].id : undefined,
   );
+  const [umpire, setUmpire] = useState<string>("");
+  const [title, setTitle] = useState<string>("");
   const [clearBy2, setClearBy2] = useState(true);
   const [isHandicap, setIsHandicap] = useState(false);
-  const [shiftHandicapScore, setShiftHandicap] = useState(true);
+  //const [shiftHandicapScore, setShiftHandicap] = useState(true);
   const [numServes, setNumServes] = useState(2);
   const [upTo, setUpTo] = useState(11);
   const [isDoubles, setIsDoubles] = useState(false);
@@ -78,18 +73,20 @@ export default function CreateMatch() {
 
   const insufficientTeamsForDoubles = isDoubles && teams.length < 2;
   const doublesCheckBox = (
-    <FormControlLabel
-      control={
-        <Checkbox
-          checked={isDoubles}
-          onChange={() => {
-            setIsDoubles(!isDoubles);
-            setSelectedPlayerOrTeams([]);
-          }}
-        />
-      }
-      label="Doubles"
-    />
+    <Box mb={2}>
+      <FormControlLabel
+        control={
+          <Checkbox
+            checked={isDoubles}
+            onChange={() => {
+              setIsDoubles(!isDoubles);
+              setSelectedPlayerOrTeams([]);
+            }}
+          />
+        }
+        label="Doubles"
+      />
+    </Box>
   );
 
   if (players.length < 2) {
@@ -135,7 +132,8 @@ export default function CreateMatch() {
       getStartScores(
         isHandicap,
         upTo,
-        shiftHandicapScore,
+        /* shiftHandicapScore, */
+        true,
         selectedPlayerOrTeams,
       );
     const matchOptions: MatchOptions = {
@@ -179,8 +177,8 @@ export default function CreateMatch() {
       ...matchOptions,
       ...playerNameAndIds,
       play,
-      umpire: "Umpire",
-      title: "Title",
+      umpire,
+      title,
     };
     submit(
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -194,40 +192,75 @@ export default function CreateMatch() {
 
   return (
     <>
+      <Box mb={1}>
+        <TextField
+          label="Title"
+          value={title}
+          onChange={(evt) => setTitle(evt.target.value)}
+        />
+      </Box>
+      <Box>
+        <TextField
+          label="Umpire"
+          value={umpire}
+          onChange={(evt) => setUmpire(evt.target.value)}
+        />
+      </Box>
+      <MarginDivider />
+
+      <FormControlLabel
+        control={
+          <Checkbox
+            checked={isHandicap}
+            onChange={() => setIsHandicap(!isHandicap)}
+          />
+        }
+        label="Handicap Match"
+      />
+      {/* <FormControlLabel
+        style={{ display: "inline" }}
+        control={
+          <Checkbox
+            disabled={!isHandicap}
+            checked={shiftHandicapScore}
+            onChange={() => setShiftHandicap(!shiftHandicapScore)}
+          />
+        }
+        label="Shift negatives"
+      /> */}
+      <MarginDivider />
       {doublesCheckBox}
-      {!isDoubles ? (
-        <FormControl sx={{ display: "block", mb: 1 }}>
-          <InputLabel id="select-player-label">Select player</InputLabel>
-          <Select
-            onChange={(evt) => setSelectedPlayerId(Number(evt.target.value))}
+      <Box mb={1}>
+        {!isDoubles ? (
+          <TextField
+            fullWidth
+            label="Select player"
+            select
             value={selectedPlayerId}
-            autoWidth
-            labelId="select-player-label"
+            onChange={(evt) => setSelectedPlayerId(Number(evt.target.value))}
           >
             {players.map((player) => (
               <MenuItem key={player.id} value={player.id}>
                 {player.name}
               </MenuItem>
             ))}
-          </Select>
-        </FormControl>
-      ) : (
-        <FormControl>
-          <InputLabel id="select-team-label">Select team</InputLabel>
-          <Select
+          </TextField>
+        ) : (
+          <TextField
+            fullWidth
+            label="Select team"
+            select
             onChange={(evt) => setSelectedTeamId(Number(evt.target.value))}
             value={selectedTeamId}
-            sx={{ minWidth: 120 }}
-            labelId="select-team-label"
           >
             {teams.map((team) => (
               <MenuItem key={team.id} value={team.id}>
                 {`${team.player1Name} & ${team.player2Name}`}
               </MenuItem>
             ))}
-          </Select>
-        </FormControl>
-      )}
+          </TextField>
+        )}
+      </Box>
       <Button
         onClick={() => {
           if (isDoubles) {
@@ -258,37 +291,26 @@ export default function CreateMatch() {
         }}
         disabled={!canAdd}
       >
-        Add
+        {`Add ${isDoubles ? "team" : "player"}`}
       </Button>
-
-      <div>
+      <Box minHeight={80}>
         {selectedPlayerOrTeams.map((p) => (
           <div key={p.id}>
-            {p.name} {p.handicap}
+            <IconButton
+              onClick={() => {
+                setSelectedPlayerOrTeams(
+                  selectedPlayerOrTeams.filter((player) => player.id !== p.id),
+                );
+              }}
+            >
+              <DeleteIcon />
+            </IconButton>
+            {p.name}
           </div>
         ))}
-      </div>
-      <FormControlLabel
-        control={
-          <Checkbox
-            checked={isHandicap}
-            onChange={() => setIsHandicap(!isHandicap)}
-          />
-        }
-        label="Handicap ?"
-      />
-      <FormControlLabel
-        style={{ display: "inline" }}
-        control={
-          <Checkbox
-            disabled={!isHandicap}
-            checked={shiftHandicapScore}
-            onChange={() => setShiftHandicap(!shiftHandicapScore)}
-          />
-        }
-        label="Shift negatives"
-      />
+      </Box>
 
+      <MarginDivider />
       <FormControlLabel
         style={{ display: "block" }}
         control={
@@ -299,16 +321,18 @@ export default function CreateMatch() {
         }
         label="Win by 2 ?"
       />
-      <LabelledNumberInput
-        label="Num serves"
-        numberInputProps={{
-          "aria-label": "Number of serves",
-          placeholder: "Num serves",
-          value: numServes,
-          min: 1,
-          onChange: (event, val) => setNumServes(val),
-        }}
-      />
+      <Box mb={1}>
+        <LabelledNumberInput
+          label="Num serves"
+          numberInputProps={{
+            "aria-label": "Number of serves",
+            placeholder: "Num serves",
+            value: numServes,
+            min: 1,
+            onChange: (event, val) => setNumServes(val),
+          }}
+        />
+      </Box>
       <LabelledNumberInput
         label="Up to"
         numberInputProps={{
@@ -319,14 +343,7 @@ export default function CreateMatch() {
           onChange: (event, val) => setUpTo(val),
         }}
       />
-      <NumberField.Root min={1} value={upTo} onChange={setUpTo}>
-        <NumberField.Group>
-          <NumberField.Decrement>&minus;</NumberField.Decrement>
-          <NumberField.Input />
-          <NumberField.Increment>+</NumberField.Increment>
-        </NumberField.Group>
-      </NumberField.Root>
-
+      <MarginDivider />
       <LabelledNumberInput
         label="Best of"
         numberInputProps={{
@@ -357,6 +374,7 @@ export default function CreateMatch() {
         }}
       />
 
+      <MarginDivider />
       <Button
         onClick={() => {
           _submit(false);
@@ -364,7 +382,7 @@ export default function CreateMatch() {
         disabled={!canCreateMatch}
         type="submit"
       >
-        Create
+        Create Match
       </Button>
 
       <Button
@@ -379,6 +397,7 @@ export default function CreateMatch() {
     </>
   );
 }
+
 export interface CreateMatchOptions extends MatchOptions, PlayerIds {
   umpire: string;
   title: string;
