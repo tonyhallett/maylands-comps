@@ -74,21 +74,22 @@ export default function FreeScoringMatches() {
         ],
       },
       { field: "title", headerName: "Title", width: 240 },
-      { field: "players", headerName: "Players", width: 150 },
+      /* { field: "players", headerName: "Players", width: 150 }, */
       { field: "umpire", headerName: "Umpire", width: 120 },
       { field: "score", headerName: "Score", width: 120 },
-      /* { field: "upTo", headerName: "Up to" },
-      { field: "clearBy2", headerName: "Clear by 2" },
-      { field: "numServes", headerName: "Num Serves" },
-      { field: "bestOf", headerName: "Best of" },
-      { field: "isHandicap", headerName: "Is Handicap" }, */
-      /* { field: "team1StartScore", headerName: "Team1 Start score" }, */
-      /* { field: "team1Player1Name", headerName: "Team1 Player 1" },
-      { field: "team1Player2Name", headerName: "Team1 Player 2" }, */
-
-      /* { field: "team2StartScore", headerName: "Team2 Start score" }, */
-      /* { field: "team2Player1Name", headerName: "Team2 Player 1" },
-      { field: "team2Player2Name", headerName: "Team2 Player 2" }, */
+      { field: "team1Player1Name", headerName: "Team1 Player 1", width: 120 },
+      { field: "team1Player2Name", headerName: "Team1 Player 2", width: 120 },
+      { field: "team2Player1Name", headerName: "Team2 Player 1", width: 120 },
+      { field: "team2Player2Name", headerName: "Team2 Player 2", width: 120 },
+      /* 
+        { field: "upTo", headerName: "Up to" },
+        { field: "clearBy2", headerName: "Clear by 2" },
+        { field: "numServes", headerName: "Num Serves" },
+        { field: "bestOf", headerName: "Best of" },
+        { field: "isHandicap", headerName: "Is Handicap" }, 
+        { field: "team1StartScore", headerName: "Team1 Start score" }, 
+        { field: "team2StartScore", headerName: "Team2 Start score" }
+      */
     ],
     [navigateToMatch, navigate],
   );
