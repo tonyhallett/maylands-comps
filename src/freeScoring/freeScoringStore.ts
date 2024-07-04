@@ -54,7 +54,3 @@ export const getFreeScoringTeams = () => {
 export const storeTransactTeams = (
   callback: StoreTransactCallback<FreeScoringTeam[]>,
 ) => storeTransact(freeScoringTeamsStoreKey, callback, [] as FreeScoringTeam[]);
-
-export const clearFreeScoringData = () => {
-  store.clearAll();
-};

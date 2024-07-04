@@ -19,7 +19,6 @@ import CreateFreeScoringDoubles from "./CreateFreeScoringDoubles";
 import EditPlayer from "./EditPlayer";
 import FreeScoringTeams from "./FreeScoringTeams";
 import {
-  clearFreeScoringData,
   getFreeScoringMatchSaveStates,
   getFreeScoringPlayers,
   getFreeScoringTeams,
@@ -213,13 +212,6 @@ const route: RouteObject = {
             (matchState) => !matchIdsToDelete.includes(matchState.id),
           );
         });
-        return redirect("/freescoring/matches");
-      },
-    },
-    {
-      path: "clearstorage",
-      loader: () => {
-        clearFreeScoringData();
         return redirect("/freescoring/matches");
       },
     },
