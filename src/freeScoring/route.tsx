@@ -38,8 +38,7 @@ import { BatPlusIcon } from "./CurrentColorBatIcon";
 import { PlayerNames } from "../umpireView/UmpireController";
 import { createStoredMatch } from "./createStoredMatch";
 import { BestOfMatchEdit, EditMatch } from "./EditMatch";
-import store from "store2";
-store.clearAll();
+
 interface FreeScoringTeamWithNames extends FreeScoringTeam {
   player1Name: string;
   player2Name: string;
