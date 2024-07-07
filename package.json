@@ -69,8 +69,7 @@
     "react-dom": "^18.3.1",
     "react-draggable": "^4.4.6",
     "react-router-dom": "^6.23.1",
-    "store2": "^2.14.3",
-    "usehooks-ts": "^3.1.0"
+    "store2": "^2.14.3"
   },
   "lint-staged": {
     "*": [

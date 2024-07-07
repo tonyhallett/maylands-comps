@@ -31,18 +31,15 @@ import GroupAddIcon from "@mui/icons-material/GroupAdd";
 import PersonIcon from "@mui/icons-material/Person";
 import PersonAddIcon from "@mui/icons-material/PersonAdd";
 import DynamicLinkIcon from "./DynamicLinkIcon";
-import { AppBar, Stack, Toolbar } from "@mui/material";
+import { AppBar, Stack, Toolbar, useTheme } from "@mui/material";
 import { BatIcon } from "../commonIcons/BatIcon";
 //import MGLogo from "../MaylandsTheming/MGLogo";
 import { BatPlusIcon } from "./CurrentColorBatIcon";
 import { PlayerNames } from "../umpireView/UmpireController";
 import { createStoredMatch } from "./createStoredMatch";
-import { initializePlayersTeamsMatches } from "./mgTournaments";
-import { useTheme } from "@emotion/react";
 import { BestOfMatchEdit, EditMatch } from "./EditMatch";
-
-initializePlayersTeamsMatches();
-
+import store from "store2";
+store.clearAll();
 interface FreeScoringTeamWithNames extends FreeScoringTeam {
   player1Name: string;
   player2Name: string;
@@ -400,8 +397,7 @@ const route: RouteObject = {
 
 function FreeScoringIndex() {
   const theme = useTheme();
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const activeColor = (theme as any).palette.primary.main;
+  const activeColor = theme.palette.primary.main;
   return (
     <Box p={1}>
       <Box mb={2}>
