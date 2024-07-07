@@ -10,8 +10,7 @@ import DemoSetAndPointTopAlignment from "./fontDemos/DemoSetAndPointTopAlignment
 import MaylandsThemeProvider from "./MaylandsTheming/MaylandsThemeProvider";
 import DemoScoringCharts from "./charts/DemoScoringCharts";
 //import freeScoringRoute from "./freeScoring/route";
-import store from "store2";
-store.clearAll();
+
 const router = createBrowserRouter([
   {
     path: "/",
