@@ -3,7 +3,13 @@ import { ServerReceiverChooser } from "./dialogs/serverReceiver/ServerReceiverCh
 import { LeftRightMatchWinState, MatchView } from "./match/MatchView";
 import { MatchState, Player, Umpire } from "../umpire";
 import { HistoryView } from "./history/HistoryView";
-import { MatchWinState } from "../umpire/getMatchWinState";
+import {
+  isGamePointTeam1,
+  isGamePointTeam2,
+  isMatchPointTeam1,
+  isMatchPointTeam2,
+  MatchWinState,
+} from "../umpire/getMatchWinState";
 import { Box, Card } from "@mui/material";
 import { EndsDialog } from "./dialogs/EndsDialog";
 import { UmpireToolbar } from "./toolbar/UmpireToolbar";
@@ -67,13 +73,13 @@ function getLeftMatchWinState(
       : LeftRightMatchWinState.RightWon;
   }
   let leftRightMatchWinState = LeftRightMatchWinState.NotWon;
-  if (matchWinState & MatchWinState.GamePointTeam1) {
+  if (isGamePointTeam1(matchWinState)) {
     leftRightMatchWinState = isTeam1Left
       ? LeftRightMatchWinState.GamePointLeft
       : LeftRightMatchWinState.GamePointRight;
   }
 
-  if (matchWinState & MatchWinState.GamePointTeam2) {
+  if (isGamePointTeam2(matchWinState)) {
     leftRightMatchWinState =
       leftRightMatchWinState +
       (!isTeam1Left
@@ -81,14 +87,14 @@ function getLeftMatchWinState(
         : LeftRightMatchWinState.GamePointRight);
   }
 
-  if (matchWinState & MatchWinState.MatchPointTeam1) {
+  if (isMatchPointTeam1(matchWinState)) {
     leftRightMatchWinState =
       leftRightMatchWinState +
       (isTeam1Left
         ? LeftRightMatchWinState.MatchPointLeft
         : LeftRightMatchWinState.MatchPointRight);
   }
-  if (matchWinState & MatchWinState.MatchPointTeam2) {
+  if (isMatchPointTeam2(matchWinState)) {
     leftRightMatchWinState =
       leftRightMatchWinState +
       (!isTeam1Left

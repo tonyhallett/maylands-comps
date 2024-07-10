@@ -11,7 +11,8 @@ import { getInitialServerReceiverForGame } from "../src/umpire/getInitialServerR
 import {
   MatchWinState,
   MatchWinStateOptions,
-  getMatchWinState,
+  MatchWinStatus,
+  getMatchWinStatus,
 } from "../src/umpire/getMatchWinState";
 import {
   GameScore,
@@ -565,7 +566,9 @@ describe("umpiring", () => {
         server: "Team1Player1",
         receiver: "Team2Player1",
       });
-      matchState = scorePoints(umpire, true, 10);
+      matchState = scorePoints(umpire, true, 9);
+      expect(matchState.gameOrMatchPoints).toBe(9);
+      matchState = umpire.pointScored(true);
       const lastPoint = getLast(matchState.pointHistory[0] as PointHistory[]);
       expect(lastPoint.matchState).toBe(MatchWinState.GamePointTeam1);
 
@@ -617,7 +620,7 @@ describe("umpiring", () => {
           };
           it("should be NotWon at 0/0 - 0/0", () => {
             expect(
-              getMatchWinState(
+              getMatchWinStatus(
                 normal11,
                 {
                   games: 0,
@@ -627,13 +630,13 @@ describe("umpiring", () => {
                   games: 0,
                   points: 0,
                 },
-              ),
+              ).matchWinState,
             ).toBe(MatchWinState.NotWon);
           });
 
           it("should be NotWon at 0/9 - 0/9", () => {
             expect(
-              getMatchWinState(
+              getMatchWinStatus(
                 normal11,
                 {
                   games: 0,
@@ -643,13 +646,13 @@ describe("umpiring", () => {
                   games: 0,
                   points: 9,
                 },
-              ),
+              ).matchWinState,
             ).toBe(MatchWinState.NotWon);
           });
 
           it("should be NotWon at 1/0 - 0/0", () => {
             expect(
-              getMatchWinState(
+              getMatchWinStatus(
                 normal11,
                 {
                   games: 1,
@@ -659,13 +662,13 @@ describe("umpiring", () => {
                   games: 0,
                   points: 0,
                 },
-              ),
+              ).matchWinState,
             ).toBe(MatchWinState.NotWon);
           });
 
           it("should be NotWon at 0/10 - 0/10", () => {
             expect(
-              getMatchWinState(
+              getMatchWinStatus(
                 normal11,
                 {
                   games: 0,
@@ -675,13 +678,13 @@ describe("umpiring", () => {
                   games: 0,
                   points: 10,
                 },
-              ),
+              ).matchWinState,
             ).toBe(MatchWinState.NotWon);
           });
 
           it("should be NotWon at 0/11 - 0/11", () => {
             expect(
-              getMatchWinState(
+              getMatchWinStatus(
                 normal11,
                 {
                   games: 0,
@@ -691,13 +694,13 @@ describe("umpiring", () => {
                   games: 0,
                   points: 11,
                 },
-              ),
+              ).matchWinState,
             ).toBe(MatchWinState.NotWon);
           });
 
           it("should be GamePointTeam1 at 0/10 - 0/9", () => {
             expect(
-              getMatchWinState(
+              getMatchWinStatus(
                 normal11,
                 {
                   games: 0,
@@ -708,12 +711,15 @@ describe("umpiring", () => {
                   points: 9,
                 },
               ),
-            ).toBe(MatchWinState.GamePointTeam1);
+            ).toEqual<MatchWinStatus>({
+              matchWinState: MatchWinState.GamePointTeam1,
+              gameOrMatchPoints: 1,
+            });
           });
 
-          it("should be GamePointTeam2 at 0/9 - 0/10", () => {
+          it("should be GamePointTeam2 at 0/9 - 0/10 - 1 game point", () => {
             expect(
-              getMatchWinState(
+              getMatchWinStatus(
                 normal11,
                 {
                   games: 0,
@@ -724,12 +730,33 @@ describe("umpiring", () => {
                   points: 10,
                 },
               ),
-            ).toBe(MatchWinState.GamePointTeam2);
+            ).toEqual<MatchWinStatus>({
+              matchWinState: MatchWinState.GamePointTeam2,
+              gameOrMatchPoints: 1,
+            });
+          });
+          it("should be GamePointTeam2 at 0/8 - 0/10 - 2 game points", () => {
+            expect(
+              getMatchWinStatus(
+                normal11,
+                {
+                  games: 0,
+                  points: 8,
+                },
+                {
+                  games: 0,
+                  points: 10,
+                },
+              ),
+            ).toEqual<MatchWinStatus>({
+              matchWinState: MatchWinState.GamePointTeam2,
+              gameOrMatchPoints: 2,
+            });
           });
 
           it("should be MatchPointTeam1 at 2/10 - 0/9", () => {
             expect(
-              getMatchWinState(
+              getMatchWinStatus(
                 normal11,
                 {
                   games: 2,
@@ -739,13 +766,13 @@ describe("umpiring", () => {
                   games: 0,
                   points: 9,
                 },
-              ),
+              ).matchWinState,
             ).toBe(MatchWinState.MatchPointTeam1);
           });
 
           it("should be MatchPointTeam2 at 0/9 - 2/10", () => {
             expect(
-              getMatchWinState(
+              getMatchWinStatus(
                 normal11,
                 {
                   games: 0,
@@ -755,13 +782,13 @@ describe("umpiring", () => {
                   games: 2,
                   points: 10,
                 },
-              ),
+              ).matchWinState,
             ).toBe(MatchWinState.MatchPointTeam2);
           });
 
           it("should be Team1Won at 3/0 - 0/0", () => {
             expect(
-              getMatchWinState(
+              getMatchWinStatus(
                 normal11,
                 {
                   games: 3,
@@ -771,13 +798,13 @@ describe("umpiring", () => {
                   games: 0,
                   points: 0,
                 },
-              ),
+              ).matchWinState,
             ).toBe(MatchWinState.Team1Won);
           });
 
           it("should be Team2Won at 0/0 - 3/0", () => {
             expect(
-              getMatchWinState(
+              getMatchWinStatus(
                 normal11,
                 {
                   games: 0,
@@ -787,7 +814,7 @@ describe("umpiring", () => {
                   games: 3,
                   points: 0,
                 },
-              ),
+              ).matchWinState,
             ).toBe(MatchWinState.Team2Won);
           });
         });
@@ -799,7 +826,7 @@ describe("umpiring", () => {
           };
           it("should be NotWon at 0/11 - 0/0", () => {
             expect(
-              getMatchWinState(
+              getMatchWinStatus(
                 hardBatBestOf3Options,
                 {
                   games: 0,
@@ -809,13 +836,13 @@ describe("umpiring", () => {
                   games: 0,
                   points: 0,
                 },
-              ),
+              ).matchWinState,
             ).toBe(MatchWinState.NotWon);
           });
 
-          it("should be GamePointTeam1 at 0/14 - 0/0", () => {
+          it("should be GamePointTeam1 at 0/14 - 0/13", () => {
             expect(
-              getMatchWinState(
+              getMatchWinStatus(
                 hardBatBestOf3Options,
                 {
                   games: 0,
@@ -823,15 +850,18 @@ describe("umpiring", () => {
                 },
                 {
                   games: 0,
-                  points: 0,
+                  points: 13,
                 },
               ),
-            ).toBe(MatchWinState.GamePointTeam1);
+            ).toEqual<MatchWinStatus>({
+              matchWinState: MatchWinState.GamePointTeam1,
+              gameOrMatchPoints: 2,
+            });
           });
 
           it("should be GamePointTeam2 at 0/0 - 0/14", () => {
             expect(
-              getMatchWinState(
+              getMatchWinStatus(
                 hardBatBestOf3Options,
                 {
                   games: 0,
@@ -841,13 +871,13 @@ describe("umpiring", () => {
                   games: 0,
                   points: 14,
                 },
-              ),
+              ).matchWinState,
             ).toBe(MatchWinState.GamePointTeam2);
           });
 
           it("should be GamePointTeam1 & GamePointTeam2 at 0/14 - 0/14", () => {
             expect(
-              getMatchWinState(
+              getMatchWinStatus(
                 hardBatBestOf3Options,
                 {
                   games: 0,
@@ -858,12 +888,16 @@ describe("umpiring", () => {
                   points: 14,
                 },
               ),
-            ).toBe(MatchWinState.GamePointTeam1 + MatchWinState.GamePointTeam2);
+            ).toEqual<MatchWinStatus>({
+              matchWinState:
+                MatchWinState.GamePointTeam1 + MatchWinState.GamePointTeam2,
+              gameOrMatchPoints: 1,
+            });
           });
 
           it("should be MatchPointTeam1 & GamePointTeam2 at 1/14 - 0/14", () => {
             expect(
-              getMatchWinState(
+              getMatchWinStatus(
                 hardBatBestOf3Options,
                 {
                   games: 1,
@@ -873,7 +907,7 @@ describe("umpiring", () => {
                   games: 0,
                   points: 14,
                 },
-              ),
+              ).matchWinState,
             ).toBe(
               MatchWinState.MatchPointTeam1 + MatchWinState.GamePointTeam2,
             );
@@ -881,7 +915,7 @@ describe("umpiring", () => {
 
           it("should be MatchPointTeam2 & GamePointTeam1 at 0/14 - 1/14", () => {
             expect(
-              getMatchWinState(
+              getMatchWinStatus(
                 hardBatBestOf3Options,
                 {
                   games: 0,
@@ -891,14 +925,14 @@ describe("umpiring", () => {
                   games: 1,
                   points: 14,
                 },
-              ),
+              ).matchWinState,
             ).toBe(
               MatchWinState.MatchPointTeam2 + MatchWinState.GamePointTeam1,
             );
           });
 
           it("should be MatchPointTeam1 & MatchPointTeam2 at 1/14 - 1/14", () => {
-            const matchWinState = getMatchWinState(
+            const matchWinState = getMatchWinStatus(
               hardBatBestOf3Options,
               {
                 games: 1,
@@ -910,7 +944,7 @@ describe("umpiring", () => {
               },
             );
 
-            expect(matchWinState).toBe(
+            expect(matchWinState.matchWinState).toBe(
               MatchWinState.MatchPointTeam1 + MatchWinState.MatchPointTeam2,
             );
           });
