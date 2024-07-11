@@ -1,10 +1,9 @@
-import { GameStats } from ".";
 import { Player, PointHistory } from "../umpire";
 import { ServerReceiver } from "../umpire/commonTypes";
 import { isTeam1 } from "../umpire/playersHelpers";
 
 type ServerReceiverRecord = [ServerReceiver, ServiceRecord];
-export class ServerReceiverMap<T> {
+class ServerReceiverMap<T> {
   private map = new Map<string, T>();
   private getKey(server: Player, receiver: Player) {
     return `${server}-${receiver}`;
@@ -28,24 +27,24 @@ export class ServerReceiverMap<T> {
   }
 }
 
-export interface ServiceRecord {
+interface ServiceRecord {
   numServes: number;
   numWonByServer: number;
 }
 
 // ---------------------------------------------------------------------------------
-interface ServeReceiveRecord {
+export interface ServeReceiveRecord {
   num: number;
   numWon: number;
   numLost: number;
   winPercentage: number | undefined;
 }
 
-interface PlayerServeReceiveRecord extends ServeReceiveRecord {
+export interface PlayerServeReceiveRecord extends ServeReceiveRecord {
   opponent: Player;
 }
 
-interface PlayerPointsBreakdown extends ServeAndReceiveRecord {
+export interface PlayerPointsBreakdown extends ServeAndReceiveRecord {
   serverRecords: PlayerServeReceiveRecord[];
   receiverRecords: PlayerServeReceiveRecord[];
 }
@@ -55,18 +54,19 @@ interface ServeAndReceiveRecord {
   receive: ServeReceiveRecord;
 }
 
-interface TeamPointsBreakdown extends ServeAndReceiveRecord {
+export interface TeamPointsBreakdown extends ServeAndReceiveRecord {
   pointsWon: number;
   pointsLost: number;
   pointWinPercentage: number | undefined;
   player1PointsBreakdown: PlayerPointsBreakdown;
-  player2PointsBreakdown?: PlayerPointsBreakdown;
+  player2PointsBreakdown: PlayerPointsBreakdown;
 }
 
 export interface PointsBreakdown {
   team1: TeamPointsBreakdown;
   team2: TeamPointsBreakdown;
 }
+
 function getWinPercentage(numWon: number, num: number): number | undefined {
   if (num === 0) {
     return undefined;
@@ -120,8 +120,8 @@ class PlayerServeReceiveRecordImpl implements ServeReceiveRecord {
     this.numLost = this.num - this.numWon;
     this.winPercentage = getWinPercentage(this.numWon, this.num);
   }
-  num: number;
-  numWon: number;
+  num: number = 0;
+  numWon: number = 0;
   numLost: number;
   winPercentage: number;
 }
@@ -149,7 +149,7 @@ class TeamPointsBreakdownImpl implements TeamPointsBreakdown {
     return getWinPercentage(this.pointsWon, this.pointsWon + this.pointsLost);
   }
   player1PointsBreakdown: PlayerPointsBreakdown;
-  player2PointsBreakdown?: PlayerPointsBreakdown;
+  player2PointsBreakdown: PlayerPointsBreakdown;
   get serve(): ServeReceiveRecord {
     const numWon =
       this.player1PointsBreakdown.serve.numWon +
@@ -202,11 +202,9 @@ export class PointsBreakdownStats {
       serveReceiveRecord.numWonByServer += wonByServerIncrement;
     }
   }
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  addStatistics(gameStats: GameStats) {
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  getStats() {
     const serverReceiverRecords = this.serverReceiverMap.getAll();
-    gameStats.pointsBreakdown = {
+    return {
       team1: new TeamPointsBreakdownImpl(true, serverReceiverRecords),
       team2: new TeamPointsBreakdownImpl(false, serverReceiverRecords),
     };

@@ -6,6 +6,11 @@ import {
   GameMatchPoints,
   GameMatchPointState,
 } from "../src/matchstats/GameMatchPointsStats";
+import {
+  /* PlayerPointsBreakdown, */
+  ServeReceiveRecord,
+  /* TeamPointsBreakdown, */
+} from "../src/matchstats/PointsBreakdownStats";
 
 describe("getGameStats", () => {
   describe("streaks", () => {
@@ -831,5 +836,62 @@ describe("getGameStats", () => {
     });
   });
 
-  xdescribe("pointsbreakdown", () => {});
+  describe("pointsbreakdown", () => {
+    it("should be correct when no game points", () => {
+      const gamePointHistory: GamePointHistory = [];
+      const pointsBreakdown = getGameStats(gamePointHistory).pointsBreakdown;
+      const expectedServeReceiveRecord: ServeReceiveRecord = {
+        num: 0,
+        numLost: 0,
+        numWon: 0,
+        winPercentage: undefined,
+      };
+      /* const expectedPlayerPointsBreakdown: PlayerPointsBreakdown = {
+        receiverRecords: [],
+        serverRecords: [],
+        receive: expectedServeReceiveRecord,
+        serve: expectedServeReceiveRecord,
+      }; */
+      /* const expectedTeamsBreakdown: TeamPointsBreakdown = {
+        pointsLost: 0,
+        pointsWon: 0,
+        pointWinPercentage: undefined,
+        receive: expectedServeReceiveRecord,
+        serve: expectedServeReceiveRecord,
+        player1PointsBreakdown: expectedPlayerPointsBreakdown,
+        player2PointsBreakdown: expectedPlayerPointsBreakdown,
+      }; */
+
+      // todo find the appropriate way to to match without the object type
+      [pointsBreakdown.team1, pointsBreakdown.team2].forEach(
+        (teamPointsBreakdown) => {
+          expect(teamPointsBreakdown.pointsWon).toBe(0);
+          expect(teamPointsBreakdown.pointsLost).toBe(0);
+          expect(teamPointsBreakdown.pointWinPercentage).toBeUndefined();
+          [teamPointsBreakdown.receive, teamPointsBreakdown.serve].forEach(
+            (serveReceiveRecord) => {
+              expect(serveReceiveRecord.num).toBe(0);
+              expect(serveReceiveRecord.numLost).toBe(0);
+              expect(serveReceiveRecord.numWon).toBe(0);
+              expect(serveReceiveRecord.winPercentage).toBeUndefined();
+            },
+          );
+          [
+            teamPointsBreakdown.player1PointsBreakdown,
+            teamPointsBreakdown.player2PointsBreakdown,
+          ].forEach((playerPointsBreakdown) => {
+            expect(playerPointsBreakdown.receiverRecords).toEqual([]);
+            expect(playerPointsBreakdown.serverRecords).toEqual([]);
+
+            expect(playerPointsBreakdown.receive).toEqual(
+              expectedServeReceiveRecord,
+            );
+            expect(playerPointsBreakdown.serve).toEqual(
+              expectedServeReceiveRecord,
+            );
+          });
+        },
+      );
+    });
+  });
 });

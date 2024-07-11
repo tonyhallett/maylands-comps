@@ -6,7 +6,7 @@ import { Streaks, StreakStats } from "./StreakStats";
 export { GamePointHistory } from "../umpire";
 
 export interface GameStats {
-  pointsBreakdown?: PointsBreakdown;
+  pointsBreakdown: PointsBreakdown;
   streaks: Streaks;
   gameMatchPoints?: GameMatchPoints;
   leads?: Leads;
@@ -26,6 +26,7 @@ export function getGameStats(gamePointHistory: GamePointHistory): GameStats {
 
   const gameStats: GameStats = {
     streaks: streakStats.getStats(),
+    pointsBreakdown: serviceReceiverRecordManager.getStats(),
   };
 
   const gameMatchPoints = gameMatchPointStats.getStats();
@@ -37,6 +38,5 @@ export function getGameStats(gamePointHistory: GamePointHistory): GameStats {
   if (leads !== undefined) {
     gameStats.leads = leads;
   }
-  serviceReceiverRecordManager.addStatistics(gameStats);
   return gameStats;
 }
