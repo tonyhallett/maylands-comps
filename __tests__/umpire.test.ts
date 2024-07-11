@@ -19,6 +19,7 @@ import {
   MatchState,
   Player,
   PointHistory,
+  PointState,
   Team1Player,
   Team2Player,
   TeamScore,
@@ -554,31 +555,37 @@ describe("umpiring", () => {
       expect(matchState.pointHistory[0][0]).toEqual<PointHistory>({
         team1: true,
         date: dates[0],
-        matchState: MatchWinState.NotWon,
+        pointState: PointState.NotWon,
         server: "Team1Player1",
         receiver: "Team2Player1",
+        team1Points: 1,
+        team2Points: 0,
       });
       matchState = umpire.pointScored(false);
       expect(matchState.pointHistory[0][1]).toEqual<PointHistory>({
         team1: false,
         date: dates[1],
-        matchState: MatchWinState.NotWon,
+        pointState: PointState.NotWon,
         server: "Team1Player1",
         receiver: "Team2Player1",
+        team1Points: 1,
+        team2Points: 1,
       });
       matchState = scorePoints(umpire, true, 9);
       expect(matchState.gameOrMatchPoints).toBe(9);
       matchState = umpire.pointScored(true);
       const lastPoint = getLast(matchState.pointHistory[0] as PointHistory[]);
-      expect(lastPoint.matchState).toBe(MatchWinState.GamePointTeam1);
+      expect(lastPoint.pointState).toBe(PointState.GameWonTeam1);
 
       matchState = umpire.pointScored(true);
       expect(matchState.pointHistory[1][0]).toEqual<PointHistory>({
         team1: true,
         date: dates[12],
-        matchState: MatchWinState.NotWon,
+        pointState: PointState.NotWon,
         server: "Team2Player1",
         receiver: "Team1Player1",
+        team1Points: 1,
+        team2Points: 0,
       });
     });
 
@@ -2886,6 +2893,35 @@ describe("umpiring", () => {
         matchState = umpire.undoPoint();
         expect(matchState.team1Left).toBe(false);
       });
+    });
+  });
+
+  describe("SaveState should be json serializable", () => {
+    it("should serialize and deserialize - initial state", () => {
+      const umpire = getAnUmpire();
+      const saveState = umpire.getSaveState();
+      const json = JSON.stringify(saveState);
+      const deserialized = JSON.parse(json);
+      expect(deserialized).toEqual(saveState);
+    });
+
+    it("should serialize and deserialize - after setting server", () => {
+      const umpire = getAnUmpire();
+      umpire.setServer("Team1Player1");
+      const saveState = umpire.getSaveState();
+      const json = JSON.stringify(saveState);
+      const deserialized = JSON.parse(json);
+      expect(deserialized).toEqual(saveState);
+    });
+
+    it("should serialize and deserialize - after scoring point", () => {
+      const umpire = getAnUmpire();
+      umpire.setServer("Team1Player1");
+      umpire.pointScored(true);
+      const saveState = umpire.getSaveState();
+      const json = JSON.stringify(saveState);
+      const deserialized = JSON.parse(json);
+      expect(deserialized).toEqual(saveState);
     });
   });
 });

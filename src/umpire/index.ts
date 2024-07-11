@@ -69,19 +69,35 @@ enum GameWonState {
   Team2Won,
 }
 
-export interface PointHistory {
+export enum PointState {
+  NotWon = 0,
+  Team1Won = 1,
+  Team2Won = 2,
+  GamePointTeam1 = 4,
+  GamePointTeam2 = 8,
+  MatchPointTeam1 = 16,
+  MatchPointTeam2 = 32,
+  GameWonTeam1 = 64,
+  GameWonTeam2 = 128,
+}
+
+export interface PointHistory extends GameScore {
   team1: boolean;
   server: Player;
   receiver: Player;
   date: Date;
-  matchState: MatchWinState;
+  pointState: PointState;
   gameOrMatchPoints?: number;
 }
 export type GamePointHistory = PointHistory[];
 
+type SavePointHistory = Omit<PointHistory, "date"> & {
+  date: string;
+};
+
 interface SaveGameState extends TeamScores {
   isDoubles: boolean;
-  pointHistory: PointHistory[][];
+  pointHistory: SavePointHistory[][];
   gameScores: GameScore[];
   team1Left: boolean;
   initialServersDoublesReceiver: InitialServersDoublesReceiver;
@@ -284,7 +300,16 @@ export class Umpire {
         initialServersDoublesReceiver: saveState.initialServersDoublesReceiver,
         doublesEndsPointsScored: saveState.doublesEndsPointsScored,
       };
-      this._pointHistory = saveGameState.pointHistory;
+      this._pointHistory = saveGameState.pointHistory.map(
+        (savedGameHistory) => {
+          return savedGameHistory.map((savedPoint) => {
+            return {
+              ...savedPoint,
+              date: new Date(savedPoint.date),
+            };
+          });
+        },
+      );
       this._gameScores = saveGameState.gameScores;
       this._team1Score = saveGameState.team1Score;
       this._team2Score = saveGameState.team2Score;
@@ -319,7 +344,14 @@ export class Umpire {
   getSaveState(): SaveState {
     return {
       isDoubles: this.isDoubles,
-      pointHistory: this._pointHistory,
+      pointHistory: this._pointHistory.map((gameHistory) => {
+        return gameHistory.map((point) => {
+          return {
+            ...point,
+            date: point.date.toISOString(),
+          };
+        });
+      }),
       gameScores: this._gameScores,
       team1Score: this._team1Score,
       team2Score: this._team2Score,
@@ -488,11 +520,11 @@ export class Umpire {
   }
 
   pointScored(team1: boolean): MatchState {
-    this.addPoint(team1);
+    const gameWonState = this.addPoint(team1);
     if (this.isDoubles) {
       this.setDoublesEndsPoints(team1);
     }
-    const gameWonState = this.getGameWonState();
+
     if (gameWonState === GameWonState.NotWon) {
       this.pointScoredAndNotWon(team1);
     } else {
@@ -511,9 +543,13 @@ export class Umpire {
     }
   }
 
-  private addPoint(team1: boolean) {
-    this.addPointHistory(team1);
+  private addPoint(team1: boolean): GameWonState {
+    const serverReceiver = this.getServerReceiver(
+      this.serverReceiverChoice,
+      false,
+    );
     this.incrementTeamPoints(team1);
+    return this.addPointHistory(team1, serverReceiver);
   }
 
   private incrementTeamPoints(team1: boolean) {
@@ -521,25 +557,47 @@ export class Umpire {
     teamScore.points += 1;
   }
 
-  private addPointHistory(team1: boolean) {
+  private getPointState(
+    matchWinState: MatchWinState,
+    gameWonState: GameWonState,
+  ): PointState {
+    let pointState = matchWinState as unknown as PointState;
+    switch (gameWonState) {
+      case GameWonState.Team1Won:
+        pointState = PointState.GameWonTeam1;
+        break;
+      case GameWonState.Team2Won:
+        pointState = PointState.GameWonTeam2;
+        break;
+    }
+    return pointState;
+  }
+
+  private addPointHistory(
+    team1: boolean,
+    serverReceiver: ServerReceiver,
+  ): GameWonState {
     const date = this.dateProvider();
     const matchWinStatus = this.matchWinStatus;
     const matchState = matchWinStatus.matchWinState;
-    const serverReceiver = this.getServerReceiver(
-      this.serverReceiverChoice,
-      this.matchWon(matchState),
-    );
+
+    const gameWonState = this.getGameWonState();
+    const pointState = this.getPointState(matchState, gameWonState);
+
     const pointHistory: PointHistory = {
       team1: team1,
       date,
-      matchState,
+      pointState,
       ...serverReceiver,
+      team1Points: this._team1Score.points,
+      team2Points: this._team2Score.points,
     };
     if (matchWinStatus.gameOrMatchPoints !== undefined) {
       pointHistory.gameOrMatchPoints = matchWinStatus.gameOrMatchPoints;
     }
 
     this._pointHistory[this._pointHistory.length - 1].push(pointHistory);
+    return gameWonState;
   }
 
   private pointScoredAndNotWon(team1: boolean) {

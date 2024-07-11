@@ -1,10 +1,12 @@
+import { getGameStats, GamePointHistory } from "../src/matchstats";
+import { PointHistory, PointState } from "../src/umpire";
+import { fillArrayWithIndices } from "../src/helpers/fillArray";
+import { TeamLeads } from "../src/matchstats/LeadStats";
 import {
-  getGameStats,
-  GamePointHistory,
   GameMatchPoints,
   GameMatchPointState,
-} from "../src/matchstats";
-import { MatchWinState } from "../src/umpire/getMatchWinState";
+} from "../src/matchstats/GameMatchPointsStats";
+
 describe("getGameStats", () => {
   describe("streaks", () => {
     it("should have no streaks when no points", () => {
@@ -22,9 +24,11 @@ describe("getGameStats", () => {
           {
             date: new Date(),
             team1,
-            matchState: MatchWinState.NotWon,
+            pointState: PointState.NotWon,
             server: "Team1Player1",
             receiver: "Team2Player1",
+            team1Points: team1 ? 1 : 0,
+            team2Points: team1 ? 0 : 1,
           },
         ];
         const stats = getGameStats(gamePointHistory);
@@ -45,16 +49,20 @@ describe("getGameStats", () => {
         {
           date: new Date(),
           team1: true,
-          matchState: MatchWinState.NotWon,
+          pointState: PointState.NotWon,
           server: "Team1Player1",
           receiver: "Team2Player1",
+          team1Points: 1,
+          team2Points: 0,
         },
         {
           date: new Date(),
           team1: true,
-          matchState: MatchWinState.NotWon,
+          pointState: PointState.NotWon,
           server: "Team1Player1",
           receiver: "Team2Player1",
+          team1Points: 2,
+          team2Points: 0,
         },
       ];
       const stats = getGameStats(gamePointHistory);
@@ -67,44 +75,56 @@ describe("getGameStats", () => {
         {
           date: new Date(),
           team1: true,
-          matchState: MatchWinState.NotWon,
+          pointState: PointState.NotWon,
           server: "Team1Player1",
           receiver: "Team2Player1",
+          team1Points: 1,
+          team2Points: 0,
         },
         {
           date: new Date(),
           team1: true,
-          matchState: MatchWinState.NotWon,
+          pointState: PointState.NotWon,
           server: "Team1Player1",
           receiver: "Team2Player1",
+          team1Points: 2,
+          team2Points: 0,
         },
         {
           date: new Date(),
           team1: false,
-          matchState: MatchWinState.NotWon,
+          pointState: PointState.NotWon,
           server: "Team1Player1",
           receiver: "Team2Player1",
+          team1Points: 2,
+          team2Points: 1,
         },
         {
           date: new Date(),
           team1: true,
-          matchState: MatchWinState.NotWon,
+          pointState: PointState.NotWon,
           server: "Team1Player1",
           receiver: "Team2Player1",
+          team1Points: 3,
+          team2Points: 1,
         },
         {
           date: new Date(),
           team1: true,
-          matchState: MatchWinState.NotWon,
+          pointState: PointState.NotWon,
           server: "Team1Player1",
           receiver: "Team2Player1",
+          team1Points: 4,
+          team2Points: 1,
         },
         {
           date: new Date(),
           team1: true,
-          matchState: MatchWinState.NotWon,
+          pointState: PointState.NotWon,
           server: "Team1Player1",
           receiver: "Team2Player1",
+          team1Points: 5,
+          team2Points: 1,
         },
       ];
       const stats = getGameStats(gamePointHistory);
@@ -122,64 +142,70 @@ describe("getGameStats", () => {
         {
           date: new Date(),
           team1: true,
-          matchState: MatchWinState.NotWon,
+          pointState: PointState.NotWon,
           server: "Team1Player1",
           receiver: "Team2Player1",
+          team1Points: 1,
+          team2Points: 0,
         },
       ];
       const stats = getGameStats(gamePointHistory);
       expect(stats.gameMatchPoints).toBeUndefined();
     });
     interface EnterGamePointTest {
-      matchState:
-        | MatchWinState.GamePointTeam1
-        | MatchWinState.GamePointTeam2
-        | MatchWinState.MatchPointTeam1
-        | MatchWinState.MatchPointTeam2;
+      pointState:
+        | PointState.GamePointTeam1
+        | PointState.GamePointTeam2
+        | PointState.MatchPointTeam1
+        | PointState.MatchPointTeam2;
       gameOrMatchPoints: number;
     }
     const enterGamePointTests: EnterGamePointTest[] = [
       {
         gameOrMatchPoints: 2,
-        matchState: MatchWinState.GamePointTeam1,
+        pointState: PointState.GamePointTeam1,
       },
       {
         gameOrMatchPoints: 3,
-        matchState: MatchWinState.GamePointTeam2,
+        pointState: PointState.GamePointTeam2,
       },
       {
         gameOrMatchPoints: 2,
-        matchState: MatchWinState.MatchPointTeam1,
+        pointState: PointState.MatchPointTeam1,
       },
       {
         gameOrMatchPoints: 3,
-        matchState: MatchWinState.MatchPointTeam2,
+        pointState: PointState.MatchPointTeam2,
       },
     ];
     it.each(enterGamePointTests)(
       "should have GameOrMatchPoints when enter game point state",
-      ({ gameOrMatchPoints, matchState }) => {
+      ({ gameOrMatchPoints, pointState }) => {
         const isMatchPoint =
-          matchState === MatchWinState.MatchPointTeam1 ||
-          matchState === MatchWinState.MatchPointTeam2;
+          pointState === PointState.MatchPointTeam1 ||
+          pointState === PointState.MatchPointTeam2;
         const team1 =
-          matchState === MatchWinState.GamePointTeam1 ||
-          matchState === MatchWinState.MatchPointTeam1;
+          pointState === PointState.GamePointTeam1 ||
+          pointState === PointState.MatchPointTeam1;
         const gamePointHistory: GamePointHistory = [
           {
             date: new Date(),
             team1: true,
-            matchState: MatchWinState.NotWon,
+            pointState: PointState.NotWon,
             server: "Team1Player1",
             receiver: "Team2Player1",
+            team1Points: 1,
+            team2Points: 0,
           },
           {
             date: new Date(),
             team1,
-            matchState,
+            pointState,
             server: "Team1Player1",
             receiver: "Team2Player1",
             gameOrMatchPoints,
+            team1Points: team1 ? 2 : 1,
+            team2Points: team1 ? 0 : 1,
           },
         ];
         const gameMatchPoints = getGameStats(gamePointHistory)
@@ -207,18 +233,22 @@ describe("getGameStats", () => {
         {
           date: new Date(),
           team1: true,
-          matchState: MatchWinState.GamePointTeam1,
+          pointState: PointState.GamePointTeam1,
           server: "Team1Player1",
           receiver: "Team2Player1",
           gameOrMatchPoints: 2,
+          team1Points: 1,
+          team2Points: 0,
         },
         {
           date: new Date(),
           team1: true,
-          matchState: MatchWinState.GamePointTeam1,
+          pointState: PointState.GamePointTeam1,
           server: "Team1Player1",
           receiver: "Team2Player1",
           gameOrMatchPoints: 1,
+          team1Points: 2,
+          team2Points: 0,
         },
       ];
       const gameMatchPoints = getGameStats(gamePointHistory)
@@ -238,25 +268,31 @@ describe("getGameStats", () => {
         {
           date: new Date(),
           team1: true,
-          matchState: MatchWinState.GamePointTeam1,
+          pointState: PointState.GamePointTeam1,
           server: "Team1Player1",
           receiver: "Team2Player1",
           gameOrMatchPoints: 2,
+          team1Points: 1,
+          team2Points: 0,
         },
         {
           date: new Date(),
           team1: false,
-          matchState: MatchWinState.GamePointTeam1,
+          pointState: PointState.GamePointTeam1,
           server: "Team1Player1",
           receiver: "Team2Player1",
           gameOrMatchPoints: 1,
+          team1Points: 1,
+          team2Points: 1,
         },
         {
           date: new Date(),
           team1: false,
-          matchState: MatchWinState.NotWon,
+          pointState: PointState.NotWon,
           server: "Team1Player1",
           receiver: "Team2Player1",
+          team1Points: 1,
+          team2Points: 2,
         },
       ];
 
@@ -277,25 +313,31 @@ describe("getGameStats", () => {
         {
           date: new Date(),
           team1: false,
-          matchState: MatchWinState.GamePointTeam2,
+          pointState: PointState.GamePointTeam2,
           server: "Team1Player1",
           receiver: "Team2Player1",
           gameOrMatchPoints: 2,
+          team1Points: 0,
+          team2Points: 1,
         },
         {
           date: new Date(),
           team1: true,
-          matchState: MatchWinState.GamePointTeam2,
+          pointState: PointState.GamePointTeam2,
           server: "Team1Player1",
           receiver: "Team2Player1",
           gameOrMatchPoints: 1,
+          team1Points: 1,
+          team2Points: 1,
         },
         {
           date: new Date(),
           team1: true,
-          matchState: MatchWinState.NotWon,
+          pointState: PointState.NotWon,
           server: "Team1Player1",
           receiver: "Team2Player1",
+          team1Points: 2,
+          team2Points: 1,
         },
       ];
 
@@ -311,30 +353,36 @@ describe("getGameStats", () => {
       ]);
     });
 
-    it("should set converted to true when game point is converted - Team1", () => {
+    it("should set converted to true when match point is converted - Team1", () => {
       const gamePointHistory: GamePointHistory = [
         {
           date: new Date(),
           team1: true,
-          matchState: MatchWinState.GamePointTeam1,
+          pointState: PointState.MatchPointTeam1,
           server: "Team1Player1",
           receiver: "Team2Player1",
           gameOrMatchPoints: 2,
+          team1Points: 1,
+          team2Points: 0,
         },
         {
           date: new Date(),
           team1: false,
-          matchState: MatchWinState.GamePointTeam1,
+          pointState: PointState.MatchPointTeam1,
           server: "Team1Player1",
           receiver: "Team2Player1",
           gameOrMatchPoints: 1,
+          team1Points: 1,
+          team2Points: 1,
         },
         {
           date: new Date(),
           team1: true,
-          matchState: MatchWinState.Team1Won,
+          pointState: PointState.Team1Won,
           server: "Team1Player1",
           receiver: "Team2Player1",
+          team1Points: 2,
+          team2Points: 1,
         },
       ];
 
@@ -355,25 +403,31 @@ describe("getGameStats", () => {
         {
           date: new Date(),
           team1: false,
-          matchState: MatchWinState.GamePointTeam2,
+          pointState: PointState.GamePointTeam2,
           server: "Team1Player1",
           receiver: "Team2Player1",
           gameOrMatchPoints: 2,
+          team1Points: 0,
+          team2Points: 1,
         },
         {
           date: new Date(),
           team1: true,
-          matchState: MatchWinState.GamePointTeam2,
+          pointState: PointState.GamePointTeam2,
           server: "Team1Player1",
           receiver: "Team2Player1",
           gameOrMatchPoints: 1,
+          team1Points: 1,
+          team2Points: 1,
         },
         {
           date: new Date(),
           team1: false,
-          matchState: MatchWinState.Team2Won,
+          pointState: PointState.GameWonTeam2,
           server: "Team1Player1",
           receiver: "Team2Player1",
+          team1Points: 1,
+          team2Points: 2,
         },
       ];
 
@@ -394,33 +448,41 @@ describe("getGameStats", () => {
         {
           date: new Date(),
           team1: true,
-          matchState: MatchWinState.GamePointTeam1,
+          pointState: PointState.GamePointTeam1,
           server: "Team1Player1",
           receiver: "Team2Player1",
           gameOrMatchPoints: 2,
+          team1Points: 1,
+          team2Points: 0,
         },
         {
           date: new Date(),
           team1: false,
-          matchState: MatchWinState.GamePointTeam1,
+          pointState: PointState.GamePointTeam1,
           server: "Team1Player1",
           receiver: "Team2Player1",
           gameOrMatchPoints: 1,
+          team1Points: 1,
+          team2Points: 1,
         },
         {
           date: new Date(),
           team1: true,
-          matchState: MatchWinState.NotWon,
+          pointState: PointState.NotWon,
           server: "Team1Player1",
           receiver: "Team2Player1",
+          team1Points: 2,
+          team2Points: 1,
         },
         {
           date: new Date(),
           team1: true,
-          matchState: MatchWinState.GamePointTeam1,
+          pointState: PointState.GamePointTeam1,
           server: "Team1Player1",
           receiver: "Team2Player1",
           gameOrMatchPoints: 2,
+          team1Points: 3,
+          team2Points: 1,
         },
       ];
 
@@ -448,19 +510,22 @@ describe("getGameStats", () => {
           {
             date: new Date(),
             team1: true,
-            matchState: MatchWinState.GamePointTeam1,
+            pointState: PointState.GamePointTeam1,
             server: "Team1Player1",
             receiver: "Team2Player1",
             gameOrMatchPoints: 2, // 10-9
+            team1Points: 10,
+            team2Points: 9,
           },
           {
             date: new Date(),
             team1: false,
-            matchState:
-              MatchWinState.GamePointTeam1 + MatchWinState.GamePointTeam2,
+            pointState: PointState.GamePointTeam1 + PointState.GamePointTeam2,
             server: "Team1Player1",
             receiver: "Team2Player1",
             gameOrMatchPoints: 1,
+            team1Points: 10,
+            team2Points: 10,
           },
         ];
 
@@ -488,19 +553,22 @@ describe("getGameStats", () => {
           {
             date: new Date(),
             team1: false,
-            matchState: MatchWinState.GamePointTeam2,
+            pointState: PointState.GamePointTeam2,
             server: "Team1Player1",
             receiver: "Team2Player1",
             gameOrMatchPoints: 2, // 10-9
+            team1Points: 9,
+            team2Points: 10,
           },
           {
             date: new Date(),
             team1: true,
-            matchState:
-              MatchWinState.GamePointTeam1 + MatchWinState.GamePointTeam2,
+            pointState: PointState.GamePointTeam1 + PointState.GamePointTeam2,
             server: "Team1Player1",
             receiver: "Team2Player1",
             gameOrMatchPoints: 1,
+            team1Points: 10,
+            team2Points: 10,
           },
         ];
 
@@ -528,26 +596,31 @@ describe("getGameStats", () => {
           {
             date: new Date(),
             team1: true,
-            matchState: MatchWinState.GamePointTeam1,
+            pointState: PointState.GamePointTeam1,
             server: "Team1Player1",
             receiver: "Team2Player1",
             gameOrMatchPoints: 2, // 10-9
+            team1Points: 10,
+            team2Points: 9,
           },
           {
             date: new Date(),
             team1: false,
-            matchState:
-              MatchWinState.GamePointTeam1 + MatchWinState.GamePointTeam2,
+            pointState: PointState.GamePointTeam1 + PointState.GamePointTeam2,
             server: "Team1Player1",
             receiver: "Team2Player1",
             gameOrMatchPoints: 1,
+            team1Points: 10,
+            team2Points: 10,
           },
           {
             date: new Date(),
             team1: true,
-            matchState: MatchWinState.Team1Won,
+            pointState: PointState.Team1Won,
             server: "Team1Player1",
             receiver: "Team2Player1",
+            team1Points: 11,
+            team2Points: 10,
           },
         ];
 
@@ -569,6 +642,192 @@ describe("getGameStats", () => {
           },
         ]);
       });
+    });
+  });
+
+  describe("leads", () => {
+    it("should be undefined when no points scored", () => {
+      const gamePointHistory: GamePointHistory = [];
+      const stats = getGameStats(gamePointHistory);
+      expect(stats.leads).toBeUndefined();
+    });
+    it.each([true, false])("should be 1 when first point scored", (team1) => {
+      const gamePointHistory: GamePointHistory = [
+        {
+          date: new Date(),
+          team1,
+          pointState: PointState.NotWon,
+          server: "Team1Player1",
+          receiver: "Team2Player1",
+          team1Points: team1 ? 1 : 0,
+          team2Points: team1 ? 0 : 1,
+        },
+      ];
+      const stats = getGameStats(gamePointHistory);
+      const scoringTeamLeads = team1 ? stats.leads?.team1 : stats.leads?.team2;
+      const nonScoringTeamLeads = team1
+        ? stats.leads?.team2
+        : stats.leads?.team1;
+      expect(scoringTeamLeads).toEqual<TeamLeads>({
+        biggest: 1,
+        greatestDeficitOvercome: undefined,
+      });
+      expect(nonScoringTeamLeads).toBeUndefined();
+    });
+
+    it("should be 2 when lead by 2", () => {
+      const gamePointHistory: GamePointHistory = [
+        {
+          date: new Date(),
+          team1: true,
+          pointState: PointState.NotWon,
+          server: "Team1Player1",
+          receiver: "Team2Player1",
+          team1Points: 1,
+          team2Points: 0,
+        },
+        {
+          date: new Date(),
+          team1: true,
+          pointState: PointState.NotWon,
+          server: "Team1Player1",
+          receiver: "Team2Player1",
+          team1Points: 2,
+          team2Points: 0,
+        },
+      ];
+      const stats = getGameStats(gamePointHistory);
+
+      expect(stats.leads?.team1).toEqual<TeamLeads>({
+        biggest: 2,
+        greatestDeficitOvercome: undefined,
+      });
+    });
+
+    it("should work with later leads", () => {
+      const gamePointHistory: GamePointHistory = [
+        {
+          date: new Date(),
+          team1: true,
+          pointState: PointState.NotWon,
+          server: "Team1Player1",
+          receiver: "Team2Player1",
+          team1Points: 1,
+          team2Points: 0,
+        },
+        {
+          date: new Date(),
+          team1: false,
+          pointState: PointState.NotWon,
+          server: "Team1Player1",
+          receiver: "Team2Player1",
+          team1Points: 1,
+          team2Points: 1,
+        },
+        {
+          date: new Date(),
+          team1: true,
+          pointState: PointState.NotWon,
+          server: "Team1Player1",
+          receiver: "Team2Player1",
+          team1Points: 2,
+          team2Points: 1,
+        },
+        {
+          date: new Date(),
+          team1: true,
+          pointState: PointState.NotWon,
+          server: "Team1Player1",
+          receiver: "Team2Player1",
+          team1Points: 3,
+          team2Points: 1,
+        },
+      ];
+      const stats = getGameStats(gamePointHistory);
+
+      expect(stats.leads?.team1).toEqual<TeamLeads>({
+        biggest: 2,
+        greatestDeficitOvercome: undefined,
+      });
+    });
+
+    describe("when game won", () => {
+      it.each([PointState.Team1Won, PointState.GameWonTeam1])(
+        "should have undefined greatestDeficitOvercome when always lead",
+        (winPointState) => {
+          const gamePointHistory = fillArrayWithIndices(11).map((i) => {
+            let pointState = PointState.NotWon;
+            if (i === 9) {
+              pointState = PointState.GamePointTeam1;
+            } else if (i === 10) {
+              pointState = winPointState;
+            }
+
+            const pointHistory: PointHistory = {
+              date: new Date(),
+              team1: true,
+              pointState,
+              server: "Team1Player1",
+              receiver: "Team2Player1",
+              team1Points: i + 1,
+              team2Points: 0,
+            };
+            return pointHistory;
+          });
+
+          const stats = getGameStats(gamePointHistory);
+          expect(stats.leads?.team1?.greatestDeficitOvercome).toBeUndefined();
+        },
+      );
+      it.each([1, 2])(
+        "should have greatest deficit overcome as the greatest lead of the other team",
+        (otherTeamLead) => {
+          const losingTeamWinningPointHistories = fillArrayWithIndices(
+            otherTeamLead,
+          ).map((i) => {
+            const losingTeamWinningPointHistory: PointHistory = {
+              date: new Date(),
+              team1: false,
+              pointState: PointState.NotWon,
+              server: "Team1Player1",
+              receiver: "Team2Player1",
+              team1Points: 0,
+              team2Points: i + 1,
+            };
+            return losingTeamWinningPointHistory;
+          });
+          const winningTeamPointHistories = fillArrayWithIndices(11).map(
+            (i) => {
+              let pointState = PointState.NotWon;
+              if (i === 9) {
+                pointState = PointState.GamePointTeam1;
+              } else if (i === 10) {
+                pointState = PointState.GameWonTeam1;
+              }
+
+              const winningTeamPointHistory: PointHistory = {
+                date: new Date(),
+                team1: true,
+                pointState,
+                server: "Team1Player1",
+                receiver: "Team2Player1",
+                team1Points: i + 1,
+                team2Points: otherTeamLead,
+              };
+              return winningTeamPointHistory;
+            },
+          );
+
+          const stats = getGameStats([
+            ...losingTeamWinningPointHistories,
+            ...winningTeamPointHistories,
+          ]);
+          expect(stats.leads?.team1?.greatestDeficitOvercome).toEqual(
+            otherTeamLead,
+          );
+          expect(stats.leads?.team2?.biggest).toEqual(otherTeamLead);
+        },
+      );
     });
   });
 

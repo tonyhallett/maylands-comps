@@ -9,7 +9,7 @@ import MGLogo from "./MaylandsTheming/MGSVGLogo";
 import DemoSetAndPointTopAlignment from "./fontDemos/DemoSetAndPointTopAlignment";
 import MaylandsThemeProvider from "./MaylandsTheming/MaylandsThemeProvider";
 import DemoScoringCharts from "./charts/DemoScoringCharts";
-//import freeScoringRoute from "./freeScoring/route";
+import freeScoringRoute from "./freeScoring/route";
 
 const router = createBrowserRouter([
   {
@@ -18,9 +18,9 @@ const router = createBrowserRouter([
       <Box p={1}>
         <Typography variant="h5">Maylands Competitions </Typography>
         <MGLogo width={100} />
-        {/* <Link style={{ display: "block" }} href="freescoring">
+        <Link style={{ display: "block" }} href="freescoring">
           Free scoring
-        </Link> */}
+        </Link>
         <Link href="playerviewdemo">Player view demo</Link>
         <Link style={{ display: "block" }} href="demoscoringcharts">
           Demo scoring charts
@@ -36,7 +36,7 @@ const router = createBrowserRouter([
     path: "demoscoringcharts",
     element: <DemoScoringCharts />,
   },
-  //freeScoringRoute,
+  freeScoringRoute,
 ]);
 
 createRoot(document.getElementById("root")).render(
