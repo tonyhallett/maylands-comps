@@ -81,10 +81,12 @@ export enum PointState {
   GameWonTeam2 = 128,
 }
 
-export interface PointHistory extends GameScore {
+export interface GameScoreState extends GameScore {
+  pointState: PointState;
   team1: boolean;
-  server: Player;
-  receiver: Player;
+}
+
+export interface PointHistory extends GameScoreState, ServerReceiver {
   date: Date;
   pointState: PointState;
   gameOrMatchPoints?: number;
