@@ -7,10 +7,12 @@ import {
   GameMatchPointState,
 } from "../src/matchstats/GameMatchPointsStats";
 import {
-  /* PlayerPointsBreakdown, */
+  PlayerPointsBreakdown,
+  PointsBreakdown,
   ServeReceiveRecord,
-  /* TeamPointsBreakdown, */
+  TeamPointsBreakdown,
 } from "../src/matchstats/PointsBreakdownStats";
+import { expect } from "../customMatchers/extendedExpect";
 
 describe("getGameStats", () => {
   describe("streaks", () => {
@@ -840,19 +842,20 @@ describe("getGameStats", () => {
     it("should be correct when no game points", () => {
       const gamePointHistory: GamePointHistory = [];
       const pointsBreakdown = getGameStats(gamePointHistory).pointsBreakdown;
+
       const expectedServeReceiveRecord: ServeReceiveRecord = {
         num: 0,
         numLost: 0,
         numWon: 0,
         winPercentage: undefined,
       };
-      /* const expectedPlayerPointsBreakdown: PlayerPointsBreakdown = {
+      const expectedPlayerPointsBreakdown: PlayerPointsBreakdown = {
         receiverRecords: [],
         serverRecords: [],
         receive: expectedServeReceiveRecord,
         serve: expectedServeReceiveRecord,
-      }; */
-      /* const expectedTeamsBreakdown: TeamPointsBreakdown = {
+      };
+      const expectedTeamsBreakdown: TeamPointsBreakdown = {
         pointsLost: 0,
         pointsWon: 0,
         pointWinPercentage: undefined,
@@ -860,38 +863,758 @@ describe("getGameStats", () => {
         serve: expectedServeReceiveRecord,
         player1PointsBreakdown: expectedPlayerPointsBreakdown,
         player2PointsBreakdown: expectedPlayerPointsBreakdown,
-      }; */
+      };
+      const expectedPointsBreakdown: PointsBreakdown = {
+        team1: expectedTeamsBreakdown,
+        team2: expectedTeamsBreakdown,
+      };
+      expect(pointsBreakdown).toMatchWithGetters(expectedPointsBreakdown);
+    });
+    const player2NotPlayingPointsBreakdown: PlayerPointsBreakdown = {
+      receiverRecords: [],
+      serverRecords: [],
+      receive: {
+        num: 0,
+        numLost: 0,
+        numWon: 0,
+        winPercentage: undefined,
+      },
+      serve: {
+        num: 0,
+        numLost: 0,
+        numWon: 0,
+        winPercentage: undefined,
+      },
+    };
 
-      // todo find the appropriate way to to match without the object type
-      [pointsBreakdown.team1, pointsBreakdown.team2].forEach(
-        (teamPointsBreakdown) => {
-          expect(teamPointsBreakdown.pointsWon).toBe(0);
-          expect(teamPointsBreakdown.pointsLost).toBe(0);
-          expect(teamPointsBreakdown.pointWinPercentage).toBeUndefined();
-          [teamPointsBreakdown.receive, teamPointsBreakdown.serve].forEach(
-            (serveReceiveRecord) => {
-              expect(serveReceiveRecord.num).toBe(0);
-              expect(serveReceiveRecord.numLost).toBe(0);
-              expect(serveReceiveRecord.numWon).toBe(0);
-              expect(serveReceiveRecord.winPercentage).toBeUndefined();
+    it.each([true, false])(
+      "should be correct when 1 game point - server wins point %p",
+      (team1Server) => {
+        const gamePointHistory: GamePointHistory = [
+          {
+            date: new Date(),
+            pointState: PointState.NotWon,
+            server: team1Server ? "Team1Player1" : "Team2Player1",
+            receiver: !team1Server ? "Team1Player1" : "Team2Player1",
+            team1: team1Server,
+            team1Points: team1Server ? 1 : 0,
+            team2Points: !team1Server ? 1 : 0,
+          },
+        ];
+        const pointsBreakdown = getGameStats(gamePointHistory).pointsBreakdown;
+        const serverTeamPointsBreakdown: TeamPointsBreakdown = {
+          pointsWon: 1,
+          pointsLost: 0,
+          pointWinPercentage: 100,
+          serve: {
+            num: 1,
+            numLost: 0,
+            numWon: 1,
+            winPercentage: 100,
+          },
+          receive: {
+            num: 0,
+            numLost: 0,
+            numWon: 0,
+            winPercentage: undefined,
+          },
+          player1PointsBreakdown: {
+            receiverRecords: [],
+            serverRecords: [
+              {
+                num: 1,
+                numWon: 1,
+                numLost: 0,
+                winPercentage: 100,
+                opponent: team1Server ? "Team2Player1" : "Team1Player1",
+              },
+            ],
+            receive: {
+              num: 0,
+              numLost: 0,
+              numWon: 0,
+              winPercentage: undefined,
             },
-          );
-          [
-            teamPointsBreakdown.player1PointsBreakdown,
-            teamPointsBreakdown.player2PointsBreakdown,
-          ].forEach((playerPointsBreakdown) => {
-            expect(playerPointsBreakdown.receiverRecords).toEqual([]);
-            expect(playerPointsBreakdown.serverRecords).toEqual([]);
+            serve: {
+              num: 1,
+              numLost: 0,
+              numWon: 1,
+              winPercentage: 100,
+            },
+          },
+          player2PointsBreakdown: player2NotPlayingPointsBreakdown,
+        };
+        const receiverTeamPointsBreakdown: TeamPointsBreakdown = {
+          pointsWon: 0,
+          pointsLost: 1,
+          pointWinPercentage: 0,
+          serve: {
+            num: 0,
+            numLost: 0,
+            numWon: 0,
+            winPercentage: undefined,
+          },
+          receive: {
+            num: 1,
+            numLost: 1,
+            numWon: 0,
+            winPercentage: 0,
+          },
+          player1PointsBreakdown: {
+            receiverRecords: [
+              {
+                num: 1,
+                numWon: 0,
+                numLost: 1,
+                winPercentage: 0,
+                opponent: team1Server ? "Team1Player1" : "Team2Player1",
+              },
+            ],
+            serverRecords: [],
+            receive: {
+              num: 1,
+              numLost: 1,
+              numWon: 0,
+              winPercentage: 0,
+            },
+            serve: {
+              num: 0,
+              numLost: 0,
+              numWon: 0,
+              winPercentage: undefined,
+            },
+          },
+          player2PointsBreakdown: player2NotPlayingPointsBreakdown,
+        };
+        const expectedPointsBreakdown: PointsBreakdown = {
+          team1: team1Server
+            ? serverTeamPointsBreakdown
+            : receiverTeamPointsBreakdown,
+          team2: !team1Server
+            ? serverTeamPointsBreakdown
+            : receiverTeamPointsBreakdown,
+        };
 
-            expect(playerPointsBreakdown.receive).toEqual(
-              expectedServeReceiveRecord,
-            );
-            expect(playerPointsBreakdown.serve).toEqual(
-              expectedServeReceiveRecord,
-            );
-          });
+        expect(pointsBreakdown).toMatchWithGetters(expectedPointsBreakdown);
+      },
+    );
+
+    it("should be correct when 1 game point each", () => {
+      const gamePointHistory: GamePointHistory = [
+        {
+          date: new Date(),
+          pointState: PointState.NotWon,
+          server: "Team1Player1",
+          receiver: "Team2Player1",
+          team1: true,
+          team1Points: 1,
+          team2Points: 0,
         },
-      );
+        {
+          date: new Date(),
+          pointState: PointState.NotWon,
+          server: "Team1Player1",
+          receiver: "Team2Player1",
+          team1: false,
+          team1Points: 1,
+          team2Points: 1,
+        },
+      ];
+      const pointsBreakdown = getGameStats(gamePointHistory).pointsBreakdown;
+      const team1TeamPointsBreakdown: TeamPointsBreakdown = {
+        pointsWon: 1,
+        pointsLost: 1,
+        pointWinPercentage: 50,
+        serve: {
+          num: 2,
+          numLost: 1,
+          numWon: 1,
+          winPercentage: 50,
+        },
+        receive: {
+          num: 0,
+          numLost: 0,
+          numWon: 0,
+          winPercentage: undefined,
+        },
+        player1PointsBreakdown: {
+          receiverRecords: [],
+          serverRecords: [
+            {
+              num: 2,
+              numWon: 1,
+              numLost: 1,
+              winPercentage: 50,
+              opponent: "Team2Player1",
+            },
+          ],
+          receive: {
+            num: 0,
+            numLost: 0,
+            numWon: 0,
+            winPercentage: undefined,
+          },
+          serve: {
+            num: 2,
+            numLost: 1,
+            numWon: 1,
+            winPercentage: 50,
+          },
+        },
+        player2PointsBreakdown: player2NotPlayingPointsBreakdown,
+      };
+      const team2TeamPointsBreakdown: TeamPointsBreakdown = {
+        pointsWon: 1,
+        pointsLost: 1,
+        pointWinPercentage: 50,
+        serve: {
+          num: 0,
+          numLost: 0,
+          numWon: 0,
+          winPercentage: undefined,
+        },
+        receive: {
+          num: 2,
+          numLost: 1,
+          numWon: 1,
+          winPercentage: 50,
+        },
+        player1PointsBreakdown: {
+          receiverRecords: [
+            {
+              num: 2,
+              numWon: 1,
+              numLost: 1,
+              winPercentage: 50,
+              opponent: "Team1Player1",
+            },
+          ],
+          serverRecords: [],
+          receive: {
+            num: 2,
+            numLost: 1,
+            numWon: 1,
+            winPercentage: 50,
+          },
+          serve: {
+            num: 0,
+            numLost: 0,
+            numWon: 0,
+            winPercentage: undefined,
+          },
+        },
+        player2PointsBreakdown: player2NotPlayingPointsBreakdown,
+      };
+      const expectedPointsBreakdown: PointsBreakdown = {
+        team1: team1TeamPointsBreakdown,
+        team2: team2TeamPointsBreakdown,
+      };
+
+      expect(pointsBreakdown).toMatchWithGetters(expectedPointsBreakdown);
+    });
+
+    it("should be correct when 2 game points", () => {
+      const gamePointHistory: GamePointHistory = [
+        {
+          date: new Date(),
+          pointState: PointState.NotWon,
+          server: "Team1Player1",
+          receiver: "Team2Player1",
+          team1: true,
+          team1Points: 1,
+          team2Points: 0,
+        },
+        {
+          date: new Date(),
+          pointState: PointState.NotWon,
+          server: "Team1Player1",
+          receiver: "Team2Player1",
+          team1: true,
+          team1Points: 2,
+          team2Points: 0,
+        },
+      ];
+      const pointsBreakdown = getGameStats(gamePointHistory).pointsBreakdown;
+      const team1TeamPointsBreakdown: TeamPointsBreakdown = {
+        pointsWon: 2,
+        pointsLost: 0,
+        pointWinPercentage: 100,
+        serve: {
+          num: 2,
+          numLost: 0,
+          numWon: 2,
+          winPercentage: 100,
+        },
+        receive: {
+          num: 0,
+          numLost: 0,
+          numWon: 0,
+          winPercentage: undefined,
+        },
+        player1PointsBreakdown: {
+          receiverRecords: [],
+          serverRecords: [
+            {
+              num: 2,
+              numWon: 2,
+              numLost: 0,
+              winPercentage: 100,
+              opponent: "Team2Player1",
+            },
+          ],
+          receive: {
+            num: 0,
+            numLost: 0,
+            numWon: 0,
+            winPercentage: undefined,
+          },
+          serve: {
+            num: 2,
+            numLost: 0,
+            numWon: 2,
+            winPercentage: 100,
+          },
+        },
+        player2PointsBreakdown: player2NotPlayingPointsBreakdown,
+      };
+      const team2TeamPointsBreakdown: TeamPointsBreakdown = {
+        pointsWon: 0,
+        pointsLost: 2,
+        pointWinPercentage: 0,
+        serve: {
+          num: 0,
+          numLost: 0,
+          numWon: 0,
+          winPercentage: undefined,
+        },
+        receive: {
+          num: 2,
+          numLost: 2,
+          numWon: 0,
+          winPercentage: 0,
+        },
+        player1PointsBreakdown: {
+          receiverRecords: [
+            {
+              num: 2,
+              numWon: 0,
+              numLost: 2,
+              winPercentage: 0,
+              opponent: "Team1Player1",
+            },
+          ],
+          serverRecords: [],
+          receive: {
+            num: 2,
+            numLost: 2,
+            numWon: 0,
+            winPercentage: 0,
+          },
+          serve: {
+            num: 0,
+            numLost: 0,
+            numWon: 0,
+            winPercentage: undefined,
+          },
+        },
+        player2PointsBreakdown: player2NotPlayingPointsBreakdown,
+      };
+      const expectedPointsBreakdown: PointsBreakdown = {
+        team1: team1TeamPointsBreakdown,
+        team2: team2TeamPointsBreakdown,
+      };
+
+      expect(pointsBreakdown).toMatchWithGetters(expectedPointsBreakdown);
+    });
+    it("should be correct with multiple services", () => {
+      const gamePointHistory: GamePointHistory = [
+        {
+          date: new Date(),
+          pointState: PointState.NotWon,
+          server: "Team1Player1",
+          receiver: "Team2Player1",
+          team1: true,
+          team1Points: 1,
+          team2Points: 0,
+        },
+        {
+          date: new Date(),
+          pointState: PointState.NotWon,
+          server: "Team1Player1",
+          receiver: "Team2Player1",
+          team1: false,
+          team1Points: 1,
+          team2Points: 1,
+        },
+        {
+          date: new Date(),
+          pointState: PointState.NotWon,
+          server: "Team2Player1",
+          receiver: "Team1Player1",
+          team1: true,
+          team1Points: 2,
+          team2Points: 1,
+        },
+        {
+          date: new Date(),
+          pointState: PointState.NotWon,
+          server: "Team2Player1",
+          receiver: "Team1Player1",
+          team1: false,
+          team1Points: 2,
+          team2Points: 2,
+        },
+        {
+          date: new Date(),
+          pointState: PointState.NotWon,
+          server: "Team1Player1",
+          receiver: "Team2Player1",
+          team1: true,
+          team1Points: 3,
+          team2Points: 2,
+        },
+      ];
+      const pointsBreakdown = getGameStats(gamePointHistory).pointsBreakdown;
+      const team1TeamPointsBreakdown: TeamPointsBreakdown = {
+        pointsWon: 3,
+        pointsLost: 2,
+        pointWinPercentage: (3 / 5) * 100,
+        serve: {
+          num: 3,
+          numLost: 1,
+          numWon: 2,
+          winPercentage: (2 / 3) * 100,
+        },
+        receive: {
+          num: 2,
+          numLost: 1,
+          numWon: 1,
+          winPercentage: 50,
+        },
+        player1PointsBreakdown: {
+          receiverRecords: [
+            {
+              num: 2,
+              numWon: 1,
+              numLost: 1,
+              winPercentage: 50,
+              opponent: "Team2Player1",
+            },
+          ],
+          serverRecords: [
+            {
+              num: 3,
+              numWon: 2,
+              numLost: 1,
+              winPercentage: (2 / 3) * 100,
+              opponent: "Team2Player1",
+            },
+          ],
+          receive: {
+            num: 2,
+            numLost: 1,
+            numWon: 1,
+            winPercentage: 50,
+          },
+          serve: {
+            num: 3,
+            numLost: 1,
+            numWon: 2,
+            winPercentage: (2 / 3) * 100,
+          },
+        },
+        player2PointsBreakdown: player2NotPlayingPointsBreakdown,
+      };
+      const team2TeamPointsBreakdown: TeamPointsBreakdown = {
+        pointsWon: 2,
+        pointsLost: 3,
+        pointWinPercentage: (2 / 5) * 100,
+        serve: {
+          num: 2,
+          numLost: 1,
+          numWon: 1,
+          winPercentage: 50,
+        },
+        receive: {
+          num: 3,
+          numLost: 2,
+          numWon: 1,
+          winPercentage: (1 / 3) * 100,
+        },
+        player1PointsBreakdown: {
+          receiverRecords: [
+            {
+              num: 3,
+              numWon: 1,
+              numLost: 2,
+              winPercentage: (1 / 3) * 100,
+              opponent: "Team1Player1",
+            },
+          ],
+          serverRecords: [
+            {
+              num: 2,
+              numWon: 1,
+              numLost: 1,
+              winPercentage: 50,
+              opponent: "Team1Player1",
+            },
+          ],
+          receive: {
+            num: 3,
+            numLost: 2,
+            numWon: 1,
+            winPercentage: (1 / 3) * 100,
+          },
+          serve: {
+            num: 2,
+            numLost: 1,
+            numWon: 1,
+            winPercentage: 50,
+          },
+        },
+        player2PointsBreakdown: player2NotPlayingPointsBreakdown,
+      };
+      const expectedPointsBreakdown: PointsBreakdown = {
+        team1: team1TeamPointsBreakdown,
+        team2: team2TeamPointsBreakdown,
+      };
+
+      expect(pointsBreakdown).toMatchWithGetters(expectedPointsBreakdown);
+    });
+
+    it("should work with doubles", () => {
+      const gamePointHistory: GamePointHistory = [
+        {
+          date: new Date(),
+          pointState: PointState.NotWon,
+          server: "Team1Player1",
+          receiver: "Team2Player1",
+          team1: true,
+          team1Points: 1,
+          team2Points: 0,
+        },
+        {
+          date: new Date(),
+          pointState: PointState.NotWon,
+          server: "Team2Player1",
+          receiver: "Team1Player2",
+          team1: false,
+          team1Points: 1,
+          team2Points: 1,
+        },
+        {
+          date: new Date(),
+          pointState: PointState.NotWon,
+          server: "Team1Player2",
+          receiver: "Team2Player2",
+          team1: false,
+          team1Points: 1,
+          team2Points: 2,
+        },
+        {
+          date: new Date(),
+          pointState: PointState.NotWon,
+          server: "Team2Player2",
+          receiver: "Team1Player1",
+          team1: true,
+          team1Points: 2,
+          team2Points: 2,
+        },
+        // switching receivers
+        {
+          date: new Date(),
+          pointState: PointState.NotWon,
+          server: "Team1Player1",
+          receiver: "Team2Player2",
+          team1: true,
+          team1Points: 3,
+          team2Points: 2,
+        },
+      ];
+      const pointsBreakdown = getGameStats(gamePointHistory).pointsBreakdown;
+      const team1TeamPointsBreakdown: TeamPointsBreakdown = {
+        pointsWon: 3,
+        pointsLost: 2,
+        pointWinPercentage: (3 / 5) * 100,
+        serve: {
+          num: 3,
+          numLost: 1,
+          numWon: 2,
+          winPercentage: (2 / 3) * 100,
+        },
+        receive: {
+          num: 2,
+          numLost: 1,
+          numWon: 1,
+          winPercentage: 50,
+        },
+        player1PointsBreakdown: {
+          receiverRecords: [
+            {
+              num: 1,
+              numWon: 1,
+              numLost: 0,
+              winPercentage: 100,
+              opponent: "Team2Player2",
+            },
+          ],
+          serverRecords: [
+            {
+              num: 1,
+              numWon: 1,
+              numLost: 0,
+              winPercentage: 100,
+              opponent: "Team2Player1",
+            },
+            {
+              num: 1,
+              numWon: 1,
+              numLost: 0,
+              winPercentage: 100,
+              opponent: "Team2Player2",
+            },
+          ],
+          receive: {
+            num: 1,
+            numLost: 0,
+            numWon: 1,
+            winPercentage: 100,
+          },
+          serve: {
+            num: 2,
+            numLost: 0,
+            numWon: 2,
+            winPercentage: 100,
+          },
+        },
+        player2PointsBreakdown: {
+          receiverRecords: [
+            {
+              num: 1,
+              numWon: 0,
+              numLost: 1,
+              winPercentage: 0,
+              opponent: "Team2Player1",
+            },
+          ],
+          serverRecords: [
+            {
+              num: 1,
+              numWon: 0,
+              numLost: 1,
+              winPercentage: 0,
+              opponent: "Team2Player2",
+            },
+          ],
+          receive: {
+            num: 1,
+            numLost: 1,
+            numWon: 0,
+            winPercentage: 0,
+          },
+          serve: {
+            num: 1,
+            numLost: 1,
+            numWon: 0,
+            winPercentage: 0,
+          },
+        },
+      };
+      const team2TeamPointsBreakdown: TeamPointsBreakdown = {
+        pointsWon: 2,
+        pointsLost: 3,
+        pointWinPercentage: (2 / 5) * 100,
+        serve: {
+          num: 2,
+          numLost: 1,
+          numWon: 1,
+          winPercentage: 50,
+        },
+        receive: {
+          num: 3,
+          numLost: 2,
+          numWon: 1,
+          winPercentage: (1 / 3) * 100,
+        },
+        player1PointsBreakdown: {
+          receiverRecords: [
+            {
+              num: 1,
+              numWon: 0,
+              numLost: 1,
+              winPercentage: 0,
+              opponent: "Team1Player1",
+            },
+          ],
+          serverRecords: [
+            {
+              num: 1,
+              numWon: 1,
+              numLost: 0,
+              winPercentage: 100,
+              opponent: "Team1Player2",
+            },
+          ],
+          receive: {
+            num: 1,
+            numLost: 1,
+            numWon: 0,
+            winPercentage: 0,
+          },
+          serve: {
+            num: 1,
+            numLost: 0,
+            numWon: 1,
+            winPercentage: 100,
+          },
+        },
+        player2PointsBreakdown: {
+          receiverRecords: [
+            {
+              num: 1,
+              numWon: 1,
+              numLost: 0,
+              winPercentage: 100,
+              opponent: "Team1Player2",
+            },
+            {
+              num: 1,
+              numWon: 0,
+              numLost: 1,
+              winPercentage: 0,
+              opponent: "Team1Player1",
+            },
+          ],
+          serverRecords: [
+            {
+              num: 1,
+              numWon: 0,
+              numLost: 1,
+              winPercentage: 0,
+              opponent: "Team1Player1",
+            },
+          ],
+          receive: {
+            num: 2,
+            numLost: 1,
+            numWon: 1,
+            winPercentage: 50,
+          },
+          serve: {
+            num: 1,
+            numLost: 1,
+            numWon: 0,
+            winPercentage: 0,
+          },
+        },
+      };
+      const expectedPointsBreakdown: PointsBreakdown = {
+        team1: team1TeamPointsBreakdown,
+        team2: team2TeamPointsBreakdown,
+      };
+
+      expect(pointsBreakdown).toMatchWithGetters(expectedPointsBreakdown);
     });
   });
 });

@@ -153,10 +153,10 @@ class TeamPointsBreakdownImpl implements TeamPointsBreakdown {
   get serve(): ServeReceiveRecord {
     const numWon =
       this.player1PointsBreakdown.serve.numWon +
-      (this.player2PointsBreakdown?.serve.numWon ?? 0);
+      this.player2PointsBreakdown.serve.numWon;
     const numLost =
       this.player1PointsBreakdown.serve.numLost +
-      (this.player2PointsBreakdown?.serve.numLost ?? 0);
+      this.player2PointsBreakdown.serve.numLost;
     return {
       num: numWon + numLost,
       numWon,
@@ -167,10 +167,10 @@ class TeamPointsBreakdownImpl implements TeamPointsBreakdown {
   get receive(): ServeReceiveRecord {
     const numWon =
       this.player1PointsBreakdown.receive.numWon +
-      (this.player2PointsBreakdown?.receive.numWon ?? 0);
+      this.player2PointsBreakdown.receive.numWon;
     const numLost =
       this.player1PointsBreakdown.receive.numLost +
-      (this.player2PointsBreakdown?.receive.numLost ?? 0);
+      this.player2PointsBreakdown.receive.numLost;
     return {
       num: numWon + numLost,
       numWon,
