@@ -1,11 +1,11 @@
+import { GameScore } from "../../umpire";
 import {
   ParallelXAxisLine,
   ParallelXAxisLineProps,
 } from "../ParallelXAxisLine";
-import { Points } from "./DemoScoringCharts";
 
 type ParallelXAxisLinePropsNoY = Omit<ParallelXAxisLineProps, "y">;
-export interface GamePointLineProps extends Points {
+export interface GamePointLineProps extends GameScore {
   gamePoint: number;
   atOrPastGamePointProps: ParallelXAxisLinePropsNoY;
   beforeGamePointProps: ParallelXAxisLinePropsNoY;
@@ -14,13 +14,14 @@ export interface GamePointLineProps extends Points {
 
 export function GamePointLine({
   gamePoint,
-  team1,
-  team2,
+  team1Points,
+  team2Points,
   beforeGamePointProps,
   atOrPastGamePointProps,
   commonGamePointProps,
 }: GamePointLineProps) {
-  const atOrPastGamePoint = team1 >= gamePoint || team2 >= gamePoint;
+  const atOrPastGamePoint =
+    team1Points >= gamePoint || team2Points >= gamePoint;
   const otherProps = atOrPastGamePoint
     ? atOrPastGamePointProps
     : beforeGamePointProps;

@@ -183,7 +183,7 @@ class TeamPointsBreakdownImpl implements TeamPointsBreakdown {
 export class PointsBreakdownStats {
   private serverReceiverMap = new ServerReceiverMap<ServiceRecord>();
   public addPoint(point: PointHistory) {
-    const wonByServer = point.team1
+    const wonByServer = point.team1WonPoint
       ? isTeam1(point.server)
       : !isTeam1(point.server);
     const wonByServerIncrement = wonByServer ? 1 : 0;

@@ -234,6 +234,8 @@ export function UmpireController({
         </Box>
       </Card>
       <HistoryView
+        upTo={umpire.upTo}
+        gamePoint={umpire.upTo - 1}
         team1StartScore={umpire.team1StartGameScore}
         team2StartScore={umpire.team2StartGameScore}
         gameWon={gameWon(matchState.matchWinState)}

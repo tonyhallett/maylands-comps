@@ -83,7 +83,7 @@ export enum PointState {
 
 export interface GameScoreState extends GameScore {
   pointState: PointState;
-  team1: boolean;
+  team1WonPoint: boolean;
 }
 
 export interface PointHistory extends GameScoreState, ServerReceiver {
@@ -142,7 +142,7 @@ export class Umpire {
     this._pointHistory.pop();
     const lastGameScore = this._gameScores.pop();
     const lastPoint = this.removeLastPointHistory();
-    const teamScoreToReduce = lastPoint.team1
+    const teamScoreToReduce = lastPoint.team1WonPoint
       ? this._team1Score
       : this._team2Score;
     teamScoreToReduce.games -= 1;
@@ -153,11 +153,11 @@ export class Umpire {
 
   private undoMidGameState() {
     const lastPoint = this.removeLastPointHistory();
-    if (this.isEndsFromTeamScoringLast(lastPoint.team1)) {
+    if (this.isEndsFromTeamScoringLast(lastPoint.team1WonPoint)) {
       this.switchEnds();
       this.doublesEndsPointsScored = "NotEnds";
     }
-    const teamScoreToReduce = lastPoint.team1
+    const teamScoreToReduce = lastPoint.team1WonPoint
       ? this._team1Score
       : this._team2Score;
     teamScoreToReduce.points -= 1;
@@ -587,7 +587,7 @@ export class Umpire {
     const pointState = this.getPointState(matchState, gameWonState);
 
     const pointHistory: PointHistory = {
-      team1: team1,
+      team1WonPoint: team1,
       date,
       pointState,
       ...serverReceiver,
@@ -623,7 +623,9 @@ export class Umpire {
     if (lastGamePointHistory.length === 0) {
       return false;
     }
-    return this.isEndsFromTeamScoringLast(getLast(lastGamePointHistory).team1);
+    return this.isEndsFromTeamScoringLast(
+      getLast(lastGamePointHistory).team1WonPoint,
+    );
   }
 
   private isEndsFromTeamScoringLast(team1LastScored: boolean): boolean {

@@ -1,4 +1,10 @@
 import { PointHistory, PointState } from "../umpire";
+import {
+  isGamePointTeam1,
+  isGamePointTeam2,
+  isMatchPointTeam1,
+  isMatchPointTeam2,
+} from "../umpire/pointStateHelpers";
 
 export interface EnteredGameMatchPointStates {
   team1: GameMatchPointState | undefined;
@@ -16,15 +22,6 @@ export interface GameMatchPoints {
   team1: GameMatchPointState[];
   team2: GameMatchPointState[];
 }
-
-export const isMatchPointTeam1 = (pointState: PointState) =>
-  Boolean(pointState & PointState.MatchPointTeam1);
-export const isMatchPointTeam2 = (pointState: PointState) =>
-  Boolean(pointState & PointState.MatchPointTeam2);
-export const isGamePointTeam1 = (pointState: PointState) =>
-  Boolean(pointState & PointState.GamePointTeam1);
-export const isGamePointTeam2 = (pointState: PointState) =>
-  Boolean(pointState & PointState.GamePointTeam2);
 
 export class GameMatchPointsStats {
   private gameMatchPoints: GameMatchPoints = {

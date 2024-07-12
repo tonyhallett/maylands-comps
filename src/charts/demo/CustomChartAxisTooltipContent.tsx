@@ -1,12 +1,12 @@
 import { ChartsAxisContentProps } from "@mui/x-charts/ChartsTooltip";
-import { Score } from "./DemoScoringCharts";
+import { GameScoreState } from "../../umpire";
 
 interface CustomChartAxisTooltipContentData {
-  score: Score | undefined;
+  score: GameScoreState | undefined;
 }
 export type AxisTooltipScoreRenderer = (
   props: ChartsAxisContentProps,
-  score: Score,
+  score: GameScoreState,
 ) => JSX.Element;
 
 interface CustomChartAxisTooltipContentPropsFromSlots {

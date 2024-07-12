@@ -27,18 +27,20 @@ export class StreakStats {
   };
 
   nextPoint = (point: PointHistory) => {
-    const teamStreaks = point.team1 ? this.streaks.team1 : this.streaks.team2;
+    const teamStreaks = point.team1WonPoint
+      ? this.streaks.team1
+      : this.streaks.team2;
     if (this.streaks.team1Last === undefined) {
       teamStreaks.streaks.push(1);
     } else {
-      if (this.streaks.team1Last === point.team1) {
+      if (this.streaks.team1Last === point.team1WonPoint) {
         const streak = teamStreaks.streaks[teamStreaks.streaks.length - 1];
         teamStreaks.streaks[teamStreaks.streaks.length - 1] = streak + 1;
       } else {
         teamStreaks.streaks.push(1);
       }
     }
-    this.streaks.team1Last = point.team1;
+    this.streaks.team1Last = point.team1WonPoint;
   };
   getStats(): Streaks {
     this.streaks.team1.longestStreak = getLongestStreak(
