@@ -29,6 +29,16 @@ export function FreeScoringMatch() {
     const theUmpire = new Umpire(saveState);
     umpireControllerRef.current = (
       <UmpireController
+        rules={{
+          bestOf: theUmpire.bestOf,
+          upTo: theUmpire.upTo,
+          clearBy2: theUmpire.clearBy2,
+          numServes: theUmpire.numServes,
+          team1EndsAt: theUmpire.team1MidwayPoints,
+          team2EndsAt: theUmpire.team2MidwayPoints,
+          team1StartGameScore: theUmpire.team1StartGameScore,
+          team2StartGameScore: theUmpire.team2StartGameScore,
+        }}
         additionalStateRendering={statsRenderer}
         matchStateChanged={() => {
           const saveState = theUmpire.getSaveState();
@@ -61,14 +71,15 @@ function getTeamLabels(playerNames: PlayerNames) {
 const statsRenderer: UmpireMatchStateRenderer = (
   matchState,
   umpire,
+  rules,
   playerNames,
 ) => {
   return (
     <HistoryView
-      upTo={umpire.upTo}
-      gamePoint={umpire.upTo - 1}
-      team1StartScore={umpire.team1StartGameScore}
-      team2StartScore={umpire.team2StartGameScore}
+      upTo={rules.upTo}
+      gamePoint={rules.upTo - 1}
+      team1StartScore={rules.team1StartGameScore}
+      team2StartScore={rules.team2StartGameScore}
       matchWon={isMatchWon(matchState.matchWinState)}
       currentGameScore={{
         team1Points: matchState.team1Score.points,

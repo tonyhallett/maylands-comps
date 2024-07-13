@@ -86,28 +86,30 @@ const getFreeScoringPlayersAndTeams =
 const getFreeScoringMatchStates = (): FreeScoringMatchState[] => {
   const players = getFreeScoringPlayers();
   const matchSaveStates = getFreeScoringMatchSaveStates();
-  return matchSaveStates.map((matchState) => {
+  return matchSaveStates.map((matchSaveState) => {
     const playerNames: PlayerNames = {
       team1Player1Name: players.find(
-        (player) => player.id === matchState.team1Player1Id,
+        (player) => player.id === matchSaveState.team1Player1Id,
       )?.name,
 
       team1Player2Name:
-        matchState.team1Player2Id === undefined
+        matchSaveState.team1Player2Id === undefined
           ? undefined
-          : players.find((player) => player.id === matchState.team1Player2Id)
-              ?.name,
+          : players.find(
+              (player) => player.id === matchSaveState.team1Player2Id,
+            )?.name,
       team2Player1Name: players.find(
-        (player) => player.id === matchState.team2Player1Id,
+        (player) => player.id === matchSaveState.team2Player1Id,
       )?.name,
       team2Player2Name:
-        matchState.team2Player2Id === undefined
+        matchSaveState.team2Player2Id === undefined
           ? undefined
-          : players.find((player) => player.id === matchState.team2Player2Id)
-              ?.name,
+          : players.find(
+              (player) => player.id === matchSaveState.team2Player2Id,
+            )?.name,
     };
     const freeScoringMatchState: FreeScoringMatchState = {
-      ...matchState,
+      ...matchSaveState,
       ...playerNames,
     };
     return freeScoringMatchState;

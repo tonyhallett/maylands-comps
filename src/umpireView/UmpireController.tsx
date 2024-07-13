@@ -1,7 +1,7 @@
 import { useRef, useState } from "react";
 import { ServerReceiverChooser } from "./dialogs/serverReceiver/ServerReceiverChooser";
 import { LeftRightMatchWinState, MatchView } from "./match/MatchView";
-import { MatchState, Player, Umpire } from "../umpire";
+import { MatchState, Player } from "../umpire";
 import {
   isGamePointTeam1,
   isGamePointTeam2,
@@ -23,12 +23,34 @@ export interface PlayerNames {
 
 export type UmpireMatchStateRenderer = (
   matchState: MatchState,
-  umpire: Umpire,
+  umpire: ControllableUmpire,
+  rules: MatchInfo,
   playerNames: PlayerNames,
 ) => JSX.Element;
 
+interface ControllableUmpire {
+  setFirstGameDoublesReceiver(player: string): MatchState;
+  switchEnds(): MatchState;
+  resetServerReceiver(): MatchState;
+  pointScored(isTeam1: boolean): MatchState;
+  undoPoint(): MatchState;
+  setServer(player: Player): MatchState;
+  getMatchState(): MatchState;
+}
+
+interface MatchInfo {
+  team2StartGameScore: number;
+  team1StartGameScore: number;
+  bestOf: number;
+  clearBy2: boolean;
+  upTo: number;
+  numServes: number;
+  team1EndsAt: number;
+  team2EndsAt: number;
+}
 export interface UmpireControllerProps extends PlayerNames {
-  umpire: Umpire;
+  umpire: ControllableUmpire;
+  rules: MatchInfo;
   matchStateChanged?: () => void;
   additionalStateRendering?: UmpireMatchStateRenderer;
 }
@@ -113,6 +135,7 @@ function getLeftMatchWinState(
 
 export function UmpireController({
   umpire,
+  rules,
   matchStateChanged,
   additionalStateRendering,
   ...playerNames
@@ -230,12 +253,12 @@ export function UmpireController({
                 setNewMatchState(umpire.resetServerReceiver());
               }}
               rules={{
-                bestOf: umpire.bestOf,
-                clearBy2: umpire.clearBy2,
-                upTo: umpire.upTo,
-                numServes: umpire.numServes,
-                team1EndsAt: umpire.team1MidwayPoints,
-                team2EndsAt: umpire.team2MidwayPoints,
+                bestOf: rules.bestOf,
+                clearBy2: rules.clearBy2,
+                upTo: rules.upTo,
+                numServes: rules.upTo,
+                team1EndsAt: rules.team1EndsAt,
+                team2EndsAt: rules.team2EndsAt,
                 team1Identifier: getTeamVs(team1Player1Name, team1Player2Name),
                 team2Identifier: getTeamVs(team2Player1Name, team2Player2Name),
               }}
@@ -245,24 +268,9 @@ export function UmpireController({
             />
           </Box>
         </Card>
-        {/* <HistoryView
-        upTo={umpire.upTo}
-        gamePoint={umpire.upTo - 1}
-        team1StartScore={umpire.team1StartGameScore}
-        team2StartScore={umpire.team2StartGameScore}
-        matchWon={isMatchWon(matchState.matchWinState)}
-        currentGameScore={{
-          team1Points: matchState.team1Score.points,
-          team2Points: matchState.team2Score.points,
-        }}
-        team1Left={matchState.team1Left}
-        gameScores={matchState.gameScores}
-        pointHistory={matchState.pointHistory}
-        {...teamLabels}
-      /> */}
       </div>
       {additionalStateRendering &&
-        additionalStateRendering(matchState, umpire, playerNames)}
+        additionalStateRendering(matchState, umpire, rules, playerNames)}
     </div>
   );
 }
