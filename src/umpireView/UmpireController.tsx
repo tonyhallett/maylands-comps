@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useRef } from "react";
 import { ServerReceiverChooser } from "./dialogs/serverReceiver/ServerReceiverChooser";
 import { LeftRightMatchWinState, MatchView } from "./match/MatchView";
 import { MatchState, Player } from "../umpire";
@@ -21,26 +21,16 @@ export interface PlayerNames {
   team2Player2Name?: string;
 }
 
-export type UmpireMatchStateRenderer = (
-  matchState: MatchState,
-  umpire: ControllableUmpire,
-  rules: MatchInfo,
-  playerNames: PlayerNames,
-) => JSX.Element;
-
 interface ControllableUmpire {
-  setFirstGameDoublesReceiver(player: string): MatchState;
-  switchEnds(): MatchState;
-  resetServerReceiver(): MatchState;
-  pointScored(isTeam1: boolean): MatchState;
-  undoPoint(): MatchState;
-  setServer(player: Player): MatchState;
-  getMatchState(): MatchState;
+  setFirstGameDoublesReceiver(player: Player): void;
+  switchEnds(): void;
+  resetServerReceiver(): void;
+  pointScored(isTeam1: boolean): void;
+  undoPoint(): void;
+  setServer(player: Player): void;
 }
 
-interface MatchInfo {
-  team2StartGameScore: number;
-  team1StartGameScore: number;
+export interface MatchInfo {
   bestOf: number;
   clearBy2: boolean;
   upTo: number;
@@ -50,9 +40,8 @@ interface MatchInfo {
 }
 export interface UmpireControllerProps extends PlayerNames {
   umpire: ControllableUmpire;
+  matchState: MatchState;
   rules: MatchInfo;
-  matchStateChanged?: () => void;
-  additionalStateRendering?: UmpireMatchStateRenderer;
 }
 
 function getServerReceiverName(
@@ -136,25 +125,11 @@ function getLeftMatchWinState(
 export function UmpireController({
   umpire,
   rules,
-  matchStateChanged,
-  additionalStateRendering,
+  matchState,
   ...playerNames
 }: UmpireControllerProps) {
-  const [matchState, setMatchState] = useState<MatchState>(
-    umpire.getMatchState(),
-  );
   const revertedPointRef = useRef(false);
-  const setNewMatchState = (
-    newMatchState: MatchState,
-    revertedPoint = false,
-  ) => {
-    revertedPointRef.current = revertedPoint;
-    setMatchState(newMatchState);
 
-    if (matchStateChanged) {
-      matchStateChanged();
-    }
-  };
   const {
     team1Player1Name,
     team2Player1Name,
@@ -192,13 +167,11 @@ export function UmpireController({
           availableReceivers={serverReceiverChoice.firstGameDoublesReceivers}
           availableServers={serverReceiverChoice.servers}
           chosenCallback={(player, isServer) => {
-            let matchState: MatchState;
             if (isServer) {
-              matchState = umpire.setServer(player);
+              umpire.setServer(player);
             } else {
-              matchState = umpire.setFirstGameDoublesReceiver(player);
+              umpire.setFirstGameDoublesReceiver(player);
             }
-            setNewMatchState(matchState);
           }}
           team1Player1Name={team1Player1Name}
           team2Player1Name={team2Player1Name}
@@ -242,15 +215,19 @@ export function UmpireController({
             />
             <UmpireToolbar
               canUndoPoint={matchState.canUndoPoint}
-              undoPoint={() => setNewMatchState(umpire.undoPoint(), true)}
+              undoPoint={() => {
+                revertedPointRef.current = true;
+                umpire.undoPoint();
+              }}
               canScorePoint={canScorePoint}
               scorePoint={(isLeft) => {
                 const isTeam1 = matchState.team1Left === isLeft;
-                setNewMatchState(umpire.pointScored(isTeam1));
+                revertedPointRef.current = false;
+                umpire.pointScored(isTeam1);
               }}
               canResetServerReceiver={matchState.canResetServerReceiver}
               resetServerReceiver={() => {
-                setNewMatchState(umpire.resetServerReceiver());
+                umpire.resetServerReceiver();
               }}
               rules={{
                 bestOf: rules.bestOf,
@@ -263,14 +240,12 @@ export function UmpireController({
                 team2Identifier: getTeamVs(team2Player1Name, team2Player2Name),
               }}
               switchEnds={() => {
-                setNewMatchState(umpire.switchEnds());
+                umpire.switchEnds();
               }}
             />
           </Box>
         </Card>
       </div>
-      {additionalStateRendering &&
-        additionalStateRendering(matchState, umpire, rules, playerNames)}
     </div>
   );
 }

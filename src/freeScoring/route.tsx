@@ -283,10 +283,10 @@ const route: RouteObject = {
           };
           matchSaveStates[matchSaveStateIndex] = matchSaveState;
         });
-
-        return {
+        return null;
+        /* return {
           matchState: updatedUmpireSaveState,
-        };
+        }; */
       },
     },
     {
