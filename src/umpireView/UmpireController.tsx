@@ -164,7 +164,7 @@ export function UmpireController({
     );
   };
   return (
-    <>
+    <div style={{ userSelect: "none" }}>
       <EndsDialog
         isEnds={matchState.isEnds && !revertedPointRef.current}
         isDoubles={team1Player2Name !== undefined}
@@ -268,6 +268,6 @@ export function UmpireController({
         pointHistory={matchState.pointHistory}
         {...teamLabels}
       />
-    </>
+    </div>
   );
 }

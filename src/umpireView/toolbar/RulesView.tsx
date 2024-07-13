@@ -32,7 +32,7 @@ export function RulesView({
       </>
     );
   return (
-    <Box p={1} border={1} borderRadius={1}>
+    <Box p={1} border={1} borderRadius={1} sx={{ userSelect: "none" }}>
       <Typography>{`Best of ${bestOf}`}</Typography>
       <Typography>{`Up to ${upTo}`}</Typography>
       <Typography>{`${numServes} serves`}</Typography>

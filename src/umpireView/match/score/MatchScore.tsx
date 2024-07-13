@@ -24,7 +24,12 @@ export function MatchScore({
 }) {
   return (
     <Card variant="outlined">
-      <div style={{ display: "flex", justifyContent: "center" }}>
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "center",
+        }}
+      >
         <TeamPoints
           teamScore={leftScore}
           pointState={leftPointState}
