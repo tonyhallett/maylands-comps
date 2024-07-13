@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import {
   LoaderFunction,
   Outlet,
@@ -5,10 +6,9 @@ import {
   redirect,
 } from "react-router-dom";
 import FreeScoringMatches, {
-  FreeScoringMatchSaveState,
   FreeScoringMatchState,
 } from "./FreeScoringMatches";
-import { FreeScoringMatch } from "./FreeScoringMatch";
+import { FreeScoringMatch, FreeScoringMatchData } from "./FreeScoringMatch";
 import CreateFreeScoringPlayer from "./CreateFreeScoringPlayer";
 import Box from "@mui/material/Box/Box";
 import FreeScoringPlayers from "./FreeScoringPlayers";
@@ -38,6 +38,7 @@ import { BatPlusIcon } from "./CurrentColorBatIcon";
 import { PlayerNames } from "../umpireView/UmpireController";
 import { createStoredMatch } from "./createStoredMatch";
 import { BestOfMatchEdit, EditMatch } from "./EditMatch";
+import { SaveState } from "../umpire";
 
 interface FreeScoringTeamWithNames extends FreeScoringTeam {
   player1Name: string;
@@ -241,29 +242,48 @@ const route: RouteObject = {
       element: <FreeScoringMatch />,
       loader: ({ params }) => {
         const matchStates = getFreeScoringMatchStates();
-        const matchState: FreeScoringMatchState = matchStates.find(
+        const matchState = matchStates.find(
           (matchState) => matchState.id === params.matchId,
         );
-        return matchState;
+        if (matchState === undefined) {
+          return redirectTo404();
+        }
+        const {
+          id,
+          lastUsed,
+          umpire,
+          title,
+          team1Player1Id,
+          team1Player2Id,
+          team2Player1Id,
+          team2Player2Id,
+          ...other
+        } = matchState;
+        const matchData: FreeScoringMatchData = other;
+        return matchData;
       },
-      action: async ({ request }) => {
-        const updatedMatchState: FreeScoringMatchSaveState =
-          await request.json();
+      action: async ({ request, params }) => {
+        const id = params.matchId;
+        const updatedUmpireSaveState: SaveState = await request.json();
 
-        storeTransactMatchStates((matchStates) => {
-          const index = matchStates.findIndex(
-            (matchState) => matchState.id === updatedMatchState.id,
+        storeTransactMatchStates((matchSaveStates) => {
+          const matchSaveStateIndex = matchSaveStates.findIndex(
+            (matchState) => matchState.id === id,
           );
-          if (index === -1) {
-            throw new Error(
-              `Match state with id ${updatedMatchState.id} not found`,
-            );
+          if (matchSaveStateIndex === undefined) {
+            throw new Error(`Match state with id ${id} not found`);
           }
-          matchStates[index] = updatedMatchState;
+          let matchSaveState = matchSaveStates[matchSaveStateIndex];
+          matchSaveState = {
+            ...matchSaveState,
+            ...updatedUmpireSaveState,
+            lastUsed: new Date().getTime(),
+          };
+          matchSaveStates[matchSaveStateIndex] = matchSaveState;
         });
 
         return {
-          matchState: updatedMatchState,
+          matchState: updatedUmpireSaveState,
         };
       },
     },
