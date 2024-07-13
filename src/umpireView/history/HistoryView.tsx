@@ -16,13 +16,13 @@ export function HistoryView({
   team2StartScore,
   gameScores,
   team1Left,
-  gameWon,
+  matchWon,
   pointHistory,
   currentGameScore,
   gamePoint,
   upTo,
 }: {
-  gameWon: boolean;
+  matchWon: boolean;
   currentGameScore: GameScore;
   team1Left: boolean;
   gameScores: ReadonlyArray<GameScore>;
@@ -33,7 +33,7 @@ export function HistoryView({
   upTo: number;
 }) {
   gameScores = [...gameScores].reverse();
-  if (!gameWon) {
+  if (!matchWon) {
     gameScores = [currentGameScore, ...gameScores];
   }
   const minX = upTo - Math.min(team1StartScore, team2StartScore);

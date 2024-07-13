@@ -8,6 +8,7 @@ import {
   isGamePointTeam2,
   isMatchPointTeam1,
   isMatchPointTeam2,
+  isMatchWon,
   MatchWinState,
 } from "../umpire/getMatchWinState";
 import { Box, Card } from "@mui/material";
@@ -238,7 +239,7 @@ export function UmpireController({
         gamePoint={umpire.upTo - 1}
         team1StartScore={umpire.team1StartGameScore}
         team2StartScore={umpire.team2StartGameScore}
-        gameWon={gameWon(matchState.matchWinState)}
+        matchWon={isMatchWon(matchState.matchWinState)}
         currentGameScore={{
           team1Points: matchState.team1Score.points,
           team2Points: matchState.team2Score.points,
@@ -248,12 +249,5 @@ export function UmpireController({
         pointHistory={matchState.pointHistory}
       />
     </>
-  );
-}
-
-function gameWon(matchWinState: MatchWinState) {
-  return (
-    matchWinState === MatchWinState.Team1Won ||
-    matchWinState === MatchWinState.Team2Won
   );
 }

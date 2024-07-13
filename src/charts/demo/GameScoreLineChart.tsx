@@ -9,12 +9,7 @@ import {
   AxisTooltipScoreRenderer,
 } from "./CustomChartAxisTooltipContent";
 import { GamePointLine, GamePointLineProps } from "./GamePointLine";
-import {
-  isGamePointTeam1,
-  isGamePointTeam2,
-  isMatchPointTeam1,
-  isMatchPointTeam2,
-} from "../../umpire/pointStateHelpers";
+import { isGameOrMatchPoint } from "../../umpire/pointStateHelpers";
 
 export function hasNotScoredMinY(scores: GameScoreState[], amount: number) {
   if (scores.length === 0) return true;
@@ -118,11 +113,7 @@ export function GameScoreLineChart(props: GameScoreLineChartProps) {
     let gamePointValue = props.gamePoint;
     if (currentScore !== undefined) {
       const currentScoreState = currentScore.pointState;
-      const atGamePoint =
-        isGamePointTeam1(currentScoreState) ||
-        isGamePointTeam2(currentScoreState) ||
-        isMatchPointTeam1(currentScoreState) ||
-        isMatchPointTeam2(currentScoreState);
+      const atGamePoint = isGameOrMatchPoint(currentScoreState);
       if (atGamePoint) {
         gamePointValue = Math.max(
           currentScore.team1Points,

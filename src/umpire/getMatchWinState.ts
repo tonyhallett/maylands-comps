@@ -25,6 +25,9 @@ export const isGamePointTeam1 = (matchWinState: MatchWinState) =>
   Boolean(matchWinState & MatchWinState.GamePointTeam1);
 export const isGamePointTeam2 = (matchWinState: MatchWinState) =>
   Boolean(matchWinState & MatchWinState.GamePointTeam2);
+export const isMatchWon = (matchWinState: MatchWinState) =>
+  matchWinState === MatchWinState.Team1Won ||
+  matchWinState === MatchWinState.Team2Won;
 
 export interface MatchWinStatus {
   matchWinState: MatchWinState;
