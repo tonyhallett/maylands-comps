@@ -332,7 +332,7 @@ const route: RouteObject = {
             id: new Date().getTime(),
           });
         });
-        return redirect("/freescoring/players");
+        return redirect("/freescoring/teams");
       },
     },
     {
