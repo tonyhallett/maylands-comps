@@ -20,6 +20,7 @@ import {
   Player,
   PointHistory,
   PointState,
+  SinglesPlayer,
   Team1Player,
   Team2Player,
   TeamScore,
@@ -553,7 +554,7 @@ describe("umpiring", () => {
       umpire.setServer("Team1Player1");
       let matchState = umpire.pointScored(true);
       expect(matchState.pointHistory[0][0]).toEqual<PointHistory>({
-        team1: true,
+        team1WonPoint: true,
         date: dates[0],
         pointState: PointState.NotWon,
         server: "Team1Player1",
@@ -563,7 +564,7 @@ describe("umpiring", () => {
       });
       matchState = umpire.pointScored(false);
       expect(matchState.pointHistory[0][1]).toEqual<PointHistory>({
-        team1: false,
+        team1WonPoint: false,
         date: dates[1],
         pointState: PointState.NotWon,
         server: "Team1Player1",
@@ -579,7 +580,7 @@ describe("umpiring", () => {
 
       matchState = umpire.pointScored(true);
       expect(matchState.pointHistory[1][0]).toEqual<PointHistory>({
-        team1: true,
+        team1WonPoint: true,
         date: dates[12],
         pointState: PointState.NotWon,
         server: "Team2Player1",
@@ -2545,7 +2546,9 @@ describe("umpiring", () => {
         const matchState = umpire.undoPoint();
 
         expect(matchState.pointHistory).toHaveLength(1);
-        const points = matchState.pointHistory[0].map((point) => point.team1);
+        const points = matchState.pointHistory[0].map(
+          (point) => point.team1WonPoint,
+        );
         expect(points).toStrictEqual([true, true, true, false]);
       });
 
@@ -2622,6 +2625,26 @@ describe("umpiring", () => {
         "Team2Player2",
       ]);
     });
+
+    it.each([true, false])(
+      "should have server receiver when undo singles game winning point",
+      (team1ServesFirst) => {
+        const umpire = getNormalSinglesBestOf5Umpire();
+        const server: SinglesPlayer = team1ServesFirst
+          ? "Team1Player1"
+          : "Team2Player1";
+        const receiver: SinglesPlayer = !team1ServesFirst
+          ? "Team1Player1"
+          : "Team2Player1";
+        umpire.setServer(server);
+        scoreGames(umpire, true, 1);
+
+        const matchState = umpire.undoPoint();
+        expect(matchState.server).toBe<SinglesPlayer>(receiver);
+        expect(matchState.receiver).toBe<SinglesPlayer>(server);
+        expect(matchState.serverReceiverChoice.servers).toHaveLength(0);
+      },
+    );
 
     describe("remaining serves", () => {
       interface RemainingServesCalculationTest {

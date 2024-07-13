@@ -37,9 +37,13 @@ export interface MatchState extends TeamScores {
   pointHistory: ReadonlyArray<ReadonlyArray<PointHistory>>;
   isEnds: boolean;
 }
-
-export type Team1Player = "Team1Player1" | "Team1Player2";
-export type Team2Player = "Team2Player1" | "Team2Player2";
+type Team1Player1 = "Team1Player1";
+type Team1Player2 = "Team1Player2";
+type Team2Player1 = "Team2Player1";
+type Team2Player2 = "Team2Player2";
+export type Team1Player = Team1Player1 | Team1Player2;
+export type Team2Player = Team2Player1 | Team2Player2;
+export type SinglesPlayer = Team1Player1 | Team2Player1;
 export type Player = Team1Player | Team2Player;
 export interface TeamScore {
   games: number;
@@ -135,7 +139,9 @@ export class Umpire {
   private undoStartOfGameState() {
     this.undoGameWinScore();
     this.switchEnds();
-    this.initialServersDoublesReceiver.gameInitialServers.pop();
+    if (this.isDoubles) {
+      this.initialServersDoublesReceiver.gameInitialServers.pop();
+    }
   }
 
   private undoGameWinScore() {
