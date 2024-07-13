@@ -106,7 +106,7 @@ export function MatchView({
         >
           <TeamView
             player1={{
-              prefix: getPlayerServerReceiverPrefix({
+              prefix: getPlayerServerReceiverAffix({
                 ...serverReceiverInfo,
                 playerName: leftPlayer1Name,
               }),
@@ -116,7 +116,7 @@ export function MatchView({
               leftPlayer2Name
                 ? {
                     name: leftPlayer2Name,
-                    prefix: getPlayerServerReceiverPrefix({
+                    prefix: getPlayerServerReceiverAffix({
                       ...serverReceiverInfo,
                       playerName: leftPlayer2Name,
                     }),
@@ -134,7 +134,7 @@ export function MatchView({
         >
           <TeamView
             player1={{
-              prefix: getPlayerServerReceiverPrefix({
+              prefix: getPlayerServerReceiverAffix({
                 ...serverReceiverInfo,
                 playerName: rightPlayer1Name,
               }),
@@ -144,7 +144,7 @@ export function MatchView({
               rightPlayer2Name
                 ? {
                     name: rightPlayer2Name,
-                    prefix: getPlayerServerReceiverPrefix({
+                    prefix: getPlayerServerReceiverAffix({
                       ...serverReceiverInfo,
                       playerName: rightPlayer2Name,
                     }),
@@ -158,7 +158,7 @@ export function MatchView({
   );
 }
 
-function getPlayerServerReceiverPrefix({
+function getPlayerServerReceiverAffix({
   playerName,
   receiverName,
   serverName,
@@ -166,11 +166,11 @@ function getPlayerServerReceiverPrefix({
 }: {
   playerName: string;
 } & ServerReceiverInfo) {
-  let suffix = "";
+  let affix = "";
   if (playerName === serverName) {
-    suffix = `(${remainingServes})`;
+    affix = `(${remainingServes})`;
   } else if (playerName === receiverName) {
-    suffix = `(R)`;
+    affix = `(R)`;
   }
-  return suffix;
+  return affix;
 }
