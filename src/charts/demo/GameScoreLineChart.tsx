@@ -67,7 +67,7 @@ export function GameScoreLineChart(props: GameScoreLineChartProps) {
     { ...props.startScore, pointState: PointState.NotWon, team1WonPoint: true },
     ...props.scores,
   ];
-  const chartScores = getAtLeastMinScores(scoresWithStartScore, props.minX);
+
   const chartGamePointLineProps: ChartGamePointLineProps =
     props.gamePointLineProps ?? {
       beforeGamePointProps: { stroke: "white" },
@@ -80,19 +80,19 @@ export function GameScoreLineChart(props: GameScoreLineChartProps) {
     team1: boolean,
     showMarkParams: ShowMarkParams,
   ): boolean {
-    const score = chartScores[showMarkParams.index];
+    const score = scoresWithStartScore[showMarkParams.index];
     return props.mark.showMark(team1, score, showMarkParams.index === 0);
   }
 
   const smarterMarkElementProps: SmarterMarkElementSlotProps = {
     getColor(seriesId, dataIndex) {
       const isTeam1 = seriesId === team1SeriesId;
-      const chartScore = chartScores[dataIndex];
+      const chartScore = scoresWithStartScore[dataIndex];
       return props.mark.getColor(isTeam1, chartScore, dataIndex === 0);
     },
     getShape(seriesId, dataIndex) {
       const isTeam1 = seriesId === team1SeriesId;
-      const chartScore = chartScores[dataIndex];
+      const chartScore = scoresWithStartScore[dataIndex];
       return props.mark.getShape(isTeam1, chartScore, dataIndex === 0);
     },
   };
@@ -101,7 +101,7 @@ export function GameScoreLineChart(props: GameScoreLineChartProps) {
     {
       getData(dataIndex) {
         return {
-          score: chartScores[dataIndex],
+          score: scoresWithStartScore[dataIndex], //chartScores[dataIndex],
         };
       },
       renderer(rendererProps, score) {
@@ -158,6 +158,13 @@ export function GameScoreLineChart(props: GameScoreLineChartProps) {
     slotProps.axisContent = customChartAxisTooltipContentSlotProps;
     toolTipProps.trigger = "axis";
   }
+  const xAxisLength = Math.max(scoresWithStartScore.length, props.minX + 1);
+  const team1SeriesData = scoresWithStartScore.map(
+    (score) => score.team1Points,
+  );
+  const team2SeriesData = scoresWithStartScore.map(
+    (score) => score.team2Points,
+  );
   return (
     <SmarterLineChart
       grid={props.grid}
@@ -170,7 +177,7 @@ export function GameScoreLineChart(props: GameScoreLineChartProps) {
         {
           id: "x-axis",
           scaleType: "point",
-          data: fillArrayWithIndices(chartScores.length),
+          data: fillArrayWithIndices(xAxisLength),
           label: props.xAxisLabel,
           reverse: props.reversed,
         },
@@ -178,9 +185,7 @@ export function GameScoreLineChart(props: GameScoreLineChartProps) {
       series={[
         {
           id: team1SeriesId,
-          data: chartScores.map((score) =>
-            score === undefined ? undefined : score.team1Points,
-          ),
+          data: team1SeriesData,
           curve: "linear",
           showMark(showMarkParams) {
             return showMarkIfScored(true, showMarkParams);
@@ -190,12 +195,11 @@ export function GameScoreLineChart(props: GameScoreLineChartProps) {
         },
         {
           id: team2SeriesId,
-          data: chartScores.map((score) =>
-            score === undefined ? undefined : score.team2Points,
-          ),
+          data: team2SeriesData,
           label: props.team2Label,
           curve: "linear",
           showMark(showMarkParams) {
+            true;
             return showMarkIfScored(false, showMarkParams);
           },
         },

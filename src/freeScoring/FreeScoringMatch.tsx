@@ -7,9 +7,12 @@ import {
   FreeScoringMatchState,
 } from "./FreeScoringMatches";
 import { usePostJson } from "./hooks/usePostJson";
-
+interface UmpireControllerRef {
+  umpireController: JSX.Element;
+  id: string;
+}
 export function FreeScoringMatch() {
-  const umpireRef = useRef<Umpire>();
+  const umpireControllerRef = useRef<UmpireControllerRef | undefined>();
   const matchState = useLoaderDataT<FreeScoringMatchState>();
   const postJson = usePostJson();
   const {
@@ -30,34 +33,40 @@ export function FreeScoringMatch() {
     title,
     ...saveState
   } = matchState;
-  // will want to meno
-  if (!umpireRef.current) {
-    umpireRef.current = new Umpire(saveState);
-  }
 
-  return (
-    <UmpireController
-      matchStateChanged={() => {
-        const saveState = umpireRef.current.getSaveState();
-        const updatedMatchState: FreeScoringMatchSaveState = {
-          id,
-          team1Player1Id,
-          team1Player2Id,
-          team2Player1Id,
-          team2Player2Id,
-          umpire,
-          title,
-          ...saveState,
-          lastUsed: new Date().getTime(),
-        };
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        postJson(updatedMatchState as any);
-      }}
-      umpire={umpireRef.current}
-      team1Player1Name={team1Player1Name}
-      team2Player1Name={team2Player1Name}
-      team1Player2Name={team1Player2Name}
-      team2Player2Name={team2Player2Name}
-    />
-  );
+  if (
+    umpireControllerRef.current === undefined ||
+    umpireControllerRef.current.id !== id
+  ) {
+    const theUmpire = new Umpire(saveState);
+    umpireControllerRef.current = {
+      id,
+      umpireController: (
+        <UmpireController
+          matchStateChanged={() => {
+            const saveState = theUmpire.getSaveState();
+            const updatedMatchState: FreeScoringMatchSaveState = {
+              id,
+              team1Player1Id,
+              team1Player2Id,
+              team2Player1Id,
+              team2Player2Id,
+              umpire,
+              title,
+              ...saveState,
+              lastUsed: new Date().getTime(),
+            };
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            postJson(updatedMatchState as any);
+          }}
+          umpire={theUmpire}
+          team1Player1Name={team1Player1Name}
+          team2Player1Name={team2Player1Name}
+          team1Player2Name={team1Player2Name}
+          team2Player2Name={team2Player2Name}
+        />
+      ),
+    };
+  }
+  return umpireControllerRef.current.umpireController;
 }

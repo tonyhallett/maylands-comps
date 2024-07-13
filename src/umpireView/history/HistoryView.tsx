@@ -21,6 +21,8 @@ export function HistoryView({
   currentGameScore,
   gamePoint,
   upTo,
+  team1Label,
+  team2Label,
 }: {
   matchWon: boolean;
   currentGameScore: GameScore;
@@ -31,6 +33,8 @@ export function HistoryView({
   team2StartScore: number;
   gamePoint: number;
   upTo: number;
+  team1Label: string;
+  team2Label: string;
 }) {
   gameScores = [...gameScores].reverse();
   if (!matchWon) {
@@ -41,8 +45,8 @@ export function HistoryView({
   return gameScores.map((gameScore, i) => {
     const pointHistoryForGame = pointHistory[numGameScores - i - 1];
     return (
-      <>
-        <div key={i}>
+      <div key={i}>
+        <div>
           {`${team1Left ? gameScore.team1Points : gameScore.team2Points} - ${!team1Left ? gameScore.team1Points : gameScore.team2Points}`}
         </div>
         <Box sx={{ width: "100%", height: 400 }}>
@@ -53,9 +57,9 @@ export function HistoryView({
             gamePoint={gamePoint}
             reversed={false}
             xAxisLabel="Points scored"
-            yAxisLabel="Game points"
-            team1Label="Team 1" //todo
-            team2Label="Team 2" //todo
+            yAxisLabel="Team points"
+            team1Label={team1Label}
+            team2Label={team2Label}
             startScore={{
               team1Points: team1StartScore,
               team2Points: team2StartScore,
@@ -86,7 +90,7 @@ export function HistoryView({
             axisTooltipRenderer={demoScoreTooltipRenderer}
           />
         </Box>
-      </>
+      </div>
     );
   });
 }

@@ -105,6 +105,19 @@ function getLeftMatchWinState(
   return leftRightMatchWinState;
 }
 
+function getTeamLabels(playerNames: PlayerNames) {
+  return {
+    team1Label: getTeamVs(
+      playerNames.team1Player1Name,
+      playerNames.team1Player2Name,
+    ),
+    team2Label: getTeamVs(
+      playerNames.team2Player1Name,
+      playerNames.team2Player2Name,
+    ),
+  };
+}
+
 export function UmpireController({
   umpire,
   team1Player1Name,
@@ -128,6 +141,12 @@ export function UmpireController({
       matchStateChanged();
     }
   };
+  const teamLabels = getTeamLabels({
+    team1Player1Name,
+    team1Player2Name,
+    team2Player1Name,
+    team2Player2Name,
+  });
   const serverReceiverChoice = matchState.serverReceiverChoice;
 
   const canScorePoint =
@@ -247,6 +266,7 @@ export function UmpireController({
         team1Left={matchState.team1Left}
         gameScores={matchState.gameScores}
         pointHistory={matchState.pointHistory}
+        {...teamLabels}
       />
     </>
   );
