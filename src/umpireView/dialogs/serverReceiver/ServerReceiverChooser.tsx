@@ -1,5 +1,5 @@
 import { Player } from "../../../umpire";
-import { PlayerNames } from "../../UmpireController";
+import { PlayerNames } from "../..";
 import { mapNames } from "./mapNames";
 import { PlayerChooserDialog } from "./PlayerChooserDialog";
 

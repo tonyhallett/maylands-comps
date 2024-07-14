@@ -2,7 +2,7 @@ import { GameScore } from "../../umpire";
 import {
   ParallelXAxisLine,
   ParallelXAxisLineProps,
-} from "../ParallelXAxisLine";
+} from "../../charts/ParallelXAxisLine";
 
 type ParallelXAxisLinePropsNoY = Omit<ParallelXAxisLineProps, "y">;
 export interface GamePointLineProps extends GameScore {

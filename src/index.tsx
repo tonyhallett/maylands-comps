@@ -8,7 +8,6 @@ import { Box, CssBaseline, Link, Typography } from "@mui/material";
 import MGLogo from "./MaylandsTheming/MGSVGLogo";
 import DemoSetAndPointTopAlignment from "./fontDemos/DemoSetAndPointTopAlignment";
 import MaylandsThemeProvider from "./MaylandsTheming/MaylandsThemeProvider";
-import DemoScoringCharts from "./charts/demo/DemoScoringCharts";
 import freeScoringRoute from "./freeScoring/route";
 
 const router = createBrowserRouter([
@@ -22,19 +21,12 @@ const router = createBrowserRouter([
           Free scoring
         </Link>
         <Link href="playerviewdemo">Player view demo</Link>
-        <Link style={{ display: "block" }} href="demoscoringcharts">
-          Demo scoring charts
-        </Link>
       </Box>
     ),
   },
   {
     path: "playerviewdemo",
     element: <DemoSetAndPointTopAlignment />,
-  },
-  {
-    path: "demoscoringcharts",
-    element: <DemoScoringCharts />,
   },
   freeScoringRoute,
 ]);

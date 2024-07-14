@@ -1,15 +1,15 @@
 import { mangoFusionPalette } from "@mui/x-charts/colorPalettes";
-import { GameScoreLineChart } from "../../charts/demo/GameScoreLineChart";
-import { GameScore, PointHistory } from "../../umpire";
+import { GameScoreLineChart } from "./GameScoreLineChart";
+import { GameScore, PointHistory } from "../umpire";
 import {
   isGameOrMatchWon,
   isGamePoint,
   isMatchPoint,
-} from "../../umpire/pointStateHelpers";
-import { demoScoreTooltipRenderer } from "../../charts/demo/demoScoreTooltipRenderer";
+} from "../umpire/pointStateHelpers";
+import { scoreTooltipRenderer } from "./GameScoreLineChart/ScoreTooltipRenderer/scoreTooltipRenderer";
 import Box from "@mui/material/Box/Box";
 
-export function HistoryView({
+export function StatsView({
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   team1StartScore,
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -87,7 +87,7 @@ export function HistoryView({
               },
             }}
             scores={[...pointHistoryForGame]}
-            axisTooltipRenderer={demoScoreTooltipRenderer}
+            axisTooltipRenderer={scoreTooltipRenderer}
           />
         </Box>
       </div>

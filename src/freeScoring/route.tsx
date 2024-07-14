@@ -35,7 +35,7 @@ import { AppBar, Stack, Toolbar, useTheme } from "@mui/material";
 import { BatIcon } from "../commonIcons/BatIcon";
 //import MGLogo from "../MaylandsTheming/MGLogo";
 import { BatPlusIcon } from "./CurrentColorBatIcon";
-import { PlayerNames } from "../umpireView/UmpireController";
+import { PlayerNames } from "../umpireView";
 import { createStoredMatch } from "./createStoredMatch";
 import { BestOfMatchEdit, EditMatch } from "./EditMatch";
 import { SaveState } from "../umpire";

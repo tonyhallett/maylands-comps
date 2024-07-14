@@ -1,8 +1,11 @@
 import { MarkElementProps, ShowMarkParams } from "@mui/x-charts";
 import { fillArrayWithIndices } from "../../helpers/fillArray";
 import { GameScore, GameScoreState, PointState } from "../../umpire";
-import { SmarterLineChartProps, SmarterLineChart } from "../SmarterLineChart";
-import { SmarterMarkElementSlotProps } from "../SmarterMarkElement";
+import {
+  SmarterLineChartProps,
+  SmarterLineChart,
+} from "../../charts/SmarterLineChart";
+import { SmarterMarkElementSlotProps } from "../../charts/SmarterMarkElement";
 import {
   CustomChartAxisTooltipContentSlotProps,
   CustomChartAxisTooltipContent,

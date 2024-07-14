@@ -14,7 +14,7 @@ import { useLoaderDataT } from "./hooks/useLoaderDataT";
 import { FreeScoringMatchStatesLoaderData } from "./route";
 import { useDeleteJson } from "./hooks/usePostJson";
 import DeleteIcon from "@mui/icons-material/Delete";
-import { PlayerNames } from "../umpireView/UmpireController";
+import { PlayerNames } from "../umpireView";
 import { getTeamVs } from "../umpireView/helpers";
 import EditIcon from "@mui/icons-material/Edit";
 

@@ -1,5 +1,5 @@
 import { Player } from "../../../umpire";
-import { PlayerNames } from "../../UmpireController";
+import { PlayerNames } from "../..";
 import { PlayerAndName } from "./PlayerAndName";
 
 export function mapNames(
