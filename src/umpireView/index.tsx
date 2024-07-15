@@ -21,7 +21,9 @@ export interface PlayerNames {
   team2Player2Name?: string;
 }
 
-interface ControllableUmpire {
+export type DoublesPlayerNames = Required<PlayerNames>;
+
+export interface ControllableUmpire {
   setFirstGameDoublesReceiver(player: Player): void;
   switchEnds(): void;
   resetServerReceiver(): void;
@@ -122,7 +124,7 @@ function getLeftMatchWinState(
   return leftRightMatchWinState;
 }
 
-export function UmpireController({
+export function UmpireView({
   umpire,
   rules,
   matchState,
@@ -181,6 +183,7 @@ export function UmpireController({
         <Card variant="outlined">
           <Box p={1}>
             <MatchView
+              serverReceiverTop={true}
               leftPlayer1Name={
                 matchState.team1Left ? team1Player1Name : team2Player1Name
               }

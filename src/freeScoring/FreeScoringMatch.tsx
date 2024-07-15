@@ -1,5 +1,5 @@
 import { MatchState, SaveState, Umpire } from "../umpire";
-import { MatchInfo, PlayerNames, UmpireController } from "../umpireView";
+import { MatchInfo, PlayerNames, UmpireView } from "../umpireView";
 import { usePostJson } from "./hooks/usePostJson";
 import { StatsView } from "../statsViews/StatsView";
 import { isMatchWon } from "../umpire/getMatchWinState";
@@ -59,7 +59,7 @@ export function FreeScoringMatch() {
 
       return (
         <>
-          <UmpireController
+          <UmpireView
             matchState={matchState}
             rules={rules}
             umpire={{

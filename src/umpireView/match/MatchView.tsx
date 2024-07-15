@@ -31,6 +31,7 @@ export type MatchViewProps = {
   serverName: string;
   receiverName: string;
   remainingServes: number;
+  serverReceiverTop: boolean;
 } & ServerReceiverInfo &
   TeamPointsFontSizes;
 
@@ -65,6 +66,17 @@ function getPointState(
   return PointState.Normal;
 }
 
+const teamPlayer2IsServerReceiver = (
+  teamPlayer2Name: string | undefined,
+  serverName: string,
+  receiverName: string,
+): boolean => {
+  if (teamPlayer2Name === undefined) {
+    return false;
+  }
+  return teamPlayer2Name === serverName || teamPlayer2Name === receiverName;
+};
+
 // eslint-disable-next-line no-empty-pattern
 export function MatchView({
   leftPlayer1Name,
@@ -79,6 +91,7 @@ export function MatchView({
   matchWinState,
   gamePointFontSize,
   setPointFontSize,
+  serverReceiverTop,
 }: MatchViewProps) {
   const leftPointState = getPointState(matchWinState, true);
   const rightPointState = getPointState(matchWinState, false);
@@ -87,6 +100,7 @@ export function MatchView({
     serverName,
     receiverName,
   };
+
   return (
     <>
       <MatchScore
@@ -105,6 +119,14 @@ export function MatchView({
           }}
         >
           <TeamView
+            player1Bottom={
+              serverReceiverTop &&
+              teamPlayer2IsServerReceiver(
+                leftPlayer2Name,
+                serverName,
+                receiverName,
+              )
+            }
             player1={{
               prefix: getPlayerServerReceiverAffix({
                 ...serverReceiverInfo,
@@ -133,6 +155,14 @@ export function MatchView({
           }}
         >
           <TeamView
+            player1Bottom={
+              serverReceiverTop &&
+              teamPlayer2IsServerReceiver(
+                rightPlayer2Name,
+                serverName,
+                receiverName,
+              )
+            }
             player1={{
               prefix: getPlayerServerReceiverAffix({
                 ...serverReceiverInfo,

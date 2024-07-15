@@ -80,6 +80,7 @@ export function UmpireToolbar({
       <Card variant="outlined">
         <Box sx={{ display: "flex", justifyContent: "center" }}>
           <IconButton
+            aria-label="Reset server and receiver"
             sx={{ border: 1, borderRadius: 1, m: 1 }}
             disabled={!canResetServerReceiver}
             onClick={() => resetServerReceiver()}
