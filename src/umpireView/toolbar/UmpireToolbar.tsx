@@ -13,13 +13,17 @@ import { useState } from "react";
 import { CarbonBatButton } from "../iconButtons/CarbonBatButton";
 import EndsIcon from "@mui/icons-material/TransferWithinAStation";
 import { RulesView, RulesViewProps } from "./RulesView";
-export interface UmpireToolbarProps {
+
+export interface ServerReceiverButtonProps {
+  serverReceiverButtonEnabled: boolean;
+  serverReceiverButtonClicked: () => void;
+  serverReceiverButtonAriaLabel: string;
+}
+export interface UmpireToolbarProps extends ServerReceiverButtonProps {
   canScorePoint: boolean;
   scorePoint: (isLeft: boolean) => void;
   canUndoPoint: boolean;
   undoPoint: () => void;
-  canResetServerReceiver: boolean;
-  resetServerReceiver: () => void;
   rules: RulesViewProps;
   switchEnds: () => void;
 }
@@ -29,8 +33,9 @@ export function UmpireToolbar({
   undoPoint,
   canScorePoint,
   scorePoint,
-  canResetServerReceiver,
-  resetServerReceiver,
+  serverReceiverButtonEnabled,
+  serverReceiverButtonClicked,
+  serverReceiverButtonAriaLabel,
   rules,
   switchEnds,
 }: UmpireToolbarProps) {
@@ -80,10 +85,10 @@ export function UmpireToolbar({
       <Card variant="outlined">
         <Box sx={{ display: "flex", justifyContent: "center" }}>
           <IconButton
-            aria-label="Reset server and receiver"
+            aria-label={serverReceiverButtonAriaLabel}
             sx={{ border: 1, borderRadius: 1, m: 1 }}
-            disabled={!canResetServerReceiver}
-            onClick={() => resetServerReceiver()}
+            disabled={!serverReceiverButtonEnabled}
+            onClick={() => serverReceiverButtonClicked()}
           >
             <ServerReceiverIcon />
           </IconButton>
@@ -103,12 +108,14 @@ export function UmpireToolbar({
         <Divider />
         <div style={{ display: "flex", justifyContent: "space-between" }}>
           <CarbonBatButton
+            ariaLabel="Score left"
             enabled={canScorePoint}
             clicked={() => scorePoint(true)}
             rubberFillColor={scoreRubberFillColor}
           />
 
           <CarbonBatButton
+            ariaLabel="Undo point"
             enabled={canUndoPoint}
             clicked={() => undoPoint()}
             rubberFillColor={getRubberFillColor(
@@ -119,6 +126,7 @@ export function UmpireToolbar({
             showBall={false}
           />
           <CarbonBatButton
+            ariaLabel="Score right"
             enabled={canScorePoint}
             clicked={() => scorePoint(false)}
             rubberFillColor={scoreRubberFillColor}

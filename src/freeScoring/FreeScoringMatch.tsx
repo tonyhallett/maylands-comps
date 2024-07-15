@@ -8,6 +8,7 @@ import { useRef } from "react";
 import { useLoaderDataOnce } from "./hooks/useLoaderDataOnce";
 
 export interface FreeScoringMatchData extends SaveState, PlayerNames {}
+
 export function FreeScoringMatch() {
   const postJson = usePostJson();
   const umpireRef = useRef<Umpire | undefined>(undefined);
@@ -60,6 +61,7 @@ export function FreeScoringMatch() {
       return (
         <>
           <UmpireView
+            autoShowServerReceiverChooser={false}
             matchState={matchState}
             rules={rules}
             umpire={{

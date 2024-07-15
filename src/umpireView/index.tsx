@@ -1,17 +1,21 @@
-import { useRef } from "react";
+import { useRef, useState } from "react";
 import { ServerReceiverChooser } from "./dialogs/serverReceiver/ServerReceiverChooser";
 import { LeftRightMatchWinState, MatchView } from "./match/MatchView";
-import { MatchState, Player } from "../umpire";
+import { CompetitionRules, MatchState, Player } from "../umpire";
 import {
   isGamePointTeam1,
   isGamePointTeam2,
   isMatchPointTeam1,
   isMatchPointTeam2,
+  isMatchWon,
   MatchWinState,
 } from "../umpire/getMatchWinState";
 import { Box, Card } from "@mui/material";
 import { EndsDialog } from "./dialogs/EndsDialog";
-import { UmpireToolbar } from "./toolbar/UmpireToolbar";
+import {
+  ServerReceiverButtonProps,
+  UmpireToolbar,
+} from "./toolbar/UmpireToolbar";
 import { getTeamInitials } from "./helpers";
 
 export interface PlayerNames {
@@ -32,18 +36,16 @@ export interface ControllableUmpire {
   setServer(player: Player): void;
 }
 
-export interface MatchInfo {
+export interface MatchInfo extends CompetitionRules {
   bestOf: number;
-  clearBy2: boolean;
-  upTo: number;
-  numServes: number;
   team1EndsAt: number;
   team2EndsAt: number;
 }
-export interface UmpireControllerProps extends PlayerNames {
+export interface UmpireViewProps extends PlayerNames {
   umpire: ControllableUmpire;
   matchState: MatchState;
   rules: MatchInfo;
+  autoShowServerReceiverChooser: boolean;
 }
 
 function getServerReceiverName(
@@ -66,13 +68,6 @@ function getServerReceiverName(
     default:
       return team2Player2Name;
   }
-}
-
-function matchWon(matchWinState: MatchWinState): boolean {
-  return (
-    matchWinState === MatchWinState.Team1Won ||
-    matchWinState === MatchWinState.Team2Won
-  );
 }
 
 function getLeftMatchWinState(
@@ -128,9 +123,12 @@ export function UmpireView({
   umpire,
   rules,
   matchState,
+  autoShowServerReceiverChooser,
   ...playerNames
-}: UmpireControllerProps) {
+}: UmpireViewProps) {
   const revertedPointRef = useRef(false);
+  const [showManualServerReceiverDialog, setShowManualServerReceiverDialog] =
+    useState(false);
 
   const {
     team1Player1Name,
@@ -143,7 +141,7 @@ export function UmpireView({
   const canScorePoint =
     serverReceiverChoice.servers.length === 0 &&
     serverReceiverChoice.firstGameDoublesReceivers.length === 0 &&
-    !matchWon(matchState.matchWinState);
+    !isMatchWon(matchState.matchWinState);
 
   const getNameOfServerReceiver = (isServer: boolean) => {
     return getServerReceiverName(
@@ -154,6 +152,37 @@ export function UmpireView({
       team2Player2Name,
     );
   };
+
+  let serverReceiverButtonProps: ServerReceiverButtonProps;
+  let shouldShowServerReceiverChooser = true;
+  if (autoShowServerReceiverChooser) {
+    serverReceiverButtonProps = {
+      serverReceiverButtonEnabled: matchState.canResetServerReceiver,
+      serverReceiverButtonClicked: () => {
+        umpire.resetServerReceiver();
+      },
+      serverReceiverButtonAriaLabel: "Reset server and receiver",
+    };
+  } else {
+    const hasFirstGameDoublesReceivers =
+      serverReceiverChoice.firstGameDoublesReceivers.length > 0;
+    const hasServerReceiverChoice =
+      serverReceiverChoice.servers.length > 0 || hasFirstGameDoublesReceivers;
+    serverReceiverButtonProps = {
+      serverReceiverButtonAriaLabel: "Set server and receiver",
+      serverReceiverButtonEnabled:
+        matchState.canResetServerReceiver || hasServerReceiverChoice,
+      serverReceiverButtonClicked: () => {
+        if (matchState.canResetServerReceiver) {
+          umpire.resetServerReceiver();
+        }
+        setShowManualServerReceiverDialog(true);
+      },
+    };
+    shouldShowServerReceiverChooser =
+      hasFirstGameDoublesReceivers || showManualServerReceiverDialog;
+  }
+
   return (
     <div>
       <div style={{ userSelect: "none" }}>
@@ -161,25 +190,30 @@ export function UmpireView({
           isEnds={matchState.isEnds && !revertedPointRef.current}
           isDoubles={team1Player2Name !== undefined}
         />
-        <ServerReceiverChooser
-          showTosser={
-            serverReceiverChoice.servers.length > 0 &&
-            matchState.gameScores.length === 0
-          }
-          availableReceivers={serverReceiverChoice.firstGameDoublesReceivers}
-          availableServers={serverReceiverChoice.servers}
-          chosenCallback={(player, isServer) => {
-            if (isServer) {
-              umpire.setServer(player);
-            } else {
-              umpire.setFirstGameDoublesReceiver(player);
+        {shouldShowServerReceiverChooser && (
+          <ServerReceiverChooser
+            showTosser={
+              serverReceiverChoice.servers.length > 0 &&
+              matchState.gameScores.length === 0
             }
-          }}
-          team1Player1Name={team1Player1Name}
-          team2Player1Name={team2Player1Name}
-          team1Player2Name={team1Player2Name}
-          team2Player2Name={team2Player2Name}
-        />
+            availableReceivers={serverReceiverChoice.firstGameDoublesReceivers}
+            availableServers={serverReceiverChoice.servers}
+            chosenCallback={(player, isServer) => {
+              if (showManualServerReceiverDialog) {
+                setShowManualServerReceiverDialog(false);
+              }
+              if (isServer) {
+                umpire.setServer(player);
+              } else {
+                umpire.setFirstGameDoublesReceiver(player);
+              }
+            }}
+            team1Player1Name={team1Player1Name}
+            team2Player1Name={team2Player1Name}
+            team1Player2Name={team1Player2Name}
+            team2Player2Name={team2Player2Name}
+          />
+        )}
         <Card variant="outlined">
           <Box p={1}>
             <MatchView
@@ -228,10 +262,7 @@ export function UmpireView({
                 revertedPointRef.current = false;
                 umpire.pointScored(isTeam1);
               }}
-              canResetServerReceiver={matchState.canResetServerReceiver}
-              resetServerReceiver={() => {
-                umpire.resetServerReceiver();
-              }}
+              {...serverReceiverButtonProps}
               rules={{
                 bestOf: rules.bestOf,
                 clearBy2: rules.clearBy2,

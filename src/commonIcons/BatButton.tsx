@@ -4,12 +4,19 @@ import { BatIcon, BatIconProps } from "./BatIcon";
 export interface BatButtonProps extends BatIconProps {
   enabled: boolean;
   clicked: () => void;
+  ariaLabel?: string;
 }
 
-export function BatButton({ enabled, clicked, ...svgProps }: BatButtonProps) {
+export function BatButton({
+  enabled,
+  clicked,
+  ariaLabel,
+  ...svgProps
+}: BatButtonProps) {
   return (
     <Box m={1}>
       <IconButton
+        aria-label={ariaLabel}
         sx={{ border: 1, borderRadius: 1 }}
         disabled={!enabled}
         onClick={clicked}
