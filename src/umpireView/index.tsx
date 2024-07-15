@@ -12,7 +12,7 @@ import {
 import { Box, Card } from "@mui/material";
 import { EndsDialog } from "./dialogs/EndsDialog";
 import { UmpireToolbar } from "./toolbar/UmpireToolbar";
-import { getTeamVs } from "./helpers";
+import { getTeamInitials } from "./helpers";
 
 export interface PlayerNames {
   team1Player1Name: string;
@@ -239,8 +239,14 @@ export function UmpireView({
                 numServes: rules.upTo,
                 team1EndsAt: rules.team1EndsAt,
                 team2EndsAt: rules.team2EndsAt,
-                team1Identifier: getTeamVs(team1Player1Name, team1Player2Name),
-                team2Identifier: getTeamVs(team2Player1Name, team2Player2Name),
+                team1Identifier: getTeamInitials(
+                  team1Player1Name,
+                  team1Player2Name,
+                ),
+                team2Identifier: getTeamInitials(
+                  team2Player1Name,
+                  team2Player2Name,
+                ),
               }}
               switchEnds={() => {
                 umpire.switchEnds();

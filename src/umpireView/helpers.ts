@@ -5,7 +5,7 @@ export const getInitials = (name: string) => {
     .join("");
 };
 
-export const getTeamVs = (player1Name: string, player2Name: string) => {
+export const getTeamInitials = (player1Name: string, player2Name: string) => {
   const player1Initials = getInitials(player1Name);
   if (player2Name) {
     const player2Initials = getInitials(player2Name);

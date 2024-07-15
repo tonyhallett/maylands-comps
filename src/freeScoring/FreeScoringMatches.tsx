@@ -15,7 +15,7 @@ import { FreeScoringMatchStatesLoaderData } from "./route";
 import { useDeleteJson } from "./hooks/usePostJson";
 import DeleteIcon from "@mui/icons-material/Delete";
 import { PlayerNames } from "../umpireView";
-import { getTeamVs } from "../umpireView/helpers";
+import { getTeamInitials } from "../umpireView/helpers";
 import EditIcon from "@mui/icons-material/Edit";
 
 export interface PlayerIds {
@@ -114,7 +114,7 @@ export default function FreeScoringMatches() {
       /* team2StartScore: matchState.team2StartGameScore, */
       team2Player1Name: matchState.team2Player1Name,
       team2Player2Name: matchState.team2Player2Name,
-      players: `${getTeamVs(matchState.team1Player1Name, matchState.team1Player2Name)} vs ${getTeamVs(matchState.team2Player1Name, matchState.team2Player2Name)}`,
+      players: `${getTeamInitials(matchState.team1Player1Name, matchState.team1Player2Name)} vs ${getTeamInitials(matchState.team2Player1Name, matchState.team2Player2Name)}`,
     };
   });
   return (

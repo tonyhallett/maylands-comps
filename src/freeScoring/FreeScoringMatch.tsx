@@ -3,7 +3,7 @@ import { MatchInfo, PlayerNames, UmpireView } from "../umpireView";
 import { usePostJson } from "./hooks/usePostJson";
 import { StatsView } from "../statsViews/StatsView";
 import { isMatchWon } from "../umpire/getMatchWinState";
-import { getTeamVs } from "../umpireView/helpers";
+import { getTeamInitials } from "../umpireView/helpers";
 import { useRef } from "react";
 import { useLoaderDataOnce } from "./hooks/useLoaderDataOnce";
 
@@ -109,11 +109,11 @@ export function FreeScoringMatch() {
 
 function getTeamLabels(playerNames: PlayerNames) {
   return {
-    team1Label: getTeamVs(
+    team1Label: getTeamInitials(
       playerNames.team1Player1Name,
       playerNames.team1Player2Name,
     ),
-    team2Label: getTeamVs(
+    team2Label: getTeamInitials(
       playerNames.team2Player1Name,
       playerNames.team2Player2Name,
     ),
