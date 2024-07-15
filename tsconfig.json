@@ -3,7 +3,9 @@
     "jsx": "react-jsx",
     "target": "ESNext",
     "module": "ESNext",
-    "moduleResolution": "Bundler"
+    "moduleResolution": "Bundler",
+    // temporary solution - https://github.com/testing-library/jest-dom/issues/605
+    "skipLibCheck": true
   },
   "include": ["src/**/*", "__tests__/**/*"]
 }
