@@ -19,7 +19,7 @@ export function PlayerChooserDialog({
   return (
     <Dialog open>
       <DialogTitle>
-        <Box sx={{ display: "inline" }} mr={1}>
+        <Box sx={{ display: "inline", userSelect: "none" }} mr={1}>
           {title}
         </Box>
         <ServerReceiverIcon />
