@@ -2,13 +2,13 @@ import { useTheme } from "@mui/material";
 import { PointState } from "./MatchScore";
 import { getContrastingPaletteColor } from "../../../themeHelpers/getContrastingPaletteColor";
 
-export function MatchGamePoint({
-  point,
+export function Points({
+  points,
   pointState,
   fontSize,
   isRight,
 }: {
-  point: number;
+  points: number;
   pointState: PointState;
   fontSize: number;
   isRight: boolean;
@@ -24,19 +24,20 @@ export function MatchGamePoint({
       )
     : undefined;
   let rightNegative = "";
-  if (isRight && point < 0) {
-    point = Math.abs(point);
+  if (isRight && points < 0) {
+    points = Math.abs(points);
     rightNegative = "-";
   }
   return (
     <span
+      aria-label="Points"
       style={{
         fontSize,
         fontStyle: pointState === PointState.Won ? "italic" : "normal",
         color,
       }}
     >
-      {point}
+      {points}
       {rightNegative}
     </span>
   );

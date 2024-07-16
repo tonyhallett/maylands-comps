@@ -1,52 +1,54 @@
 import { TeamScore } from "../../../umpire";
-import { MatchGamePoint } from "./MatchGamePoint";
-import { MatchSetPoint } from "./MatchSetPoint";
+import { Points } from "./Points";
+import { Games } from "./Games";
 import { PointState } from "./MatchScore";
 import { Box } from "@mui/material";
 
-export interface TeamPointsFontSizes {
+export interface TeamFontSizes {
   gamePointFontSize: number;
   setPointFontSize: number;
 }
-export function TeamPoints({
+export function Team({
   teamScore,
   pointState,
   isLeft,
   gamePointFontSize,
   setPointFontSize,
-}: TeamPointsFontSizes & {
+}: TeamFontSizes & {
   teamScore: TeamScore;
   pointState: PointState;
   isLeft: boolean;
 }) {
-  const gamePoint = (
-    <MatchGamePoint
+  const points = (
+    <Points
       isRight={!isLeft}
       fontSize={gamePointFontSize}
-      point={teamScore.points}
+      points={teamScore.points}
       pointState={pointState}
     />
   );
-  const setPoint = (
-    <MatchSetPoint
+  const games = (
+    <Games
       fontSize={setPointFontSize}
-      point={teamScore.games}
+      points={teamScore.games}
       pointState={pointState}
     />
   );
 
   return (
     <Box
+      component="section"
       ml={isLeft ? 0 : 1}
       mr={isLeft ? 1 : 0}
       flex="1 1 0"
       fontFamily={[`"Chivo Mono"`]}
       fontWeight="900"
       textAlign={isLeft ? "right" : "left"}
+      aria-label={isLeft ? "Left team" : "Right team"}
     >
-      {isLeft ? gamePoint : setPoint}
+      {isLeft ? points : games}
       <span style={{ margin: "0 0.1em" }}></span>
-      {isLeft ? setPoint : gamePoint}
+      {isLeft ? games : points}
     </Box>
   );
 }

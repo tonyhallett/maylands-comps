@@ -2,12 +2,12 @@ import { useTheme } from "@mui/material";
 import { PointState } from "./MatchScore";
 import { getContrastingPaletteColor } from "../../../themeHelpers/getContrastingPaletteColor";
 
-export function MatchSetPoint({
-  point,
+export function Games({
+  points,
   pointState,
   fontSize,
 }: {
-  point: number;
+  points: number;
   pointState: PointState;
   fontSize: number;
 }) {
@@ -21,13 +21,14 @@ export function MatchSetPoint({
       : undefined;
   return (
     <span
+      aria-label="Games"
       style={{
         fontSize,
         fontStyle: pointState === PointState.Won ? "italic" : "normal",
         color,
       }}
     >
-      {point}
+      {points}
     </span>
   );
 }

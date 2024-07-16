@@ -46,6 +46,7 @@ export interface UmpireViewProps extends PlayerNames {
   matchState: MatchState;
   rules: MatchInfo;
   autoShowServerReceiverChooser: boolean;
+  serverReceiverTop?: boolean;
 }
 
 function getServerReceiverName(
@@ -124,12 +125,14 @@ export function UmpireView({
   rules,
   matchState,
   autoShowServerReceiverChooser,
+  serverReceiverTop,
   ...playerNames
 }: UmpireViewProps) {
   const revertedPointRef = useRef(false);
   const [showManualServerReceiverDialog, setShowManualServerReceiverDialog] =
     useState(false);
-
+  serverReceiverTop =
+    serverReceiverTop === undefined ? true : serverReceiverTop;
   const {
     team1Player1Name,
     team2Player1Name,
@@ -137,11 +140,13 @@ export function UmpireView({
     team2Player2Name,
   } = playerNames;
   const serverReceiverChoice = matchState.serverReceiverChoice;
+  const hasFirstGameDoublesReceivers =
+    serverReceiverChoice.firstGameDoublesReceivers.length > 0;
+  const hasServerReceiverChoice =
+    serverReceiverChoice.servers.length > 0 || hasFirstGameDoublesReceivers;
 
   const canScorePoint =
-    serverReceiverChoice.servers.length === 0 &&
-    serverReceiverChoice.firstGameDoublesReceivers.length === 0 &&
-    !isMatchWon(matchState.matchWinState);
+    !hasServerReceiverChoice && !isMatchWon(matchState.matchWinState);
 
   const getNameOfServerReceiver = (isServer: boolean) => {
     return getServerReceiverName(
@@ -164,10 +169,6 @@ export function UmpireView({
       serverReceiverButtonAriaLabel: "Reset server and receiver",
     };
   } else {
-    const hasFirstGameDoublesReceivers =
-      serverReceiverChoice.firstGameDoublesReceivers.length > 0;
-    const hasServerReceiverChoice =
-      serverReceiverChoice.servers.length > 0 || hasFirstGameDoublesReceivers;
     serverReceiverButtonProps = {
       serverReceiverButtonAriaLabel: "Set server and receiver",
       serverReceiverButtonEnabled:
@@ -217,7 +218,7 @@ export function UmpireView({
         <Card variant="outlined">
           <Box p={1}>
             <MatchView
-              serverReceiverTop={true}
+              serverReceiverTop={serverReceiverTop}
               leftPlayer1Name={
                 matchState.team1Left ? team1Player1Name : team2Player1Name
               }

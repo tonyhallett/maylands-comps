@@ -2,7 +2,8 @@ import { PlayerPrefix } from "./PlayerPrefix";
 
 export function ServerReceiverPlayer({ name, prefix }: PlayerPrefix) {
   return (
-    <div
+    <section
+      aria-label="Player with service information"
       style={{
         textWrap: "nowrap",
         overflow: "hidden",
@@ -12,6 +13,6 @@ export function ServerReceiverPlayer({ name, prefix }: PlayerPrefix) {
     >
       <span style={{ width: 30, display: "inline-block" }}>{prefix}</span>
       {name}
-    </div>
+    </section>
   );
 }

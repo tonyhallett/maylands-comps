@@ -12,7 +12,7 @@ import {
 import { MatchWinState } from "../src/umpire/getMatchWinState";
 import * as matchers from "@testing-library/jest-dom/matchers";
 import { expect as jestExpect } from "@jest/globals";
-import { MatchState, Player } from "../src/umpire";
+import { MatchState, Player, TeamScores } from "../src/umpire";
 import { Team } from "../src/umpire/playersHelpers";
 import { ServerReceiverChoice } from "../src/umpire/availableServerReceiverChoice";
 
@@ -21,7 +21,7 @@ jest.mock(
   "../src/umpireView/dialogs/serverReceiver/Tosser/ClickKingTosser",
   () => {
     return {
-      ClickKingTosser: () => <div></div>,
+      ClickKingTosser: () => <div data-testid="tosser"></div>,
     };
   },
 );
@@ -445,43 +445,1090 @@ describe("<UmpireView/", () => {
       });
     });
     describe("button click", () => {
-      it("should have choose server receiver button enabled when server requires choosing", () => {});
-      it("should have choose server receiver button enabled when doubles receiver requires choosing", () => {});
-      it("should have choose server receiver button enabled when chosen and canResetServerReceiver is true", () => {
-        // Is this problematic.  Goind to need to call resetServerReceiver before showing the dialog.
+      it("should have choose server receiver button enabled when server requires choosing", () => {
+        const { getByRole } = render(
+          <UmpireView
+            autoShowServerReceiverChooser={false}
+            team1Player1Name="T1P1"
+            team2Player1Name="T2P1"
+            matchState={{
+              canUndoPoint: false,
+              isEnds: false,
+              remainingServes: 0,
+              matchWinState: MatchWinState.NotWon,
+              server: undefined,
+              receiver: undefined,
+              gameScores: [],
+              team1Left: true,
+              team1Score: { points: 0, games: 0 },
+              team2Score: { points: 0, games: 0 },
+              pointHistory: [],
+              canResetServerReceiver: false,
+              serverReceiverChoice: {
+                servers: ["Team1Player1", "Team2Player1"],
+                firstGameDoublesReceivers: [],
+              },
+            }}
+            rules={{
+              bestOf: 1,
+              upTo: 1,
+              clearBy2: false,
+              numServes: 1,
+              team1EndsAt: 1,
+              team2EndsAt: 1,
+            }}
+            umpire={{
+              pointScored() {},
+              resetServerReceiver() {},
+              setFirstGameDoublesReceiver() {},
+              setServer() {},
+              switchEnds() {},
+              undoPoint() {},
+            }}
+          />,
+        );
+
+        const setServerReceiverButton = getByRole("button", {
+          name: "Set server and receiver",
+        });
+        expect(setServerReceiverButton).toBeEnabled();
       });
-      it("should have choose server receiver button disabled when chosen and canResetServerReceiver is false", () => {});
-      it("should show the server dialog when clicked", () => {});
+
+      it("should have choose server receiver button enabled when chosen and canResetServerReceiver is true", () => {
+        const { getByRole } = render(
+          <UmpireView
+            autoShowServerReceiverChooser={false}
+            team1Player1Name="T1P1"
+            team2Player1Name="T2P1"
+            matchState={{
+              canUndoPoint: false,
+              isEnds: false,
+              remainingServes: 0,
+              matchWinState: MatchWinState.NotWon,
+              server: "Team1Player1",
+              receiver: "Team2Player2",
+              gameScores: [],
+              team1Left: true,
+              team1Score: { points: 0, games: 0 },
+              team2Score: { points: 0, games: 0 },
+              pointHistory: [],
+              canResetServerReceiver: true,
+              serverReceiverChoice: {
+                servers: [],
+                firstGameDoublesReceivers: [],
+              },
+            }}
+            rules={{
+              bestOf: 1,
+              upTo: 1,
+              clearBy2: false,
+              numServes: 1,
+              team1EndsAt: 1,
+              team2EndsAt: 1,
+            }}
+            umpire={{
+              pointScored() {},
+              resetServerReceiver() {},
+              setFirstGameDoublesReceiver() {},
+              setServer() {},
+              switchEnds() {},
+              undoPoint() {},
+            }}
+          />,
+        );
+
+        const setServerReceiverButton = getByRole("button", {
+          name: "Set server and receiver",
+        });
+        expect(setServerReceiverButton).toBeEnabled();
+      });
+      it("should have choose server receiver button disabled when chosen and canResetServerReceiver is false", () => {
+        const { getByRole } = render(
+          <UmpireView
+            autoShowServerReceiverChooser={false}
+            team1Player1Name="T1P1"
+            team2Player1Name="T2P1"
+            matchState={{
+              canUndoPoint: false,
+              isEnds: false,
+              remainingServes: 0,
+              matchWinState: MatchWinState.NotWon,
+              server: "Team1Player1",
+              receiver: "Team2Player2",
+              gameScores: [],
+              team1Left: true,
+              team1Score: { points: 1, games: 0 },
+              team2Score: { points: 0, games: 0 },
+              pointHistory: [],
+              canResetServerReceiver: false,
+              serverReceiverChoice: {
+                servers: [],
+                firstGameDoublesReceivers: [],
+              },
+            }}
+            rules={{
+              bestOf: 1,
+              upTo: 1,
+              clearBy2: false,
+              numServes: 1,
+              team1EndsAt: 1,
+              team2EndsAt: 1,
+            }}
+            umpire={{
+              pointScored() {},
+              resetServerReceiver() {},
+              setFirstGameDoublesReceiver() {},
+              setServer() {},
+              switchEnds() {},
+              undoPoint() {},
+            }}
+          />,
+        );
+
+        const setServerReceiverButton = getByRole("button", {
+          name: "Set server and receiver",
+        });
+        expect(setServerReceiverButton).toBeDisabled();
+      });
+      it("should show the server dialog when server to choose and clicked", async () => {
+        const user = userEvent.setup();
+        const { getByRole } = render(
+          <UmpireView
+            autoShowServerReceiverChooser={false}
+            team1Player1Name="T1P1"
+            team2Player1Name="T2P1"
+            matchState={{
+              canUndoPoint: false,
+              isEnds: false,
+              remainingServes: 0,
+              matchWinState: MatchWinState.NotWon,
+              server: "Team1Player1",
+              receiver: "Team2Player2",
+              gameScores: [],
+              team1Left: true,
+              team1Score: { points: 1, games: 0 },
+              team2Score: { points: 0, games: 0 },
+              pointHistory: [],
+              canResetServerReceiver: false,
+              serverReceiverChoice: {
+                servers: ["Team1Player1", "Team2Player1"],
+                firstGameDoublesReceivers: [],
+              },
+            }}
+            rules={{
+              bestOf: 1,
+              upTo: 1,
+              clearBy2: false,
+              numServes: 1,
+              team1EndsAt: 1,
+              team2EndsAt: 1,
+            }}
+            umpire={{
+              pointScored() {},
+              resetServerReceiver() {},
+              setFirstGameDoublesReceiver() {},
+              setServer() {},
+              switchEnds() {},
+              undoPoint() {},
+            }}
+          />,
+        );
+
+        const setServerReceiverButton = getByRole("button", {
+          name: "Set server and receiver",
+        });
+        await user.click(setServerReceiverButton);
+        const chooseServerDialog = getByRole("dialog", {
+          name: "Choose server",
+        });
+        expect(chooseServerDialog).toBeInTheDocument();
+      });
+
+      it("should resetServerReceiver when canResetServerReceiver and clicked", async () => {
+        const user = userEvent.setup();
+        const resetServerReceiver = jest.fn();
+        const { getByRole } = render(
+          <UmpireView
+            autoShowServerReceiverChooser={false}
+            team1Player1Name="T1P1"
+            team2Player1Name="T2P1"
+            matchState={{
+              canUndoPoint: false,
+              isEnds: false,
+              remainingServes: 0,
+              matchWinState: MatchWinState.NotWon,
+              server: "Team1Player1",
+              receiver: "Team2Player2",
+              gameScores: [],
+              team1Left: true,
+              team1Score: { points: 0, games: 0 },
+              team2Score: { points: 0, games: 0 },
+              pointHistory: [],
+              canResetServerReceiver: true,
+              serverReceiverChoice: {
+                servers: [],
+                firstGameDoublesReceivers: [],
+              },
+            }}
+            rules={{
+              bestOf: 1,
+              upTo: 1,
+              clearBy2: false,
+              numServes: 1,
+              team1EndsAt: 1,
+              team2EndsAt: 1,
+            }}
+            umpire={{
+              pointScored() {},
+              resetServerReceiver,
+              setFirstGameDoublesReceiver() {},
+              setServer() {},
+              switchEnds() {},
+              undoPoint() {},
+            }}
+          />,
+        );
+
+        const setServerReceiverButton = getByRole("button", {
+          name: "Set server and receiver",
+        });
+        await user.click(setServerReceiverButton);
+
+        expect(resetServerReceiver).toHaveBeenCalled();
+      });
+      it("should show the server dialog when MatchState changes after canResetServerReceiver and clicked", async () => {
+        const user = userEvent.setup();
+        const { getByRole, rerender } = render(
+          <UmpireView
+            autoShowServerReceiverChooser={false}
+            team1Player1Name="T1P1"
+            team2Player1Name="T2P1"
+            matchState={{
+              canUndoPoint: false,
+              isEnds: false,
+              remainingServes: 0,
+              matchWinState: MatchWinState.NotWon,
+              server: "Team1Player1",
+              receiver: "Team2Player2",
+              gameScores: [],
+              team1Left: true,
+              team1Score: { points: 0, games: 0 },
+              team2Score: { points: 0, games: 0 },
+              pointHistory: [],
+              canResetServerReceiver: true,
+              serverReceiverChoice: {
+                servers: [],
+                firstGameDoublesReceivers: [],
+              },
+            }}
+            rules={{
+              bestOf: 1,
+              upTo: 1,
+              clearBy2: false,
+              numServes: 1,
+              team1EndsAt: 1,
+              team2EndsAt: 1,
+            }}
+            umpire={{
+              pointScored() {},
+              resetServerReceiver() {},
+              setFirstGameDoublesReceiver() {},
+              setServer() {},
+              switchEnds() {},
+              undoPoint() {},
+            }}
+          />,
+        );
+
+        const setServerReceiverButton = getByRole("button", {
+          name: "Set server and receiver",
+        });
+        await user.click(setServerReceiverButton);
+
+        rerender(
+          <UmpireView
+            autoShowServerReceiverChooser={false}
+            team1Player1Name="T1P1"
+            team2Player1Name="T2P1"
+            matchState={{
+              canUndoPoint: false,
+              isEnds: false,
+              remainingServes: 0,
+              matchWinState: MatchWinState.NotWon,
+              server: "Team1Player1",
+              receiver: "Team2Player2",
+              gameScores: [],
+              team1Left: true,
+              team1Score: { points: 0, games: 0 },
+              team2Score: { points: 0, games: 0 },
+              pointHistory: [],
+              canResetServerReceiver: false,
+              serverReceiverChoice: {
+                servers: ["Team1Player1", "Team2Player1"],
+                firstGameDoublesReceivers: [],
+              },
+            }}
+            rules={{
+              bestOf: 1,
+              upTo: 1,
+              clearBy2: false,
+              numServes: 1,
+              team1EndsAt: 1,
+              team2EndsAt: 1,
+            }}
+            umpire={{
+              pointScored() {},
+              resetServerReceiver() {},
+              setFirstGameDoublesReceiver() {},
+              setServer() {},
+              switchEnds() {},
+              undoPoint() {},
+            }}
+          />,
+        );
+
+        const chooseServerDialog = getByRole("dialog", {
+          name: "Choose server",
+        });
+        expect(chooseServerDialog).toBeInTheDocument();
+      });
+
+      it("should show the receiver dialog when there are receivers to choose", () => {
+        const { getByRole } = render(
+          <UmpireView
+            autoShowServerReceiverChooser={false}
+            team1Player1Name="T1P1"
+            team1Player2Name="T1P2"
+            team2Player1Name="T2P1"
+            team2Player2Name="T2P2"
+            matchState={{
+              canUndoPoint: false,
+              isEnds: false,
+              remainingServes: 0,
+              matchWinState: MatchWinState.NotWon,
+              server: "Team1Player1",
+              receiver: "Team2Player2",
+              gameScores: [],
+              team1Left: true,
+              team1Score: { points: 0, games: 0 },
+              team2Score: { points: 0, games: 0 },
+              pointHistory: [],
+              canResetServerReceiver: false,
+              serverReceiverChoice: {
+                servers: [],
+                firstGameDoublesReceivers: ["Team2Player1", "Team2Player2"],
+              },
+            }}
+            rules={{
+              bestOf: 1,
+              upTo: 1,
+              clearBy2: false,
+              numServes: 1,
+              team1EndsAt: 1,
+              team2EndsAt: 1,
+            }}
+            umpire={{
+              pointScored() {},
+              resetServerReceiver() {},
+              setFirstGameDoublesReceiver() {},
+              setServer() {},
+              switchEnds() {},
+              undoPoint() {},
+            }}
+          />,
+        );
+        const chooseReceiverDialog = getByRole("dialog", {
+          name: "Choose receiver",
+        });
+        expect(chooseReceiverDialog).toBeInTheDocument();
+      });
+    });
+    describe("click king tosser", () => {
+      const renderGetTosser = (
+        serverReceiverChoice: ServerReceiverChoice,
+        gameScores: MatchState["gameScores"],
+        dialogAriaLabel: string,
+      ) => {
+        const isDoubles =
+          serverReceiverChoice.firstGameDoublesReceivers.length > 0;
+        const { getByRole } = render(
+          <UmpireView
+            team1Player1Name="T1P1"
+            team2Player1Name="T2P2"
+            team1Player2Name={isDoubles ? "T1P2" : undefined}
+            team2Player2Name={isDoubles ? "T2P2" : undefined}
+            autoShowServerReceiverChooser={true}
+            matchState={{
+              canUndoPoint: false,
+              isEnds: false,
+              remainingServes: 0,
+              matchWinState: MatchWinState.NotWon,
+              server: undefined,
+              receiver: undefined,
+              gameScores,
+              team1Left: true,
+              team1Score: { points: 0, games: 0 },
+              team2Score: { points: 0, games: 0 },
+              pointHistory: [],
+              canResetServerReceiver: false,
+              serverReceiverChoice,
+            }}
+            rules={{
+              bestOf: 1,
+              upTo: 1,
+              clearBy2: false,
+              numServes: 1,
+              team1EndsAt: 1,
+              team2EndsAt: 1,
+            }}
+            umpire={{
+              pointScored() {},
+              resetServerReceiver() {},
+              setFirstGameDoublesReceiver() {},
+              setServer() {},
+              switchEnds() {},
+              undoPoint() {},
+            }}
+          />,
+        );
+
+        const dialog = getByRole("dialog", { name: dialogAriaLabel });
+        return within(dialog).queryByTestId("tosser");
+      };
+      it("should not show tosser when choosing first doubles receivers", () => {
+        const tosser = renderGetTosser(
+          {
+            servers: [],
+            firstGameDoublesReceivers: ["Team1Player1", "Team1Player2"],
+          },
+          [],
+          "Choose receiver",
+        );
+        expect(tosser).toBeNull();
+      });
+      it("should show tosser when choosing servers and is the first game", () => {
+        const tosser = renderGetTosser(
+          {
+            servers: ["Team1Player1", "Team2Player1"],
+            firstGameDoublesReceivers: [],
+          },
+          [],
+          "Choose server",
+        );
+        expect(tosser).toBeInTheDocument();
+      });
+      it("should not show tosser when choosing servers and is not the first game", () => {
+        const tosser = renderGetTosser(
+          {
+            servers: ["Team1Player1", "Team2Player1"],
+            firstGameDoublesReceivers: [],
+          },
+          [{ team1Points: 11, team2Points: 0 }],
+          "Choose server",
+        );
+        expect(tosser).toBeNull();
+      });
     });
   });
-  describe("point scoring", () => {
-    type ScoreTestState = Pick<MatchState, "matchWinState" | "team1Left">;
-    const renderPointButtons = (
-      scoreTestState: ScoreTestState,
-      serverReceiverChoice: ServerReceiverChoice,
-      pointScored: ControllableUmpire["pointScored"] = jest.fn(),
-    ) => {
+  describe("points", () => {
+    describe("point scoring", () => {
+      type ScoreTestState = Pick<MatchState, "matchWinState" | "team1Left">;
+      const renderPointButtons = (
+        scoreTestState: ScoreTestState,
+        serverReceiverChoice: ServerReceiverChoice,
+        autoShowServerReceiverChooser = true,
+        pointScored: ControllableUmpire["pointScored"] = jest.fn(),
+      ) => {
+        const { queryByRole } = render(
+          <UmpireView
+            team1Player1Name="T1P1"
+            team1Player2Name="T1P2"
+            team2Player1Name="T2P1"
+            team2Player2Name="T2P2"
+            autoShowServerReceiverChooser={autoShowServerReceiverChooser}
+            matchState={{
+              canUndoPoint: false,
+              isEnds: false,
+              remainingServes: 0,
+              matchWinState: scoreTestState.matchWinState,
+              server: undefined,
+              receiver: undefined,
+              gameScores: [],
+              team1Left: scoreTestState.team1Left,
+              team1Score: { points: 0, games: 0 },
+              team2Score: { points: 0, games: 0 },
+              pointHistory: [],
+              canResetServerReceiver: false,
+              serverReceiverChoice,
+            }}
+            rules={{
+              bestOf: 1,
+              upTo: 1,
+              clearBy2: false,
+              numServes: 1,
+              team1EndsAt: 1,
+              team2EndsAt: 1,
+            }}
+            umpire={{
+              pointScored,
+              resetServerReceiver() {},
+              setFirstGameDoublesReceiver() {},
+              setServer() {},
+              switchEnds() {},
+              undoPoint() {},
+            }}
+          />,
+        );
+        const scoreLeftButton = queryByRole("button", { name: "Score left" });
+        const scoreRightButton = queryByRole("button", { name: "Score right" });
+        return { scoreLeftButton, scoreRightButton };
+      };
+
+      it.each([true, false])(
+        "should not be possible to score a point if server requires choosing - auto %p",
+        (autoShowServerReceiverChooser) => {
+          const buttons = renderPointButtons(
+            {
+              matchWinState: MatchWinState.NotWon,
+              team1Left: true,
+            },
+            {
+              servers: ["Team1Player1", "Team2Player1"],
+              firstGameDoublesReceivers: [],
+            },
+            autoShowServerReceiverChooser,
+          );
+          if (autoShowServerReceiverChooser) {
+            expect(buttons.scoreLeftButton).toBeNull();
+            expect(buttons.scoreRightButton).toBeNull();
+          } else {
+            expect(buttons.scoreLeftButton).toBeDisabled();
+            expect(buttons.scoreRightButton).toBeDisabled();
+          }
+        },
+      );
+
+      it.each([true, false])(
+        "should not be possible to score a point if doubles receiver requires choosing - %p",
+        (autoShowServerReceiverChooser) => {
+          const buttons = renderPointButtons(
+            {
+              matchWinState: MatchWinState.NotWon,
+              team1Left: true,
+            },
+            {
+              servers: [],
+              firstGameDoublesReceivers: ["Team1Player1", "Team1Player2"],
+            },
+            autoShowServerReceiverChooser,
+          );
+          expect(buttons.scoreLeftButton).toBeNull();
+          expect(buttons.scoreRightButton).toBeNull();
+        },
+      );
+
+      it.each([
+        MatchWinState.GamePointTeam1,
+        MatchWinState.GamePointTeam2,
+        MatchWinState.MatchPointTeam1,
+        MatchWinState.MatchPointTeam2,
+        MatchWinState.NotWon,
+        MatchWinState.Team1Won,
+        MatchWinState.Team2Won,
+      ])(
+        "should not be possible to score a point if match won",
+        (matchWinState) => {
+          const buttons = renderPointButtons(
+            { matchWinState, team1Left: true },
+            {
+              servers: [],
+              firstGameDoublesReceivers: [],
+            },
+          );
+          if (
+            matchWinState === MatchWinState.Team1Won ||
+            matchWinState === MatchWinState.Team2Won
+          ) {
+            expect(buttons.scoreLeftButton).toBeDisabled();
+            expect(buttons.scoreRightButton).toBeDisabled();
+          } else {
+            expect(buttons.scoreLeftButton).toBeEnabled();
+            expect(buttons.scoreRightButton).toBeEnabled();
+          }
+        },
+      );
+      interface PointScoredTest {
+        leftScored: boolean;
+        team1Left: boolean;
+        expectedTeam1Scored: boolean;
+      }
+      const pointScoredTests: PointScoredTest[] = [
+        {
+          leftScored: true,
+          team1Left: true,
+          expectedTeam1Scored: true,
+        },
+        {
+          leftScored: true,
+          team1Left: false,
+          expectedTeam1Scored: false,
+        },
+        {
+          leftScored: false,
+          team1Left: true,
+          expectedTeam1Scored: false,
+        },
+        {
+          leftScored: false,
+          team1Left: false,
+          expectedTeam1Scored: true,
+        },
+      ];
+      it.each(pointScoredTests)(
+        "should pointScored with the correct team",
+        async (pointScoredTest) => {
+          const user = userEvent.setup();
+          const pointScored = jest.fn();
+          const buttons = renderPointButtons(
+            {
+              matchWinState: MatchWinState.NotWon,
+              team1Left: pointScoredTest.team1Left,
+            },
+            {
+              servers: [],
+              firstGameDoublesReceivers: [],
+            },
+            true,
+            pointScored,
+          );
+          const scoreButton = pointScoredTest.leftScored
+            ? buttons.scoreLeftButton
+            : buttons.scoreRightButton;
+
+          await user.click(scoreButton);
+
+          expect(pointScored).toHaveBeenCalledWith(
+            pointScoredTest.expectedTeam1Scored,
+          );
+        },
+      );
+    });
+    describe("undo point", () => {
+      const renderUndoPointButton = (
+        canUndoPoint: boolean,
+        undoPoint = jest.fn(),
+      ) => {
+        const { getByRole } = render(
+          <UmpireView
+            team1Player1Name="T1P1"
+            team1Player2Name="T1P2"
+            team2Player1Name="T2P1"
+            team2Player2Name="T2P2"
+            autoShowServerReceiverChooser={false}
+            matchState={{
+              canUndoPoint,
+              isEnds: false,
+              remainingServes: 0,
+              matchWinState: MatchWinState.NotWon,
+              server: undefined,
+              receiver: undefined,
+              gameScores: [],
+              team1Left: true,
+              team1Score: { points: 0, games: 0 },
+              team2Score: { points: 0, games: 0 },
+              pointHistory: [],
+              canResetServerReceiver: false,
+              serverReceiverChoice: {
+                servers: [],
+                firstGameDoublesReceivers: [],
+              },
+            }}
+            rules={{
+              bestOf: 1,
+              upTo: 1,
+              clearBy2: false,
+              numServes: 1,
+              team1EndsAt: 1,
+              team2EndsAt: 1,
+            }}
+            umpire={{
+              pointScored() {},
+              resetServerReceiver() {},
+              setFirstGameDoublesReceiver() {},
+              setServer() {},
+              switchEnds() {},
+              undoPoint,
+            }}
+          />,
+        );
+
+        return getByRole("button", { name: "Undo point" });
+      };
+      it.each([true, false])(
+        "should be enabled based on the match state",
+        (enabled) => {
+          const undoPointButton = renderUndoPointButton(enabled);
+          if (enabled) {
+            expect(undoPointButton).toBeEnabled();
+          } else {
+            expect(undoPointButton).toBeDisabled();
+          }
+        },
+      );
+      it("should undoPoint when clicked", async () => {
+        const user = userEvent.setup();
+        const undoPoint = jest.fn();
+        const undoPointButton = renderUndoPointButton(true, undoPoint);
+        await user.click(undoPointButton);
+
+        expect(undoPoint).toHaveBeenCalled();
+      });
+    });
+  });
+  describe("MatchView", () => {
+    describe("MatchScore", () => {
+      const renderMatchScore = (teamScores: TeamScores, team1Left = true) => {
+        const { getByRole } = render(
+          <UmpireView
+            team1Player1Name="T1P1"
+            team1Player2Name="T1P2"
+            team2Player1Name="T2P1"
+            team2Player2Name="T2P2"
+            autoShowServerReceiverChooser={false}
+            matchState={{
+              canUndoPoint: false,
+              isEnds: false,
+              remainingServes: 0,
+              matchWinState: MatchWinState.NotWon,
+              server: undefined,
+              receiver: undefined,
+              gameScores: [],
+              team1Left,
+              ...teamScores,
+              pointHistory: [],
+              canResetServerReceiver: false,
+              serverReceiverChoice: {
+                servers: [],
+                firstGameDoublesReceivers: [],
+              },
+            }}
+            rules={{
+              bestOf: 1,
+              upTo: 1,
+              clearBy2: false,
+              numServes: 1,
+              team1EndsAt: 1,
+              team2EndsAt: 1,
+            }}
+            umpire={{
+              pointScored() {},
+              resetServerReceiver() {},
+              setFirstGameDoublesReceiver() {},
+              setServer() {},
+              switchEnds() {},
+              undoPoint() {},
+            }}
+          />,
+        );
+
+        /*
+          <section> elements should have an internal browser role of section until you give them an accessible name; in which case, they implicitly have the role region:
+        */
+        const matchScore = getByRole("region", { name: "Match score" });
+        const leftTeamScore = within(matchScore).getByRole("region", {
+          name: "Left team",
+        });
+        const rightTeamScore = within(matchScore).getByRole("region", {
+          name: "Right team",
+        });
+        const leftGames = within(leftTeamScore).getByLabelText("Games");
+        const leftPoints = within(leftTeamScore).getByLabelText("Points");
+        const rightGames = within(rightTeamScore).getByLabelText("Games");
+        const rightPoints = within(rightTeamScore).getByLabelText("Points");
+
+        return {
+          matchScore,
+          leftTeamScore,
+          rightTeamScore,
+          leftGames,
+          leftPoints,
+          rightGames,
+          rightPoints,
+        };
+      };
+      xit("should have the left score on the left and the right score on the right", () => {});
+      xit("should have game point then set point for left", () => {});
+      xit("should have set point then game point for right", () => {});
+      xit("should display points larger than sets", () => {});
+      xit("should have italic games and points if team won", () => {});
+
+      // these colours are the same
+      xit("should color games differently when team is at match point", () => {});
+      xit("should color points differently when team is at match point or game point", () => {});
+
+      xit("should move negative point indicator to the right when right", () => {});
+      it.each([true, false])(
+        "should show the scores from MatchState - team1 left %p",
+        (team1Left) => {
+          const teamScores = {
+            team1Score: { points: 1, games: 2 },
+            team2Score: { points: 2, games: 1 },
+          };
+          const { leftGames, leftPoints, rightGames, rightPoints } =
+            renderMatchScore(teamScores, team1Left);
+
+          const expectedLeftGames = team1Left ? "2" : "1";
+          const expectedLeftPoints = team1Left ? "1" : "2";
+          const expectedRightGames = team1Left ? "1" : "2";
+          const expectedRightPoints = team1Left ? "2" : "1";
+
+          expect(leftGames).toHaveTextContent(expectedLeftGames);
+          expect(leftPoints).toHaveTextContent(expectedLeftPoints);
+          expect(rightGames).toHaveTextContent(expectedRightGames);
+          expect(rightPoints).toHaveTextContent(expectedRightPoints);
+        },
+      );
+    });
+    describe("Teams", () => {
+      interface RenderTeamOptions {
+        team1Left: boolean;
+        server: Player | undefined;
+        receiver: Player | undefined;
+        remainingServes: number;
+        serverReceiverTop?: boolean;
+      }
+      const team1Player1Name = "T1P1";
+      const team1Player2Name = "T1P2";
+      const team2Player1Name = "T2P1";
+      const team2Player2Name = "T2P2";
+      const renderTeams = (
+        renderTeamOptions: RenderTeamOptions = {
+          server: "Team1Player1",
+          receiver: "Team2Player1",
+          team1Left: true,
+          remainingServes: 2,
+        },
+      ) => {
+        const {
+          server,
+          receiver,
+          team1Left,
+          serverReceiverTop,
+          remainingServes,
+        } = renderTeamOptions;
+        const { getByRole } = render(
+          <UmpireView
+            serverReceiverTop={serverReceiverTop}
+            team1Player1Name={team1Player1Name}
+            team1Player2Name={team1Player2Name}
+            team2Player1Name={team2Player1Name}
+            team2Player2Name={team2Player2Name}
+            autoShowServerReceiverChooser={false}
+            matchState={{
+              canUndoPoint: false,
+              isEnds: false,
+              remainingServes,
+              matchWinState: MatchWinState.NotWon,
+              server,
+              receiver,
+              gameScores: [],
+              team1Left,
+              team1Score: { points: 0, games: 0 },
+              team2Score: { points: 0, games: 0 },
+              pointHistory: [],
+              canResetServerReceiver: false,
+              serverReceiverChoice: {
+                servers: [],
+                firstGameDoublesReceivers: [],
+              },
+            }}
+            rules={{
+              bestOf: 1,
+              upTo: 1,
+              clearBy2: false,
+              numServes: 1,
+              team1EndsAt: 1,
+              team2EndsAt: 1,
+            }}
+            umpire={{
+              pointScored() {},
+              resetServerReceiver() {},
+              setFirstGameDoublesReceiver() {},
+              setServer() {},
+              switchEnds() {},
+              undoPoint() {},
+            }}
+          />,
+        );
+        const teams = getByRole("region", { name: "Teams" });
+        const leftTeam = within(teams).getByRole("region", {
+          name: "Left team",
+        });
+        const rightTeam = within(teams).getByRole("region", {
+          name: "Right team",
+        });
+        return {
+          teams: getByRole("region", { name: "Teams" }),
+          leftTeam,
+          rightTeam,
+        };
+      };
+      it("should have a teams region with left teams and right teams", () => {
+        const { teams, leftTeam, rightTeam } = renderTeams();
+        expect(teams).toBeInTheDocument();
+        expect(leftTeam).toBeInTheDocument();
+        expect(rightTeam).toBeInTheDocument();
+      });
+
+      interface PlayerServiceInfoTest extends RenderTeamOptions {
+        expectedLeftPlayerTopInfo: string;
+        expectedLeftPlayerBottomInfo: string;
+        expectedRightPlayerTopInfo: string;
+        expectedRightPlayerBottomInfo: string;
+
+        team1Left: boolean;
+        server: Player | undefined;
+        receiver: Player | undefined;
+        serverReceiverTop?: boolean;
+
+        testDescription: string;
+      }
+      const playerServiceInfoTests: PlayerServiceInfoTest[] = [
+        {
+          expectedLeftPlayerTopInfo: `(2)${team1Player1Name}`,
+          expectedLeftPlayerBottomInfo: team1Player2Name,
+          expectedRightPlayerTopInfo: `(R)${team2Player2Name}`,
+          expectedRightPlayerBottomInfo: team2Player1Name,
+          server: "Team1Player1",
+          receiver: "Team2Player2",
+          team1Left: true,
+          remainingServes: 2,
+          testDescription: "show server/receiver top when server receiver top",
+          serverReceiverTop: true,
+        },
+        {
+          expectedLeftPlayerTopInfo: `(2)${team1Player1Name}`,
+          expectedLeftPlayerBottomInfo: team1Player2Name,
+          expectedRightPlayerTopInfo: team2Player1Name,
+          expectedRightPlayerBottomInfo: `(R)${team2Player2Name}`,
+          server: "Team1Player1",
+          receiver: "Team2Player2",
+          team1Left: true,
+          remainingServes: 2,
+          testDescription:
+            "show server/receiver in order when server receiver is not top",
+          serverReceiverTop: false,
+        },
+        {
+          expectedLeftPlayerTopInfo: `(1)${team1Player1Name}`,
+          expectedLeftPlayerBottomInfo: team1Player2Name,
+          expectedRightPlayerTopInfo: `(R)${team2Player2Name}`,
+          expectedRightPlayerBottomInfo: team2Player1Name,
+          server: "Team1Player1",
+          receiver: "Team2Player2",
+          team1Left: true,
+          remainingServes: 1,
+          testDescription: "show 1 remaining serve",
+          serverReceiverTop: true,
+        },
+        {
+          expectedLeftPlayerTopInfo: `(R)${team1Player1Name}`,
+          expectedLeftPlayerBottomInfo: team1Player2Name,
+          expectedRightPlayerTopInfo: `(1)${team2Player2Name}`,
+          expectedRightPlayerBottomInfo: team2Player1Name,
+          server: "Team2Player2",
+          receiver: "Team1Player1",
+          team1Left: true,
+          remainingServes: 1,
+          testDescription: "should work with right team serving",
+          serverReceiverTop: true,
+        },
+        {
+          expectedLeftPlayerTopInfo: `(1)${team2Player2Name}`,
+          expectedLeftPlayerBottomInfo: team2Player1Name,
+          expectedRightPlayerTopInfo: `(R)${team1Player1Name}`,
+          expectedRightPlayerBottomInfo: team1Player2Name,
+          server: "Team2Player2",
+          receiver: "Team1Player1",
+          team1Left: false,
+          remainingServes: 1,
+          testDescription: "should work with team1 on the right",
+          serverReceiverTop: true,
+        },
+        {
+          expectedLeftPlayerTopInfo: `(1)${team2Player2Name}`,
+          expectedLeftPlayerBottomInfo: team2Player1Name,
+          expectedRightPlayerTopInfo: `(R)${team1Player1Name}`,
+          expectedRightPlayerBottomInfo: team1Player2Name,
+          server: "Team2Player2",
+          receiver: "Team1Player1",
+          team1Left: false,
+          remainingServes: 1,
+          testDescription: "should deault serverReceiverTop true",
+        },
+        {
+          expectedLeftPlayerTopInfo: team1Player1Name,
+          expectedLeftPlayerBottomInfo: team1Player2Name,
+          expectedRightPlayerTopInfo: team2Player1Name,
+          expectedRightPlayerBottomInfo: team2Player2Name,
+          server: undefined,
+          receiver: undefined,
+          team1Left: true,
+          remainingServes: 2,
+          testDescription: "should work when there is no server / receiver",
+          serverReceiverTop: false,
+        },
+      ];
+      it.each(playerServiceInfoTests)(
+        "should $testDescription",
+        (playerServiceInfoTest) => {
+          const {
+            expectedLeftPlayerTopInfo,
+            expectedLeftPlayerBottomInfo,
+            expectedRightPlayerTopInfo,
+            expectedRightPlayerBottomInfo,
+            // eslint-disable-next-line @typescript-eslint/no-unused-vars
+            testDescription,
+            ...renderTeamOptions
+          } = playerServiceInfoTest;
+
+          const { leftTeam, rightTeam } = renderTeams(renderTeamOptions);
+          const leftPlayerTopInfo = leftTeam.children[0].textContent;
+          expect(expectedLeftPlayerTopInfo).toBe(leftPlayerTopInfo);
+          const leftPlayerBottomInfo = leftTeam.children[1].textContent;
+          expect(expectedLeftPlayerBottomInfo).toBe(leftPlayerBottomInfo);
+          const rightPlayerTopInfo = rightTeam.children[0].textContent;
+          expect(expectedRightPlayerTopInfo).toBe(rightPlayerTopInfo);
+          const rightPlayerBottomInfo = rightTeam.children[1].textContent;
+          expect(expectedRightPlayerBottomInfo).toBe(rightPlayerBottomInfo);
+        },
+      );
+    });
+  });
+  describe("EndsDialog", () => {
+    it("should display the ends dialog with message Ends ! when MatchState.isEnds is true and singles", () => {
       const { getByRole } = render(
         <UmpireView
           team1Player1Name="T1P1"
-          team1Player2Name="T1P2"
           team2Player1Name="T2P1"
-          team2Player2Name="T2P2"
-          autoShowServerReceiverChooser={true}
+          autoShowServerReceiverChooser={false}
           matchState={{
-            canUndoPoint: false,
-            isEnds: false,
+            canUndoPoint: true,
+            isEnds: true,
             remainingServes: 0,
-            matchWinState: scoreTestState.matchWinState,
+            matchWinState: MatchWinState.NotWon,
             server: undefined,
             receiver: undefined,
             gameScores: [],
-            team1Left: scoreTestState.team1Left,
+            team1Left: true,
             team1Score: { points: 0, games: 0 },
             team2Score: { points: 0, games: 0 },
             pointHistory: [],
             canResetServerReceiver: false,
-            serverReceiverChoice,
+            serverReceiverChoice: {
+              servers: [],
+              firstGameDoublesReceivers: [],
+            },
           }}
           rules={{
             bestOf: 1,
@@ -492,7 +1539,7 @@ describe("<UmpireView/", () => {
             team2EndsAt: 1,
           }}
           umpire={{
-            pointScored,
+            pointScored() {},
             resetServerReceiver() {},
             setFirstGameDoublesReceiver() {},
             setServer() {},
@@ -501,92 +1548,101 @@ describe("<UmpireView/", () => {
           }}
         />,
       );
-      const scoreLeftButton = getByRole("button", { name: "Score left" });
-      const scoreRightButton = getByRole("button", { name: "Score right" });
-      return { scoreLeftButton, scoreRightButton };
-    };
+      const endsDialog = getByRole("dialog");
+      expect(endsDialog).toHaveTextContent("Ends !");
+    });
 
-    // this does not work with ServerReceiverChooser being displayed when auto
-    /* it("should not be possible to score a point if server requires choosing", () => {
-      const buttons = renderPointButtons(MatchWinState.Team1Won, {
-        servers: ["Team1Player1", "Team2Player1"],
-        firstGameDoublesReceivers: [],
-      });
-      expect(buttons.scoreLeftButton).toBeDisabled();
-      expect(buttons.scoreRightButton).toBeDisabled();
-    });
-    it("should not be possible to score a point if doubles receiver requires choosing", () => {
-      const buttons = renderPointButtons(MatchWinState.Team1Won, {
-        servers: [],
-        firstGameDoublesReceivers: ["Team1Player1", "Team1Player2"],
-      });
-      expect(buttons.scoreLeftButton).toBeDisabled();
-      expect(buttons.scoreRightButton).toBeDisabled();
-    }); */
-    it("should not be possible to score a point if match won", () => {
-      const buttons = renderPointButtons(
-        { matchWinState: MatchWinState.Team1Won, team1Left: true },
-        {
-          servers: [],
-          firstGameDoublesReceivers: [],
-        },
-      );
-      expect(buttons.scoreLeftButton).toBeDisabled();
-      expect(buttons.scoreRightButton).toBeDisabled();
-    });
-    interface PointScoredTest {
-      leftScored: boolean;
-      team1Left: boolean;
-      expectedTeam1Scored: boolean;
-    }
-    const pointScoredTests: PointScoredTest[] = [
-      {
-        leftScored: true,
-        team1Left: true,
-        expectedTeam1Scored: true,
-      },
-      {
-        leftScored: true,
-        team1Left: false,
-        expectedTeam1Scored: false,
-      },
-      {
-        leftScored: false,
-        team1Left: true,
-        expectedTeam1Scored: false,
-      },
-      {
-        leftScored: false,
-        team1Left: false,
-        expectedTeam1Scored: true,
-      },
-    ];
-    it.each(pointScoredTests)(
-      "should pointScored with the correct team",
-      async (pointScoredTest) => {
-        const user = userEvent.setup();
-        const pointScored = jest.fn();
-        const buttons = renderPointButtons(
-          {
+    it("should display the ends dialog with message Ends ! Switch receivers when MatchState.isEnds is true and doubles", () => {
+      const { getByRole } = render(
+        <UmpireView
+          team1Player1Name="T1P1"
+          team1Player2Name="T1P2"
+          team2Player1Name="T2P1"
+          team2Player2Name="T2P2"
+          autoShowServerReceiverChooser={false}
+          matchState={{
+            canUndoPoint: true,
+            isEnds: true,
+            remainingServes: 0,
             matchWinState: MatchWinState.NotWon,
-            team1Left: pointScoredTest.team1Left,
-          },
-          {
-            servers: [],
-            firstGameDoublesReceivers: [],
-          },
-          pointScored,
-        );
-        const scoreButton = pointScoredTest.leftScored
-          ? buttons.scoreLeftButton
-          : buttons.scoreRightButton;
-
-        await user.click(scoreButton);
-
-        expect(pointScored).toHaveBeenCalledWith(
-          pointScoredTest.expectedTeam1Scored,
-        );
-      },
-    );
+            server: undefined,
+            receiver: undefined,
+            gameScores: [],
+            team1Left: true,
+            team1Score: { points: 0, games: 0 },
+            team2Score: { points: 0, games: 0 },
+            pointHistory: [],
+            canResetServerReceiver: false,
+            serverReceiverChoice: {
+              servers: [],
+              firstGameDoublesReceivers: [],
+            },
+          }}
+          rules={{
+            bestOf: 1,
+            upTo: 1,
+            clearBy2: false,
+            numServes: 1,
+            team1EndsAt: 1,
+            team2EndsAt: 1,
+          }}
+          umpire={{
+            pointScored() {},
+            resetServerReceiver() {},
+            setFirstGameDoublesReceiver() {},
+            setServer() {},
+            switchEnds() {},
+            undoPoint() {},
+          }}
+        />,
+      );
+      const endsDialog = getByRole("dialog");
+      expect(endsDialog).toHaveTextContent("Ends ! Switch receivers");
+    });
+    it("should not display the ends dialog if not ends", () => {
+      const { queryByRole } = render(
+        <UmpireView
+          team1Player1Name="T1P1"
+          team2Player1Name="T2P1"
+          autoShowServerReceiverChooser={false}
+          matchState={{
+            canUndoPoint: true,
+            isEnds: false,
+            remainingServes: 0,
+            matchWinState: MatchWinState.NotWon,
+            server: undefined,
+            receiver: undefined,
+            gameScores: [],
+            team1Left: true,
+            team1Score: { points: 0, games: 0 },
+            team2Score: { points: 0, games: 0 },
+            pointHistory: [],
+            canResetServerReceiver: false,
+            serverReceiverChoice: {
+              servers: [],
+              firstGameDoublesReceivers: [],
+            },
+          }}
+          rules={{
+            bestOf: 1,
+            upTo: 1,
+            clearBy2: false,
+            numServes: 1,
+            team1EndsAt: 1,
+            team2EndsAt: 1,
+          }}
+          umpire={{
+            pointScored() {},
+            resetServerReceiver() {},
+            setFirstGameDoublesReceiver() {},
+            setServer() {},
+            switchEnds() {},
+            undoPoint() {},
+          }}
+        />,
+      );
+      const endsDialog = queryByRole("dialog");
+      expect(endsDialog).toBeNull();
+    });
   });
 });

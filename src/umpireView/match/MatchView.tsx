@@ -2,7 +2,7 @@ import { TeamScore } from "../../umpire";
 import { TeamView } from "../team/TeamView";
 import { MatchScore, PointState } from "./score/MatchScore";
 import { Box } from "@mui/material";
-import { TeamPointsFontSizes } from "./score/TeamPoints";
+import { TeamFontSizes } from "./score/Team";
 
 export enum LeftRightMatchWinState {
   NotWon = 0,
@@ -33,7 +33,7 @@ export type MatchViewProps = {
   remainingServes: number;
   serverReceiverTop: boolean;
 } & ServerReceiverInfo &
-  TeamPointsFontSizes;
+  TeamFontSizes;
 
 function getPointState(
   leftRightMatchWinState: LeftRightMatchWinState,
@@ -111,7 +111,7 @@ export function MatchView({
         gamePointFontSize={gamePointFontSize}
         setPointFontSize={setPointFontSize}
       />
-      <Box mt={1} sx={{ width: "100%" }}>
+      <Box component="section" aria-label="Teams" mt={1} sx={{ width: "100%" }}>
         <div
           style={{
             display: "inline-block",
@@ -119,6 +119,7 @@ export function MatchView({
           }}
         >
           <TeamView
+            isLeft={true}
             player1Bottom={
               serverReceiverTop &&
               teamPlayer2IsServerReceiver(
@@ -155,6 +156,7 @@ export function MatchView({
           }}
         >
           <TeamView
+            isLeft={false}
             player1Bottom={
               serverReceiverTop &&
               teamPlayer2IsServerReceiver(
