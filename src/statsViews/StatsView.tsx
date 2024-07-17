@@ -1,7 +1,12 @@
 import { mangoFusionPalette } from "@mui/x-charts/colorPalettes";
 import { GameScoreLineChart } from "./GameScoreLineChart";
 import { GameScore, PointHistory } from "../umpire";
-import { isGameOrMatchWon, isMatchWon } from "../umpire/pointStateHelpers";
+import {
+  isGameOrMatchWon,
+  isGamePoint,
+  isMatchPoint,
+  isMatchWon,
+} from "../umpire/pointStateHelpers";
 import { scoreTooltipRenderer } from "./GameScoreLineChart/ScoreTooltipRenderer/scoreTooltipRenderer";
 import Box from "@mui/material/Box/Box";
 import { GameStats, getGameStats } from "../matchstats";
@@ -11,74 +16,6 @@ import {
   PointsBreakdown,
   ServeReceiveRecord,
 } from "../matchstats/PointsBreakdownStats";
-import {
-  GameMatchPoints,
-  GameMatchPointState,
-} from "../matchstats/GameMatchPointsStats";
-
-enum SaveablePointState {
-  Default,
-  GamePoint,
-  MatchPoint,
-  SavedGamePoint,
-  SavedMatchPoint,
-}
-
-function findInRangeGameMatchPointState(
-  gameMatchPointStates: GameMatchPointState[],
-  pointNumber,
-): GameMatchPointState | undefined {
-  for (let i = 0; i < gameMatchPointStates.length; i++) {
-    const state = gameMatchPointStates[i];
-    const inRange =
-      state.pointNumber <= pointNumber &&
-      pointNumber <= state.pointNumber + state.numGameMatchPoints;
-    if (inRange) {
-      return state;
-    }
-  }
-}
-
-function getSavedOrGameOrMatchPointState(
-  gameMatchPointState: GameMatchPointState,
-  pointNumber: number,
-): SaveablePointState {
-  const numPointsSinceEntered = pointNumber - gameMatchPointState.pointNumber;
-  if (
-    numPointsSinceEntered > 0 &&
-    numPointsSinceEntered === gameMatchPointState.pointsSaved
-  ) {
-    return gameMatchPointState.isGamePoint
-      ? SaveablePointState.SavedGamePoint
-      : SaveablePointState.SavedMatchPoint;
-  }
-  return gameMatchPointState.isGamePoint
-    ? SaveablePointState.GamePoint
-    : SaveablePointState.MatchPoint;
-}
-
-function getSaveablePointState(
-  gameMatchPoints: GameMatchPoints,
-  pointNumber: number,
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  team1WonPoint: boolean,
-) {
-  const team1State = findInRangeGameMatchPointState(
-    gameMatchPoints.team1,
-    pointNumber,
-  );
-  if (team1State !== undefined) {
-    return getSavedOrGameOrMatchPointState(team1State, pointNumber);
-  }
-  const team2State = findInRangeGameMatchPointState(
-    gameMatchPoints.team2,
-    pointNumber,
-  );
-  if (team2State !== undefined) {
-    return getSavedOrGameOrMatchPointState(team2State, pointNumber);
-  }
-  return SaveablePointState.Default;
-}
 
 export function StatsView({
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -139,28 +76,26 @@ export function StatsView({
             }}
             mark={{
               // eslint-disable-next-line @typescript-eslint/no-unused-vars
-              getColor(_, score, index) {
+              getColor(_, score, pointNumber) {
                 if (isGameOrMatchWon(score.pointState)) {
                   return "white";
                 }
-                const pointsToHere = pointHistoryForGame.slice(0, index);
-                const gameMatchPoints =
-                  getGameStats(pointsToHere).gameMatchPoints;
-                if (gameMatchPoints !== undefined) {
-                  const state = getSaveablePointState(
-                    gameMatchPoints,
-                    index,
-                    score.team1WonPoint,
-                  );
-                  switch (state) {
-                    case SaveablePointState.GamePoint:
-                      return "orange";
-                    case SaveablePointState.MatchPoint:
-                      return "red";
-                    case SaveablePointState.SavedGamePoint:
-                      return "green";
-                    case SaveablePointState.SavedMatchPoint:
-                      return "yellow";
+                const gameMatchPointsForPointNumber = getGameStats(
+                  pointHistoryForGame.slice(0, pointNumber),
+                ).gameMatchPoints;
+                if (gameMatchPointsForPointNumber !== undefined) {
+                  const savedPointAt =
+                    gameMatchPointsForPointNumber.savedPointsAt.find(
+                      (savedPointAt) => savedPointAt.at === pointNumber,
+                    );
+                  if (savedPointAt !== undefined) {
+                    return savedPointAt.isGamePoint ? "green" : "yellow";
+                  }
+                  if (isGamePoint(score.pointState)) {
+                    return "orange";
+                  }
+                  if (isMatchPoint(score.pointState)) {
+                    return "red";
                   }
                 }
               },
@@ -216,7 +151,7 @@ function PointsBreakdownRows({
     <>
       <tr>
         <td>{getServeDisplay(team1Serve)}</td>
-        <td>Service</td>
+        <td>Services won</td>
         <td>{getServeDisplay(team2Serve)}</td>
       </tr>
     </>

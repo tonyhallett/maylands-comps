@@ -55,9 +55,17 @@ export type GameScoreLineChartProps<T extends GameScoreState = GameScoreState> =
   };
 
 interface MarkProps<T> {
-  getColor(team1: boolean, score: T, index: number): MarkElementProps["color"];
-  getShape(team1: boolean, score: T, index: number): MarkElementProps["shape"];
-  showMark(team1: boolean, score: T, index: number): boolean;
+  getColor(
+    team1: boolean,
+    score: T,
+    pointNumber: number,
+  ): MarkElementProps["color"];
+  getShape(
+    team1: boolean,
+    score: T,
+    pointNumber: number,
+  ): MarkElementProps["shape"];
+  showMark(team1: boolean, score: T, pointNumber: number): boolean;
 }
 
 export const team1SeriesId = "Team1";

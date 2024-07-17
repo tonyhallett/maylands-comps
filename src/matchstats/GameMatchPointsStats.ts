@@ -21,9 +21,14 @@ export interface GameMatchPointState {
   pointNumber: number;
 }
 
+interface SavedPoint {
+  isGamePoint: boolean;
+  at: number;
+}
 export interface GameMatchPoints {
   team1: GameMatchPointState[];
   team2: GameMatchPointState[];
+  savedPointsAt: SavedPoint[];
 }
 
 export class GameMatchPointsStats {
@@ -31,6 +36,7 @@ export class GameMatchPointsStats {
   private gameMatchPoints: GameMatchPoints = {
     team1: [],
     team2: [],
+    savedPointsAt: [],
   };
 
   private getEnteredGameMatchPointState = (
@@ -55,19 +61,27 @@ export class GameMatchPointsStats {
     };
   };
 
-  private pointSaved = ({
+  private savePoint = (gameMatchPointState: GameMatchPointState) => {
+    gameMatchPointState.pointsSaved++;
+    this.gameMatchPoints.savedPointsAt.push({
+      isGamePoint: gameMatchPointState.isGamePoint,
+      at: this.pointNumber,
+    });
+  };
+
+  private incrementPointsSavedIfEnteredGameOrMatchPoint = ({
     team1: team1State,
     team2: team2State,
   }: EnteredGameMatchPointStates) => {
     if (team1State !== undefined) {
-      team1State.pointsSaved++;
+      this.savePoint(team1State);
     }
     if (team2State !== undefined) {
-      team2State.pointsSaved++;
+      this.savePoint(team2State);
     }
   };
 
-  private convertAndPossiblySave = (
+  private convert = (
     { team1: team1State, team2: team2State }: EnteredGameMatchPointStates,
     team1: boolean,
   ) => {
@@ -75,7 +89,7 @@ export class GameMatchPointsStats {
     state.converted = true;
     const otherState = team1 ? team2State : team1State;
     if (otherState !== undefined) {
-      otherState.pointsSaved++;
+      this.savePoint(otherState);
     }
   };
 
@@ -106,7 +120,7 @@ export class GameMatchPointsStats {
     if (state === undefined) {
       this.newState(team1, gameOrMatchPoints, isGamePoint);
     } else {
-      state.pointsSaved++;
+      this.savePoint(state);
     }
   };
 
@@ -125,7 +139,9 @@ export class GameMatchPointsStats {
     const isGamePoint = gamePointTeam1 || gamePointTeam2;
     // if in a game/match point state then have not gone from one to the other
     if (isGameOrMatchPointTeam1 && isGameOrMatchPointTeam2) {
-      this.pointSaved(enteredGameMatchPointStates);
+      this.incrementPointsSavedIfEnteredGameOrMatchPoint(
+        enteredGameMatchPointStates,
+      );
       team1State === undefined &&
         this.newState(true, point.gameOrMatchPoints!, isGamePoint);
       team2State === undefined &&
@@ -151,11 +167,13 @@ export class GameMatchPointsStats {
     this.pointNumber++;
     const enteredGameMatchPointStates = this.getEnteredGameMatchPointStates();
     if (point.pointState === PointState.NotWon) {
-      this.pointSaved(enteredGameMatchPointStates);
+      this.incrementPointsSavedIfEnteredGameOrMatchPoint(
+        enteredGameMatchPointStates,
+      );
     } else if (team1WonGameOrMatch(point.pointState)) {
-      this.convertAndPossiblySave(enteredGameMatchPointStates, true);
+      this.convert(enteredGameMatchPointStates, true);
     } else if (team2WonGameOrMatch(point.pointState)) {
-      this.convertAndPossiblySave(enteredGameMatchPointStates, false);
+      this.convert(enteredGameMatchPointStates, false);
     } else {
       this.applyGamePointOrMatchPoint(enteredGameMatchPointStates, point);
     }
