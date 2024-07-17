@@ -268,7 +268,7 @@ export function UmpireView({
                 bestOf: rules.bestOf,
                 clearBy2: rules.clearBy2,
                 upTo: rules.upTo,
-                numServes: rules.upTo,
+                numServes: rules.numServes,
                 team1EndsAt: rules.team1EndsAt,
                 team2EndsAt: rules.team2EndsAt,
                 team1Identifier: getTeamInitials(
