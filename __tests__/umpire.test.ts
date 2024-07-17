@@ -472,6 +472,35 @@ describe("umpiring", () => {
       });
     });
 
+    it.each([true, false])(
+      "should increment correct games when go to deuce twice - team1 wins - %p",
+      (team1Wins) => {
+        const umpire = getNormalSinglesBestOf5Umpire();
+        scorePoints(umpire, true, 10);
+        scorePoints(umpire, false, 10);
+        umpire.pointScored(true);
+        umpire.pointScored(false);
+
+        umpire.pointScored(team1Wins);
+        const matchState = umpire.pointScored(team1Wins);
+
+        const winTeamScore = team1Wins
+          ? matchState.team1Score
+          : matchState.team2Score;
+        const loseTeamScore = !team1Wins
+          ? matchState.team1Score
+          : matchState.team2Score;
+        expect(loseTeamScore).toEqual<TeamScore>({
+          games: 0,
+          points: 0,
+        });
+        expect(winTeamScore).toEqual<TeamScore>({
+          games: 1,
+          points: 0,
+        });
+      },
+    );
+
     it("should have game won at 12-10 normal rules", () => {
       const umpire = getNormalSinglesBestOf5Umpire();
 

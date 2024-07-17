@@ -55,9 +55,9 @@ export type GameScoreLineChartProps<T extends GameScoreState = GameScoreState> =
   };
 
 interface MarkProps<T> {
-  getColor(team1: boolean, score: T, isStartScore): MarkElementProps["color"];
-  getShape(team1: boolean, score: T, isStartScore): MarkElementProps["shape"];
-  showMark(team1: boolean, score: T, isStartScore): boolean;
+  getColor(team1: boolean, score: T, index: number): MarkElementProps["color"];
+  getShape(team1: boolean, score: T, index: number): MarkElementProps["shape"];
+  showMark(team1: boolean, score: T, index: number): boolean;
 }
 
 export const team1SeriesId = "Team1";
@@ -84,19 +84,19 @@ export function GameScoreLineChart(props: GameScoreLineChartProps) {
     showMarkParams: ShowMarkParams,
   ): boolean {
     const score = scoresWithStartScore[showMarkParams.index];
-    return props.mark.showMark(team1, score, showMarkParams.index === 0);
+    return props.mark.showMark(team1, score, showMarkParams.index);
   }
 
   const smarterMarkElementProps: SmarterMarkElementSlotProps = {
     getColor(seriesId, dataIndex) {
       const isTeam1 = seriesId === team1SeriesId;
       const chartScore = scoresWithStartScore[dataIndex];
-      return props.mark.getColor(isTeam1, chartScore, dataIndex === 0);
+      return props.mark.getColor(isTeam1, chartScore, dataIndex);
     },
     getShape(seriesId, dataIndex) {
       const isTeam1 = seriesId === team1SeriesId;
       const chartScore = scoresWithStartScore[dataIndex];
-      return props.mark.getShape(isTeam1, chartScore, dataIndex === 0);
+      return props.mark.getShape(isTeam1, chartScore, dataIndex);
     },
   };
   //#endregion

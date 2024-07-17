@@ -92,7 +92,6 @@ export interface GameScoreState extends GameScore {
 
 export interface PointHistory extends GameScoreState, ServerReceiver {
   date: Date;
-  pointState: PointState;
   gameOrMatchPoints?: number;
 }
 export type GamePointHistory = PointHistory[];
@@ -587,10 +586,10 @@ export class Umpire {
   ): GameWonState {
     const date = this.dateProvider();
     const matchWinStatus = this.matchWinStatus;
-    const matchState = matchWinStatus.matchWinState;
+    const matchWinState = matchWinStatus.matchWinState;
 
     const gameWonState = this.getGameWonState();
-    const pointState = this.getPointState(matchState, gameWonState);
+    const pointState = this.getPointState(matchWinState, gameWonState);
 
     const pointHistory: PointHistory = {
       team1WonPoint: team1,
@@ -698,7 +697,9 @@ export class Umpire {
     if (pointsDifference < clearBy) {
       return GameWonState.NotWon;
     }
-    return team1IsUpTo ? GameWonState.Team1Won : GameWonState.Team2Won;
+    return this._team1Score.points > this._team2Score.points
+      ? GameWonState.Team1Won
+      : GameWonState.Team2Won;
   }
 
   private nextGame(team1Won: boolean): void {

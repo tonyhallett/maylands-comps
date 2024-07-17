@@ -4,6 +4,8 @@ import {
   isGamePointTeam2,
   isMatchPointTeam1,
   isMatchPointTeam2,
+  team1WonGameOrMatch,
+  team2WonGameOrMatch,
 } from "../umpire/pointStateHelpers";
 
 export interface EnteredGameMatchPointStates {
@@ -12,22 +14,23 @@ export interface EnteredGameMatchPointStates {
 }
 
 export interface GameMatchPointState {
+  isGamePoint: boolean;
   numGameMatchPoints: number;
   pointsSaved: number;
   converted: boolean;
+  pointNumber: number;
 }
 
 export interface GameMatchPoints {
-  isMatchPoint: boolean;
   team1: GameMatchPointState[];
   team2: GameMatchPointState[];
 }
 
 export class GameMatchPointsStats {
+  private pointNumber = 0;
   private gameMatchPoints: GameMatchPoints = {
     team1: [],
     team2: [],
-    isMatchPoint: false,
   };
 
   private getEnteredGameMatchPointState = (
@@ -76,7 +79,11 @@ export class GameMatchPointsStats {
     }
   };
 
-  private newState = (team1: boolean, gameOrMatchPoints: number) => {
+  private newState = (
+    team1: boolean,
+    gameOrMatchPoints: number,
+    isGamePoint: boolean,
+  ) => {
     const states = team1
       ? this.gameMatchPoints.team1
       : this.gameMatchPoints.team2;
@@ -84,6 +91,8 @@ export class GameMatchPointsStats {
       numGameMatchPoints: gameOrMatchPoints,
       pointsSaved: 0,
       converted: false,
+      pointNumber: this.pointNumber,
+      isGamePoint,
     });
   };
 
@@ -91,27 +100,14 @@ export class GameMatchPointsStats {
     { team1: team1State, team2: team2State }: EnteredGameMatchPointStates,
     team1: boolean,
     gameOrMatchPoints: number,
+    isGamePoint: boolean,
   ) => {
     const state = team1 ? team1State : team2State;
     if (state === undefined) {
-      this.newState(team1, gameOrMatchPoints);
+      this.newState(team1, gameOrMatchPoints, isGamePoint);
     } else {
       state.pointsSaved++;
     }
-  };
-
-  private team1WonGame = (point: PointHistory) => {
-    return (
-      point.pointState === PointState.Team1Won ||
-      point.pointState === PointState.GameWonTeam1
-    );
-  };
-
-  private team2WonGame = (point: PointHistory) => {
-    return (
-      point.pointState === PointState.Team2Won ||
-      point.pointState === PointState.GameWonTeam2
-    );
   };
 
   private applyGamePointOrMatchPoint(
@@ -126,37 +122,39 @@ export class GameMatchPointsStats {
     const matchPointTeam2 = isMatchPointTeam2(point.pointState);
     const isGameOrMatchPointTeam1 = gamePointTeam1 || matchPointTeam1;
     const isGameOrMatchPointTeam2 = gamePointTeam2 || matchPointTeam2;
-
+    const isGamePoint = gamePointTeam1 || gamePointTeam2;
     // if in a game/match point state then have not gone from one to the other
     if (isGameOrMatchPointTeam1 && isGameOrMatchPointTeam2) {
       this.pointSaved(enteredGameMatchPointStates);
-      team1State === undefined && this.newState(true, point.gameOrMatchPoints!);
+      team1State === undefined &&
+        this.newState(true, point.gameOrMatchPoints!, isGamePoint);
       team2State === undefined &&
-        this.newState(false, point.gameOrMatchPoints!);
+        this.newState(false, point.gameOrMatchPoints!, isGamePoint);
     } else if (isGameOrMatchPointTeam1) {
       this.savePointOrNewState(
         enteredGameMatchPointStates,
         true,
         point.gameOrMatchPoints!,
+        isGamePoint,
       );
     } else {
       this.savePointOrNewState(
         enteredGameMatchPointStates,
         false,
         point.gameOrMatchPoints!,
+        isGamePoint,
       );
     }
-
-    this.gameMatchPoints.isMatchPoint = matchPointTeam1 || matchPointTeam2;
   }
 
   nextPoint = (point: PointHistory) => {
+    this.pointNumber++;
     const enteredGameMatchPointStates = this.getEnteredGameMatchPointStates();
     if (point.pointState === PointState.NotWon) {
       this.pointSaved(enteredGameMatchPointStates);
-    } else if (this.team1WonGame(point)) {
+    } else if (team1WonGameOrMatch(point.pointState)) {
       this.convertAndPossiblySave(enteredGameMatchPointStates, true);
-    } else if (this.team2WonGame(point)) {
+    } else if (team2WonGameOrMatch(point.pointState)) {
       this.convertAndPossiblySave(enteredGameMatchPointStates, false);
     } else {
       this.applyGamePointOrMatchPoint(enteredGameMatchPointStates, point);

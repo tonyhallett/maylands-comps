@@ -13,6 +13,7 @@ import {
   TeamPointsBreakdown,
 } from "../src/matchstats/PointsBreakdownStats";
 import { expect } from "../customMatchers/extendedExpect";
+import { isGamePoint } from "../src/umpire/pointStateHelpers";
 
 describe("getGameStats", () => {
   describe("streaks", () => {
@@ -188,9 +189,6 @@ describe("getGameStats", () => {
     it.each(enterGamePointTests)(
       "should have GameOrMatchPoints when enter game point state",
       ({ gameOrMatchPoints, pointState }) => {
-        const isMatchPoint =
-          pointState === PointState.MatchPointTeam1 ||
-          pointState === PointState.MatchPointTeam2;
         const team1WonPoint =
           pointState === PointState.GamePointTeam1 ||
           pointState === PointState.MatchPointTeam1;
@@ -217,7 +215,6 @@ describe("getGameStats", () => {
         ];
         const gameMatchPoints = getGameStats(gamePointHistory)
           .gameMatchPoints as GameMatchPoints;
-        expect(gameMatchPoints.isMatchPoint).toBe(isMatchPoint);
         const gameMatchPointsTeam = team1WonPoint
           ? gameMatchPoints.team1
           : gameMatchPoints.team2;
@@ -227,6 +224,8 @@ describe("getGameStats", () => {
             converted: false,
             pointsSaved: 0,
             numGameMatchPoints: gameOrMatchPoints,
+            pointNumber: 2,
+            isGamePoint: isGamePoint(pointState),
           },
         ]);
         const nonGameMatchPointsTeam = team1WonPoint
@@ -266,6 +265,8 @@ describe("getGameStats", () => {
           converted: false,
           pointsSaved: 1,
           numGameMatchPoints: 2,
+          pointNumber: 1,
+          isGamePoint: true,
         },
       ]);
     });
@@ -311,6 +312,8 @@ describe("getGameStats", () => {
           converted: false,
           pointsSaved: 2,
           numGameMatchPoints: 2,
+          pointNumber: 1,
+          isGamePoint: true,
         },
       ]);
     });
@@ -356,6 +359,8 @@ describe("getGameStats", () => {
           converted: false,
           pointsSaved: 2,
           numGameMatchPoints: 2,
+          pointNumber: 1,
+          isGamePoint: true,
         },
       ]);
     });
@@ -401,6 +406,8 @@ describe("getGameStats", () => {
           converted: true,
           pointsSaved: 1,
           numGameMatchPoints: 2,
+          pointNumber: 1,
+          isGamePoint: false,
         },
       ]);
     });
@@ -446,12 +453,15 @@ describe("getGameStats", () => {
           converted: true,
           pointsSaved: 1,
           numGameMatchPoints: 2,
+          pointNumber: 1,
+          isGamePoint: true,
         },
       ]);
     });
 
     it("should create a new gameMatchPointState when a new game point is entered", () => {
       const gamePointHistory: GamePointHistory = [
+        // enter game point for Team1
         {
           date: new Date(),
           team1WonPoint: true,
@@ -462,6 +472,7 @@ describe("getGameStats", () => {
           team1Points: 1,
           team2Points: 0,
         },
+        // game point saved by Team2
         {
           date: new Date(),
           team1WonPoint: false,
@@ -472,6 +483,7 @@ describe("getGameStats", () => {
           team1Points: 1,
           team2Points: 1,
         },
+        // game point saved by Team2
         {
           date: new Date(),
           team1WonPoint: true,
@@ -481,6 +493,7 @@ describe("getGameStats", () => {
           team1Points: 2,
           team2Points: 1,
         },
+        // enter game point for Team1
         {
           date: new Date(),
           team1WonPoint: true,
@@ -501,11 +514,68 @@ describe("getGameStats", () => {
           converted: false,
           pointsSaved: 2,
           numGameMatchPoints: 2,
+          pointNumber: 1,
+          isGamePoint: true,
         },
         {
           converted: false,
           pointsSaved: 0,
           numGameMatchPoints: 2,
+          pointNumber: 4,
+          isGamePoint: true,
+        },
+      ]);
+    });
+
+    it("should be able to save and enter", () => {
+      // will need to do combinations of game point with match point
+
+      const gamePointHistory: GamePointHistory = [
+        // not clear by 2
+
+        // enter game point for Team1
+        {
+          date: new Date(),
+          team1WonPoint: true,
+          pointState: PointState.GamePointTeam1,
+          server: "Team1Player1",
+          receiver: "Team2Player1",
+          gameOrMatchPoints: 2,
+          team1Points: 10,
+          team2Points: 9,
+        },
+        // game point saved by Team2 and enter game point for Team2
+        {
+          date: new Date(),
+          team1WonPoint: false,
+          pointState: PointState.GamePointTeam1 + PointState.GamePointTeam2,
+          server: "Team1Player1",
+          receiver: "Team2Player1",
+          gameOrMatchPoints: 1,
+          team1Points: 10,
+          team2Points: 10,
+        },
+      ];
+
+      const gameMatchPoints = getGameStats(gamePointHistory)
+        .gameMatchPoints as GameMatchPoints;
+
+      expect(gameMatchPoints.team1).toEqual<GameMatchPointState[]>([
+        {
+          converted: false,
+          pointsSaved: 1,
+          numGameMatchPoints: 2,
+          pointNumber: 1,
+          isGamePoint: true,
+        },
+      ]);
+      expect(gameMatchPoints.team2).toEqual<GameMatchPointState[]>([
+        {
+          converted: false,
+          pointsSaved: 0,
+          numGameMatchPoints: 1,
+          pointNumber: 2,
+          isGamePoint: true,
         },
       ]);
     });
@@ -544,6 +614,8 @@ describe("getGameStats", () => {
             converted: false,
             pointsSaved: 1,
             numGameMatchPoints: 2,
+            pointNumber: 1,
+            isGamePoint: true,
           },
         ]);
         expect(gameMatchPoints.team2).toEqual<GameMatchPointState[]>([
@@ -551,6 +623,8 @@ describe("getGameStats", () => {
             converted: false,
             pointsSaved: 0,
             numGameMatchPoints: 1,
+            pointNumber: 2,
+            isGamePoint: true,
           },
         ]);
       });
@@ -587,6 +661,8 @@ describe("getGameStats", () => {
             converted: false,
             pointsSaved: 1,
             numGameMatchPoints: 2,
+            pointNumber: 1,
+            isGamePoint: true,
           },
         ]);
         expect(gameMatchPoints.team1).toEqual<GameMatchPointState[]>([
@@ -594,6 +670,8 @@ describe("getGameStats", () => {
             converted: false,
             pointsSaved: 0,
             numGameMatchPoints: 1,
+            pointNumber: 2,
+            isGamePoint: true,
           },
         ]);
       });
@@ -639,6 +717,8 @@ describe("getGameStats", () => {
             converted: true,
             pointsSaved: 1,
             numGameMatchPoints: 2,
+            pointNumber: 1,
+            isGamePoint: true,
           },
         ]);
         expect(gameMatchPoints.team2).toEqual<GameMatchPointState[]>([
@@ -646,6 +726,8 @@ describe("getGameStats", () => {
             converted: false,
             pointsSaved: 1,
             numGameMatchPoints: 1,
+            pointNumber: 2,
+            isGamePoint: true,
           },
         ]);
       });

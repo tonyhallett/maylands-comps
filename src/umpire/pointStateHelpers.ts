@@ -36,3 +36,15 @@ export const isMatchWon = (pointState: PointState) => {
 export const isGameOrMatchWon = (pointState: PointState) => {
   return isMatchWon(pointState) || isGameWon(pointState);
 };
+
+export const team1WonGameOrMatch = (pointState: PointState) => {
+  return (
+    pointState === PointState.Team1Won || pointState === PointState.GameWonTeam1
+  );
+};
+
+export const team2WonGameOrMatch = (pointState: PointState) => {
+  return (
+    pointState === PointState.Team2Won || pointState === PointState.GameWonTeam2
+  );
+};
