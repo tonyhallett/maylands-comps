@@ -685,6 +685,7 @@ describe("umpiring", () => {
       expect(scorePointAndGetState(true)).toBe(PointState.MatchPointTeam1); //2-0
       scorePoints(umpire, false, 2); //2-2
       expect(scorePointAndGetState(false)).toBe(PointState.MatchPointTeam2); //2-3
+      expect(scorePointAndGetState(false)).toBe(PointState.Team2Won); //2-4
 
       umpire = new Umpire(
         {
@@ -720,6 +721,7 @@ describe("umpiring", () => {
       expect(scorePointAndGetState(false)).toBe(
         PointState.MatchPointTeam1 + PointState.MatchPointTeam2,
       );
+      expect(scorePointAndGetState(true)).toBe(PointState.Team1Won);
     });
 
     it("should keep scores from previous games", () => {

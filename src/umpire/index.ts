@@ -429,8 +429,8 @@ export class Umpire {
     );
   }
 
-  public getMatchState(): MatchState {
-    const matchWinStatus = this.matchWinStatus;
+  public getMatchState(matchWinStatus?: MatchWinStatus): MatchState {
+    matchWinStatus = matchWinStatus ?? this.matchWinStatus;
     const matchWinState = matchWinStatus.matchWinState;
     const matchWon = this.matchWon(matchWinState);
     let serverReceiverChoice: ServerReceiverChoice;
@@ -534,18 +534,38 @@ export class Umpire {
   }
 
   pointScored(team1: boolean): MatchState {
-    const gameWonState = this.addPoint(team1);
+    const serverReceiver = this.getServerReceiver(
+      this.serverReceiverChoice,
+      false,
+    );
+    const { team1Points, team2Points } = this.incrementTeamPoints(team1);
+
     if (this.isDoubles) {
       this.setDoublesEndsPoints(team1);
     }
+    const gameWonState = this.getGameWonState();
+    let matchWon = false;
+    if (gameWonState !== GameWonState.NotWon) {
+      matchWon = this.updateGameScores(team1);
+    }
+    const matchWinStatus = this.matchWinStatus;
+    this.addPointHistory(
+      team1,
+      serverReceiver,
+      team1Points,
+      team2Points,
+      gameWonState,
+      this.matchWinStatus,
+    );
 
     if (gameWonState === GameWonState.NotWon) {
       this.switchEndsIfEnds(team1);
-    } else {
-      this.nextGame(gameWonState === GameWonState.Team1Won);
+    } else if (!matchWon) {
+      this.switchEnds();
+      this._pointHistory.push([]);
     }
 
-    return this.getMatchState();
+    return this.getMatchState(matchWinStatus);
   }
 
   private setDoublesEndsPoints(team1: boolean) {
@@ -557,69 +577,77 @@ export class Umpire {
     }
   }
 
-  private addPoint(team1: boolean): GameWonState {
-    const serverReceiver = this.getServerReceiver(
-      this.serverReceiverChoice,
-      false,
-    );
-    this.incrementTeamPoints(team1);
-    return this.addPointHistory(team1, serverReceiver);
-  }
-
   private incrementTeamPoints(team1: boolean) {
     const teamScore = team1 ? this._team1Score : this._team2Score;
     teamScore.points += 1;
+    return {
+      team1Points: this._team1Score.points,
+      team2Points: this._team2Score.points,
+    };
+  }
+
+  private isDeuce(): boolean {
+    return (
+      this.clearBy2 &&
+      this._team1Score.points === this._team2Score.points &&
+      this._team1Score.points >= this._upTo - 1
+    );
   }
 
   private getPointState(
     matchWinState: MatchWinState,
     gameWonState: GameWonState,
   ): PointState {
+    if (matchWinState === MatchWinState.Team1Won) {
+      return PointState.Team1Won;
+    }
+    if (matchWinState === MatchWinState.Team2Won) {
+      return PointState.Team2Won;
+    }
+
     switch (gameWonState) {
       case GameWonState.Team1Won:
         return PointState.GameWonTeam1;
       case GameWonState.Team2Won:
         return PointState.GameWonTeam2;
     }
-    if (
-      this.clearBy2 &&
-      this._team1Score.points === this._team2Score.points &&
-      this._team1Score.points >= this._upTo - 1
-    ) {
+    if (this.isDeuce()) {
       return PointState.Deuce;
     }
+
     return matchWinState as unknown as PointState;
   }
 
   private addPointHistory(
-    team1: boolean,
+    team1WonPoint: boolean,
     serverReceiver: ServerReceiver,
-  ): GameWonState {
+    team1Points: number,
+    team2Points: number,
+    gameWonState: GameWonState,
+    matchWinStatus: MatchWinStatus,
+  ) {
     const date = this.dateProvider();
-    const matchWinStatus = this.matchWinStatus;
     const matchWinState = matchWinStatus.matchWinState;
 
-    const gameWonState = this.getGameWonState();
     const pointState = this.getPointState(matchWinState, gameWonState);
 
     const pointHistory: PointHistory = {
-      team1WonPoint: team1,
+      team1WonPoint,
       date,
       pointState,
       ...serverReceiver,
-      team1Points: this._team1Score.points,
-      team2Points: this._team2Score.points,
+      team1Points,
+      team2Points,
     };
     if (matchWinStatus.gameOrMatchPoints !== undefined) {
       pointHistory.gameOrMatchPoints = matchWinStatus.gameOrMatchPoints;
     }
 
     this._pointHistory[this._pointHistory.length - 1].push(pointHistory);
-    return gameWonState;
   }
 
   private switchEndsIfEnds(team1: boolean) {
-    const isMidwayLastGame = this.isEndsFromTeamScoringLast(team1); // todo affects server and receiver for doubles
+    const isMidwayLastGame = this.isEndsFromTeamScoringLast(team1);
     if (isMidwayLastGame) {
       this.switchEnds();
     }
@@ -728,12 +756,5 @@ export class Umpire {
       this._team2Score.points = this._team2StartGameScore;
     }
     return gameWon;
-  }
-  private nextGame(team1Won: boolean): void {
-    const gameWon = this.updateGameScores(team1Won);
-    if (!gameWon) {
-      this.switchEnds();
-      this._pointHistory.push([]);
-    }
   }
 }
