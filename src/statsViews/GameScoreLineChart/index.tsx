@@ -141,6 +141,7 @@ export function GameScoreLineChart(props: GameScoreLineChartProps) {
   const yAxis: SmarterLineChartProps["yAxis"][number] = {
     label: props.yAxisLabel,
     tickMaxStep: 1,
+    tickMinStep: 1,
     valueFormatter(value, context) {
       if (context.location === "tooltip") return undefined;
       return getYAxisTickTextGamePoint(value);
