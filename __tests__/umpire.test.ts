@@ -30,6 +30,7 @@ import {
 import { HandicapOptions, shiftHandicap } from "../src/umpire/shiftHandicap";
 import {
   Team,
+  getDoublesPartner,
   getDoublesServiceCycle,
   getPlayers,
 } from "../src/umpire/playersHelpers";
@@ -2672,6 +2673,70 @@ describe("umpiring", () => {
         expect(matchState.server).toBe<SinglesPlayer>(receiver);
         expect(matchState.receiver).toBe<SinglesPlayer>(server);
         expect(matchState.serverReceiverChoice.servers).toHaveLength(0);
+      },
+    );
+
+    interface UndoPointDoublesServerReceiverTest {
+      firstServer: Player;
+      firstReceiver: Player;
+    }
+    const undoPointDoublesServerReceiverTests: UndoPointDoublesServerReceiverTest[] =
+      [
+        {
+          firstServer: "Team1Player1",
+          firstReceiver: "Team2Player1",
+        },
+        {
+          firstServer: "Team1Player1",
+          firstReceiver: "Team2Player2",
+        },
+        {
+          firstServer: "Team1Player2",
+          firstReceiver: "Team2Player1",
+        },
+        {
+          firstServer: "Team1Player2",
+          firstReceiver: "Team2Player2",
+        },
+
+        {
+          firstServer: "Team2Player1",
+          firstReceiver: "Team1Player1",
+        },
+        {
+          firstServer: "Team2Player1",
+          firstReceiver: "Team1Player2",
+        },
+        {
+          firstServer: "Team2Player2",
+          firstReceiver: "Team1Player1",
+        },
+        {
+          firstServer: "Team2Player2",
+          firstReceiver: "Team1Player2",
+        },
+      ];
+    it.each(undoPointDoublesServerReceiverTests)(
+      "should have server receiver when undo doubles game winning point",
+      (undoPointDoublesServerReceiverTest) => {
+        const umpire = getNormalDoublesBestOf5Umpire();
+        umpire.setServer(undoPointDoublesServerReceiverTest.firstServer);
+        umpire.setFirstGameDoublesReceiver(
+          undoPointDoublesServerReceiverTest.firstReceiver,
+        );
+        scoreGames(umpire, true, 1);
+
+        const matchState = umpire.undoPoint();
+        expect(matchState.server).toBe<Player>(
+          undoPointDoublesServerReceiverTest.firstReceiver,
+        );
+        expect(matchState.receiver).toBe<Player>(
+          getDoublesPartner(undoPointDoublesServerReceiverTest.firstServer),
+        );
+        expect(matchState.serverReceiverChoice.servers).toHaveLength(0);
+        expect(
+          matchState.serverReceiverChoice.firstGameDoublesReceivers,
+        ).toHaveLength(0);
       },
     );
 

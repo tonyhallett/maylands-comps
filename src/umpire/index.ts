@@ -139,7 +139,13 @@ export class Umpire {
     this.undoGameWinScore();
     this.switchEnds();
     if (this.isDoubles) {
-      this.initialServersDoublesReceiver.gameInitialServers.pop();
+      const gameNumber = this.gamesPlayed() + 1;
+      const hasSetNextGameInitialServer =
+        gameNumber <
+        this.initialServersDoublesReceiver.gameInitialServers.length;
+      if (hasSetNextGameInitialServer) {
+        this.initialServersDoublesReceiver.gameInitialServers.pop();
+      }
     }
   }
 

@@ -22,7 +22,7 @@ export function getPlayers(isDoubles: boolean): Player[] {
     : ["Team1Player1", "Team2Player1"];
 }
 
-export const getDoublesPartner = (player: string): Player => {
+export const getDoublesPartner = (player: Player): Player => {
   switch (player) {
     case "Team1Player1":
       return "Team1Player2";

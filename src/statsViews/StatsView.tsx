@@ -145,7 +145,7 @@ function PointsBreakdownRows({
     if (serve.num === 0) {
       return "-";
     }
-    return `${serve.numWon} / ${serve.num} - ${Math.round(serve.winPercentage)} %`;
+    return `${Math.round(serve.winPercentage)} % (${serve.numWon} / ${serve.num})`;
   };
   return (
     <>
