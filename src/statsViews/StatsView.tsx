@@ -179,6 +179,9 @@ function LeadsRows({ leads }: { leads: Leads }) {
         <td>Greatest deficit overcome</td>
         <td>{leads.team2?.greatestDeficitOvercome ?? "-"}</td>
       </tr>
+      <tr>
+        <td>{`Lead changed ${leads.numChanges} time${leads.numChanges !== 1 ? "s" : ""}`}</td>
+      </tr>
     </>
   );
 }

@@ -21,7 +21,7 @@ export interface GameMatchPointState {
   pointNumber: number;
 }
 
-interface SavedPoint {
+export interface SavedPoint {
   isGamePoint: boolean;
   at: number;
 }
@@ -29,6 +29,7 @@ export interface GameMatchPoints {
   team1: GameMatchPointState[];
   team2: GameMatchPointState[];
   savedPointsAt: SavedPoint[];
+  numDeuces: number;
 }
 
 export class GameMatchPointsStats {
@@ -37,6 +38,7 @@ export class GameMatchPointsStats {
     team1: [],
     team2: [],
     savedPointsAt: [],
+    numDeuces: 0,
   };
 
   private getEnteredGameMatchPointState = (
@@ -163,7 +165,18 @@ export class GameMatchPointsStats {
     }
   }
 
+  constructor(
+    private readonly upTo: number,
+    private readonly clearBy2: boolean,
+  ) {}
   nextPoint = (point: PointHistory) => {
+    if (
+      this.clearBy2 &&
+      point.team1Points === point.team2Points &&
+      point.team1Points >= this.upTo - 1
+    ) {
+      this.gameMatchPoints.numDeuces++;
+    }
     this.pointNumber++;
     const enteredGameMatchPointStates = this.getEnteredGameMatchPointStates();
     if (point.pointState === PointState.NotWon) {

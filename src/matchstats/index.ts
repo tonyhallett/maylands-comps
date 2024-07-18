@@ -12,10 +12,14 @@ export interface GameStats {
   leads?: Leads;
 }
 
-export function getGameStats(gamePointHistory: GamePointHistory): GameStats {
+export function getGameStats(
+  gamePointHistory: GamePointHistory,
+  clearBy2 = true,
+  upTo = 11,
+): GameStats {
   const streakStats = new StreakStats();
   const leadStats = new LeadStats();
-  const gameMatchPointStats = new GameMatchPointsStats();
+  const gameMatchPointStats = new GameMatchPointsStats(upTo, clearBy2);
   const serviceReceiverRecordManager = new PointsBreakdownStats();
   gamePointHistory.forEach((point) => {
     streakStats.nextPoint(point);
