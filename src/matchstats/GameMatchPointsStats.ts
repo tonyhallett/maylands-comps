@@ -165,21 +165,16 @@ export class GameMatchPointsStats {
     }
   }
 
-  constructor(
-    private readonly upTo: number,
-    private readonly clearBy2: boolean,
-  ) {}
   nextPoint = (point: PointHistory) => {
-    if (
-      this.clearBy2 &&
-      point.team1Points === point.team2Points &&
-      point.team1Points >= this.upTo - 1
-    ) {
+    if (point.pointState === PointState.Deuce) {
       this.gameMatchPoints.numDeuces++;
     }
     this.pointNumber++;
     const enteredGameMatchPointStates = this.getEnteredGameMatchPointStates();
-    if (point.pointState === PointState.NotWon) {
+    if (
+      point.pointState === PointState.Default ||
+      point.pointState === PointState.Deuce
+    ) {
       this.incrementPointsSavedIfEnteredGameOrMatchPoint(
         enteredGameMatchPointStates,
       );

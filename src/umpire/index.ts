@@ -74,7 +74,7 @@ enum GameWonState {
 }
 
 export enum PointState {
-  NotWon = 0,
+  Default = 0,
   Team1Won = 1,
   Team2Won = 2,
   GamePointTeam1 = 4,
@@ -83,6 +83,7 @@ export enum PointState {
   MatchPointTeam2 = 32,
   GameWonTeam1 = 64,
   GameWonTeam2 = 128,
+  Deuce = 256,
 }
 
 export interface GameScoreState extends GameScore {
@@ -539,7 +540,7 @@ export class Umpire {
     }
 
     if (gameWonState === GameWonState.NotWon) {
-      this.pointScoredAndNotWon(team1);
+      this.switchEndsIfEnds(team1);
     } else {
       this.nextGame(gameWonState === GameWonState.Team1Won);
     }
@@ -574,16 +575,20 @@ export class Umpire {
     matchWinState: MatchWinState,
     gameWonState: GameWonState,
   ): PointState {
-    let pointState = matchWinState as unknown as PointState;
     switch (gameWonState) {
       case GameWonState.Team1Won:
-        pointState = PointState.GameWonTeam1;
-        break;
+        return PointState.GameWonTeam1;
       case GameWonState.Team2Won:
-        pointState = PointState.GameWonTeam2;
-        break;
+        return PointState.GameWonTeam2;
     }
-    return pointState;
+    if (
+      this.clearBy2 &&
+      this._team1Score.points === this._team2Score.points &&
+      this._team1Score.points >= this._upTo - 1
+    ) {
+      return PointState.Deuce;
+    }
+    return matchWinState as unknown as PointState;
   }
 
   private addPointHistory(
@@ -613,7 +618,7 @@ export class Umpire {
     return gameWonState;
   }
 
-  private pointScoredAndNotWon(team1: boolean) {
+  private switchEndsIfEnds(team1: boolean) {
     const isMidwayLastGame = this.isEndsFromTeamScoringLast(team1); // todo affects server and receiver for doubles
     if (isMidwayLastGame) {
       this.switchEnds();
@@ -708,17 +713,25 @@ export class Umpire {
       : GameWonState.Team2Won;
   }
 
-  private nextGame(team1Won: boolean): void {
+  private updateGameScores(team1Won: boolean): boolean {
     this._gameScores.push({
       team1Points: this._team1Score.points,
       team2Points: this._team2Score.points,
     });
     const teamScore = team1Won ? this._team1Score : this._team2Score;
     teamScore.games += 1;
-    this._team1Score.points = this._team1StartGameScore;
-    this._team2Score.points = this._team2StartGameScore;
-
-    if (teamScore.games !== requiredGamesToWin(this.bestOf)) {
+    this._team1Score.points = 0;
+    this._team2Score.points = 0;
+    const gameWon = teamScore.games === requiredGamesToWin(this.bestOf);
+    if (!gameWon) {
+      this._team1Score.points = this._team1StartGameScore;
+      this._team2Score.points = this._team2StartGameScore;
+    }
+    return gameWon;
+  }
+  private nextGame(team1Won: boolean): void {
+    const gameWon = this.updateGameScores(team1Won);
+    if (!gameWon) {
       this.switchEnds();
       this._pointHistory.push([]);
     }

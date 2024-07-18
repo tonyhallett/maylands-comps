@@ -1,4 +1,8 @@
 import { PointState, PointHistory } from "../umpire";
+import {
+  team1WonGameOrMatch,
+  team2WonGameOrMatch,
+} from "../umpire/pointStateHelpers";
 
 export interface TeamLeads {
   biggest: number | undefined;
@@ -16,7 +20,7 @@ enum Leader {
   Team2,
 }
 export class LeadStats {
-  private lastPointState = PointState.NotWon;
+  private lastPointState = PointState.Default;
   private biggestLeads = {
     team1: 0,
     team2: 0,
@@ -69,16 +73,10 @@ export class LeadStats {
               greatestDeficitOvercome: undefined,
             }
           : undefined;
-      if (
-        this.lastPointState === PointState.GameWonTeam1 ||
-        this.lastPointState === PointState.Team1Won
-      ) {
+      if (team1WonGameOrMatch(this.lastPointState)) {
         leads.team1!.greatestDeficitOvercome = leads.team2?.biggest;
       }
-      if (
-        this.lastPointState === PointState.GameWonTeam2 ||
-        this.lastPointState === PointState.Team2Won
-      ) {
+      if (team2WonGameOrMatch(this.lastPointState)) {
         leads.team2!.greatestDeficitOvercome = leads.team1?.biggest;
       }
       return leads;

@@ -473,6 +473,25 @@ describe("umpiring", () => {
       });
     });
 
+    it("should not show start game scores when match won", () => {
+      const umpire = new Umpire(
+        {
+          bestOf: 1,
+          clearBy2: true,
+          numServes: 2,
+          team1StartGameScore: 4,
+          team2StartGameScore: 5,
+          upTo: 11,
+        },
+        false,
+      );
+      const matchState = scorePoints(umpire, true, 7);
+      expect(matchState.team1Score).toEqual<TeamScore>({
+        games: 1,
+        points: 0,
+      });
+    });
+
     it.each([true, false])(
       "should increment correct games when go to deuce twice - team1 wins - %p",
       (team1Wins) => {
@@ -586,7 +605,7 @@ describe("umpiring", () => {
       expect(matchState.pointHistory[0][0]).toEqual<PointHistory>({
         team1WonPoint: true,
         date: dates[0],
-        pointState: PointState.NotWon,
+        pointState: PointState.Default,
         server: "Team1Player1",
         receiver: "Team2Player1",
         team1Points: 1,
@@ -596,7 +615,7 @@ describe("umpiring", () => {
       expect(matchState.pointHistory[0][1]).toEqual<PointHistory>({
         team1WonPoint: false,
         date: dates[1],
-        pointState: PointState.NotWon,
+        pointState: PointState.Default,
         server: "Team1Player1",
         receiver: "Team2Player1",
         team1Points: 1,
@@ -612,12 +631,95 @@ describe("umpiring", () => {
       expect(matchState.pointHistory[1][0]).toEqual<PointHistory>({
         team1WonPoint: true,
         date: dates[12],
-        pointState: PointState.NotWon,
+        pointState: PointState.Default,
         server: "Team2Player1",
         receiver: "Team1Player1",
         team1Points: 1,
         team2Points: 0,
       });
+    });
+
+    it("should have correct point states", () => {
+      let umpire = new Umpire(
+        {
+          clearBy2: true,
+          upTo: 3,
+          numServes: 2,
+          team1StartGameScore: 0,
+          team2StartGameScore: 0,
+          bestOf: 3,
+        },
+        false,
+      );
+
+      const scorePointAndGetState = (team1: boolean) => {
+        const matchState = umpire.pointScored(team1);
+
+        const pointHistory = matchState.pointHistory;
+        let lastGameHistory = getLast(pointHistory as PointHistory[][]);
+        if (lastGameHistory.length === 0) {
+          lastGameHistory = pointHistory[
+            pointHistory.length - 2
+          ] as PointHistory[];
+        }
+        return getLast(lastGameHistory).pointState;
+      };
+
+      // upTo 3 !
+
+      expect(scorePointAndGetState(true)).toBe(PointState.Default); // 1-0
+      expect(scorePointAndGetState(false)).toBe(PointState.Default); // 1-1
+      expect(scorePointAndGetState(true)).toBe(PointState.GamePointTeam1); // 2-1
+      expect(scorePointAndGetState(false)).toBe(PointState.Deuce); // 2-2
+      expect(scorePointAndGetState(false)).toBe(PointState.GamePointTeam2); // 2-3
+      expect(scorePointAndGetState(true)).toBe(PointState.Deuce); // 3-3
+      umpire.pointScored(true);
+      expect(scorePointAndGetState(true)).toBe(PointState.GameWonTeam1); // 5-3
+
+      // game 2
+      scorePoints(umpire, false, 2);
+      expect(scorePointAndGetState(false)).toBe(PointState.GameWonTeam2);
+
+      // decider
+      umpire.pointScored(true);
+      expect(scorePointAndGetState(true)).toBe(PointState.MatchPointTeam1); //2-0
+      scorePoints(umpire, false, 2); //2-2
+      expect(scorePointAndGetState(false)).toBe(PointState.MatchPointTeam2); //2-3
+
+      umpire = new Umpire(
+        {
+          clearBy2: false,
+          upTo: 3,
+          numServes: 2,
+          team1StartGameScore: 0,
+          team2StartGameScore: 0,
+          bestOf: 3,
+        },
+        false,
+      );
+
+      scorePoints(umpire, false, 2);
+      umpire.pointScored(true);
+      expect(scorePointAndGetState(true)).toBe(
+        PointState.GamePointTeam1 + PointState.GamePointTeam2,
+      ); //2-2 not deuce
+      umpire.pointScored(true);
+
+      // game 2
+      umpire.pointScored(true);
+      expect(scorePointAndGetState(true)).toBe(PointState.MatchPointTeam1);
+      umpire.pointScored(false);
+      expect(scorePointAndGetState(false)).toBe(
+        PointState.MatchPointTeam1 + PointState.GamePointTeam2,
+      );
+      umpire.pointScored(false);
+
+      //decider
+      scorePoints(umpire, true, 2);
+      umpire.pointScored(false);
+      expect(scorePointAndGetState(false)).toBe(
+        PointState.MatchPointTeam1 + PointState.MatchPointTeam2,
+      );
     });
 
     it("should keep scores from previous games", () => {

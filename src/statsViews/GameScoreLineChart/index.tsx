@@ -75,7 +75,11 @@ export function GameScoreLineChart(props: GameScoreLineChartProps) {
   const currentScore = props.scores[props.scores.length - 1];
   let showGamePointLine = props.showGamePointLine ?? true;
   const scoresWithStartScore: GameScoreState[] = [
-    { ...props.startScore, pointState: PointState.NotWon, team1WonPoint: true },
+    {
+      ...props.startScore,
+      pointState: PointState.Default,
+      team1WonPoint: true,
+    },
     ...props.scores,
   ];
 
