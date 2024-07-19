@@ -146,6 +146,7 @@ export default function FreeScoringMatches() {
         </DialogActions>
       </Dialog>
       <Button
+        disabled={matchStates.length === 0}
         startIcon={<DeleteIcon />}
         onClick={() => {
           setShowDeleteDialog(true);
