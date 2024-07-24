@@ -1,40 +1,47 @@
 import { GamePointHistory } from "../umpire";
-import { GameMatchPoints, GameMatchPointsStats } from "./GameMatchPointsStats";
-import { Leads, LeadStats } from "./LeadStats";
-import { PointsBreakdown, PointsBreakdownStats } from "./PointsBreakdownStats";
-import { Streaks, StreakStats } from "./StreakStats";
+import {
+  GameMatchPointDeucesStats,
+  GameMatchPointDeucesStatistician,
+} from "./GameMatchPointDeucesStatistician";
+import { LeadsStats, LeadStatistician } from "./LeadStatistician";
+import {
+  PointsBreakdownStats,
+  PointsBreakdownStatistician,
+} from "./PointsBreakdownStatistician";
+import { StreaksStats, StreakStatistician } from "./StreakStatistician";
 export { GamePointHistory } from "../umpire";
 
 export interface GameStats {
-  pointsBreakdown: PointsBreakdown;
-  streaks: Streaks;
-  gameMatchPoints?: GameMatchPoints;
-  leads?: Leads;
+  pointsBreakdown: PointsBreakdownStats;
+  streaks: StreaksStats;
+  gameMatchPoints?: GameMatchPointDeucesStats;
+  leads?: LeadsStats;
 }
 
 export function getGameStats(gamePointHistory: GamePointHistory): GameStats {
-  const streakStats = new StreakStats();
-  const leadStats = new LeadStats();
-  const gameMatchPointStats = new GameMatchPointsStats();
-  const serviceReceiverRecordManager = new PointsBreakdownStats();
+  const streakStatistician = new StreakStatistician();
+  const leadStatistician = new LeadStatistician();
+  const gameMatchPointDeucesStatistician =
+    new GameMatchPointDeucesStatistician();
+  const serviceReceiverRecordManager = new PointsBreakdownStatistician();
   gamePointHistory.forEach((point) => {
-    streakStats.nextPoint(point);
-    leadStats.nextPoint(point);
-    gameMatchPointStats.nextPoint(point);
+    streakStatistician.nextPoint(point);
+    leadStatistician.nextPoint(point);
+    gameMatchPointDeucesStatistician.nextPoint(point);
     serviceReceiverRecordManager.addPoint(point);
   });
 
   const gameStats: GameStats = {
-    streaks: streakStats.getStats(),
+    streaks: streakStatistician.getStats(),
     pointsBreakdown: serviceReceiverRecordManager.getStats(),
   };
 
-  const gameMatchPoints = gameMatchPointStats.getStats();
+  const gameMatchPoints = gameMatchPointDeucesStatistician.getStats();
   if (gameMatchPoints !== undefined) {
     gameStats.gameMatchPoints = gameMatchPoints;
   }
 
-  const leads = leadStats.getStats();
+  const leads = leadStatistician.getStats();
   if (leads !== undefined) {
     gameStats.leads = leads;
   }

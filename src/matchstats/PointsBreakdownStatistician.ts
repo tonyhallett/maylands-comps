@@ -62,7 +62,7 @@ export interface TeamPointsBreakdown extends ServeAndReceiveRecord {
   player2PointsBreakdown: PlayerPointsBreakdown;
 }
 
-export interface PointsBreakdown {
+export interface PointsBreakdownStats {
   team1: TeamPointsBreakdown;
   team2: TeamPointsBreakdown;
 }
@@ -180,7 +180,7 @@ class TeamPointsBreakdownImpl implements TeamPointsBreakdown {
   }
 }
 
-export class PointsBreakdownStats {
+export class PointsBreakdownStatistician {
   private serverReceiverMap = new ServerReceiverMap<ServiceRecord>();
   public addPoint(point: PointHistory) {
     const wonByServer = point.team1WonPoint
@@ -202,7 +202,7 @@ export class PointsBreakdownStats {
       serveReceiveRecord.numWonByServer += wonByServerIncrement;
     }
   }
-  getStats() {
+  getStats(): PointsBreakdownStats {
     const serverReceiverRecords = this.serverReceiverMap.getAll();
     return {
       team1: new TeamPointsBreakdownImpl(true, serverReceiverRecords),

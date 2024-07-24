@@ -4,18 +4,19 @@ import { GameScore, PointHistory } from "../umpire";
 import {
   isGameOrMatchWon,
   isGamePoint,
+  isGameWon,
   isMatchPoint,
   isMatchWon,
 } from "../umpire/pointStateHelpers";
 import { scoreTooltipRenderer } from "./GameScoreLineChart/ScoreTooltipRenderer/scoreTooltipRenderer";
 import Box from "@mui/material/Box/Box";
 import { GameStats, getGameStats } from "../matchstats";
-import { Leads } from "../matchstats/LeadStats";
-import { Streaks } from "../matchstats/StreakStats";
+import { LeadsStats } from "../matchstats/LeadStatistician";
+import { StreaksStats } from "../matchstats/StreakStatistician";
 import {
-  PointsBreakdown,
+  PointsBreakdownStats,
   ServeReceiveRecord,
-} from "../matchstats/PointsBreakdownStats";
+} from "../matchstats/PointsBreakdownStatistician";
 
 export function StatsView({
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -59,7 +60,10 @@ export function StatsView({
           {`${team1Left ? gameScore.team1Points : gameScore.team2Points} - ${!team1Left ? gameScore.team1Points : gameScore.team2Points}`}
         </div>
         <GameStatsTable stats={gameStats} />
-        <Box sx={{ width: "100%", height: 400 }}>
+        <Box
+          data-id={`game-${i}-score-line-chart-container`}
+          sx={{ width: "100%", height: 400 }}
+        >
           <GameScoreLineChart
             colors={mangoFusionPalette}
             minX={minX}
@@ -75,7 +79,6 @@ export function StatsView({
               team2Points: team2StartScore,
             }}
             mark={{
-              // eslint-disable-next-line @typescript-eslint/no-unused-vars
               getColor(_, score, pointNumber) {
                 if (isGameOrMatchWon(score.pointState)) {
                   return "white";
@@ -99,12 +102,11 @@ export function StatsView({
                   }
                 }
               },
-              // eslint-disable-next-line @typescript-eslint/no-unused-vars
               getShape(team1, score) {
                 if (isMatchWon(score.pointState)) {
                   return "star";
                 }
-                if (isGameOrMatchWon(score.pointState)) {
+                if (isGameWon(score.pointState)) {
                   return "diamond";
                 }
                 return team1 ? "circle" : "square";
@@ -128,16 +130,18 @@ export function StatsView({
 function GameStatsTable({ stats }: { stats: GameStats }) {
   return (
     <table>
-      {stats.leads && <LeadsRows leads={stats.leads!} />}
-      <StreaksRows streaks={stats.streaks} />
-      <PointsBreakdownRows pointsBreakdown={stats.pointsBreakdown} />
+      <tbody>
+        {stats.leads && <LeadsRows leads={stats.leads!} />}
+        <StreaksRows streaks={stats.streaks} />
+        <PointsBreakdownRows pointsBreakdown={stats.pointsBreakdown} />
+      </tbody>
     </table>
   );
 }
 function PointsBreakdownRows({
   pointsBreakdown,
 }: {
-  pointsBreakdown: PointsBreakdown;
+  pointsBreakdown: PointsBreakdownStats;
 }) {
   const team1Serve = pointsBreakdown.team1.serve;
   const team2Serve = pointsBreakdown.team2.serve;
@@ -157,7 +161,7 @@ function PointsBreakdownRows({
     </>
   );
 }
-function StreaksRows({ streaks }: { streaks: Streaks }) {
+function StreaksRows({ streaks }: { streaks: StreaksStats }) {
   return (
     <tr>
       <td>{streaks.team1.longestStreak}</td>
@@ -166,7 +170,7 @@ function StreaksRows({ streaks }: { streaks: Streaks }) {
     </tr>
   );
 }
-function LeadsRows({ leads }: { leads: Leads }) {
+function LeadsRows({ leads }: { leads: LeadsStats }) {
   return (
     <>
       <tr>

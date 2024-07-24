@@ -25,16 +25,16 @@ export interface SavedPoint {
   isGamePoint: boolean;
   at: number;
 }
-export interface GameMatchPoints {
+export interface GameMatchPointDeucesStats {
   team1: GameMatchPointState[];
   team2: GameMatchPointState[];
   savedPointsAt: SavedPoint[];
   numDeuces: number;
 }
 
-export class GameMatchPointsStats {
+export class GameMatchPointDeucesStatistician {
   private pointNumber = 0;
-  private gameMatchPoints: GameMatchPoints = {
+  private gameMatchPoints: GameMatchPointDeucesStats = {
     team1: [],
     team2: [],
     savedPointsAt: [],
@@ -187,7 +187,7 @@ export class GameMatchPointsStats {
     }
   };
 
-  getStats(): GameMatchPoints | undefined {
+  getStats(): GameMatchPointDeucesStats | undefined {
     if (
       this.gameMatchPoints.team1.length > 0 ||
       this.gameMatchPoints.team2.length > 0

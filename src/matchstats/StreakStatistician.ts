@@ -4,11 +4,11 @@ export interface TeamStreaks {
   streaks: number[];
   longestStreak: number;
 }
-export interface Streaks {
+export interface StreaksStats {
   team1: TeamStreaks;
   team2: TeamStreaks;
 }
-export interface StreaksInfo extends Streaks {
+export interface StreaksInfo extends StreaksStats {
   team1Last: boolean | undefined;
 }
 
@@ -19,7 +19,7 @@ export function getLongestStreak(streaks: number[]): number {
   return Math.max(...streaks);
 }
 
-export class StreakStats {
+export class StreakStatistician {
   private streaks: StreaksInfo = {
     team1: { streaks: [], longestStreak: 0 },
     team2: { streaks: [], longestStreak: 0 },
@@ -42,7 +42,7 @@ export class StreakStats {
     }
     this.streaks.team1Last = point.team1WonPoint;
   };
-  getStats(): Streaks {
+  getStats(): StreaksStats {
     this.streaks.team1.longestStreak = getLongestStreak(
       this.streaks.team1.streaks,
     );

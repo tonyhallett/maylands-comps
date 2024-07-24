@@ -13,5 +13,14 @@ export function SmarterMarkElement(props: SmarterMarkElementProps) {
   const color = getColor?.(props.id, props.dataIndex) ?? props.color;
   const shape = getShape?.(props.id, props.dataIndex) ?? props.shape;
 
-  return <MarkElement {...rest} color={color} shape={shape} />;
+  return (
+    <MarkElement
+      data-index={props.dataIndex}
+      data-series={props.id}
+      data-shape={shape}
+      {...rest}
+      color={color}
+      shape={shape}
+    />
+  );
 }
