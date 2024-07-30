@@ -1,11 +1,14 @@
 import { getGameStats, GamePointHistory } from "../src/matchstats";
-import { PointHistory, PointState } from "../src/umpire";
+import { PointHistory, PointState, Umpire } from "../src/umpire";
 import {
   LeadInfo,
   LeadsStats,
   LeadStatistician,
 } from "../src/matchstats/LeadStatistician";
 import {
+  AvailableGameMatchPoints,
+  availableGameMatchPoints,
+  GameMatchPointDeucesStatistician,
   GameMatchPointDeucesStats,
   GameMatchPointState,
   SavedPoint,
@@ -21,6 +24,7 @@ import {
   isGamePoint,
   team1WonGameOrMatch,
 } from "../src/umpire/pointStateHelpers";
+import { getLast } from "../src/umpire/helpers";
 
 describe("getGameStats", () => {
   describe("streaks", () => {
@@ -528,6 +532,40 @@ describe("getGameStats", () => {
       ]);
     });
 
+    it("should work with multiple saved points", () => {
+      const umpire = new Umpire(
+        {
+          bestOf: 3,
+          clearBy2: true,
+          upTo: 3,
+          numServes: 2,
+          team1StartGameScore: 0,
+          team2StartGameScore: 0,
+        },
+        false,
+      );
+
+      umpire.pointScored(true); // 1-0
+      umpire.pointScored(true); // 2-0 - game point
+      umpire.pointScored(false); // 2-1 - saved game point
+      umpire.pointScored(false); // 2-2 - saved game point
+      umpire.pointScored(true); // 3-2 - game point
+      umpire.pointScored(false); //3-3 - saved game point
+      umpire.pointScored(false); //3-4 - game point
+      const matchState = umpire.pointScored(true); //4-4 saved game point
+      const gamePointHistory = matchState.pointHistory[0];
+      const gameMatchPointStatistician = new GameMatchPointDeucesStatistician();
+      gamePointHistory.forEach((pointHistory) =>
+        gameMatchPointStatistician.nextPoint(pointHistory),
+      );
+      const stats = gameMatchPointStatistician.getStats();
+      const expected = [3, 4, 6, 8].map<SavedPoint>((at) => ({
+        at,
+        isGamePoint: true,
+      }));
+      expect(stats.savedPointsAt).toEqual<SavedPoint[]>(expected);
+    });
+
     it("should set converted to true when match point is converted - Team1", () => {
       const gamePointHistory: GamePointHistory = [
         {
@@ -893,6 +931,123 @@ describe("getGameStats", () => {
             isGamePoint: true,
           },
         ]);
+      });
+    });
+
+    describe("availableGameMatchPoints", () => {
+      function availableGameMatchPointsTest(
+        expected: AvailableGameMatchPoints,
+        scorePoints: (umpire: Umpire) => void,
+        clearBy2 = true,
+        upTo = 11,
+        team1 = true,
+      ) {
+        const umpire = new Umpire(
+          {
+            bestOf: 3,
+            clearBy2,
+            numServes: 2,
+            team1StartGameScore: 0,
+            team2StartGameScore: 0,
+            upTo,
+          },
+          false,
+        );
+        scorePoints(umpire);
+        const gamePointHistory = getLast(
+          umpire.getMatchState().pointHistory as PointHistory[][],
+        );
+
+        const statistician = new GameMatchPointDeucesStatistician();
+        gamePointHistory.forEach((pointHistory) => {
+          statistician.nextPoint(pointHistory);
+        });
+        const stats = statistician.getStats();
+        const team = team1 ? stats.team1 : stats.team2;
+        expect(availableGameMatchPoints(team)).toEqual(expected);
+      }
+
+      it.each([3, 5])(
+        "should have numGameMatchPoints when enter game point state",
+        (upTo) => {
+          availableGameMatchPointsTest(
+            {
+              available: upTo - 1,
+              isGamePoint: true,
+            },
+            (umpire) => {
+              for (let i = 0; i < upTo - 1; i++) {
+                umpire.pointScored(true);
+              }
+            },
+            true,
+            upTo,
+          );
+        },
+      );
+
+      it("should be undefined when no game match point states", () => {
+        availableGameMatchPointsTest(
+          undefined,
+          (umpire) => {
+            umpire.pointScored(true);
+          },
+          true,
+          2,
+          false,
+        );
+      });
+
+      it("should be undefined if converted", () => {
+        expect(
+          availableGameMatchPoints([
+            {
+              converted: true,
+              isGamePoint: true,
+              numGameMatchPoints: 3,
+              pointsSaved: 2,
+              pointNumber: 1,
+            },
+          ]),
+        ).toBeUndefined();
+      });
+
+      it.each([true, false])("should be the remaining", (isGamePoint) => {
+        expect(
+          availableGameMatchPoints([
+            {
+              pointNumber: 1,
+              converted: false,
+              isGamePoint,
+              numGameMatchPoints: 1,
+              pointsSaved: 1,
+            },
+            {
+              converted: false,
+              isGamePoint,
+              numGameMatchPoints: 7,
+              pointsSaved: 3,
+              pointNumber: 2,
+            },
+          ]),
+        ).toEqual<AvailableGameMatchPoints>({
+          available: 4,
+          isGamePoint,
+        });
+      });
+
+      it("should be undefined if none remaining", () => {
+        expect(
+          availableGameMatchPoints([
+            {
+              pointNumber: 1,
+              converted: false,
+              isGamePoint: true,
+              numGameMatchPoints: 3,
+              pointsSaved: 3,
+            },
+          ]),
+        ).toBeUndefined();
       });
     });
   });

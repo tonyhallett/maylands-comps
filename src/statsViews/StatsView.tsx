@@ -17,6 +17,11 @@ import {
   PointsBreakdownStats,
   ServeReceiveRecord,
 } from "../matchstats/PointsBreakdownStatistician";
+import {
+  availableGameMatchPoints,
+  GameMatchPointDeucesStats,
+  GameMatchPointState,
+} from "../matchstats/GameMatchPointDeucesStatistician";
 
 export function StatsView({
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -83,12 +88,9 @@ export function StatsView({
                 if (isGameOrMatchWon(score.pointState)) {
                   return "white";
                 }
-                const gameMatchPointsForPointNumber = getGameStats(
-                  pointHistoryForGame.slice(0, pointNumber),
-                ).gameMatchPoints;
-                if (gameMatchPointsForPointNumber !== undefined) {
+                if (gameStats.gameMatchPoints !== undefined) {
                   const savedPointAt =
-                    gameMatchPointsForPointNumber.savedPointsAt.find(
+                    gameStats.gameMatchPoints.savedPointsAt.find(
                       (savedPointAt) => savedPointAt.at === pointNumber,
                     );
                   if (savedPointAt !== undefined) {
@@ -128,16 +130,31 @@ export function StatsView({
 }
 
 function GameStatsTable({ stats }: { stats: GameStats }) {
+  const numPoints =
+    stats.pointsBreakdown.team1.pointsWon +
+    stats.pointsBreakdown.team1.pointsLost;
   return (
     <table>
       <tbody>
-        {stats.leads && <LeadsRows leads={stats.leads!} />}
+        {stats.leads && (
+          <LeadsRows leads={stats.leads!} numPoints={numPoints} />
+        )}
         <StreaksRows streaks={stats.streaks} />
         <PointsBreakdownRows pointsBreakdown={stats.pointsBreakdown} />
+        <GameMatchPointDeuceStatsRows stats={stats.gameMatchPoints} />
       </tbody>
     </table>
   );
 }
+
+function getPercentageDisplay(
+  percentage: number,
+  numerator: number,
+  denominator: number,
+): string {
+  return `${Math.round(percentage)} % (${numerator} / ${denominator})`;
+}
+
 function PointsBreakdownRows({
   pointsBreakdown,
 }: {
@@ -149,7 +166,7 @@ function PointsBreakdownRows({
     if (serve.num === 0) {
       return "-";
     }
-    return `${Math.round(serve.winPercentage)} % (${serve.numWon} / ${serve.num})`;
+    return getPercentageDisplay(serve.winPercentage, serve.numWon, serve.num);
   };
   return (
     <>
@@ -170,22 +187,115 @@ function StreaksRows({ streaks }: { streaks: StreaksStats }) {
     </tr>
   );
 }
-function LeadsRows({ leads }: { leads: LeadsStats }) {
+
+function TeamRow({
+  title,
+  team1Value,
+  team2Value,
+}: {
+  title: string;
+  team1Value: string | number;
+  team2Value: string | number;
+}) {
+  return (
+    <tr>
+      <td>{team1Value}</td>
+      <td>{title}</td>
+      <td>{team2Value}</td>
+    </tr>
+  );
+}
+
+function availableGameMatchPointsDisplay(states: GameMatchPointState[]) {
+  if (states.length === 0) {
+    return "0";
+  }
+  const available = availableGameMatchPoints(states);
+  if (available === undefined) {
+    return "0";
+  }
+  const gmp = available.isGamePoint ? "GP" : "MP";
+  return `${available.available} ( ${gmp} )`;
+}
+function GameMatchPointDeuceStatsRows({
+  stats,
+}: {
+  stats: GameMatchPointDeucesStats | undefined;
+}) {
+  if (stats === undefined) {
+    return null;
+  }
+  return (
+    <TeamRow
+      title="Game / Match points"
+      team1Value={availableGameMatchPointsDisplay(stats.team1)}
+      team2Value={availableGameMatchPointsDisplay(stats.team2)}
+    />
+  );
+}
+
+function LeadsRows({
+  leads,
+  numPoints,
+}: {
+  leads: LeadsStats;
+  numPoints: number;
+}) {
+  const getGreatestDeficitOvercomeDisplay = (
+    deficit: number | undefined,
+  ): string => {
+    if (deficit === undefined) {
+      return "-";
+    }
+    return deficit.toString();
+  };
+
+  const gameInLeadDisplay = (
+    numPointsInLead: number,
+    percentageOfGameInLead: number | undefined,
+  ): string => {
+    if (percentageOfGameInLead === undefined) {
+      return "-";
+    }
+    return getPercentageDisplay(
+      percentageOfGameInLead,
+      numPointsInLead,
+      numPoints,
+    );
+  };
+
   return (
     <>
-      <tr>
-        <td>{leads.team1?.biggest ?? 0}</td>
-        <td>Biggest lead</td>
-        <td>{leads.team2?.biggest ?? 0}</td>
-      </tr>
-      <tr>
-        <td>{leads.team1?.greatestDeficitOvercome ?? "-"}</td>
-        <td>Greatest deficit overcome</td>
-        <td>{leads.team2?.greatestDeficitOvercome ?? "-"}</td>
-      </tr>
-      <tr>
-        <td>{`Lead changed ${leads.numChanges} time${leads.numChanges !== 1 ? "s" : ""}`}</td>
-      </tr>
+      <TeamRow
+        title="Biggest lead"
+        team1Value={leads.team1.biggest}
+        team2Value={leads.team2.biggest}
+      />
+      <TeamRow
+        title="Greatest deficit overcome"
+        team1Value={getGreatestDeficitOvercomeDisplay(
+          leads.team1.greatestDeficitOvercome,
+        )}
+        team2Value={getGreatestDeficitOvercomeDisplay(
+          leads.team2.greatestDeficitOvercome,
+        )}
+      />
+      <TeamRow
+        title="Leading for"
+        team1Value={gameInLeadDisplay(
+          leads.team1.numPointsInLead,
+          leads.team1.percentageOfGameInLead,
+        )}
+        team2Value={gameInLeadDisplay(
+          leads.team2.numPointsInLead,
+          leads.team2.percentageOfGameInLead,
+        )}
+      />
+      <TeamRow
+        title="Times leading"
+        team1Value={leads.team1.leads.length}
+        team2Value={leads.team2.leads.length}
+      />
     </>
   );
 }

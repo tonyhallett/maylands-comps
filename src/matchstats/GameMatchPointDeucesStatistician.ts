@@ -1,4 +1,5 @@
 import { PointHistory, PointState } from "../umpire";
+import { getLast } from "../umpire/helpers";
 import {
   isGamePointTeam1,
   isGamePointTeam2,
@@ -195,4 +196,31 @@ export class GameMatchPointDeucesStatistician {
       return this.gameMatchPoints;
     }
   }
+}
+
+export interface AvailableGameMatchPoints {
+  available: number;
+  isGamePoint: boolean;
+}
+export function availableGameMatchPoints(
+  states: GameMatchPointState[],
+): AvailableGameMatchPoints | undefined {
+  if (states.length === 0) {
+    return undefined;
+  }
+  const lastGameMatchPointState = getLast(states);
+  if (lastGameMatchPointState.converted) {
+    return undefined;
+  }
+  const available =
+    lastGameMatchPointState.numGameMatchPoints -
+    lastGameMatchPointState.pointsSaved;
+
+  if (available === 0) {
+    return undefined;
+  }
+  return {
+    available,
+    isGamePoint: lastGameMatchPointState.isGamePoint,
+  };
 }
