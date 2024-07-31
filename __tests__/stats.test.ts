@@ -10,6 +10,8 @@ import {
   availableGameMatchPoints,
   GameMatchPointDeucesStatistician,
   GameMatchPointDeucesStats,
+  GameMatchPointSaved,
+  gameMatchPointsSaved,
   GameMatchPointState,
   SavedPoint,
 } from "../src/matchstats/GameMatchPointDeucesStatistician";
@@ -1048,6 +1050,52 @@ describe("getGameStats", () => {
             },
           ]),
         ).toBeUndefined();
+      });
+    });
+
+    describe("gameMatchPointsSaved", () => {
+      it("should be undefined if no game match points", () => {
+        expect(gameMatchPointsSaved([])).toBeUndefined();
+      });
+      it("should work with single GameMatchPointState", () => {
+        const result = gameMatchPointsSaved([
+          {
+            converted: false,
+            isGamePoint: true,
+            numGameMatchPoints: 2,
+            pointsSaved: 1,
+            pointNumber: 1,
+          },
+        ]);
+        expect(result).toEqual<GameMatchPointSaved>({
+          numPoints: 2,
+          numSaved: 1,
+          isGamePoints: true,
+        });
+      });
+
+      it("should work with multiple GameMatchPointState", () => {
+        const result = gameMatchPointsSaved([
+          {
+            converted: false,
+            isGamePoint: false,
+            numGameMatchPoints: 2,
+            pointsSaved: 2,
+            pointNumber: 2,
+          },
+          {
+            converted: false,
+            isGamePoint: false,
+            numGameMatchPoints: 1,
+            pointsSaved: 0,
+            pointNumber: 4,
+          },
+        ]);
+        expect(result).toEqual<GameMatchPointSaved>({
+          numPoints: 3,
+          numSaved: 2,
+          isGamePoints: false,
+        });
       });
     });
   });

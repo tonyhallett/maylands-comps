@@ -20,6 +20,7 @@ import {
 import {
   availableGameMatchPoints,
   GameMatchPointDeucesStats,
+  gameMatchPointsSaved,
   GameMatchPointState,
 } from "../matchstats/GameMatchPointDeucesStatistician";
 
@@ -217,20 +218,53 @@ function availableGameMatchPointsDisplay(states: GameMatchPointState[]) {
   const gmp = available.isGamePoint ? "GP" : "MP";
   return `${available.available} ( ${gmp} )`;
 }
+
+function gameMatchPointsSavedDisplay(states: GameMatchPointState[]): string {
+  const savedInfo = gameMatchPointsSaved(states);
+  if (savedInfo === undefined) {
+    return "-";
+  }
+
+  const percentageDisplay = getPercentageDisplay(
+    (savedInfo.numSaved / savedInfo.numPoints) * 100,
+    savedInfo.numSaved,
+    savedInfo.numPoints,
+  );
+  const gpmp = savedInfo.isGamePoints ? "GP" : "MP";
+  return `${percentageDisplay} ( ${gpmp} )`;
+}
+
 function GameMatchPointDeuceStatsRows({
   stats,
 }: {
   stats: GameMatchPointDeucesStats | undefined;
 }) {
-  if (stats === undefined) {
-    return null;
+  let team1GameMatchPointsDisplay = "-";
+  let team2GameMatchPointsDisplay = "-";
+  let team1GameMatchPointsSavedDisplay = "-";
+  let team2GameMatchPointsSavedDisplay = "-";
+  let gameMatchPointsTitle = "Game / Match points";
+  if (stats !== undefined) {
+    team1GameMatchPointsDisplay = availableGameMatchPointsDisplay(stats.team1);
+    team2GameMatchPointsDisplay = availableGameMatchPointsDisplay(stats.team2);
+    team1GameMatchPointsSavedDisplay = gameMatchPointsSavedDisplay(stats.team1);
+    team2GameMatchPointsSavedDisplay = gameMatchPointsSavedDisplay(stats.team2);
+    const deuceDisplay = stats.numDeuces === 1 ? "deuce" : "deuces";
+    gameMatchPointsTitle = `${gameMatchPointsTitle} ( ${stats.numDeuces} ${deuceDisplay} )`;
   }
   return (
-    <TeamRow
-      title="Game / Match points"
-      team1Value={availableGameMatchPointsDisplay(stats.team1)}
-      team2Value={availableGameMatchPointsDisplay(stats.team2)}
-    />
+    <>
+      <TeamRow
+        title={gameMatchPointsTitle}
+        team1Value={team1GameMatchPointsDisplay}
+        team2Value={team2GameMatchPointsDisplay}
+      />
+      <TeamRow
+        title="Saved"
+        team1Value={team1GameMatchPointsSavedDisplay}
+        team2Value={team2GameMatchPointsSavedDisplay}
+      />
+    </>
   );
 }
 

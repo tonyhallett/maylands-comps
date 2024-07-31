@@ -9,7 +9,7 @@ import {
   team2WonGameOrMatch,
 } from "../umpire/pointStateHelpers";
 
-export interface EnteredGameMatchPointStates {
+interface EnteredGameMatchPointStates {
   team1: GameMatchPointState | undefined;
   team2: GameMatchPointState | undefined;
 }
@@ -223,4 +223,28 @@ export function availableGameMatchPoints(
     available,
     isGamePoint: lastGameMatchPointState.isGamePoint,
   };
+}
+
+export interface GameMatchPointSaved {
+  isGamePoints: boolean;
+  numSaved: number;
+  numPoints: number;
+}
+
+export function gameMatchPointsSaved(
+  states: GameMatchPointState[],
+): GameMatchPointSaved | undefined {
+  if (states.length === 0) {
+    return undefined;
+  }
+  const gameMatchPointSaved: GameMatchPointSaved = {
+    numSaved: 0,
+    numPoints: 0,
+    isGamePoints: states[0].isGamePoint,
+  };
+  states.forEach((state) => {
+    gameMatchPointSaved.numSaved += state.pointsSaved;
+    gameMatchPointSaved.numPoints += state.numGameMatchPoints;
+  });
+  return gameMatchPointSaved;
 }
