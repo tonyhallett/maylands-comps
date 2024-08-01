@@ -60,12 +60,16 @@ export function StatsView({
   return gameScores.map((gameScore, i) => {
     const pointHistoryForGame = pointHistory[numGameScores - i - 1];
     const gameStats = getGameStats([...pointHistoryForGame]);
+    const pointsScoredInGame = pointHistoryForGame.length > 0;
     return (
       <div key={i}>
         <div>
           {`${team1Left ? gameScore.team1Points : gameScore.team2Points} - ${!team1Left ? gameScore.team1Points : gameScore.team2Points}`}
         </div>
-        <GameStatsTable stats={gameStats} />
+        <GameStatsTable
+          stats={gameStats}
+          pointsScoredInGame={pointsScoredInGame}
+        />
         <Box
           data-id={`game-${i}-score-line-chart-container`}
           sx={{ width: "100%", height: 400 }}
@@ -130,17 +134,28 @@ export function StatsView({
   });
 }
 
-function GameStatsTable({ stats }: { stats: GameStats }) {
+function GameStatsTable({
+  stats,
+  pointsScoredInGame,
+}: {
+  stats: GameStats;
+  pointsScoredInGame: boolean;
+}) {
   const numPoints =
     stats.pointsBreakdown.team1.pointsWon +
     stats.pointsBreakdown.team1.pointsLost;
   return (
     <table>
       <tbody>
-        {stats.leads && (
-          <LeadsRows leads={stats.leads!} numPoints={numPoints} />
-        )}
-        <StreaksRows streaks={stats.streaks} />
+        <LeadsRows
+          leads={stats.leads!}
+          numPoints={numPoints}
+          pointsScoredInGame={pointsScoredInGame}
+        />
+        <StreaksRows
+          streaks={stats.streaks}
+          pointsScoreInGame={pointsScoredInGame}
+        />
         <PointsBreakdownRows pointsBreakdown={stats.pointsBreakdown} />
         <GameMatchPointDeuceStatsRows stats={stats.gameMatchPoints} />
       </tbody>
@@ -179,12 +194,19 @@ function PointsBreakdownRows({
     </>
   );
 }
-function StreaksRows({ streaks }: { streaks: StreaksStats }) {
+
+function StreaksRows({
+  streaks,
+  pointsScoreInGame,
+}: {
+  streaks: StreaksStats;
+  pointsScoreInGame: boolean;
+}) {
   return (
     <tr>
-      <td>{streaks.team1.longestStreak}</td>
+      <td>{pointsScoreInGame ? streaks.team1.longestStreak : "-"}</td>
       <td>Longest streak</td>
-      <td>{streaks.team2.longestStreak}</td>
+      <td>{pointsScoreInGame ? streaks.team2.longestStreak : "-"}</td>
     </tr>
   );
 }
@@ -243,14 +265,14 @@ function GameMatchPointDeuceStatsRows({
   let team2GameMatchPointsDisplay = "-";
   let team1GameMatchPointsSavedDisplay = "-";
   let team2GameMatchPointsSavedDisplay = "-";
-  let gameMatchPointsTitle = "Game / Match points";
+  let gameMatchPointsTitle = "Game / Match points / Deuces";
   if (stats !== undefined) {
     team1GameMatchPointsDisplay = availableGameMatchPointsDisplay(stats.team1);
     team2GameMatchPointsDisplay = availableGameMatchPointsDisplay(stats.team2);
     team1GameMatchPointsSavedDisplay = gameMatchPointsSavedDisplay(stats.team1);
     team2GameMatchPointsSavedDisplay = gameMatchPointsSavedDisplay(stats.team2);
     const deuceDisplay = stats.numDeuces === 1 ? "deuce" : "deuces";
-    gameMatchPointsTitle = `${gameMatchPointsTitle} ( ${stats.numDeuces} ${deuceDisplay} )`;
+    gameMatchPointsTitle = `Game / Match points / ${stats.numDeuces} ${deuceDisplay}`;
   }
   return (
     <>
@@ -260,7 +282,7 @@ function GameMatchPointDeuceStatsRows({
         team2Value={team2GameMatchPointsDisplay}
       />
       <TeamRow
-        title="Saved"
+        title="Game / Match points saved"
         team1Value={team1GameMatchPointsSavedDisplay}
         team2Value={team2GameMatchPointsSavedDisplay}
       />
@@ -271,9 +293,11 @@ function GameMatchPointDeuceStatsRows({
 function LeadsRows({
   leads,
   numPoints,
+  pointsScoredInGame,
 }: {
   leads: LeadsStats;
   numPoints: number;
+  pointsScoredInGame: boolean;
 }) {
   const getGreatestDeficitOvercomeDisplay = (
     deficit: number | undefined,
@@ -302,8 +326,8 @@ function LeadsRows({
     <>
       <TeamRow
         title="Biggest lead"
-        team1Value={leads.team1.biggest}
-        team2Value={leads.team2.biggest}
+        team1Value={pointsScoredInGame ? leads.team1.biggest : "-"}
+        team2Value={pointsScoredInGame ? leads.team2.biggest : "-"}
       />
       <TeamRow
         title="Greatest deficit overcome"
@@ -327,8 +351,8 @@ function LeadsRows({
       />
       <TeamRow
         title="Times leading"
-        team1Value={leads.team1.leads.length}
-        team2Value={leads.team2.leads.length}
+        team1Value={pointsScoredInGame ? leads.team1.leads.length : "-"}
+        team2Value={pointsScoredInGame ? leads.team2.leads.length : "-"}
       />
     </>
   );

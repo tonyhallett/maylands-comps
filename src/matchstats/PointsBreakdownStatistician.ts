@@ -1,6 +1,7 @@
 import { Player, PointHistory } from "../umpire";
 import { ServerReceiver } from "../umpire/commonTypes";
 import { isTeam1 } from "../umpire/playersHelpers";
+import { LazyGetter } from "lazy-get-decorator";
 
 type ServerReceiverRecord = [ServerReceiver, ServiceRecord];
 class ServerReceiverMap<T> {
@@ -138,18 +139,21 @@ class TeamPointsBreakdownImpl implements TeamPointsBreakdown {
       serverReceiverRecords,
     );
   }
-  // todo cache the values
+  @LazyGetter()
   get pointsWon(): number {
     return this.serve.numWon + this.receive.numWon;
   }
+  @LazyGetter()
   get pointsLost(): number {
     return this.serve.numLost + this.receive.numLost;
   }
+  @LazyGetter()
   get pointWinPercentage(): number {
     return getWinPercentage(this.pointsWon, this.pointsWon + this.pointsLost);
   }
   player1PointsBreakdown: PlayerPointsBreakdown;
   player2PointsBreakdown: PlayerPointsBreakdown;
+  @LazyGetter()
   get serve(): ServeReceiveRecord {
     const numWon =
       this.player1PointsBreakdown.serve.numWon +
@@ -164,6 +168,7 @@ class TeamPointsBreakdownImpl implements TeamPointsBreakdown {
       winPercentage: getWinPercentage(numWon, numWon + numLost),
     };
   }
+  @LazyGetter()
   get receive(): ServeReceiveRecord {
     const numWon =
       this.player1PointsBreakdown.receive.numWon +

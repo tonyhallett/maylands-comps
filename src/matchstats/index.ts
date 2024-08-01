@@ -15,7 +15,7 @@ export interface GameStats {
   pointsBreakdown: PointsBreakdownStats;
   streaks: StreaksStats;
   gameMatchPoints?: GameMatchPointDeucesStats;
-  leads?: LeadsStats;
+  leads: LeadsStats;
 }
 
 export function getGameStats(gamePointHistory: GamePointHistory): GameStats {
@@ -34,6 +34,7 @@ export function getGameStats(gamePointHistory: GamePointHistory): GameStats {
   const gameStats: GameStats = {
     streaks: streakStatistician.getStats(),
     pointsBreakdown: serviceReceiverRecordManager.getStats(),
+    leads: leadStatistician.getStats(),
   };
 
   const gameMatchPoints = gameMatchPointDeucesStatistician.getStats();
@@ -41,9 +42,5 @@ export function getGameStats(gamePointHistory: GamePointHistory): GameStats {
     gameStats.gameMatchPoints = gameMatchPoints;
   }
 
-  const leads = leadStatistician.getStats();
-  if (leads !== undefined) {
-    gameStats.leads = leads;
-  }
   return gameStats;
 }
