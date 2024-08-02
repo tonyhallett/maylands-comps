@@ -37,6 +37,7 @@ describe("StatsView", () => {
           (showMarkTest) => {
             render(
               <StatsView
+                bestOf={1}
                 gamePoint={10}
                 matchWon={false}
                 team1StartScore={0}
@@ -66,6 +67,7 @@ describe("StatsView", () => {
         it("should not render a mark for 0 position", () => {
           render(
             <StatsView
+              bestOf={1}
               gamePoint={10}
               matchWon={false}
               team1StartScore={0}
@@ -98,6 +100,7 @@ describe("StatsView", () => {
           (winPointState) => {
             render(
               <StatsView
+                bestOf={1}
                 gamePoint={10}
                 matchWon={true}
                 team1StartScore={0}
@@ -130,6 +133,7 @@ describe("StatsView", () => {
           (winPointState) => {
             render(
               <StatsView
+                bestOf={1}
                 gamePoint={10}
                 matchWon={false}
                 team1StartScore={0}
@@ -160,6 +164,7 @@ describe("StatsView", () => {
         it("should render a circle if the mark is for team1 and not a game/match won state", () => {
           render(
             <StatsView
+              bestOf={1}
               gamePoint={10}
               matchWon={true}
               team1StartScore={0}
@@ -190,6 +195,7 @@ describe("StatsView", () => {
           act(() => {
             render(
               <StatsView
+                bestOf={1}
                 gamePoint={10}
                 matchWon={true}
                 team1StartScore={0}
@@ -224,6 +230,7 @@ describe("StatsView", () => {
           (winPointState) => {
             render(
               <StatsView
+                bestOf={1}
                 gamePoint={10}
                 matchWon={true}
                 team1StartScore={0}
@@ -256,6 +263,7 @@ describe("StatsView", () => {
           (winPointState) => {
             render(
               <StatsView
+                bestOf={1}
                 gamePoint={10}
                 matchWon={true}
                 team1StartScore={0}
@@ -287,6 +295,7 @@ describe("StatsView", () => {
         it("should be green if saved game point at mark point", () => {
           render(
             <StatsView
+              bestOf={1}
               gamePoint={10}
               matchWon={false}
               team1StartScore={0}
@@ -340,6 +349,7 @@ describe("StatsView", () => {
         it("should be yellow if saved match point at mark point", () => {
           render(
             <StatsView
+              bestOf={1}
               gamePoint={10}
               matchWon={false}
               team1StartScore={0}
@@ -397,6 +407,7 @@ describe("StatsView", () => {
           (gamePointPointState) => {
             render(
               <StatsView
+                bestOf={1}
                 gamePoint={10}
                 matchWon={false}
                 team1StartScore={0}
@@ -453,6 +464,7 @@ describe("StatsView", () => {
           (matchPointPointState) => {
             render(
               <StatsView
+                bestOf={1}
                 gamePoint={10}
                 matchWon={false}
                 team1StartScore={0}
@@ -507,6 +519,7 @@ describe("StatsView", () => {
         it("should be undefined and default if not a save point or game/match point", () => {
           render(
             <StatsView
+              bestOf={1}
               gamePoint={10}
               matchWon={false}
               team1StartScore={0}
@@ -548,6 +561,7 @@ describe("StatsView", () => {
         it("should colour different marks differently when appropriate", () => {
           render(
             <StatsView
+              bestOf={1}
               gamePoint={10}
               matchWon={false}
               team1StartScore={0}

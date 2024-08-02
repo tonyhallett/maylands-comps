@@ -23,7 +23,20 @@ import {
   gameMatchPointsSaved,
   GameMatchPointState,
 } from "../matchstats/GameMatchPointDeucesStatistician";
+import { useState } from "react";
+import {
+  Accordion,
+  AccordionDetails,
+  AccordionSummary,
+  ToggleButton,
+  ToggleButtonGroup,
+} from "@mui/material";
+import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 
+function getGameScoreDisplay(gameScore: GameScore, team1Left: boolean) {
+  return `${team1Left ? gameScore.team1Points : gameScore.team2Points} - ${!team1Left ? gameScore.team1Points : gameScore.team2Points}`;
+}
+const currentGameValue = "current";
 export function StatsView({
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   team1StartScore,
@@ -38,6 +51,7 @@ export function StatsView({
   upTo,
   team1Label,
   team2Label,
+  bestOf,
 }: {
   matchWon: boolean;
   currentGameScore: GameScore;
@@ -50,88 +64,138 @@ export function StatsView({
   upTo: number;
   team1Label: string;
   team2Label: string;
+  bestOf: number;
 }) {
+  const [selectedGame, setSelectedGame] = useState(currentGameValue);
   gameScores = [...gameScores].reverse();
   if (!matchWon) {
     gameScores = [currentGameScore, ...gameScores];
   }
   const minX = upTo - Math.min(team1StartScore, team2StartScore);
   const numGameScores = gameScores.length;
-  return gameScores.map((gameScore, i) => {
-    const pointHistoryForGame = pointHistory[numGameScores - i - 1];
-    const gameStats = getGameStats([...pointHistoryForGame]);
-    const pointsScoredInGame = pointHistoryForGame.length > 0;
-    return (
-      <div key={i}>
-        <div>
-          {`${team1Left ? gameScore.team1Points : gameScore.team2Points} - ${!team1Left ? gameScore.team1Points : gameScore.team2Points}`}
-        </div>
-        <GameStatsTable
-          stats={gameStats}
-          pointsScoredInGame={pointsScoredInGame}
-        />
-        <Box
-          data-id={`game-${i}-score-line-chart-container`}
-          sx={{ width: "100%", height: 400 }}
+  let gameToDisplay =
+    selectedGame === currentGameValue
+      ? pointHistory.length
+      : Number.parseInt(selectedGame);
+
+  if (gameToDisplay > numGameScores) {
+    gameToDisplay = pointHistory.length;
+  }
+
+  const pointHistoryForGame = pointHistory[gameToDisplay - 1];
+  const gameStats = getGameStats([...pointHistoryForGame]);
+  const pointsScoredInGame = pointHistoryForGame.length > 0;
+  const gameStatsView = (
+    <>
+      <Accordion>
+        <AccordionSummary
+          expandIcon={<ExpandMoreIcon />}
+          aria-controls="panel1-content"
+          id="panel1-header"
         >
-          <GameScoreLineChart
-            colors={mangoFusionPalette}
-            minX={minX}
-            minY={upTo}
-            gamePoint={gamePoint}
-            reversed={false}
-            xAxisLabel="Points scored"
-            yAxisLabel="Team points"
-            team1Label={team1Label}
-            team2Label={team2Label}
-            startScore={{
-              team1Points: team1StartScore,
-              team2Points: team2StartScore,
-            }}
-            mark={{
-              getColor(_, score, pointNumber) {
-                if (isGameOrMatchWon(score.pointState)) {
-                  return "white";
-                }
-                if (gameStats.gameMatchPoints !== undefined) {
-                  const savedPointAt =
-                    gameStats.gameMatchPoints.savedPointsAt.find(
-                      (savedPointAt) => savedPointAt.at === pointNumber,
-                    );
-                  if (savedPointAt !== undefined) {
-                    return savedPointAt.isGamePoint ? "green" : "yellow";
-                  }
-                  if (isGamePoint(score.pointState)) {
-                    return "orange";
-                  }
-                  if (isMatchPoint(score.pointState)) {
-                    return "red";
-                  }
-                }
-              },
-              getShape(team1, score) {
-                if (isMatchWon(score.pointState)) {
-                  return "star";
-                }
-                if (isGameWon(score.pointState)) {
-                  return "diamond";
-                }
-                return team1 ? "circle" : "square";
-              },
-              showMark(team1, score, index) {
-                if (index === 0) {
-                  return false;
-                }
-                return score.team1WonPoint === team1;
-              },
-            }}
-            scores={[...pointHistoryForGame]}
-            axisTooltipRenderer={scoreTooltipRenderer}
+          Stats
+        </AccordionSummary>
+        <AccordionDetails>
+          <GameStatsTable
+            stats={gameStats}
+            pointsScoredInGame={pointsScoredInGame}
           />
-        </Box>
-      </div>
+        </AccordionDetails>
+      </Accordion>
+
+      <Box
+        data-id={`game-${gameToDisplay}-score-line-chart-container`}
+        sx={{ width: "100%", height: 400 }}
+      >
+        <GameScoreLineChart
+          key={gameToDisplay}
+          colors={mangoFusionPalette}
+          minX={minX}
+          minY={upTo}
+          gamePoint={gamePoint}
+          reversed={false}
+          xAxisLabel="Points scored"
+          yAxisLabel="Team points"
+          team1Label={team1Label}
+          team2Label={team2Label}
+          startScore={{
+            team1Points: team1StartScore,
+            team2Points: team2StartScore,
+          }}
+          mark={{
+            getColor(_, score, pointNumber) {
+              if (isGameOrMatchWon(score.pointState)) {
+                return "white";
+              }
+              if (gameStats.gameMatchPoints !== undefined) {
+                const savedPointAt =
+                  gameStats.gameMatchPoints.savedPointsAt.find(
+                    (savedPointAt) => savedPointAt.at === pointNumber,
+                  );
+                if (savedPointAt !== undefined) {
+                  return savedPointAt.isGamePoint ? "green" : "yellow";
+                }
+                if (isGamePoint(score.pointState)) {
+                  return "orange";
+                }
+                if (isMatchPoint(score.pointState)) {
+                  return "red";
+                }
+              }
+            },
+            getShape(team1, score) {
+              if (isMatchWon(score.pointState)) {
+                return "star";
+              }
+              if (isGameWon(score.pointState)) {
+                return "diamond";
+              }
+              return team1 ? "circle" : "square";
+            },
+            showMark(team1, score, index) {
+              if (index === 0) {
+                return false;
+              }
+              return score.team1WonPoint === team1;
+            },
+          }}
+          scores={[...pointHistoryForGame]}
+          axisTooltipRenderer={scoreTooltipRenderer}
+        />
+      </Box>
+    </>
+  );
+
+  const buttons =
+    bestOf === 1 ? null : (
+      <ToggleButtonGroup
+        exclusive
+        value={selectedGame}
+        onChange={(_, newValue) => {
+          if (newValue !== null) {
+            setSelectedGame(newValue);
+          }
+        }}
+      >
+        <ToggleButton value={currentGameValue}>Current</ToggleButton>
+        {gameScores.map((gameScore, i) => {
+          // game scores are in reverse
+          const gameNumber = numGameScores - i;
+          return (
+            <ToggleButton
+              key={gameNumber}
+              value={gameNumber.toString()}
+            >{`G${gameNumber} ${getGameScoreDisplay(gameScore, team1Left)}`}</ToggleButton>
+          );
+        })}
+      </ToggleButtonGroup>
     );
-  });
+  return (
+    <>
+      {buttons}
+      {gameStatsView}
+    </>
+  );
 }
 
 function GameStatsTable({

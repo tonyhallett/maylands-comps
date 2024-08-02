@@ -88,6 +88,7 @@ export function FreeScoringMatch() {
           />
           <StatsView
             upTo={rules.upTo}
+            bestOf={rules.bestOf}
             gamePoint={rules.upTo - 1}
             team1StartScore={umpire.team1StartGameScore}
             team2StartScore={umpire.team2StartGameScore}
