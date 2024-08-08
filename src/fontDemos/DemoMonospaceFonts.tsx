@@ -1,23 +1,12 @@
-import { useFullscreen2dCanvas } from "../canvasHelpers/useFullscreen2dCanvas";
 import { getDigitMetricsForContext } from "./getDigitMetrics";
 import { FixedToBottomRight } from "./DemoTextPlacement";
-import { getCanvasFont } from "./getCanvasFont";
-import { useMonospaceFontSelection } from "./useMonospaceFontSelection";
+import { useFontCanvas } from "./useFontCanvas";
 
 export function DemoMonospaceFonts() {
-  const [html, selectedFont] = useMonospaceFontSelection();
-  const canvas = useFullscreen2dCanvas(
-    (c: HTMLCanvasElement, context: CanvasRenderingContext2D) => {
-      if (selectedFont === undefined) {
-        return;
-      }
-      context.reset();
-      const canvasFont = getCanvasFont(
-        selectedFont.weight,
-        selectedFont.italic,
-        "100px",
-        selectedFont.family,
-      );
+  const { fontSelectionHtml, canvas, getCanvasFont } = useFontCanvas(
+    () => true,
+    (canvas, context) => {
+      const canvasFont = getCanvasFont("100px");
       const digitMetrics = getDigitMetricsForContext(canvasFont, context);
       const maxAscender = digitMetrics.reduce(
         (max, metric) => Math.max(max, metric.actualBoundingBoxAscent),
@@ -32,9 +21,10 @@ export function DemoMonospaceFonts() {
       });
     },
   );
+
   return (
     <>
-      <FixedToBottomRight>{html}</FixedToBottomRight>
+      <FixedToBottomRight>{fontSelectionHtml}</FixedToBottomRight>
       {canvas}
     </>
   );

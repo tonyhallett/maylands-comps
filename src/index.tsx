@@ -6,9 +6,9 @@ import "@fontsource/roboto/500.css";
 import "@fontsource/roboto/700.css";
 import { Box, CssBaseline, Link, Typography } from "@mui/material";
 import MGLogo from "./MaylandsTheming/MGSVGLogo";
-import DemoSetAndPointTopAlignment from "./fontDemos/DemoSetAndPointTopAlignment";
 import MaylandsThemeProvider from "./MaylandsTheming/MaylandsThemeProvider";
 import freeScoringRoute from "./freeScoring/route";
+import { DemoMonospaceFonts } from "./fontDemos/DemoMonospaceFonts";
 
 const router = createBrowserRouter([
   {
@@ -26,7 +26,7 @@ const router = createBrowserRouter([
   },
   {
     path: "playerviewdemo",
-    element: <DemoSetAndPointTopAlignment />,
+    element: <DemoMonospaceFonts />,
   },
   freeScoringRoute,
 ]);
