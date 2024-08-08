@@ -1,12 +1,12 @@
 import { useEffect, useRef } from "react";
 import { fixCanvasHighRes } from "../fontDemos/fixCanvasHighRes";
 
-export function useFullscreen2dCanvas(
-  canvasCallback: (
-    canvas: HTMLCanvasElement,
-    context: CanvasRenderingContext2D,
-  ) => void,
-) {
+export type CanvasCallback = (
+  canvas: HTMLCanvasElement,
+  context: CanvasRenderingContext2D,
+) => void;
+
+export function useFullscreen2dCanvas(canvasCallback: CanvasCallback) {
   const setUp = useRef(false);
   const inputRef = useRef<HTMLCanvasElement>(null);
   useEffect(() => {

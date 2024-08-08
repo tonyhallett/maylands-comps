@@ -10,5 +10,10 @@
     "src/**/*",
     "__tests__/**/*",
     "__hacky-mui-tests__/StatsView.test.tsx"
-  ]
+  ],
+  "ts-node": {
+    "compilerOptions": {
+      "module": "CommonJS"
+    }
+  }
 }
