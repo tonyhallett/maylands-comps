@@ -6,7 +6,7 @@ export function DemoMonospaceFonts() {
   const { fontSelectionHtml, canvas, getCanvasFont } = useFontCanvas(
     () => true,
     (canvas, context) => {
-      const canvasFont = getCanvasFont("100px");
+      const canvasFont = getCanvasFont(100);
       const digitMetrics = getDigitMetricsForContext(canvasFont, context);
       const maxAscender = digitMetrics.reduce(
         (max, metric) => Math.max(max, metric.actualBoundingBoxAscent),

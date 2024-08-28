@@ -1,5 +1,11 @@
 export const fontFaces = [
   {
+    "font-family": "VT323",
+    "font-style": "normal",
+    "font-weight": "400",
+    filePath: new URL("../fonts/VT323-400-normal.woff2", import.meta.url),
+  },
+  {
     "font-family": "Anonymous Pro",
     "font-style": "italic",
     "font-weight": "400",
@@ -59,6 +65,7 @@ export const fontFaces = [
     "font-weight": "700",
     filePath: new URL("../fonts/B612 Mono-700-normal.woff2", import.meta.url),
   },
+  //#region chivo
   {
     "font-family": "Chivo Mono",
     "font-style": "italic",
@@ -77,12 +84,14 @@ export const fontFaces = [
       import.meta.url,
     ),
   },
+  //#endregion
   {
     "font-family": "Cutive Mono",
     "font-style": "normal",
     "font-weight": "400",
     filePath: new URL("../fonts/Cutive Mono-400-normal.woff2", import.meta.url),
   },
+  //#region Fragment Mono
   {
     "font-family": "Fragment Mono",
     "font-style": "italic",
@@ -101,6 +110,7 @@ export const fontFaces = [
       import.meta.url,
     ),
   },
+  //#endregion
   {
     "font-family": "Inconsolata",
     "font-style": "normal",
@@ -111,6 +121,7 @@ export const fontFaces = [
       import.meta.url,
     ),
   },
+  //#region Lekton
   {
     "font-family": "Lekton",
     "font-style": "italic",
@@ -129,6 +140,7 @@ export const fontFaces = [
     "font-weight": "700",
     filePath: new URL("../fonts/Lekton-700-normal.woff2", import.meta.url),
   },
+  //#endregion
   {
     "font-family": "Major Mono Display",
     "font-style": "normal",
@@ -148,6 +160,7 @@ export const fontFaces = [
       import.meta.url,
     ),
   },
+  //#region Roboto Mono
   {
     "font-family": "Roboto Mono",
     "font-style": "italic",
@@ -166,6 +179,7 @@ export const fontFaces = [
       import.meta.url,
     ),
   },
+  //#endregion
   {
     "font-family": "Rubik Mono One",
     "font-style": "normal",
@@ -192,11 +206,5 @@ export const fontFaces = [
       "../fonts/Sometype Mono-400 700-normal.woff2",
       import.meta.url,
     ),
-  },
-  {
-    "font-family": "VT323",
-    "font-style": "normal",
-    "font-weight": "400",
-    filePath: new URL("../fonts/VT323-400-normal.woff2", import.meta.url),
   },
 ];

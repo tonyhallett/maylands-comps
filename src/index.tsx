@@ -8,7 +8,7 @@ import { Box, CssBaseline, Link, Typography } from "@mui/material";
 import MGLogo from "./MaylandsTheming/MGSVGLogo";
 import MaylandsThemeProvider from "./MaylandsTheming/MaylandsThemeProvider";
 import freeScoringRoute from "./freeScoring/route";
-import { DemoMonospaceFonts } from "./fontDemos/DemoMonospaceFonts";
+import { DemoScoreDrawing } from "./fontDemos/DemoPlayerView/DemoScoreDrawing";
 
 const router = createBrowserRouter([
   {
@@ -26,7 +26,7 @@ const router = createBrowserRouter([
   },
   {
     path: "playerviewdemo",
-    element: <DemoMonospaceFonts />,
+    element: <DemoScoreDrawing />,
   },
   freeScoringRoute,
 ]);

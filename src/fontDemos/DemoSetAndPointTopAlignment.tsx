@@ -19,7 +19,7 @@ export default function DemoSetAndPointTopAlignment() {
       return !shouldNotRender;
     },
     (canvas, context) => {
-      const pointCanvasFont = getCanvasFont(`${pointFontSize}px`);
+      const pointCanvasFont = getCanvasFont(pointFontSize);
       const pointDigitMetrics = getDigitMetricsForContext(
         pointCanvasFont,
         context,
@@ -31,7 +31,7 @@ export default function DemoSetAndPointTopAlignment() {
         pointMetrics.actualBoundingBoxAscent,
       );
 
-      const setCanvasFont = getCanvasFont(`${setFontSize}px`);
+      const setCanvasFont = getCanvasFont(setFontSize);
       const setDigitMetrics = getDigitMetricsForContext(setCanvasFont, context);
       const setMetrics = setDigitMetrics[setScore];
 

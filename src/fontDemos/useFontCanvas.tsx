@@ -4,14 +4,18 @@ import {
   useFullscreen2dCanvas,
 } from "../canvasHelpers/useFullscreen2dCanvas";
 import { fontFaces } from "./fontInfo";
+import { fontFaces as manualFontFaces } from "./manualFontInfo";
 import { useSelect } from "./useFontSelection";
 import { getFontFamily } from "./getCanvasFont";
 
-type FontInfo = (typeof fontFaces)[0];
-export interface NameWeightFontInfo {
-  name: string;
-  fontInfo: FontInfo;
+export type FontInfo = (typeof fontFaces)[0];
+type FontInfoNoWeight = Omit<FontInfo, "weight">;
+export interface WeightFontInfo {
   weight: string;
+  fontInfo: FontInfoNoWeight;
+}
+export interface NameWeightFontInfo extends WeightFontInfo {
+  name: string;
 }
 
 function getWeights(startWeight: string, endWeight: string): string[] {
@@ -25,7 +29,8 @@ function getWeights(startWeight: string, endWeight: string): string[] {
 }
 
 export const nameWeightFontInfos: NameWeightFontInfo[] = [];
-fontFaces.forEach((fontFace) => {
+const allFontFaces = manualFontFaces.concat(fontFaces);
+allFontFaces.forEach((fontFace) => {
   const fontWeight = fontFace["font-weight"];
   const weightsRange = fontWeight.split(" ");
   const weights =
@@ -39,13 +44,15 @@ fontFaces.forEach((fontFace) => {
 });
 
 export const getCanvasFontString = (
-  fontFace: FontInfo,
-  fontSize: string,
-  fontWeight: string,
+  weightFontInfo: WeightFontInfo,
+  fontSize: number | string,
 ) => {
-  const fontStyle = fontFace["font-style"];
+  const fontInfo = weightFontInfo.fontInfo;
+
+  const fontStyle = fontInfo["font-style"];
   const fontStylePart = fontStyle === "italic" ? "italic " : "";
-  return `${fontStylePart}${fontWeight} ${fontSize} ${getFontFamily(fontFace["font-family"])}`;
+
+  return `${fontStylePart}${weightFontInfo.weight} ${fontSize}px ${getFontFamily(fontInfo["font-family"])}`;
 };
 
 export function useFontCanvas(
@@ -98,13 +105,9 @@ export function useFontCanvas(
       render(c, context);
     },
   );
-  const getCanvasFont = (fontSize: string) => {
+  const getCanvasFont = (fontSize: number | string) => {
     if (loadedFont === undefined) return "";
-    return getCanvasFontString(
-      loadedFont.fontInfo,
-      fontSize,
-      loadedFont.weight,
-    );
+    return getCanvasFontString(loadedFont, fontSize);
   };
   return { fontSelectionHtml, canvas, getCanvasFont };
 }
