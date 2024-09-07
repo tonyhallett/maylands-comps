@@ -8,7 +8,6 @@ import { Box, CssBaseline, Link, Typography } from "@mui/material";
 import MGLogo from "./MaylandsTheming/MGSVGLogo";
 import MaylandsThemeProvider from "./MaylandsTheming/MaylandsThemeProvider";
 import freeScoringRoute from "./freeScoring/route";
-import { DemoFiltering } from "./firebaseDemos/demos";
 import { DatabaseProvider } from "./firebase/rtbProvider";
 
 const router = createBrowserRouter([
@@ -22,14 +21,10 @@ const router = createBrowserRouter([
           Free scoring
         </Link>
         {/* <Link href="playerviewdemo">Player view demo</Link> */}
-        <Link href="DemoFiltering">DemoFiltering</Link>
+
         {/* <Link href="playerviewchangedemo">Player view change demo</Link> */}
       </Box>
     ),
-  },
-  {
-    path: "DemoFiltering",
-    element: <DemoFiltering />,
   },
   /* {
     path: "playerviewdemo",

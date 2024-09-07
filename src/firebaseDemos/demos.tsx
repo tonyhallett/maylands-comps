@@ -239,7 +239,7 @@ export function DemoFiltering() {
             await Promise.all(
               thingsToAdd.map((thing) => {
                 //push(thingsListRef, thing);
-                set(child(thingsListRef, thing.key), thing);
+                return set(child(thingsListRef, thing.key), thing);
               }),
             );
             setAdded(true);
