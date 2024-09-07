@@ -78,10 +78,10 @@ export function FreeScoringMatch() {
                 matchStateChanged(umpire.setServer(player));
               },
               switchEnds() {
-                matchStateChanged(umpireRef.current.switchEnds());
+                matchStateChanged(umpire.switchEnds());
               },
               undoPoint() {
-                matchStateChanged(umpireRef.current.undoPoint());
+                matchStateChanged(umpire.undoPoint());
               },
             }}
             {...playerNames}

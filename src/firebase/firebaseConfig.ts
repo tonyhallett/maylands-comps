@@ -7,6 +7,8 @@ const firebaseConfig: FirebaseOptions = {
   apiKey: "AIzaSyBoCV-CgyN4vMTrJgE7HaJI1pLmhu84zjg",
   authDomain: "maylands-comps.firebaseapp.com",
   messagingSenderId: "605649364605",
+  databaseURL:
+    "https://maylands-comps-default-rtdb.europe-west1.firebasedatabase.app/",
 };
 
 export default firebaseConfig;

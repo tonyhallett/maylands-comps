@@ -8,7 +8,8 @@ import { Box, CssBaseline, Link, Typography } from "@mui/material";
 import MGLogo from "./MaylandsTheming/MGSVGLogo";
 import MaylandsThemeProvider from "./MaylandsTheming/MaylandsThemeProvider";
 import freeScoringRoute from "./freeScoring/route";
-import { DemoScoreDrawing } from "./fontDemos/DemoPlayerView/DemoScoreDrawing";
+import { DemoFiltering } from "./firebaseDemos/demos";
+import { DatabaseProvider } from "./firebase/rtbProvider";
 
 const router = createBrowserRouter([
   {
@@ -20,20 +21,32 @@ const router = createBrowserRouter([
         <Link style={{ display: "block" }} href="freescoring">
           Free scoring
         </Link>
-        <Link href="playerviewdemo">Player view demo</Link>
+        {/* <Link href="playerviewdemo">Player view demo</Link> */}
+        <Link href="DemoFiltering">DemoFiltering</Link>
+        {/* <Link href="playerviewchangedemo">Player view change demo</Link> */}
       </Box>
     ),
   },
   {
-    path: "playerviewdemo",
-    element: <DemoScoreDrawing />,
+    path: "DemoFiltering",
+    element: <DemoFiltering />,
   },
+  /* {
+    path: "playerviewdemo",
+    element: <DemoRtbPlayerView />,
+  }, */
+  /* {
+    path: "playerviewchangedemo",
+    element: <DemoRtbScorer />,
+  }, */
   freeScoringRoute,
 ]);
 
 createRoot(document.getElementById("root")).render(
-  <MaylandsThemeProvider>
-    <CssBaseline enableColorScheme />
-    <RouterProvider router={router} />
-  </MaylandsThemeProvider>,
+  <DatabaseProvider>
+    <MaylandsThemeProvider>
+      <CssBaseline enableColorScheme />
+      <RouterProvider router={router} />
+    </MaylandsThemeProvider>
+  </DatabaseProvider>,
 );

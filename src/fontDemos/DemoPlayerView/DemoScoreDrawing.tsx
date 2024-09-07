@@ -23,6 +23,7 @@ export const scores: DemoGameScore[] = [
     return demoScore;
   }),
 ];
+
 export let fontIndex = 0;
 export function DemoScoreDrawing() {
   const [score, setScore] = useState<DemoGameScore>(scores[scoreIndex]);
