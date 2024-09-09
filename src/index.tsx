@@ -22,12 +22,12 @@ const router = createBrowserRouter([
       <Box p={1}>
         <Typography variant="h5">Maylands Competitions </Typography>
         <MGLogo width={100} />
-        <Link style={{ display: "block" }} href="freescoring">
+        {/* <Link style={{ display: "block" }} href="freescoring">
           Free scoring
         </Link>
         <Link style={{ display: "block" }} href="democreatematch">
           Demo create match
-        </Link>
+        </Link> */}
         <Link style={{ display: "block" }} href="demodbumpire">
           Demo umpire
         </Link>
