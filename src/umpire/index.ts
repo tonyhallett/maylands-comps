@@ -97,7 +97,7 @@ export interface PointHistory extends GameScoreState, ServerReceiver {
 }
 export type GamePointHistory = PointHistory[];
 
-type SavePointHistory = Omit<PointHistory, "date"> & {
+export type SavePointHistory = Omit<PointHistory, "date"> & {
   date: string;
 };
 
