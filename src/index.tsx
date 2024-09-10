@@ -10,10 +10,11 @@ import MaylandsThemeProvider from "./MaylandsTheming/MaylandsThemeProvider";
 import freeScoringRoute from "./freeScoring/route";
 import { DatabaseProvider } from "./firebase/rtbProvider";
 import {
-  DemoCreateMatch,
+  /* DemoCreateMatch, */
   DemoDbPlayersView,
   DemoDbUmpire,
 } from "./firebaseDemos/demos";
+import { DemoTeamsMatchPlayersSelect } from "./teamMatches/teamMatchPlayerSelect";
 
 const router = createBrowserRouter([
   {
@@ -22,6 +23,9 @@ const router = createBrowserRouter([
       <Box p={1}>
         <Typography variant="h5">Maylands Competitions </Typography>
         <MGLogo width={100} />
+        <Link style={{ display: "block" }} href="demoteammatchplayersselect">
+          Demo team match players select
+        </Link>
         {/* <Link style={{ display: "block" }} href="freescoring">
           Free scoring
         </Link>
@@ -38,9 +42,14 @@ const router = createBrowserRouter([
     ),
   },
   {
+    path: "demoteammatchplayersselect",
+    element: <DemoTeamsMatchPlayersSelect />,
+  },
+  /*   {
     path: "democreatematch",
     element: <DemoCreateMatch />,
   },
+  */
   {
     path: "demodbumpire",
     element: <DemoDbUmpire />,
@@ -49,22 +58,7 @@ const router = createBrowserRouter([
     path: "demodbscore",
     element: <DemoDbPlayersView />,
   },
-  /* {
-    path: "demofkeyssetup",
-    element: <DemoFKeysSetup />,
-  },
-  {
-    path: "demomatchwatcher",
-    element: <DemoMatchWatcher />,
-  }, */
-  /* {
-    path: "playerviewdemo",
-    element: <DemoRtbPlayerView />,
-  }, */
-  /* {
-    path: "playerviewchangedemo",
-    element: <DemoRtbScorer />,
-  }, */
+
   freeScoringRoute,
 ]);
 

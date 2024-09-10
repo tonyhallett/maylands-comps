@@ -34,7 +34,7 @@ export function DemoScore({ score, fontInfo }: DemoScoreProps) {
   return (
     <LandscapeFullScreen
       wrongOrientation={<Typography>Landscape please</Typography>}
-      notfullScreen={<GoFullScreen />}
+      notfullScreen={<GoFullScreen moveMouseToExit />}
     >
       <CanvasFontMax<CalculatedInstructions>
         fontInfo={fontInfo}

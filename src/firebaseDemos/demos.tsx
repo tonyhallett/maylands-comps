@@ -365,6 +365,7 @@ interface DbTeam {
 interface DbMatch extends DBMatchSaveState {
   team1Id: string;
   team2Id: string;
+  scoreboardWithUmpire: boolean;
 }
 
 export function dbMatchSaveStateToSaveState(
@@ -501,6 +502,7 @@ export function DemoCreateMatch() {
     const newMatch: DbMatch = {
       team1Id: team1Key,
       team2Id: team2Key,
+      scoreboardWithUmpire: true,
       ...dbMatchSaveState,
     };
     updates[`${matchesKey}/${matchKey}`] = newMatch;
@@ -676,6 +678,7 @@ export function DemoDbUmpire() {
     const updatedMatch: DbMatch = {
       team1Id: dbMatch.team1Id,
       team2Id: dbMatch.team2Id,
+      scoreboardWithUmpire: dbMatch.scoreboardWithUmpire,
       ...dbMatchSaveState,
     };
     const matchRef = child(ref(db), `matches/${matchKey}`);
@@ -708,6 +711,7 @@ export function DemoDbUmpire() {
         matchState={matchState}
         rules={rules}
         umpire={{
+          // todo - add a scoreboardWithUmpire method changed on the umpire and an optional button/radio to change it
           pointScored(isTeam1) {
             matchStateChanged(umpire.pointScored(isTeam1));
           },
@@ -771,8 +775,11 @@ export function DemoDbPlayersView() {
     const unsubscribe = onValue(child(ref(db), `matches`), (snapshot) => {
       snapshot.forEach((childSnapshot) => {
         const demoMatch = childSnapshot.val() as DbMatch;
-        // todo need field on team1Left for the scoreboard
-        if (demoMatch.team1Left) {
+        const scoreboardWithUmpire = demoMatch.scoreboardWithUmpire;
+        const scoreboardTeam1Left = scoreboardWithUmpire
+          ? !demoMatch.team1Left
+          : demoMatch.team1Left;
+        if (scoreboardTeam1Left) {
           setScore({
             left: demoMatch.team1Score,
             right: demoMatch.team2Score,
