@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useFirestore } from "../../firebase/firestoreProvider";
 import { fontFaces } from "../manualFontInfo";
-import { DemoGameScore, DemoScore } from "./DemoScore";
+import { Score, Scoreboard } from "./Scoreboard";
 import {
   disableNetwork,
   doc,
@@ -16,11 +16,11 @@ export function DemoFirestoreScorer() {
   const firestore = useFirestore();
   const scoresRef = doc(firestore, "demoscores", "demo");
   const createdDocRef = useRef(false);
-  const demoGameScoreRef = useRef<DemoGameScore | null>(null);
+  const demoGameScoreRef = useRef<Score | null>(null);
   const [disabledNetwork, setDisabledNetwork] = useState(false);
   useEffect(() => {
     if (createdDocRef.current) return;
-    const demoScore: DemoGameScore = {
+    const demoScore: Score = {
       left: {
         games: 0,
         points: 0,
@@ -90,7 +90,7 @@ export function DemoFirestoreScorer() {
 
 export function DemoFirestorePlayerView() {
   const firestore = useFirestore();
-  const [score, setScore] = useState<DemoGameScore>({
+  const [score, setScore] = useState<Score>({
     left: {
       games: 0,
       points: 0,
@@ -102,13 +102,13 @@ export function DemoFirestorePlayerView() {
   });
   useEffect(() => {
     const unsub = onSnapshot(doc(firestore, "demoscores", "demo"), (doc) => {
-      const gameScore = doc.data() as DemoGameScore;
+      const gameScore = doc.data() as Score;
       setScore(gameScore);
     });
     return unsub;
   }, [firestore]);
   return (
-    <DemoScore
+    <Scoreboard
       score={score}
       fontInfo={{
         weight: "400",
@@ -122,11 +122,11 @@ export function DemoRtbScorer() {
   const rtb = useRTB();
   const scoresRef = ref(rtb, "demoScore");
   const createdDocRef = useRef(false);
-  const demoGameScoreRef = useRef<DemoGameScore | null>(null);
+  const demoGameScoreRef = useRef<Score | null>(null);
   const [disabledNetwork, setDisabledNetwork] = useState(false);
   useEffect(() => {
     if (createdDocRef.current) return;
-    const demoScore: DemoGameScore = {
+    const demoScore: Score = {
       left: {
         games: 0,
         points: 0,
@@ -193,7 +193,7 @@ export function DemoRtbScorer() {
 export function DemoRtbPlayerView() {
   const rtb = useRTB();
   const scoresRef = ref(rtb, "demoScore");
-  const [score, setScore] = useState<DemoGameScore>({
+  const [score, setScore] = useState<Score>({
     left: {
       games: 0,
       points: 0,
@@ -206,14 +206,14 @@ export function DemoRtbPlayerView() {
   useEffect(() => {
     const unsub = onValue(scoresRef, (doc) => {
       if (doc !== null) {
-        const gameScore = doc.val() as DemoGameScore;
+        const gameScore = doc.val() as Score;
         setScore(gameScore);
       }
     });
     return unsub;
   }, [scoresRef]);
   return (
-    <DemoScore
+    <Scoreboard
       score={score}
       fontInfo={{
         weight: "400",

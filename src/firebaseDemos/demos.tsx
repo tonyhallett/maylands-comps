@@ -37,10 +37,7 @@ import { MatchInfo, PlayerNames, UmpireView } from "../umpireView";
 import { StatsView } from "../statsViews/StatsView";
 import { isMatchWon } from "../umpire/getMatchWinState";
 import { getTeamInitials } from "../umpireView/helpers";
-import {
-  DemoGameScore,
-  DemoScore,
-} from "../fontDemos/DemoPlayerView/DemoScore";
+import { Score, Scoreboard } from "../fontDemos/DemoPlayerView/Scoreboard";
 import { fontFaces } from "../fontDemos/manualFontInfo";
 
 export function DemoPush() {
@@ -770,7 +767,7 @@ function getTeamLabels(playerNames: PlayerNames) {
 
 export function DemoDbPlayersView() {
   const db = useRTB();
-  const [score, setScore] = useState<DemoGameScore | undefined>(undefined);
+  const [score, setScore] = useState<Score | undefined>(undefined);
   useEffect(() => {
     const unsubscribe = onValue(child(ref(db), `matches`), (snapshot) => {
       snapshot.forEach((childSnapshot) => {
@@ -798,7 +795,7 @@ export function DemoDbPlayersView() {
     return <div>loading</div>;
   }
   return (
-    <DemoScore
+    <Scoreboard
       score={score}
       fontInfo={{
         weight: "400",

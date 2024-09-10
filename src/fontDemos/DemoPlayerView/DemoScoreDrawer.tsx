@@ -3,7 +3,7 @@ import {
   CanvasFontMaxImpl,
   GetCanvasFontString,
 } from "./CanvasFontMax";
-import { DemoGameScore } from "./DemoScore";
+import { Score } from "./Scoreboard";
 import { getDigit } from "./getDigit";
 import { DigitsMaxMetrics, getDigitsMax } from "./getDigitsMax";
 import { inRange } from "./inRange";
@@ -92,7 +92,7 @@ export interface CalculatedInstructions {
 export class DemoScoreDrawer
   implements CanvasFontMaxImpl<CalculatedInstructions>
 {
-  score: DemoGameScore;
+  score: Score;
   private gamesWonFontSizeProportion: number = 0.5;
   public cardBorderColor = "yellow";
   public digitColor = "limegreen";

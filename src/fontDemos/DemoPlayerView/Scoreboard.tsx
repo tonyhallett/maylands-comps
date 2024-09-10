@@ -4,35 +4,35 @@ import { DemoScoreDrawer, CalculatedInstructions } from "./DemoScoreDrawer";
 import { WeightFontInfo } from "../useFontCanvas";
 import {
   GoFullScreen,
-  LandscapeFullScreen,
+  LandscapeFullScreenWithMouseExit,
 } from "../../OnlyIfFullScreenOrNotAvailable";
 import { Typography } from "@mui/material";
 import { useWakeLock } from "./useWakeLock";
 //import { SerializedSessionStorage } from "./SerializedSessionStorage";
 
-export interface DemoTeamScore {
+export interface TeamScore {
   games: number;
   points: number;
 }
-export interface DemoGameScore {
-  left: DemoTeamScore;
-  right: DemoTeamScore;
+export interface Score {
+  left: TeamScore;
+  right: TeamScore;
 }
-export interface DemoScoreProps {
-  score: DemoGameScore;
+export interface ScoreboardProps {
+  score: Score;
   fontInfo: WeightFontInfo;
 }
 
 /* const demoSerializedStorage =
   new SerializedSessionStorage<CalculatedInstructions>(); */
-export function DemoScore({ score, fontInfo }: DemoScoreProps) {
+export function Scoreboard({ score, fontInfo }: ScoreboardProps) {
   useWakeLock();
   const demoCanvasFontMaxImplRef = useRef(new DemoScoreDrawer());
   demoCanvasFontMaxImplRef.current.cardBorderColor = "orange";
   demoCanvasFontMaxImplRef.current.digitColor = "pink";
   demoCanvasFontMaxImplRef.current.score = score;
   return (
-    <LandscapeFullScreen
+    <LandscapeFullScreenWithMouseExit
       wrongOrientation={<Typography>Landscape please</Typography>}
       notfullScreen={<GoFullScreen moveMouseToExit />}
     >
@@ -41,6 +41,6 @@ export function DemoScore({ score, fontInfo }: DemoScoreProps) {
         /* store={demoSerializedStorage} */
         impl={demoCanvasFontMaxImplRef.current}
       />
-    </LandscapeFullScreen>
+    </LandscapeFullScreenWithMouseExit>
   );
 }

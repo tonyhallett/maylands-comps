@@ -2,11 +2,11 @@ import { useState } from "react";
 import { DraggableCard } from "../../demoHelpers/DraggableCard";
 import { NameWeightFontInfo, nameWeightFontInfos } from "../useFontCanvas";
 import { fillArray } from "../../helpers/fillArray";
-import { DemoGameScore, DemoScore } from "./DemoScore";
+import { Score, Scoreboard } from "./Scoreboard";
 import { CardContent } from "@mui/material";
 
 export let scoreIndex = 0;
-export const scores: DemoGameScore[] = [
+export const scores: Score[] = [
   {
     left: { games: 0, points: 0 },
     right: { games: 1, points: 1 },
@@ -16,7 +16,7 @@ export const scores: DemoGameScore[] = [
     right: { games: 1, points: 3 },
   },
   ...fillArray(30, (i) => {
-    const demoScore: DemoGameScore = {
+    const demoScore: Score = {
       left: { games: 2, points: 4 + i },
       right: { games: 1, points: 5 + i },
     };
@@ -26,13 +26,13 @@ export const scores: DemoGameScore[] = [
 
 export let fontIndex = 0;
 export function DemoScoreDrawing() {
-  const [score, setScore] = useState<DemoGameScore>(scores[scoreIndex]);
+  const [score, setScore] = useState<Score>(scores[scoreIndex]);
   const [font, setFont] = useState<NameWeightFontInfo>(
     nameWeightFontInfos[fontIndex],
   );
   return (
     <>
-      <DemoScore score={score} fontInfo={font} />
+      <Scoreboard score={score} fontInfo={font} />
       <DraggableCard cardStyle={{ position: "fixed", bottom: 10, right: 10 }}>
         <CardContent>
           <button
