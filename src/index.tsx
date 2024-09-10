@@ -10,7 +10,7 @@ import MaylandsThemeProvider from "./MaylandsTheming/MaylandsThemeProvider";
 import freeScoringRoute from "./freeScoring/route";
 import { DatabaseProvider } from "./firebase/rtbProvider";
 import {
-  /* DemoCreateMatch, */
+  DemoCreateMatch,
   DemoDbPlayersView,
   DemoDbUmpire,
 } from "./firebaseDemos/demos";
@@ -29,9 +29,10 @@ const router = createBrowserRouter([
         {/* <Link style={{ display: "block" }} href="freescoring">
           Free scoring
         </Link>
+         */}
         <Link style={{ display: "block" }} href="democreatematch">
           Demo create match
-        </Link> */}
+        </Link>
         <Link style={{ display: "block" }} href="demodbumpire">
           Demo umpire
         </Link>
@@ -45,11 +46,11 @@ const router = createBrowserRouter([
     path: "demoteammatchplayersselect",
     element: <DemoTeamsMatchPlayersSelect />,
   },
-  /*   {
+  {
     path: "democreatematch",
     element: <DemoCreateMatch />,
   },
-  */
+
   {
     path: "demodbumpire",
     element: <DemoDbUmpire />,

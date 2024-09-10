@@ -447,7 +447,6 @@ export function saveStateToDbMatchSaveState(
   };
 }
 
-let matchKey: string | undefined;
 export function DemoCreateMatch() {
   const db = useRTB();
   useEffect(() => {
@@ -470,19 +469,15 @@ export function DemoCreateMatch() {
       return newTeamKey;
     };
     const team1Player1Key = updatePlayer(updates, { name: "T Hallett" });
-    const team1Player2Key = updatePlayer(updates, { name: "T Bonnici" });
-    const team2Player1Key = updatePlayer(updates, { name: "D Brown" });
-    const team2Player2Key = updatePlayer(updates, { name: "R Hucker" });
+    const team2Player1Key = updatePlayer(updates, { name: "D Adcock" });
     const team1Key = updateTeam(updates, {
       player1Id: team1Player1Key,
-      player2Id: team1Player2Key,
     });
     const team2Key = updateTeam(updates, {
       player1Id: team2Player1Key,
-      player2Id: team2Player2Key,
     });
     const matchesKey = "matches";
-    matchKey = push(child(ref(db), matchesKey)).key;
+    const matchKey = push(child(ref(db), matchesKey)).key;
     const umpire = new Umpire(
       {
         bestOf: 5,
@@ -512,6 +507,7 @@ export function DemoCreateMatch() {
 
 export function DemoDbUmpire() {
   const db = useRTB();
+  const matchKeyRef = useRef<string | undefined>(undefined);
   const dbMatchRef = useRef<DbMatch | undefined>(undefined);
   const matchStateRef = useRef<MatchState | undefined>(undefined);
   const umpireRef = useRef<Umpire | undefined>(undefined);
@@ -561,6 +557,7 @@ export function DemoDbUmpire() {
     const unsubscribe = onValue(child(ref(db), `matches`), (snapshot) => {
       snapshot.forEach((childSnapshot) => {
         const demoMatch = childSnapshot.val() as DbMatch;
+        matchKeyRef.current = childSnapshot.key;
         dbMatchRef.current = demoMatch;
         setTeam1Id(demoMatch.team1Id);
         setTeam2Id(demoMatch.team2Id);
@@ -678,7 +675,7 @@ export function DemoDbUmpire() {
       scoreboardWithUmpire: dbMatch.scoreboardWithUmpire,
       ...dbMatchSaveState,
     };
-    const matchRef = child(ref(db), `matches/${matchKey}`);
+    const matchRef = child(ref(db), `matches/${matchKeyRef.current}`);
     update(matchRef, updatedMatch).catch((reason) =>
       alert(`error updating - ${reason}`),
     );
