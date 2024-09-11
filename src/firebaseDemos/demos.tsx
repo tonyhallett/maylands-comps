@@ -39,6 +39,7 @@ import { isMatchWon } from "../umpire/getMatchWinState";
 import { getTeamInitials } from "../umpireView/helpers";
 import { Score, Scoreboard } from "../fontDemos/DemoPlayerView/Scoreboard";
 import { fontFaces } from "../fontDemos/manualFontInfo";
+import { DoublesEndPoints } from "../umpire/getServerReceiver";
 
 export function DemoPush() {
   const rtb = useRTB();
@@ -346,11 +347,15 @@ export interface DbInitialServersDoublesReceiver {
 }
 export type DBMatchSaveState = Omit<
   SaveState,
-  "pointHistory" | "gameScores" | "initialServersDoublesReceiver"
+  | "pointHistory"
+  | "gameScores"
+  | "initialServersDoublesReceiver"
+  | "doublesEndsPointsScored"
 > & {
   pointHistory: ObjectPointHistory;
   gameScores?: ObjectGameScores;
   initialServersDoublesReceiver?: DbInitialServersDoublesReceiver;
+  doublesEndsPointsScored?: DoublesEndPoints;
 };
 interface DbPlayer {
   name: string;
@@ -368,8 +373,13 @@ interface DbMatch extends DBMatchSaveState {
 export function dbMatchSaveStateToSaveState(
   dbMatchSaveState: DBMatchSaveState,
 ): SaveState {
-  const { pointHistory, gameScores, initialServersDoublesReceiver, ...rest } =
-    dbMatchSaveState;
+  const {
+    pointHistory,
+    gameScores,
+    initialServersDoublesReceiver,
+    doublesEndsPointsScored,
+    ...rest
+  } = dbMatchSaveState;
   const saveGameScores =
     gameScores === undefined ? [] : Object.values(gameScores);
 
@@ -398,6 +408,7 @@ export function dbMatchSaveStateToSaveState(
 
   return {
     ...rest,
+    doublesEndsPointsScored,
     pointHistory: savePointHistory, //todo
     gameScores: saveGameScores,
     initialServersDoublesReceiver: saveInitialServersDoublesReceiver,
@@ -407,8 +418,13 @@ export function dbMatchSaveStateToSaveState(
 export function saveStateToDbMatchSaveState(
   saveState: SaveState,
 ): DBMatchSaveState {
-  const { pointHistory, gameScores, initialServersDoublesReceiver, ...rest } =
-    saveState;
+  const {
+    pointHistory,
+    gameScores,
+    initialServersDoublesReceiver,
+    doublesEndsPointsScored,
+    ...rest
+  } = saveState;
 
   const dbInitialServersDoublesReceiver: DbInitialServersDoublesReceiver = {
     gameInitialServers: initialServersDoublesReceiver.gameInitialServers.reduce(
@@ -423,7 +439,7 @@ export function saveStateToDbMatchSaveState(
     dbInitialServersDoublesReceiver.firstDoublesReceiver =
       initialServersDoublesReceiver.firstDoublesReceiver;
   }
-  return {
+  const dbMatchSaveState: DBMatchSaveState = {
     ...rest,
     gameScores: gameScores.reduce((acc, gameScore, gameIndex) => {
       acc[gameIndex.toString()] = gameScore;
@@ -445,6 +461,10 @@ export function saveStateToDbMatchSaveState(
     }, {}),
     initialServersDoublesReceiver: dbInitialServersDoublesReceiver,
   };
+  if (doublesEndsPointsScored !== undefined) {
+    dbMatchSaveState.doublesEndsPointsScored = doublesEndsPointsScored;
+  }
+  return dbMatchSaveState;
 }
 
 export function DemoCreateMatch() {
