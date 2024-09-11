@@ -487,7 +487,7 @@ export function DemoCreateMatch() {
         team2StartGameScore: 0,
         upTo: 11,
       },
-      true,
+      false,
     );
     const umpireSaveState = umpire.getSaveState();
     const dbMatchSaveState = saveStateToDbMatchSaveState(umpireSaveState);
