@@ -8,13 +8,11 @@ import { Box, CssBaseline, Link, Typography } from "@mui/material";
 import MGLogo from "./MaylandsTheming/MGSVGLogo";
 import MaylandsThemeProvider from "./MaylandsTheming/MaylandsThemeProvider";
 import freeScoringRoute from "./freeScoring/route";
-import { DatabaseProvider } from "./firebase/rtbProvider";
-import {
-  DemoCreateMatch,
-  DemoDbPlayersView,
-  DemoDbUmpire,
-} from "./firebaseDemos/demos";
-import { DemoTeamsMatchPlayersSelect } from "./teamMatches/teamMatchPlayerSelect";
+import { DatabaseProvider } from "./firebase/rtb/rtbProvider";
+import { LeagueMatchView } from "./teamMatches/league/LeagueMatchView";
+import { DemoCreateLeagueMatch } from "./firebaseDemos/DemoCreateLeagueMatch";
+import { LeagueMatchLinks } from "./teamMatches/league/LeagueMatchLinks";
+// import { DemoTeamsMatchPlayersSelect } from "./teamMatches/teamMatchPlayerSelect";
 
 const router = createBrowserRouter([
   {
@@ -23,42 +21,53 @@ const router = createBrowserRouter([
       <Box p={1}>
         <Typography variant="h5">Maylands Competitions </Typography>
         <MGLogo width={100} />
-        <Link style={{ display: "block" }} href="demoteammatchplayersselect">
+        {/*         <Link style={{ display: "block" }} href="demoteammatchplayersselect">
           Demo team match players select
-        </Link>
+        </Link> */}
         {/* <Link style={{ display: "block" }} href="freescoring">
           Free scoring
         </Link>
          */}
-        <Link style={{ display: "block" }} href="democreatematch">
-          Demo create match
+        <Link style={{ display: "block" }} href="demoCreateLeagueMatch">
+          Demo create league match
         </Link>
-        <Link style={{ display: "block" }} href="demodbumpire">
+        <Link style={{ display: "block" }} href="demoGetLeagueMatches">
+          Demo get league matches
+        </Link>
+        {/*         <Link style={{ display: "block" }} href="demodbumpire">
           Demo umpire
         </Link>
         <Link style={{ display: "block" }} href="demodbscore">
           Demo scoreboard
-        </Link>
+        </Link> */}
       </Box>
     ),
   },
-  {
+  /*   {
     path: "demoteammatchplayersselect",
     element: <DemoTeamsMatchPlayersSelect />,
+  }, */
+  {
+    path: "demoCreateLeagueMatch",
+    element: <DemoCreateLeagueMatch />,
   },
   {
-    path: "democreatematch",
-    element: <DemoCreateMatch />,
+    path: "demoGetLeagueMatches",
+    element: <LeagueMatchLinks />,
+  },
+  {
+    path: "demoGetLeagueMatches/:leagueMatchId",
+    element: <LeagueMatchView />,
   },
 
-  {
+  /*   {
     path: "demodbumpire",
     element: <DemoDbUmpire />,
   },
   {
     path: "demodbscore",
     element: <DemoDbPlayersView />,
-  },
+  }, */
 
   freeScoringRoute,
 ]);

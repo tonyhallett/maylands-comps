@@ -9,7 +9,7 @@ import {
   onSnapshot,
   setDoc,
 } from "firebase/firestore";
-import { useRTB } from "../../firebase/rtbProvider";
+import { useRTB } from "../../firebase/rtb/rtbProvider";
 import { goOffline, goOnline, onValue, ref, set } from "firebase/database";
 
 export function DemoFirestoreScorer() {
