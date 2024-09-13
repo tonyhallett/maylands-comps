@@ -117,10 +117,10 @@ export function DemoFirestorePlayerView() {
     />
   );
 }
-
+const demoScoreKey = "demoScore";
 export function DemoRtbScorer() {
   const rtb = useRTB();
-  const scoresRef = ref(rtb, "demoScore");
+  const scoresRef = ref(rtb, demoScoreKey);
   const createdDocRef = useRef(false);
   const demoGameScoreRef = useRef<Score | null>(null);
   const [disabledNetwork, setDisabledNetwork] = useState(false);
@@ -192,7 +192,7 @@ export function DemoRtbScorer() {
 
 export function DemoRtbPlayerView() {
   const rtb = useRTB();
-  const scoresRef = ref(rtb, "demoScore");
+  const scoresRef = ref(rtb, demoScoreKey);
   const [score, setScore] = useState<Score>({
     left: {
       games: 0,

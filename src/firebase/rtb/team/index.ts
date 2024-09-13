@@ -1,7 +1,10 @@
-export const registeredPlayersKey = "registeredPlayers";
-export const clubsKey = "clubs";
-export const teamsKey = "teams";
-export const leagueMatchesKey = "leagueMatches";
+import { Root } from "../root";
+import { nameof } from "../typeHelpers";
+
+export const registeredPlayersKey = nameof<Root>("registeredPlayers");
+export const clubsKey = nameof<Root>("clubs");
+export const teamsKey = nameof<Root>("teams");
+export const leagueMatchesKey = nameof<Root>("leagueMatches");
 
 export interface DbRegisteredPlayer {
   // possible to combine these for a query ?

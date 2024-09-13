@@ -23,12 +23,13 @@ import {
 import { useRTB } from "../firebase/rtb/rtbProvider";
 import { useCallback, useEffect, useRef, useState } from "react";
 
+const thingsKey = "things";
 export function DemoPush() {
   const rtb = useRTB();
   return (
     <button
       onClick={async () => {
-        const thingsListRef = ref(rtb, "things");
+        const thingsListRef = ref(rtb, thingsKey);
         try {
           await push(thingsListRef, { p1: true });
           alert("success");
@@ -45,7 +46,7 @@ export function DemoPush() {
 export function DemoOnValue() {
   const rtb = useRTB();
   useEffect(() => {
-    const thingsListRef = ref(rtb, "things");
+    const thingsListRef = ref(rtb, thingsKey);
     const unsubOnValue = onValue(thingsListRef, (snapshot) => {
       snapshot.forEach((childSnapshot) => {
         alert(
@@ -166,7 +167,7 @@ export function DemoFiltering() {
   const [added, setAdded] = useState(false);
   const [things, setThings] = useState<KeyedThing[]>([]);
   const [errored, setErrored] = useState(false);
-  const thingsListRef = ref(rtb, "things");
+  const thingsListRef = ref(rtb, thingsKey);
   const orderByNumber = orderByChild("pNumber");
   const currentInfoRef = useRef<string | undefined>(undefined);
   const logsRef = useRef<string[]>([]);
@@ -287,7 +288,7 @@ export function DemoOnChildEvents() {
   const rtb = useRTB();
 
   useEffect(() => {
-    const thingsListRef = ref(rtb, "things");
+    const thingsListRef = ref(rtb, thingsKey);
     /* eslint-disable @typescript-eslint/no-unused-vars */
     const unsubOnChildAdded = onChildAdded(thingsListRef, (snapshot) => {
       alert("child added");

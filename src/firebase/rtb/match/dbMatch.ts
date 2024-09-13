@@ -1,5 +1,6 @@
-import { orderByChild } from "firebase/database";
 import { DBMatchSaveState } from "./conversion";
+import { Root } from "../root";
+import { nameof } from "../typeHelpers";
 
 export interface DbMatch extends DBMatchSaveState {
   team1Player1Id?: string;
@@ -10,6 +11,4 @@ export interface DbMatch extends DBMatchSaveState {
   containerId?: string;
 }
 
-export const matchesKey = "matches";
-
-export const orderByContainerId = orderByChild("containerId");
+export const matchesKey = nameof<Root>("matches");

@@ -4,8 +4,8 @@ import {
   dbMatchSaveStateToSaveState,
   saveStateToDbMatchSaveState,
 } from "../firebase/rtb/match/conversion";
-import { DbMatch } from "../firebase/rtb/match/dbMatch";
-import { DbPlayer } from "../firebase/rtb/players";
+import { DbMatch, matchesKey } from "../firebase/rtb/match/dbMatch";
+import { DbPlayer, playersKey } from "../firebase/rtb/players";
 import { useRTB } from "../firebase/rtb/rtbProvider";
 import { StatsView } from "../statsViews/StatsView";
 import { MatchState, Umpire } from "../umpire";
@@ -60,7 +60,7 @@ export function DemoDbUmpire() {
   const [forceUpdate, setForceUpdate] = useState(0);
   // get the match
   useEffect(() => {
-    const unsubscribe = onValue(child(ref(db), `matches`), (snapshot) => {
+    const unsubscribe = onValue(child(ref(db), matchesKey), (snapshot) => {
       snapshot.forEach((childSnapshot) => {
         const demoMatch = childSnapshot.val() as DbMatch;
         matchKeyRef.current = childSnapshot.key;
@@ -78,7 +78,7 @@ export function DemoDbUmpire() {
     let unsubscribe: Unsubscribe | undefined;
     if (team1Player1Id !== undefined) {
       unsubscribe = onValue(
-        child(ref(db), `players/${team1Player1Id}`),
+        child(ref(db), `${playersKey}/${team1Player1Id}`),
         (snapshot) => {
           const team1Player1 = snapshot.val() as DbPlayer;
           setTeam1Player1(team1Player1);
@@ -91,7 +91,7 @@ export function DemoDbUmpire() {
     let unsubscribe: Unsubscribe | undefined;
     if (team2Player1Id !== undefined) {
       unsubscribe = onValue(
-        child(ref(db), `players/${team2Player1Id}`),
+        child(ref(db), `${playersKey}/${team2Player1Id}`),
         (snapshot) => {
           const team2Player1 = snapshot.val() as DbPlayer;
           setTeam2Player1(team2Player1);
@@ -106,7 +106,7 @@ export function DemoDbUmpire() {
     let unsubscribe: Unsubscribe | undefined;
     if (team1Player2Id !== undefined) {
       unsubscribe = onValue(
-        child(ref(db), `players/${team1Player2Id}`),
+        child(ref(db), `${playersKey}/${team1Player2Id}`),
         (snapshot) => {
           const team1Player2 = snapshot.val() as DbPlayer;
           setTeam1Player2(team1Player2);
@@ -119,7 +119,7 @@ export function DemoDbUmpire() {
     let unsubscribe: Unsubscribe | undefined;
     if (team2Player2Id !== undefined) {
       unsubscribe = onValue(
-        child(ref(db), `players/${team2Player2Id}`),
+        child(ref(db), `${playersKey}/${team2Player2Id}`),
         (snapshot) => {
           const team2Player2 = snapshot.val() as DbPlayer;
           setTeam2Player2(team2Player2);
@@ -172,7 +172,7 @@ export function DemoDbUmpire() {
     if (dbMatch.team2Player2Id !== undefined) {
       updatedMatch.team2Player2Id = dbMatch.team2Player2Id;
     }
-    const matchRef = child(ref(db), `matches/${matchKeyRef.current}`);
+    const matchRef = child(ref(db), `${matchesKey}/${matchKeyRef.current}`);
     update(matchRef, updatedMatch).catch((reason) =>
       alert(`error updating - ${reason}`),
     );

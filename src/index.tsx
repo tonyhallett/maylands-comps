@@ -14,6 +14,9 @@ import { DemoCreateLeagueMatch } from "./firebaseDemos/DemoCreateLeagueMatch";
 import { LeagueMatchLinks } from "./teamMatches/league/LeagueMatchLinks";
 // import { DemoTeamsMatchPlayersSelect } from "./teamMatches/teamMatchPlayerSelect";
 
+const leagueMatchesPath = "leagueMatches";
+const demoCreateLeagueMatchPath = "demoCreateLeagueMatch";
+
 const router = createBrowserRouter([
   {
     path: "/",
@@ -28,11 +31,11 @@ const router = createBrowserRouter([
           Free scoring
         </Link>
          */}
-        <Link style={{ display: "block" }} href="demoCreateLeagueMatch">
+        <Link style={{ display: "block" }} href={demoCreateLeagueMatchPath}>
           Demo create league match
         </Link>
-        <Link style={{ display: "block" }} href="demoGetLeagueMatches">
-          Demo get league matches
+        <Link style={{ display: "block" }} href={leagueMatchesPath}>
+          League matches
         </Link>
         {/*         <Link style={{ display: "block" }} href="demodbumpire">
           Demo umpire
@@ -48,15 +51,15 @@ const router = createBrowserRouter([
     element: <DemoTeamsMatchPlayersSelect />,
   }, */
   {
-    path: "demoCreateLeagueMatch",
+    path: demoCreateLeagueMatchPath,
     element: <DemoCreateLeagueMatch />,
   },
   {
-    path: "demoGetLeagueMatches",
+    path: leagueMatchesPath,
     element: <LeagueMatchLinks />,
   },
   {
-    path: "demoGetLeagueMatches/:leagueMatchId",
+    path: `${leagueMatchesPath}/:leagueMatchId`,
     element: <LeagueMatchView />,
   },
 

@@ -30,7 +30,7 @@ interface TeamMatchPlayersSelectProps<
 > {
   availablePlayers: TPlayer[];
   selectedPlayers: TPlayer[];
-  playerSelected: (availablePlayer: TPlayer, position: number) => void;
+  playerSelected: (availablePlayer: TPlayer | null, position: number) => void;
   newPlayerSelected?: (name: string, position: number) => void;
   numPlayers: number;
   enabled?: boolean[];
