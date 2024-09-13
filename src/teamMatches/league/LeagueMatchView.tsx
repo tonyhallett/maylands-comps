@@ -167,7 +167,6 @@ export function LeagueMatchView() {
   useEffect(() => {
     if (retrievedAvailablePlayers && matchAndKeys !== undefined) {
       const firstMatch = matchAndKeys[0].match;
-      /* eslint-disable @typescript-eslint/no-unused-vars */
       const playerA = firstMatch.team1Player1Id;
       const playerX = firstMatch.team2Player1Id;
       const secondMatch = matchAndKeys[1].match;
@@ -183,9 +182,9 @@ export function LeagueMatchView() {
         availablePlayers.home.find((player) => player.playerId === playerC),
       ];
       const selectedAwayTeamPlayers: TeamSelectedPlayers = [
-        availablePlayers.home.find((player) => player.playerId === playerX),
-        availablePlayers.home.find((player) => player.playerId === playerY),
-        availablePlayers.home.find((player) => player.playerId === playerZ),
+        availablePlayers.away.find((player) => player.playerId === playerX),
+        availablePlayers.away.find((player) => player.playerId === playerY),
+        availablePlayers.away.find((player) => player.playerId === playerZ),
       ];
 
       const filterPlayers = (players: AvailablePlayer[]) => {
@@ -206,8 +205,8 @@ export function LeagueMatchView() {
       };
       setAvailablePlayersForSelection(availablePlayersForSelection);
 
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const doubles = matchAndKeys[9].match;
-      /* eslint-enable @typescript-eslint/no-unused-vars */
     }
   }, [availablePlayers, matchAndKeys, retrievedAvailablePlayers]);
   const isFriendly = leagueMatch?.isFriendly;
