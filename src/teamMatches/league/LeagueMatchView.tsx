@@ -46,8 +46,8 @@ type AvailablePlayerOrUndefined = AvailablePlayer | undefined;
 interface AvailablePlayersForSelection {
   selectedHomeTeamPlayers: AvailablePlayerOrUndefined[];
   selectedAwayTeamPlayers: AvailablePlayerOrUndefined[];
-  homeTeamAvailablePlayers: AvailablePlayer[];
-  awayTeamAvailablePlayers: AvailablePlayer[];
+  homeTeamAvailablePlayers: AvailablePlayer[][];
+  awayTeamAvailablePlayers: AvailablePlayer[][];
 }
 const homeTeamLabels = homePlayerMatchDetails.map(
   (playerDetails) => playerDetails.positionDisplay,
@@ -116,14 +116,22 @@ const useLeagueMatchAndMatches = (leagueMatchId: string) => {
 const useTeamOnValue = (teamId: string) => {
   const teamsRef = useTeamsRef();
   const [team, setTeam] = useState<DbLeagueTeam | undefined>(undefined);
+  const unlistenRef = useRef<Unsubscribe | undefined>(undefined);
   useEffect(() => {
     if (teamId !== undefined) {
       const unlisten = onListItemValueTyped(teamId, teamsRef, (snapshot) => {
         setTeam(snapshot.val());
       });
-      return unlisten;
+      unlistenRef.current = () => {
+        unlisten();
+      };
     }
   }, [teamId, teamsRef]);
+  useEffect(() => {
+    return () => {
+      unlistenRef.current?.();
+    };
+  }, []);
   return team;
 };
 
@@ -134,6 +142,7 @@ export const useLeagueTeamsOnValue = (
   const awayTeam = useTeamOnValue(leagueMatch?.awayTeamId);
   return [homeTeam, awayTeam] as const;
 };
+
 export function LeagueMatchView() {
   const params = useParams();
   const db = useRTB();
@@ -149,7 +158,7 @@ export function LeagueMatchView() {
   const numAvailablePlayers = useRef<
     { home: number; away: number } | undefined
   >(undefined);
-  const fetchedAwayTeamRegisteredPlayers = useRef(false);
+  const awayTeamRegisteredPlayersUnsubscribes = useRef<Unsubscribe[]>([]);
   const [availablePlayersForSelection, setAvailablePlayersForSelection] =
     useState<AvailablePlayersForSelection>({
       awayTeamAvailablePlayers: [],
@@ -182,30 +191,55 @@ export function LeagueMatchView() {
           ? availablePlayers.home
           : availablePlayers.away;
         return getSelectedTeamPlayerIdsFromMatches(isHome).map((playerId) => {
-          return teamAvailablePlayers.find(
+          const selectedPlayer = teamAvailablePlayers.find(
             (player) => player.playerId === playerId,
           );
+          return selectedPlayer;
         });
       };
 
       const selectedHomeTeamPlayers = getSelectedPlayers(true);
+      const actualSelectedHomeTeamPlayers = selectedHomeTeamPlayers.filter(
+        (p) => p !== undefined,
+      );
       const selectedAwayTeamPlayers = getSelectedPlayers(false);
+      const actualSelectedAwayTeamPlayers = selectedAwayTeamPlayers.filter(
+        (p) => p !== undefined,
+      );
+      const allActualSelectedPlayers = actualSelectedHomeTeamPlayers.concat(
+        actualSelectedAwayTeamPlayers,
+      );
 
-      const getAvailablePlayers = (isHome: boolean) => {
+      const getAvailablePlayers = (isHome: boolean): AvailablePlayer[][] => {
         const teamAvailablePlayers = isHome
           ? availablePlayers.home
           : availablePlayers.away;
 
-        const selectedOtherTeamPlayers = isHome
-          ? selectedAwayTeamPlayers
-          : selectedHomeTeamPlayers;
-
-        return teamAvailablePlayers.filter(
-          (player) =>
-            !selectedOtherTeamPlayers
-              .filter((selectedPlayer) => selectedPlayer !== undefined)
-              .find((shtp) => shtp.playerId === player.playerId),
+        const selectedTeamPlayers = isHome
+          ? selectedHomeTeamPlayers
+          : selectedAwayTeamPlayers;
+        //should not include players that have already been selected.
+        const notSelectedTeamAvailablePlayers = teamAvailablePlayers.filter(
+          (player) => {
+            const playerSelected = allActualSelectedPlayers.some(
+              (shtp) => shtp.playerId === player.playerId,
+            );
+            return !playerSelected;
+          },
         );
+
+        return selectedTeamPlayers.map((selectedPlayer) => {
+          let availablePlayersForSelection = notSelectedTeamAvailablePlayers;
+          if (selectedPlayer !== undefined) {
+            availablePlayersForSelection = [
+              // Each AvailablePlayer[] should include the selected
+              selectedPlayer,
+              ...notSelectedTeamAvailablePlayers,
+            ];
+          }
+
+          return availablePlayersForSelection;
+        });
       };
 
       const availablePlayersForSelection: AvailablePlayersForSelection = {
@@ -220,6 +254,7 @@ export function LeagueMatchView() {
       const doubles = matchAndKeys[9].match;
     }
   }, [availablePlayers, matchAndKeys, retrievedAvailablePlayers]);
+
   const isFriendly = leagueMatch?.isFriendly;
   const sameClubAndFriendly: boolean | undefined =
     isFriendly === undefined
@@ -236,15 +271,14 @@ export function LeagueMatchView() {
     if (
       awayTeam !== undefined &&
       sameClubAndFriendly !== undefined &&
-      !fetchedAwayTeamRegisteredPlayers.current
+      awayTeamRegisteredPlayersUnsubscribes.current.length === 0
     ) {
-      fetchedAwayTeamRegisteredPlayers.current = true;
       const clubRegisteredPlayersQuery = orderByChildQuery(
         registeredPlayersRef,
         "clubId",
         equalTo(awayTeam.clubId),
       );
-      const unsubscribePlayers: Unsubscribe[] = [];
+
       const unsubscribeClubRegisteredPlayers = onChildAddedTyped(
         clubRegisteredPlayersQuery,
         (snapshot) => {
@@ -296,14 +330,15 @@ export function LeagueMatchView() {
                 });
               },
             );
-            unsubscribePlayers.push(unsubscribePlayer);
+            awayTeamRegisteredPlayersUnsubscribes.current.push(
+              unsubscribePlayer,
+            );
           }
         },
       );
-      return () => {
-        unsubscribeClubRegisteredPlayers();
-        unsubscribePlayers.forEach((unsubscribe) => unsubscribe());
-      };
+      awayTeamRegisteredPlayersUnsubscribes.current.push(
+        unsubscribeClubRegisteredPlayers,
+      );
     }
   }, [
     awayTeam,
@@ -326,6 +361,15 @@ export function LeagueMatchView() {
       }
     }
   }, [homeTeam, isFriendly, sameClubAndFriendly, availablePlayers]);
+
+  useEffect(() => {
+    const unsubscribes = awayTeamRegisteredPlayersUnsubscribes.current;
+    return () => {
+      alert("away registered players unsubscribing " + unsubscribes.length);
+      unsubscribes.forEach((unsubscribe) => unsubscribe());
+    };
+  }, []);
+
   //#endregion
   const getIndividualMatchTitle = (match: DbMatch, index: number) => {
     if (index < matchAndKeys.length - 1) {
@@ -406,7 +450,6 @@ export function LeagueMatchView() {
           autoHighlight: true, //	If true, the first option is automatically highlighted.
           clearOnEscape: true,
         }}
-        numPlayers={homePlayerMatchDetails.length}
         homeTeam={{
           teamName: homeTeam.name,
           labels: homeTeamLabels,
