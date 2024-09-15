@@ -1,31 +1,14 @@
-interface SinglesLeagueMatchPlayerBase {
-  index: 0 | 1 | 2;
+interface PlayerMatchDetails {
+  matchIndices: number[];
+  positionDisplay: string;
 }
-interface HomeLeagueMatchPlayer extends SinglesLeagueMatchPlayerBase {
-  id: "A" | "B" | "C";
-}
-interface AwayLeagueMatchPlayer extends SinglesLeagueMatchPlayerBase {
-  id: "X" | "Y" | "Z";
-}
-interface SinglesLeagueMatchPlayers {
-  home: HomeLeagueMatchPlayer;
-  away: AwayLeagueMatchPlayer;
-}
-const playerA: HomeLeagueMatchPlayer = { index: 0, id: "A" };
-const playerB: HomeLeagueMatchPlayer = { index: 1, id: "B" };
-const playerC: HomeLeagueMatchPlayer = { index: 2, id: "C" };
-const playerX: AwayLeagueMatchPlayer = { index: 0, id: "X" };
-const playerY: AwayLeagueMatchPlayer = { index: 1, id: "Y" };
-const playerZ: AwayLeagueMatchPlayer = { index: 2, id: "Z" };
-export const singlesLeagueMatchPlayers: SinglesLeagueMatchPlayers[] = [
-  { home: playerA, away: playerX },
-  { home: playerB, away: playerY },
-  { home: playerC, away: playerZ },
-
-  { home: playerB, away: playerX },
-  { home: playerA, away: playerZ },
-  { home: playerC, away: playerY },
-  { home: playerB, away: playerZ },
-  { home: playerC, away: playerX },
-  { home: playerA, away: playerY },
+export const homePlayerMatchDetails: PlayerMatchDetails[] = [
+  { matchIndices: [0, 4, 8], positionDisplay: "A" },
+  { matchIndices: [1, 3, 6], positionDisplay: "B" },
+  { matchIndices: [2, 5, 7], positionDisplay: "C" },
+];
+export const awayPlayerMatchDetails: PlayerMatchDetails[] = [
+  { matchIndices: [0, 3, 7], positionDisplay: "X" },
+  { matchIndices: [1, 5, 8], positionDisplay: "Y" },
+  { matchIndices: [2, 4, 6], positionDisplay: "Z" },
 ];

@@ -1,4 +1,4 @@
-import { Autocomplete, AutocompleteProps, TextField } from "@mui/material";
+import { Autocomplete, AutocompleteProps, Box, TextField } from "@mui/material";
 import { useRef, useState } from "react";
 import { fillArray, fillArrayWithIndices } from "../helpers/fillArray";
 
@@ -35,6 +35,8 @@ interface TeamMatchPlayersSelectProps<
   numPlayers: number;
   enabled?: boolean[];
   autoCompleteProps?: AutoCompleteProps<TPlayer>;
+  labels?: string[];
+  teamName?: string;
 }
 
 export function TeamsMatchPlayersSelect<
@@ -46,20 +48,18 @@ export function TeamsMatchPlayersSelect<
   autoCompleteProps,
 }: TeamsMatchPlayersSelectProps<TPlayer>) {
   return (
-    <>
-      <h2>Home team</h2>
+    <Box display="flex" justifyContent="space-between">
       <TeamMatchPlayersSelect<TPlayer>
         {...homeTeam}
         numPlayers={numPlayers}
         autoCompleteProps={autoCompleteProps}
       />
-      <h2>Away team</h2>
       <TeamMatchPlayersSelect<TPlayer>
         {...awayTeam}
         numPlayers={numPlayers}
         autoCompleteProps={autoCompleteProps}
       />
-    </>
+    </Box>
   );
 }
 
@@ -73,7 +73,12 @@ export function TeamMatchPlayersSelect<
   enabled,
   newPlayerSelected,
   autoCompleteProps = {},
+  labels,
+  teamName,
 }: TeamMatchPlayersSelectProps<TPlayer>) {
+  if (labels === undefined) {
+    labels = fillArray(numPlayers, (index) => `Player ${index + 1}`);
+  }
   if (enabled === undefined) {
     enabled = fillArray(numPlayers, () => true);
   }
@@ -81,51 +86,56 @@ export function TeamMatchPlayersSelect<
     throw new Error("enabled length must match numPlayers");
   }
   const playerPositions = fillArrayWithIndices(numPlayers);
-  return playerPositions.map((position) => {
-    let selectedPlayer = selectedPlayers[position];
-    if (selectedPlayer === undefined) {
-      selectedPlayer = null;
-    }
+  return (
+    <div style={{ flexGrow: 1 }}>
+      {teamName && <h3>{teamName}</h3>}
+      {playerPositions.map((position) => {
+        let selectedPlayer = selectedPlayers[position];
+        if (selectedPlayer === undefined) {
+          selectedPlayer = null;
+        }
 
-    return (
-      // this is generic  but includes FreeSolo as a type parameter
-      <Autocomplete
-        {...autoCompleteProps}
-        clearOnBlur
-        freeSolo={newPlayerSelected !== undefined}
-        disabled={!enabled[position]}
-        key={position}
-        options={availablePlayers}
-        getOptionLabel={(option: TPlayer | string) => {
-          // is a string when freeSolo is true
-          if (typeof option === "string") {
-            return option;
-          }
-          return option.name;
-        }}
-        value={selectedPlayer}
-        onChange={(
-          event: React.SyntheticEvent,
-          newValue: TPlayer | null,
-          // eslint-disable-next-line @typescript-eslint/no-unused-vars
-          reason,
-        ) => {
-          if (typeof newValue === "string") {
-            newPlayerSelected!(newValue, position);
-          } else {
-            playerSelected(newValue, position);
-          }
-        }}
-        renderInput={(params) => (
-          <TextField
-            {...params}
-            label={`Player ${position + 1}`}
-            variant="standard"
+        return (
+          // this is generic  but includes FreeSolo as a type parameter
+          <Autocomplete
+            {...autoCompleteProps}
+            clearOnBlur
+            freeSolo={newPlayerSelected !== undefined}
+            disabled={!enabled[position]}
+            key={position}
+            options={availablePlayers}
+            getOptionLabel={(option: TPlayer | string) => {
+              // is a string when freeSolo is true
+              if (typeof option === "string") {
+                return option;
+              }
+              return option.name;
+            }}
+            value={selectedPlayer}
+            onChange={(
+              event: React.SyntheticEvent,
+              newValue: TPlayer | null,
+              // eslint-disable-next-line @typescript-eslint/no-unused-vars
+              reason,
+            ) => {
+              if (typeof newValue === "string") {
+                newPlayerSelected!(newValue, position);
+              } else {
+                playerSelected(newValue, position);
+              }
+            }}
+            renderInput={(params) => (
+              <TextField
+                {...params}
+                label={labels![position]}
+                variant="standard"
+              />
+            )}
           />
-        )}
-      />
-    );
-  });
+        );
+      })}
+    </div>
+  );
 }
 interface AvailablePlayer extends SelectablePlayer {
   id: string;

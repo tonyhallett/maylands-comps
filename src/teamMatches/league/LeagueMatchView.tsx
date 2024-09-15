@@ -1,10 +1,13 @@
-import { equalTo, ref, update } from "firebase/database";
+import { equalTo, ref, Unsubscribe, update } from "firebase/database";
 import { useState, useRef, useEffect } from "react";
 import { useParams } from "react-router-dom";
 import { DbMatch } from "../../firebase/rtb/match/dbMatch";
 import { DbPlayer } from "../../firebase/rtb/players";
 import { DbLeagueTeam, DbLeagueMatch } from "../../firebase/rtb/team";
-import { singlesLeagueMatchPlayers } from "./singlesLeagueMatchPlayers";
+import {
+  awayPlayerMatchDetails,
+  homePlayerMatchDetails,
+} from "./singlesLeagueMatchPlayers";
 import {
   Root,
   useLeagueMatchesRef,
@@ -39,61 +42,37 @@ export interface AvailablePlayers {
   away: AvailablePlayer[];
 }
 type AvailablePlayerOrUndefined = AvailablePlayer | undefined;
-type TeamSelectedPlayers = [
-  AvailablePlayerOrUndefined,
-  AvailablePlayerOrUndefined,
-  AvailablePlayerOrUndefined,
-];
+
 interface AvailablePlayersForSelection {
-  selectedHomeTeamPlayers: TeamSelectedPlayers;
-  selectedAwayTeamPlayers: TeamSelectedPlayers;
+  selectedHomeTeamPlayers: AvailablePlayerOrUndefined[];
+  selectedAwayTeamPlayers: AvailablePlayerOrUndefined[];
   homeTeamAvailablePlayers: AvailablePlayer[];
   awayTeamAvailablePlayers: AvailablePlayer[];
 }
+const homeTeamLabels = homePlayerMatchDetails.map(
+  (playerDetails) => playerDetails.positionDisplay,
+);
+const awayTeamLabels = awayPlayerMatchDetails.map(
+  (playerDetails) => playerDetails.positionDisplay,
+);
 
-const homePlayerMatchIndices = [
-  [0, 4, 8],
-  [1, 3, 6],
-  [2, 5, 7],
-];
+const findHomePlayersMatchIndices = homePlayerMatchDetails.map(
+  (playerMatchDetails) => playerMatchDetails.matchIndices[0],
+);
+const findAwayPlayersMatchIndices = awayPlayerMatchDetails.map(
+  (playerMatchDetails) => playerMatchDetails.matchIndices[0],
+);
 
-const awayPlayerMatchIndices = [
-  [0, 3, 7],
-  [1, 5, 8],
-  [2, 4, 6],
-];
-
-export function LeagueMatchView() {
-  const params = useParams();
-  const db = useRTB();
-  const leagueMatchesRef = useLeagueMatchesRef();
+const useLeagueMatchAndMatches = (leagueMatchId: string) => {
   const matchesRef = useMatchesRef();
-  const teamsRef = useTeamsRef();
-  const playersRef = usePlayersRef();
-  const registeredPlayersRef = useRegisteredPlayersRef();
+  const leagueMatchesRef = useLeagueMatchesRef();
   const [leagueMatch, setLeagueMatch] = useState<DbLeagueMatch | undefined>(
     undefined,
   );
   const [matchAndKeys, setMatchAndKeys] = useState<MatchAndKey[]>([]);
-  const [homeTeam, setHomeTeam] = useState<DbLeagueTeam | undefined>(undefined);
-  const [awayTeam, setAwayTeam] = useState<DbLeagueTeam | undefined>(undefined);
-  const [availablePlayers, setAvailablePlayers] = useState<
-    AvailablePlayers | undefined
-  >(undefined);
-  const numAvailablePlayers = useRef<
-    { home: number; away: number } | undefined
-  >(undefined);
-  const [availablePlayersForSelection, setAvailablePlayersForSelection] =
-    useState<AvailablePlayersForSelection>({
-      awayTeamAvailablePlayers: [],
-      homeTeamAvailablePlayers: [],
-      selectedAwayTeamPlayers: [undefined, undefined, undefined],
-      selectedHomeTeamPlayers: [undefined, undefined, undefined],
-    });
-
   useEffect(() => {
-    const unlistenLeagueMatch = onListItemValueTyped(
-      params.leagueMatchId,
+    const unlistenThisLeagueMatch = onListItemValueTyped(
+      leagueMatchId,
       leagueMatchesRef,
       (snapshot) => {
         const leagueMatch = snapshot.val();
@@ -103,17 +82,17 @@ export function LeagueMatchView() {
     const thisLeagueMatchMatchesQuery = orderByChildQuery(
       matchesRef,
       "containerId",
-      equalTo(params.leagueMatchId),
+      equalTo(leagueMatchId),
     );
 
-    const unsubscribeAdded = onChildAddedTyped(
+    const unsubscribeMatchAdded = onChildAddedTyped(
       thisLeagueMatchMatchesQuery,
       (snapshot) => {
         const match = snapshot.val();
         setMatchAndKeys((prev) => [...prev, { match, key: snapshot.key }]);
       },
     );
-    const unsubscribeChanged = onChildChangedTyped(
+    const unsubscribeMatchChanged = onChildChangedTyped(
       thisLeagueMatchMatchesQuery,
       (snapshot) => {
         const match = snapshot.val();
@@ -126,37 +105,58 @@ export function LeagueMatchView() {
       },
     );
     return () => {
-      unlistenLeagueMatch();
-      unsubscribeAdded();
-      unsubscribeChanged();
+      unlistenThisLeagueMatch();
+      unsubscribeMatchAdded();
+      unsubscribeMatchChanged();
     };
-  }, [params.leagueMatchId, matchesRef, leagueMatchesRef]);
+  }, [leagueMatchId, matchesRef, leagueMatchesRef]);
+  return [leagueMatch, matchAndKeys] as const;
+};
 
+const useTeamOnValue = (teamId: string) => {
+  const teamsRef = useTeamsRef();
+  const [team, setTeam] = useState<DbLeagueTeam | undefined>(undefined);
   useEffect(() => {
-    if (leagueMatch?.homeTeamId !== undefined) {
-      const unlisten = onListItemValueTyped(
-        leagueMatch.homeTeamId,
-        teamsRef,
-        (snapshot) => {
-          setHomeTeam(snapshot.val());
-        },
-      );
+    if (teamId !== undefined) {
+      const unlisten = onListItemValueTyped(teamId, teamsRef, (snapshot) => {
+        setTeam(snapshot.val());
+      });
       return unlisten;
     }
-  }, [leagueMatch?.homeTeamId, teamsRef]);
+  }, [teamId, teamsRef]);
+  return team;
+};
 
-  useEffect(() => {
-    if (leagueMatch?.awayTeamId !== undefined) {
-      const unlisten = onListItemValueTyped(
-        leagueMatch.awayTeamId,
-        teamsRef,
-        (snapshot) => {
-          setAwayTeam(snapshot.val());
-        },
-      );
-      return unlisten;
-    }
-  }, [leagueMatch?.awayTeamId, teamsRef]);
+export const useLeagueTeamsOnValue = (
+  leagueMatch: DbLeagueMatch | undefined,
+) => {
+  const homeTeam = useTeamOnValue(leagueMatch?.homeTeamId);
+  const awayTeam = useTeamOnValue(leagueMatch?.awayTeamId);
+  return [homeTeam, awayTeam] as const;
+};
+export function LeagueMatchView() {
+  const params = useParams();
+  const db = useRTB();
+  const playersRef = usePlayersRef();
+  const registeredPlayersRef = useRegisteredPlayersRef();
+  const [leagueMatch, matchAndKeys] = useLeagueMatchAndMatches(
+    params.leagueMatchId,
+  );
+  const [homeTeam, awayTeam] = useLeagueTeamsOnValue(leagueMatch);
+  const [availablePlayers, setAvailablePlayers] = useState<
+    AvailablePlayers | undefined
+  >(undefined);
+  const numAvailablePlayers = useRef<
+    { home: number; away: number } | undefined
+  >(undefined);
+  const fetchedAwayTeamRegisteredPlayers = useRef(false);
+  const [availablePlayersForSelection, setAvailablePlayersForSelection] =
+    useState<AvailablePlayersForSelection>({
+      awayTeamAvailablePlayers: [],
+      homeTeamAvailablePlayers: [],
+      selectedAwayTeamPlayers: [undefined, undefined, undefined],
+      selectedHomeTeamPlayers: [undefined, undefined, undefined],
+    });
 
   const retrievedAvailablePlayers =
     availablePlayers !== undefined &&
@@ -166,40 +166,51 @@ export function LeagueMatchView() {
   // populate selected from the matches
   useEffect(() => {
     if (retrievedAvailablePlayers && matchAndKeys !== undefined) {
-      const firstMatch = matchAndKeys[0].match;
-      const playerA = firstMatch.team1Player1Id;
-      const playerX = firstMatch.team2Player1Id;
-      const secondMatch = matchAndKeys[1].match;
-      const playerB = secondMatch.team1Player1Id;
-      const playerY = secondMatch.team2Player1Id;
-      const thirdMatch = matchAndKeys[2].match;
-      const playerC = thirdMatch.team1Player1Id;
-      const playerZ = thirdMatch.team2Player1Id;
+      console.log("setAvailablePlayersForSelection");
+      const getSelectedTeamPlayerIdsFromMatches = (isHome: boolean) => {
+        const findPlayersMatchIndices = isHome
+          ? findHomePlayersMatchIndices
+          : findAwayPlayersMatchIndices;
+        return findPlayersMatchIndices.map((matchIndex) => {
+          const match = matchAndKeys[matchIndex].match;
+          return isHome ? match.team1Player1Id : match.team2Player1Id;
+        });
+      };
 
-      const selectedHomeTeamPlayers: TeamSelectedPlayers = [
-        availablePlayers.home.find((player) => player.playerId === playerA),
-        availablePlayers.home.find((player) => player.playerId === playerB),
-        availablePlayers.home.find((player) => player.playerId === playerC),
-      ];
-      const selectedAwayTeamPlayers: TeamSelectedPlayers = [
-        availablePlayers.away.find((player) => player.playerId === playerX),
-        availablePlayers.away.find((player) => player.playerId === playerY),
-        availablePlayers.away.find((player) => player.playerId === playerZ),
-      ];
+      const getSelectedPlayers = (isHome: boolean) => {
+        const teamAvailablePlayers = isHome
+          ? availablePlayers.home
+          : availablePlayers.away;
+        return getSelectedTeamPlayerIdsFromMatches(isHome).map((playerId) => {
+          return teamAvailablePlayers.find(
+            (player) => player.playerId === playerId,
+          );
+        });
+      };
 
-      const filterPlayers = (players: AvailablePlayer[]) => {
-        const availablePlayers = players.filter(
+      const selectedHomeTeamPlayers = getSelectedPlayers(true);
+      const selectedAwayTeamPlayers = getSelectedPlayers(false);
+
+      const getAvailablePlayers = (isHome: boolean) => {
+        const teamAvailablePlayers = isHome
+          ? availablePlayers.home
+          : availablePlayers.away;
+
+        const selectedOtherTeamPlayers = isHome
+          ? selectedAwayTeamPlayers
+          : selectedHomeTeamPlayers;
+
+        return teamAvailablePlayers.filter(
           (player) =>
-            !selectedHomeTeamPlayers
-              .concat(selectedAwayTeamPlayers)
+            !selectedOtherTeamPlayers
+              .filter((selectedPlayer) => selectedPlayer !== undefined)
               .find((shtp) => shtp.playerId === player.playerId),
         );
-        return availablePlayers;
       };
 
       const availablePlayersForSelection: AvailablePlayersForSelection = {
-        homeTeamAvailablePlayers: filterPlayers(availablePlayers.home),
-        awayTeamAvailablePlayers: filterPlayers(availablePlayers.away),
+        homeTeamAvailablePlayers: getAvailablePlayers(true),
+        awayTeamAvailablePlayers: getAvailablePlayers(false),
         selectedHomeTeamPlayers,
         selectedAwayTeamPlayers,
       };
@@ -225,19 +236,24 @@ export function LeagueMatchView() {
     if (
       awayTeam !== undefined &&
       sameClubAndFriendly !== undefined &&
-      availablePlayers?.away === undefined
+      !fetchedAwayTeamRegisteredPlayers.current
     ) {
+      fetchedAwayTeamRegisteredPlayers.current = true;
       const clubRegisteredPlayersQuery = orderByChildQuery(
         registeredPlayersRef,
         "clubId",
         equalTo(awayTeam.clubId),
       );
-      const unsubscribe = onChildAddedTyped(
+      const unsubscribePlayers: Unsubscribe[] = [];
+      const unsubscribeClubRegisteredPlayers = onChildAddedTyped(
         clubRegisteredPlayersQuery,
         (snapshot) => {
           const registeredPlayer = snapshot.val();
           const isApplicablePlayer = isFriendly || false; // todo if(registeredPlayer.rank <= awayTeam.rank)
           if (isApplicablePlayer) {
+            console.log(
+              "received registered - incrementing numAvailablePlayers",
+            );
             if (numAvailablePlayers.current) {
               numAvailablePlayers.current.away++;
             } else {
@@ -248,37 +264,46 @@ export function LeagueMatchView() {
                 numAvailablePlayers.current.away;
             }
             const playerId = registeredPlayer.playerId;
-            return onListItemValueTyped(playerId, playersRef, (snapshot) => {
-              const player = snapshot.val() as DbPlayer;
-              setAvailablePlayers((prev) => {
-                // when player changes will need to check if already added
-                const availablePlayer: AvailablePlayer = {
-                  name: player.name,
-                  playerId,
-                  registeredPlayerId: snapshot.key,
-                };
-                let next: AvailablePlayers;
-                if (prev === undefined) {
-                  next = {
-                    home: [],
-                    away: [availablePlayer],
+            const unsubscribePlayer = onListItemValueTyped(
+              playerId,
+              playersRef,
+              (snapshot) => {
+                console.log("received player");
+                const player = snapshot.val() as DbPlayer;
+                setAvailablePlayers((prev) => {
+                  // when player changes will need to check if already added
+                  const availablePlayer: AvailablePlayer = {
+                    name: player.name,
+                    playerId,
+                    registeredPlayerId: snapshot.key,
                   };
-                } else {
-                  next = {
-                    ...prev,
-                    away: [...prev.away, availablePlayer],
-                  };
-                }
-                if (sameClubAndFriendly) {
-                  next.home = next.away.map((player) => ({ ...player }));
-                }
-                return next;
-              });
-            });
+                  let next: AvailablePlayers;
+                  if (prev === undefined) {
+                    next = {
+                      home: [],
+                      away: [availablePlayer],
+                    };
+                  } else {
+                    next = {
+                      ...prev,
+                      away: [...prev.away, availablePlayer],
+                    };
+                  }
+                  if (sameClubAndFriendly) {
+                    next.home = next.away.map((player) => ({ ...player }));
+                  }
+                  return next;
+                });
+              },
+            );
+            unsubscribePlayers.push(unsubscribePlayer);
           }
         },
       );
-      return unsubscribe;
+      return () => {
+        unsubscribeClubRegisteredPlayers();
+        unsubscribePlayers.forEach((unsubscribe) => unsubscribe());
+      };
     }
   }, [
     awayTeam,
@@ -303,20 +328,32 @@ export function LeagueMatchView() {
   }, [homeTeam, isFriendly, sameClubAndFriendly, availablePlayers]);
   //#endregion
   const getIndividualMatchTitle = (match: DbMatch, index: number) => {
-    if (index < singlesLeagueMatchPlayers.length) {
-      const matchPlayers = singlesLeagueMatchPlayers[index];
-      let homePlayerName: string = matchPlayers.home.id;
-      let awayPlayerName: string = matchPlayers.home.id;
-      if (match.team1Player1Id !== undefined) {
-        homePlayerName = availablePlayers.home.find(
-          (player) => player.playerId === match.team1Player1Id,
-        )!.name;
-      }
-      if (match.team2Player1Id !== undefined) {
-        awayPlayerName = availablePlayers.away.find(
-          (player) => player.playerId === match.team2Player1Id,
-        )!.name;
-      }
+    if (index < matchAndKeys.length - 1) {
+      const getPlayerPositionDisplay = (isHome: boolean) => {
+        const playerMatchDetails = isHome
+          ? homePlayerMatchDetails
+          : awayPlayerMatchDetails;
+        return playerMatchDetails.find((pmd) =>
+          pmd.matchIndices.includes(index),
+        ).positionDisplay;
+      };
+      const getPlayerDisplay = (isHome: boolean) => {
+        const matchPlayerId = isHome
+          ? match.team1Player1Id
+          : match.team2Player1Id;
+        if (matchPlayerId !== undefined) {
+          const teamAvailablePlayers = isHome
+            ? availablePlayers.home
+            : availablePlayers.away;
+          return teamAvailablePlayers.find(
+            (player) => player.playerId === matchPlayerId,
+          )!.name;
+        }
+        return getPlayerPositionDisplay(isHome);
+      };
+
+      const homePlayerName: string = getPlayerDisplay(true);
+      const awayPlayerName: string = getPlayerDisplay(false);
       return `${homePlayerName} vs ${awayPlayerName}`;
     }
     return "Doubles"; //todo
@@ -324,46 +361,39 @@ export function LeagueMatchView() {
   if (!retrievedAvailablePlayers) {
     return <div>loading</div>;
   }
-  const getHomePlayerMatches = (position: number): MatchAndKey[] => {
-    return homePlayerMatchIndices[position].map((index) => matchAndKeys[index]);
+
+  const getPlayerMatches = (
+    isHome: boolean,
+    position: number,
+  ): MatchAndKey[] => {
+    const playerMatchDetails = isHome
+      ? homePlayerMatchDetails
+      : awayPlayerMatchDetails;
+    return playerMatchDetails[position].matchIndices.map(
+      (index) => matchAndKeys[index],
+    );
   };
-  const getAwayPlayerMatches = (position: number): MatchAndKey[] => {
-    return awayPlayerMatchIndices[position].map((index) => matchAndKeys[index]);
-  };
-  const homePlayerSelected = (
+  const playerSelected = (
+    isHome: boolean,
     player: AvailablePlayer | null,
     position: number,
   ) => {
     const updater = createTypedValuesUpdater<Root>();
-    getHomePlayerMatches(position).forEach((matchAndKey) => {
+    getPlayerMatches(isHome, position).forEach((matchAndKey) => {
       const playerId = player?.playerId ?? null;
-      updater.updateListItem("matches", matchAndKey.key, {
-        team1Player1Id: playerId,
-      });
+      const playerUpdate: Partial<DbMatch> = isHome
+        ? { team1Player1Id: playerId }
+        : { team2Player1Id: playerId };
+      updater.updateListItem("matches", matchAndKey.key, playerUpdate);
     });
     update(ref(db), updater.values);
   };
-  const awayPlayerSelected = (
-    player: AvailablePlayer | null,
-    position: number,
-  ) => {
-    const updater = createTypedValuesUpdater<Root>();
-    getAwayPlayerMatches(position).forEach((matchAndKey) => {
-      const playerId = player?.playerId ?? null;
-      updater.updateListItem("matches", matchAndKey.key, {
-        team2Player1Id: playerId,
-      });
-    });
-    update(ref(db), updater.values);
-  };
+
   // do I put the scoreboard and the umpiring here
   //MATCHSCORE
   return (
     <>
       <div>{leagueMatch!.description}</div>
-      <div>
-        {homeTeam.name} vs {awayTeam.name}
-      </div>
       <TeamsMatchPlayersSelect<AvailablePlayer>
         autoCompleteProps={{
           autoComplete: true, // !!! does not appear to be working
@@ -376,18 +406,24 @@ export function LeagueMatchView() {
           autoHighlight: true, //	If true, the first option is automatically highlighted.
           clearOnEscape: true,
         }}
-        numPlayers={3}
+        numPlayers={homePlayerMatchDetails.length}
         homeTeam={{
+          teamName: homeTeam.name,
+          labels: homeTeamLabels,
           availablePlayers:
             availablePlayersForSelection.homeTeamAvailablePlayers,
           selectedPlayers: availablePlayersForSelection.selectedHomeTeamPlayers,
-          playerSelected: homePlayerSelected,
+          playerSelected: (player, position) =>
+            playerSelected(true, player, position),
         }}
         awayTeam={{
+          teamName: awayTeam.name,
+          labels: awayTeamLabels,
           availablePlayers:
             availablePlayersForSelection.awayTeamAvailablePlayers,
           selectedPlayers: availablePlayersForSelection.selectedAwayTeamPlayers,
-          playerSelected: awayPlayerSelected,
+          playerSelected: (player, position) =>
+            playerSelected(false, player, position),
         }}
       />
       {matchAndKeys.map((matchAndKey, index) => {
