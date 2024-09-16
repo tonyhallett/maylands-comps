@@ -7,7 +7,7 @@ interface TeamsMatchPlayersSelectProps<
   homeTeam: TeamSelectProps<TPlayer>;
   awayTeam: TeamSelectProps<TPlayer>;
   newPlayers?: boolean;
-  autoCompleteProps?: AutoCompleteProps<TPlayer>;
+  autoCompleteProps?: TeamAutoCompleteProps<TPlayer>;
 }
 type TeamSelectProps<TPlayer extends SelectablePlayer = SelectablePlayer> =
   Omit<
@@ -17,11 +17,15 @@ type TeamSelectProps<TPlayer extends SelectablePlayer = SelectablePlayer> =
 interface SelectablePlayer {
   name: string;
 }
-type AutoCompleteProps<TPlayer extends SelectablePlayer = SelectablePlayer> =
-  Pick<
-    AutocompleteProps<TPlayer, undefined, undefined, undefined>,
-    "autoComplete" | "autoHighlight" | "clearOnEscape" | "groupBy"
-  >;
+
+export type AutoCompleteProps<T> = Pick<
+  AutocompleteProps<T, undefined, undefined, undefined>,
+  "autoComplete" | "autoHighlight" | "clearOnEscape" | "groupBy"
+>;
+
+type TeamAutoCompleteProps<
+  TPlayer extends SelectablePlayer = SelectablePlayer,
+> = AutoCompleteProps<TPlayer>;
 
 interface TeamMatchPlayersSelectProps<
   TPlayer extends SelectablePlayer = SelectablePlayer,
@@ -31,7 +35,7 @@ interface TeamMatchPlayersSelectProps<
   playerSelected: (availablePlayer: TPlayer | null, position: number) => void;
   newPlayerSelected?: (name: string, position: number) => void;
   enabled?: boolean[];
-  autoCompleteProps?: AutoCompleteProps<TPlayer>;
+  autoCompleteProps?: TeamAutoCompleteProps<TPlayer>;
   labels?: string[];
   teamName?: string;
 }

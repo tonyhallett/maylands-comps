@@ -23,8 +23,12 @@ import {
   onListItemValueTyped,
   orderByChildQuery,
 } from "../../firebase/rtb/typeHelpers";
-import { TeamsMatchPlayersSelect } from "../teamMatchPlayerSelect";
+import {
+  AutoCompleteProps,
+  TeamsMatchPlayersSelect,
+} from "../teamMatchPlayerSelect";
 import { useRTB } from "../../firebase/rtb/rtbProvider";
+import { Autocomplete, Box, TextField } from "@mui/material";
 
 export interface MatchAndKey {
   match: DbMatch;
@@ -35,6 +39,7 @@ export interface AvailablePlayer {
   name: string;
   playerId: string;
   registeredPlayerId: string;
+  rank: number;
 }
 
 export interface AvailablePlayers {
@@ -43,11 +48,21 @@ export interface AvailablePlayers {
 }
 type AvailablePlayerOrUndefined = AvailablePlayer | undefined;
 
+interface AvailableDoubles {
+  player1Name: string;
+  player1Id: string;
+  player2Name: string;
+  player2Id: string;
+}
 interface AvailablePlayersForSelection {
   selectedHomeTeamPlayers: AvailablePlayerOrUndefined[];
   selectedAwayTeamPlayers: AvailablePlayerOrUndefined[];
   homeTeamAvailablePlayers: AvailablePlayer[][];
   awayTeamAvailablePlayers: AvailablePlayer[][];
+  homeAvailableDoubles: AvailableDoubles[];
+  selectedHomeDoubles: AvailableDoubles | null;
+  awayAvailableDoubles: AvailableDoubles[];
+  selectedAwayDoubles: AvailableDoubles | null;
 }
 const homeTeamLabels = homePlayerMatchDetails.map(
   (playerDetails) => playerDetails.positionDisplay,
@@ -143,39 +158,137 @@ export const useLeagueTeamsOnValue = (
   return [homeTeam, awayTeam] as const;
 };
 
+const useAvailablePlayers = (
+  team: DbLeagueTeam | undefined,
+  isFriendly: boolean | undefined,
+  predicate = () => true,
+) => {
+  const numAvailablePlayers = useRef<number>(0);
+  const playersRef = usePlayersRef();
+  const registeredPlayersRef = useRegisteredPlayersRef();
+  const teamRegisteredPlayersUnsubscribes = useRef<Unsubscribe[]>([]);
+  const [availablePlayers, setAvailablePlayers] = useState<AvailablePlayer[]>(
+    [],
+  );
+  useEffect(() => {
+    if (
+      team !== undefined &&
+      isFriendly !== undefined &&
+      teamRegisteredPlayersUnsubscribes.current.length === 0 &&
+      predicate()
+    ) {
+      const clubRegisteredPlayersQuery = orderByChildQuery(
+        registeredPlayersRef,
+        "clubId",
+        equalTo(team.clubId),
+      );
+
+      const unsubscribeClubRegisteredPlayers = onChildAddedTyped(
+        clubRegisteredPlayersQuery,
+        (snapshot) => {
+          const registeredPlayer = snapshot.val();
+          const isApplicablePlayer =
+            isFriendly || registeredPlayer.rank <= team.rank;
+          if (isApplicablePlayer) {
+            numAvailablePlayers.current++;
+            const playerId = registeredPlayer.playerId;
+            const unsubscribePlayer = onListItemValueTyped(
+              playerId,
+              playersRef,
+              (snapshot) => {
+                const player = snapshot.val() as DbPlayer;
+                setAvailablePlayers((prev) => {
+                  // when player changes will need to check if already added
+                  const availablePlayer: AvailablePlayer = {
+                    name: player.name,
+                    playerId,
+                    registeredPlayerId: snapshot.key,
+                    rank: registeredPlayer.rank,
+                  };
+                  return [...prev, availablePlayer];
+                });
+              },
+            );
+            teamRegisteredPlayersUnsubscribes.current.push(unsubscribePlayer);
+          }
+        },
+      );
+      teamRegisteredPlayersUnsubscribes.current.push(
+        unsubscribeClubRegisteredPlayers,
+      );
+    }
+  }, [
+    team,
+    isFriendly,
+    availablePlayers,
+    playersRef,
+    registeredPlayersRef,
+    predicate,
+  ]);
+  useEffect(() => {
+    const unsubscribes = teamRegisteredPlayersUnsubscribes.current;
+    return () => {
+      unsubscribes.forEach((unsubscribe) => unsubscribe());
+    };
+  }, []);
+  return [
+    availablePlayers,
+    numAvailablePlayers.current > 0 &&
+      numAvailablePlayers.current === availablePlayers.length,
+  ] as const;
+};
+type PlayerKey = keyof Pick<
+  DbMatch,
+  "team1Player1Id" | "team1Player2Id" | "team2Player1Id" | "team2Player2Id"
+>;
 export function LeagueMatchView() {
   const params = useParams();
   const db = useRTB();
-  const playersRef = usePlayersRef();
-  const registeredPlayersRef = useRegisteredPlayersRef();
   const [leagueMatch, matchAndKeys] = useLeagueMatchAndMatches(
     params.leagueMatchId,
   );
   const [homeTeam, awayTeam] = useLeagueTeamsOnValue(leagueMatch);
-  const [availablePlayers, setAvailablePlayers] = useState<
-    AvailablePlayers | undefined
-  >(undefined);
-  const numAvailablePlayers = useRef<
-    { home: number; away: number } | undefined
-  >(undefined);
-  const awayTeamRegisteredPlayersUnsubscribes = useRef<Unsubscribe[]>([]);
   const [availablePlayersForSelection, setAvailablePlayersForSelection] =
     useState<AvailablePlayersForSelection>({
       awayTeamAvailablePlayers: [],
       homeTeamAvailablePlayers: [],
       selectedAwayTeamPlayers: [undefined, undefined, undefined],
       selectedHomeTeamPlayers: [undefined, undefined, undefined],
+      homeAvailableDoubles: [],
+      awayAvailableDoubles: [],
+      selectedHomeDoubles: null,
+      selectedAwayDoubles: null,
+    });
+  const [awayTeamAvailablePlayers, retrievedAvailableAwayPlayers] =
+    useAvailablePlayers(awayTeam, leagueMatch?.isFriendly);
+
+  const sameClubAndFriendly: boolean | undefined =
+    leagueMatch?.isFriendly === undefined
+      ? undefined
+      : leagueMatch?.isFriendly === false
+        ? false
+        : homeTeam === undefined || awayTeam == undefined
+          ? undefined
+          : homeTeam.clubId === awayTeam.clubId;
+  const [homeTeamAvailablePlayers, retrievedAvailableHomePlayers] =
+    useAvailablePlayers(homeTeam, leagueMatch?.isFriendly, () => {
+      return sameClubAndFriendly === false;
     });
 
   const retrievedAvailablePlayers =
-    availablePlayers !== undefined &&
-    availablePlayers.home.length === numAvailablePlayers.current!.home &&
-    availablePlayers.away.length === numAvailablePlayers.current!.away;
+    sameClubAndFriendly === undefined
+      ? false
+      : sameClubAndFriendly
+        ? retrievedAvailableAwayPlayers
+        : retrievedAvailableHomePlayers && retrievedAvailableAwayPlayers;
+
+  const actualHomeTeamAvailablePlayers = sameClubAndFriendly
+    ? awayTeamAvailablePlayers
+    : homeTeamAvailablePlayers;
 
   // populate selected from the matches
   useEffect(() => {
     if (retrievedAvailablePlayers && matchAndKeys !== undefined) {
-      console.log("setAvailablePlayersForSelection");
       const getSelectedTeamPlayerIdsFromMatches = (isHome: boolean) => {
         const findPlayersMatchIndices = isHome
           ? findHomePlayersMatchIndices
@@ -188,8 +301,8 @@ export function LeagueMatchView() {
 
       const getSelectedPlayers = (isHome: boolean) => {
         const teamAvailablePlayers = isHome
-          ? availablePlayers.home
-          : availablePlayers.away;
+          ? actualHomeTeamAvailablePlayers
+          : awayTeamAvailablePlayers;
         return getSelectedTeamPlayerIdsFromMatches(isHome).map((playerId) => {
           const selectedPlayer = teamAvailablePlayers.find(
             (player) => player.playerId === playerId,
@@ -212,8 +325,8 @@ export function LeagueMatchView() {
 
       const getAvailablePlayers = (isHome: boolean): AvailablePlayer[][] => {
         const teamAvailablePlayers = isHome
-          ? availablePlayers.home
-          : availablePlayers.away;
+          ? actualHomeTeamAvailablePlayers
+          : awayTeamAvailablePlayers;
 
         const selectedTeamPlayers = isHome
           ? selectedHomeTeamPlayers
@@ -238,139 +351,110 @@ export function LeagueMatchView() {
             ];
           }
 
-          return availablePlayersForSelection;
+          return availablePlayersForSelection.sort((first, second) => {
+            if (first.rank !== second.rank) {
+              return second.rank - first.rank;
+            }
+            return first.name.localeCompare(second.name);
+          });
         });
       };
+
+      const getDoubles = (
+        player1Id: string | undefined,
+        player2Id: string | undefined,
+        actualSelectedPlayers: AvailablePlayer[],
+      ): {
+        available: AvailableDoubles[];
+        selected: AvailableDoubles | null;
+      } => {
+        if (actualSelectedPlayers.length < 2) {
+          return {
+            available: [],
+            selected: null,
+          };
+        }
+        if (actualSelectedPlayers.length === 2) {
+          const available: AvailableDoubles[] = [
+            {
+              player1Id: actualSelectedPlayers[0].playerId,
+              player1Name: actualSelectedPlayers[0].name,
+              player2Id: actualSelectedPlayers[1].playerId,
+              player2Name: actualSelectedPlayers[1].name,
+            },
+          ];
+          const selected = player1Id === undefined ? null : available[0];
+          return {
+            available,
+            selected,
+          };
+        }
+        // could create a permute
+        const pairs: [number, number][] = [
+          [0, 1],
+          [0, 2],
+          [1, 2],
+        ];
+        const available = pairs.map(([p1Index, p2Index]) => {
+          const availableDoubles: AvailableDoubles = {
+            player1Id: actualSelectedPlayers[p1Index].playerId,
+            player1Name: actualSelectedPlayers[p1Index].name,
+            player2Id: actualSelectedPlayers[p2Index].playerId,
+            player2Name: actualSelectedPlayers[p2Index].name,
+          };
+          return availableDoubles;
+        });
+
+        return {
+          available,
+          selected:
+            player1Id === undefined
+              ? null
+              : available.find((pair) => {
+                  //should be able to reduce this to just the one condition
+                  return (
+                    (pair.player1Id === player1Id &&
+                      pair.player2Id === player2Id) ||
+                    (pair.player1Id === player2Id &&
+                      pair.player2Id === player1Id)
+                  );
+                }),
+        };
+      };
+      const doublesMatchAndKey = matchAndKeys[matchAndKeys.length - 1];
+      const doublesMatch = doublesMatchAndKey.match;
+
+      const homeDoubles = getDoubles(
+        doublesMatch.team1Player1Id,
+        doublesMatch.team1Player2Id,
+        actualSelectedHomeTeamPlayers,
+      );
+      const awayDoubles = getDoubles(
+        doublesMatch.team2Player1Id,
+        doublesMatch.team2Player2Id,
+        actualSelectedAwayTeamPlayers,
+      );
 
       const availablePlayersForSelection: AvailablePlayersForSelection = {
         homeTeamAvailablePlayers: getAvailablePlayers(true),
         awayTeamAvailablePlayers: getAvailablePlayers(false),
         selectedHomeTeamPlayers,
         selectedAwayTeamPlayers,
+        homeAvailableDoubles: homeDoubles.available,
+        selectedHomeDoubles: homeDoubles.selected,
+        awayAvailableDoubles: awayDoubles.available,
+        selectedAwayDoubles: awayDoubles.selected,
       };
       setAvailablePlayersForSelection(availablePlayersForSelection);
-
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      const doubles = matchAndKeys[9].match;
-    }
-  }, [availablePlayers, matchAndKeys, retrievedAvailablePlayers]);
-
-  const isFriendly = leagueMatch?.isFriendly;
-  const sameClubAndFriendly: boolean | undefined =
-    isFriendly === undefined
-      ? undefined
-      : isFriendly === false
-        ? false
-        : homeTeam === undefined || awayTeam == undefined
-          ? undefined
-          : homeTeam.clubId === awayTeam.clubId;
-
-  //#region get available players
-  // there is potential issue here that awayTeam name changes - new AwayTeam and fetch already in process
-  useEffect(() => {
-    if (
-      awayTeam !== undefined &&
-      sameClubAndFriendly !== undefined &&
-      awayTeamRegisteredPlayersUnsubscribes.current.length === 0
-    ) {
-      const clubRegisteredPlayersQuery = orderByChildQuery(
-        registeredPlayersRef,
-        "clubId",
-        equalTo(awayTeam.clubId),
-      );
-
-      const unsubscribeClubRegisteredPlayers = onChildAddedTyped(
-        clubRegisteredPlayersQuery,
-        (snapshot) => {
-          const registeredPlayer = snapshot.val();
-          const isApplicablePlayer = isFriendly || false; // todo if(registeredPlayer.rank <= awayTeam.rank)
-          if (isApplicablePlayer) {
-            console.log(
-              "received registered - incrementing numAvailablePlayers",
-            );
-            if (numAvailablePlayers.current) {
-              numAvailablePlayers.current.away++;
-            } else {
-              numAvailablePlayers.current = { home: 0, away: 1 };
-            }
-            if (sameClubAndFriendly) {
-              numAvailablePlayers.current.home =
-                numAvailablePlayers.current.away;
-            }
-            const playerId = registeredPlayer.playerId;
-            const unsubscribePlayer = onListItemValueTyped(
-              playerId,
-              playersRef,
-              (snapshot) => {
-                console.log("received player");
-                const player = snapshot.val() as DbPlayer;
-                setAvailablePlayers((prev) => {
-                  // when player changes will need to check if already added
-                  const availablePlayer: AvailablePlayer = {
-                    name: player.name,
-                    playerId,
-                    registeredPlayerId: snapshot.key,
-                  };
-                  let next: AvailablePlayers;
-                  if (prev === undefined) {
-                    next = {
-                      home: [],
-                      away: [availablePlayer],
-                    };
-                  } else {
-                    next = {
-                      ...prev,
-                      away: [...prev.away, availablePlayer],
-                    };
-                  }
-                  if (sameClubAndFriendly) {
-                    next.home = next.away.map((player) => ({ ...player }));
-                  }
-                  return next;
-                });
-              },
-            );
-            awayTeamRegisteredPlayersUnsubscribes.current.push(
-              unsubscribePlayer,
-            );
-          }
-        },
-      );
-      awayTeamRegisteredPlayersUnsubscribes.current.push(
-        unsubscribeClubRegisteredPlayers,
-      );
     }
   }, [
-    awayTeam,
-    isFriendly,
+    actualHomeTeamAvailablePlayers,
+    awayTeamAvailablePlayers,
+    retrievedAvailablePlayers,
+    matchAndKeys,
     sameClubAndFriendly,
-    availablePlayers,
-    playersRef,
-    registeredPlayersRef,
   ]);
 
-  // todo - common code with above
-  useEffect(() => {
-    if (
-      homeTeam !== undefined &&
-      sameClubAndFriendly !== undefined &&
-      availablePlayers?.home === undefined
-    ) {
-      if (!sameClubAndFriendly) {
-        // use common code for away team
-      }
-    }
-  }, [homeTeam, isFriendly, sameClubAndFriendly, availablePlayers]);
-
-  useEffect(() => {
-    const unsubscribes = awayTeamRegisteredPlayersUnsubscribes.current;
-    return () => {
-      alert("away registered players unsubscribing " + unsubscribes.length);
-      unsubscribes.forEach((unsubscribe) => unsubscribe());
-    };
-  }, []);
-
-  //#endregion
   const getIndividualMatchTitle = (match: DbMatch, index: number) => {
     if (index < matchAndKeys.length - 1) {
       const getPlayerPositionDisplay = (isHome: boolean) => {
@@ -387,10 +471,11 @@ export function LeagueMatchView() {
           : match.team2Player1Id;
         if (matchPlayerId !== undefined) {
           const teamAvailablePlayers = isHome
-            ? availablePlayers.home
-            : availablePlayers.away;
+            ? actualHomeTeamAvailablePlayers
+            : awayTeamAvailablePlayers;
+
           return teamAvailablePlayers.find(
-            (player) => player.playerId === matchPlayerId,
+            (player) => player?.playerId === matchPlayerId,
           )!.name;
         }
         return getPlayerPositionDisplay(isHome);
@@ -400,8 +485,39 @@ export function LeagueMatchView() {
       const awayPlayerName: string = getPlayerDisplay(false);
       return `${homePlayerName} vs ${awayPlayerName}`;
     }
-    return "Doubles"; //todo
+    const doublesMatch = matchAndKeys[matchAndKeys.length - 1].match;
+    const getDoublesTeamDisplay = (
+      player1Id: string | undefined,
+      player2Id: string | undefined,
+      isHome: boolean,
+    ) => {
+      if (player1Id === undefined) {
+        return "TBD";
+      }
+      const teamSelectedPlayers = isHome
+        ? actualHomeTeamAvailablePlayers
+        : awayTeamAvailablePlayers;
+      const firstPlayer = teamSelectedPlayers.find(
+        (player) => player?.playerId === player1Id,
+      );
+      const secondPlayer = teamSelectedPlayers.find(
+        (player) => player?.playerId === player2Id,
+      );
+      return `${firstPlayer.name} - ${secondPlayer.name}`;
+    };
+    const homeTeamDisplay = getDoublesTeamDisplay(
+      doublesMatch.team1Player1Id,
+      doublesMatch.team1Player2Id,
+      true,
+    );
+    const awayTeamDisplay = getDoublesTeamDisplay(
+      doublesMatch.team2Player1Id,
+      doublesMatch.team2Player2Id,
+      false,
+    );
+    return `${homeTeamDisplay} vs ${awayTeamDisplay}`;
   };
+
   if (!retrievedAvailablePlayers) {
     return <div>loading</div>;
   }
@@ -430,9 +546,58 @@ export function LeagueMatchView() {
         : { team2Player1Id: playerId };
       updater.updateListItem("matches", matchAndKey.key, playerUpdate);
     });
+
+    if (!player) {
+      const doublesMatchAndKey = matchAndKeys[matchAndKeys.length - 1];
+      interface PlayersInfo {
+        player1: PlayerKey;
+        player2: PlayerKey;
+      }
+      const doublesMatch = doublesMatchAndKey.match;
+      const info: PlayersInfo = isHome
+        ? {
+            player1: "team1Player1Id",
+            player2: "team1Player2Id",
+          }
+        : {
+            player1: "team2Player1Id",
+            player2: "team2Player2Id",
+          };
+
+      const selectedPlayers = isHome
+        ? availablePlayersForSelection.selectedHomeTeamPlayers
+        : availablePlayersForSelection.selectedAwayTeamPlayers;
+      const previouslySelectedPlayerId = selectedPlayers[position].playerId;
+
+      if (
+        doublesMatch[info.player1] === previouslySelectedPlayerId ||
+        doublesMatch[info.player2] === previouslySelectedPlayerId
+      ) {
+        updater.updateListItem("matches", doublesMatchAndKey.key, {
+          [info.player1]: null,
+          [info.player2]: null,
+        });
+      }
+    }
     update(ref(db), updater.values);
   };
 
+  const doublesSelected = (
+    isHome: boolean,
+    availableDoubles: AvailableDoubles | null,
+  ) => {
+    const doublesMatchKey = matchAndKeys[matchAndKeys.length - 1].key;
+    const updater = createTypedValuesUpdater<Root>();
+    const player1Id = availableDoubles ? availableDoubles.player1Id : null;
+    const player2Id = availableDoubles ? availableDoubles.player2Id : null;
+    const player1Key: PlayerKey = isHome ? "team1Player1Id" : "team2Player1Id";
+    const player2Key: PlayerKey = isHome ? "team1Player2Id" : "team2Player2Id";
+    updater.updateListItem("matches", doublesMatchKey, {
+      [player1Key]: player1Id,
+      [player2Key]: player2Id,
+    });
+    update(ref(db), updater.values);
+  };
   // do I put the scoreboard and the umpiring here
   //MATCHSCORE
   return (
@@ -469,6 +634,27 @@ export function LeagueMatchView() {
             playerSelected(false, player, position),
         }}
       />
+      <DoublesSelect
+        autoCompleteProps={{
+          autoComplete: true,
+          autoHighlight: true,
+          clearOnEscape: true,
+        }}
+        home={{
+          availableDoubles: availablePlayersForSelection.homeAvailableDoubles,
+          selectedDoubles: availablePlayersForSelection.selectedHomeDoubles,
+          onChange(availableDoubles) {
+            doublesSelected(true, availableDoubles);
+          },
+        }}
+        away={{
+          availableDoubles: availablePlayersForSelection.awayAvailableDoubles,
+          selectedDoubles: availablePlayersForSelection.selectedAwayDoubles,
+          onChange(availableDoubles) {
+            doublesSelected(false, availableDoubles);
+          },
+        }}
+      />
       {matchAndKeys.map((matchAndKey, index) => {
         const match = matchAndKey.match;
         return (
@@ -478,5 +664,70 @@ export function LeagueMatchView() {
         );
       })}
     </>
+  );
+}
+
+interface TeamDoublesSelectProps {
+  availableDoubles: AvailableDoubles[];
+  selectedDoubles: AvailableDoubles | undefined;
+  disabled?: boolean;
+  onChange: (availableDoubles: AvailableDoubles | null) => void;
+  autoCompleteProps?: AutoCompleteProps<AvailableDoubles>;
+}
+function TeamDoublesSelect({
+  availableDoubles,
+  selectedDoubles,
+  disabled = false,
+  onChange,
+  autoCompleteProps = {},
+}: TeamDoublesSelectProps) {
+  return (
+    <Autocomplete
+      {...autoCompleteProps}
+      clearOnBlur
+      freeSolo={false}
+      disabled={disabled}
+      options={availableDoubles}
+      // *********************************  renderOption for full alternative
+      getOptionLabel={(option: AvailableDoubles) => {
+        return `${option.player1Name} - ${option.player2Name}`;
+      }}
+      value={selectedDoubles}
+      onChange={(
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        event: React.SyntheticEvent,
+        newValue: AvailableDoubles | null,
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        reason,
+      ) => {
+        onChange(newValue);
+      }}
+      renderInput={(params) => (
+        <TextField {...params} label="Doubles" variant="standard" />
+      )}
+    />
+  );
+}
+interface DoublesSelectProps {
+  home: TeamDoublesSelectProps;
+  away: TeamDoublesSelectProps;
+  autoCompleteProps?: AutoCompleteProps<AvailableDoubles>;
+}
+function DoublesSelect({ home, away, autoCompleteProps }: DoublesSelectProps) {
+  return (
+    <Box display="flex" justifyContent="space-between">
+      <div style={{ flexGrow: 1 }}>
+        <TeamDoublesSelect
+          {...home}
+          autoCompleteProps={autoCompleteProps}
+        ></TeamDoublesSelect>
+      </div>
+      <div style={{ flexGrow: 1 }}>
+        <TeamDoublesSelect
+          {...away}
+          autoCompleteProps={autoCompleteProps}
+        ></TeamDoublesSelect>
+      </div>
+    </Box>
   );
 }
