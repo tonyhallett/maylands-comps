@@ -6,6 +6,7 @@ import {
   getTeamDoublesPlayerKeys,
 } from "../../firebase/rtb/match/dbMatch";
 import {
+  PlayerMatchDetails,
   awayPlayerMatchDetails,
   homePlayerMatchDetails,
 } from "./singlesLeagueMatchPlayers";
@@ -47,18 +48,25 @@ interface AvailablePlayersForSelection {
   awayAvailableDoubles: AvailableDoubles[];
   selectedAwayDoubles: AvailableDoubles | null;
 }
-const homeTeamLabels = homePlayerMatchDetails.map(
-  (playerDetails) => playerDetails.positionDisplay,
-);
-const awayTeamLabels = awayPlayerMatchDetails.map(
-  (playerDetails) => playerDetails.positionDisplay,
-);
 
-const findHomePlayersMatchIndices = homePlayerMatchDetails.map(
-  (playerMatchDetails) => playerMatchDetails.matchIndices[0],
+const getTeamLabels = (playerMatchDetails: PlayerMatchDetails[]) => {
+  return playerMatchDetails.map(
+    (playerDetails) =>
+      `${playerDetails.positionDisplay} - ${playerDetails.matchIndices.map((i) => i + 1).join(", ")}`,
+  );
+};
+const homeTeamLabels = getTeamLabels(homePlayerMatchDetails);
+const awayTeamLabels = getTeamLabels(awayPlayerMatchDetails);
+
+const getFindPlayersMatchIndices = (playerMatchDetails: PlayerMatchDetails[]) =>
+  playerMatchDetails.map(
+    (playerMatchDetail) => playerMatchDetail.matchIndices[0],
+  );
+const findHomePlayersMatchIndices = getFindPlayersMatchIndices(
+  homePlayerMatchDetails,
 );
-const findAwayPlayersMatchIndices = awayPlayerMatchDetails.map(
-  (playerMatchDetails) => playerMatchDetails.matchIndices[0],
+const findAwayPlayersMatchIndices = getFindPlayersMatchIndices(
+  awayPlayerMatchDetails,
 );
 
 export function LeagueMatchView() {

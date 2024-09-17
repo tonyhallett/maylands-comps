@@ -1,4 +1,4 @@
-interface PlayerMatchDetails {
+export interface PlayerMatchDetails {
   matchIndices: number[];
   positionDisplay: string;
 }
