@@ -85,7 +85,7 @@ export function TeamMatchPlayersSelect<
   }
   const playerPositions = fillArrayWithIndices(numPlayers);
   return (
-    <div style={{ flexGrow: 1 }}>
+    <div style={{ flexGrow: 1, flexBasis: "50%" }}>
       {teamName && <h3>{teamName}</h3>}
       {playerPositions.map((position) => {
         let selectedPlayer = selectedPlayers[position];

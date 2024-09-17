@@ -16,6 +16,7 @@
     "start-verbose": "parcel --log-level=verbose",
     "emulators-start": "firebase emulators:exec --only database \"npm run start\"",
     "start-emulators": "firebase emulators:start --only database ",
+    "deploy-rules": "firebase deploy --only database",
     "build": "npm run clean && parcel build",
     "check": "tsc --noEmit",
     "prettier-check": "npx prettier . --check",

@@ -432,8 +432,7 @@ export function LeagueMatchView() {
   // do I put the scoreboard and the umpiring here
   //MATCHSCORE
   return (
-    <>
-      <div>{leagueMatch!.description}</div>
+    <div style={{ margin: 10 }}>
       <TeamsMatchPlayersSelect<AvailablePlayer>
         autoCompleteProps={{
           autoComplete: true, // !!! does not appear to be working
@@ -486,6 +485,7 @@ export function LeagueMatchView() {
           },
         }}
       />
+      <br />
       {matchAndKeys.map((matchAndKey, index) => {
         const match = matchAndKey.match;
         return (
@@ -494,6 +494,6 @@ export function LeagueMatchView() {
           </div>
         );
       })}
-    </>
+    </div>
   );
 }

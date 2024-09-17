@@ -62,13 +62,13 @@ export function DoublesSelect({
 }: DoublesSelectProps) {
   return (
     <Box display="flex" justifyContent="space-between">
-      <div style={{ flexGrow: 1 }}>
+      <div style={{ flexGrow: 1, flexBasis: "50%" }}>
         <TeamDoublesSelect
           {...home}
           autoCompleteProps={autoCompleteProps}
         ></TeamDoublesSelect>
       </div>
-      <div style={{ flexGrow: 1 }}>
+      <div style={{ flexGrow: 1, flexBasis: "50%" }}>
         <TeamDoublesSelect
           {...away}
           autoCompleteProps={autoCompleteProps}
