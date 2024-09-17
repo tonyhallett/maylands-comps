@@ -23,7 +23,8 @@ export function CustomChartAxisTooltipContent(
   props: CustomChartAxisTooltipContentProps,
 ) {
   const { renderer, ...other } = props;
-  const data = props.getData(props.dataIndex);
+  // todo - I have forgotten why this is always necessary.  The name of the class should probably change
+  const data = props.getData(props.dataIndex as number);
   if (data.score === undefined) return null;
   return renderer(other, data.score);
 }

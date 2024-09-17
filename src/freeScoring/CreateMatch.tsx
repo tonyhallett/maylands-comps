@@ -110,8 +110,8 @@ export default function CreateMatch() {
     !selectedPlayerOrTeams.some((p) => p.id === selectedId);
 
   if (isDoubles && canAdd && selectedPlayerOrTeams.length > 0) {
-    const selectedTeam = teams.find((t) => t.id === selectedId);
-    const addedTeam = teams.find((t) => t.id === selectedPlayerOrTeams[0].id);
+    const selectedTeam = teams.find((t) => t.id === selectedId)!;
+    const addedTeam = teams.find((t) => t.id === selectedPlayerOrTeams[0].id)!;
     const addedTeamPlayerIds = [addedTeam.player1Id, addedTeam.player2Id];
     const duplicatePlayers = [
       selectedTeam.player1Id,
@@ -329,7 +329,7 @@ export default function CreateMatch() {
             placeholder: "Num serves",
             value: numServes,
             min: 1,
-            onChange: (event, val) => setNumServes(val),
+            onChange: (event, val) => setNumServes(val!),
           }}
         />
       </Box>
@@ -340,7 +340,7 @@ export default function CreateMatch() {
           placeholder: "Up to",
           value: upTo,
           min: 1,
-          onChange: (event, val) => setUpTo(val),
+          onChange: (event, val) => setUpTo(val!),
         }}
       />
       <MarginDivider />
@@ -369,7 +369,7 @@ export default function CreateMatch() {
                 }
               }
             }
-            setBestOf(val);
+            setBestOf(val!);
           },
         }}
       />

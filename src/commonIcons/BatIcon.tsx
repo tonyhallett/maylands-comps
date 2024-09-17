@@ -1,10 +1,11 @@
 import { SvgIcon, lighten } from "@mui/material";
 import { CSSProperties } from "react";
 
+type Fill = Exclude<CSSProperties["fill"], undefined>;
 export interface BatIconProps {
-  rubberFillColor: CSSProperties["fill"]; // #FF4F28
-  bladeFillColor1: CSSProperties["fill"]; // #FDD083
-  bladeFillColor2: CSSProperties["fill"]; // #F3A25A
+  rubberFillColor: Fill; // #FF4F28
+  bladeFillColor1: Fill; // #FDD083
+  bladeFillColor2: Fill; // #F3A25A
   rubberStrokeColor?: CSSProperties["stroke"];
   showBall?: boolean;
   flip?: boolean;

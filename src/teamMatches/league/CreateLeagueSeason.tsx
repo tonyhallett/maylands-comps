@@ -1,4 +1,4 @@
-import { push, ref, update } from "firebase/database";
+import { ref, update } from "firebase/database";
 import { useEffect } from "react";
 import {
   saveStateToDbMatchSaveState,
@@ -15,7 +15,10 @@ import {
 } from "../../firebase/rtb/team";
 import { Umpire } from "../../umpire";
 import { getSimpleToday } from "../../helpers/getSimpleToday";
-import { createTypedValuesUpdater } from "../../firebase/rtb/typeHelpers";
+import {
+  createTypedValuesUpdater,
+  getNewKey,
+} from "../../firebase/rtb/typeHelpers";
 import {
   Root,
   useClubsRef,
@@ -37,27 +40,27 @@ export function CreateLeagueSeason() {
   useEffect(() => {
     const updater = createTypedValuesUpdater<Root>();
     const updateClub = (demoDbLeagueClub: DbLeagueClub) => {
-      const newClubKey = push(clubsRef).key;
+      const newClubKey = getNewKey(clubsRef);
       updater.updateListItem("clubs", newClubKey, demoDbLeagueClub);
-      return newClubKey;
+      return newClubKey!;
     };
 
     const updateTeam = (demoDbLeagueTeam: DbLeagueTeam) => {
-      const newTeamKey = push(teamsRef).key;
-      updater.updateListItem("teams", newTeamKey, demoDbLeagueTeam);
-      return newTeamKey;
+      const newTeamKey = getNewKey(teamsRef);
+      updater.updateListItem("teams", newTeamKey!, demoDbLeagueTeam);
+      return newTeamKey!;
     };
 
     const updatePlayer = (demoPlayer: DbPlayer) => {
-      const newPlayerKey = push(playersRef).key;
-      updater.updateListItem("players", newPlayerKey, demoPlayer);
-      return newPlayerKey;
+      const newPlayerKey = getNewKey(playersRef);
+      updater.updateListItem("players", newPlayerKey!, demoPlayer);
+      return newPlayerKey!;
     };
 
     const updateRegisteredPlayer = (
       demoRegisteredPlayer: DbRegisteredPlayer,
     ) => {
-      const newRegisteredPlayerKey = push(registeredPlayersRef).key;
+      const newRegisteredPlayerKey = getNewKey(registeredPlayersRef);
       updater.updateListItem(
         "registeredPlayers",
         newRegisteredPlayerKey,
@@ -67,7 +70,7 @@ export function CreateLeagueSeason() {
     };
 
     const updateLeagueMatch = (demoLeagueMatch: DbLeagueMatch) => {
-      const newLeagueMatchKey = push(leagueMatchesRef).key;
+      const newLeagueMatchKey = getNewKey(leagueMatchesRef);
       updater.updateListItem(
         "leagueMatches",
         newLeagueMatchKey,
@@ -133,7 +136,7 @@ export function CreateLeagueSeason() {
       };
       const singlesMatchSaveState = getDbMatchSaveState(false);
       const addMatch = (dbMatchSaveState: DBMatchSaveState) => {
-        const matchKey = push(matchesRef).key;
+        const matchKey = getNewKey(matchesRef);
         const newMatch: DbMatch = {
           scoreboardWithUmpire: true,
           ...dbMatchSaveState,

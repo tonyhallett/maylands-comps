@@ -111,6 +111,10 @@ interface SaveGameState extends TeamScores {
 }
 export interface SaveState extends MatchOptions, SaveGameState {}
 
+interface SetServerReceiver {
+  server: Player | undefined;
+  receiver: Player | undefined;
+}
 export class Umpire {
   private get canUndoPoint(): boolean {
     let canUndo = false;
@@ -152,8 +156,8 @@ export class Umpire {
 
   private undoGameWinScore() {
     this._pointHistory.pop();
-    const lastGameScore = this._gameScores.pop();
-    const lastPoint = this.removeLastPointHistory();
+    const lastGameScore = this._gameScores.pop()!;
+    const lastPoint = this.removeLastPointHistory()!;
     const teamScoreToReduce = lastPoint.team1WonPoint
       ? this._team1Score
       : this._team2Score;
@@ -164,7 +168,7 @@ export class Umpire {
   }
 
   private undoMidGameState() {
-    const lastPoint = this.removeLastPointHistory();
+    const lastPoint = this.removeLastPointHistory()!;
     if (this.isEndsFromTeamScoringLast(lastPoint.team1WonPoint)) {
       this.switchEnds();
       this.doublesEndsPointsScored = "NotEnds";
@@ -384,8 +388,8 @@ export class Umpire {
   private getServerReceiver(
     serverReceiverChoice: ServerReceiverChoice,
     matchWon: boolean,
-  ): ServerReceiver {
-    const serverReceiver: ServerReceiver = {
+  ): SetServerReceiver {
+    const serverReceiver: SetServerReceiver = {
       server: undefined,
       receiver: undefined,
     };
@@ -551,7 +555,7 @@ export class Umpire {
     const matchWinStatus = this.matchWinStatus;
     this.addPointHistory(
       team1,
-      serverReceiver,
+      serverReceiver as ServerReceiver,
       team1Points,
       team2Points,
       gameWonState,

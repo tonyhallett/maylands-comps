@@ -9,7 +9,7 @@ export interface DigitMetrics {
 
 export function getDigitMetrics(font: string): DigitMetrics[] {
   const canvas = document.createElement("canvas");
-  const context = canvas.getContext("2d");
+  const context = canvas.getContext("2d")!;
   return getDigitMetricsForContext(font, context);
 }
 

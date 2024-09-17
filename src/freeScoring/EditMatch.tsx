@@ -41,7 +41,7 @@ export function EditMatch() {
                 }
               }
             }
-            setBestOf(val);
+            setBestOf(val!);
           },
         }}
       />

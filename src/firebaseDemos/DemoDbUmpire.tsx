@@ -161,8 +161,8 @@ export function DemoDbUmpire() {
     const saveState = umpire.getSaveState();
     const dbMatchSaveState = saveStateToDbMatchSaveState(saveState);
     const updatedMatch: DbMatch = {
-      team1Player1Id: dbMatch.team1Player1Id,
-      team2Player1Id: dbMatch.team2Player1Id,
+      team1Player1Id: dbMatch.team1Player1Id!,
+      team2Player1Id: dbMatch.team2Player1Id!,
       scoreboardWithUmpire: dbMatch.scoreboardWithUmpire,
       ...dbMatchSaveState,
     };

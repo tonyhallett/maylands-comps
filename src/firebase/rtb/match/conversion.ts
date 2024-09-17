@@ -64,9 +64,12 @@ export function dbMatchSaveStateToSaveState(
     };
   } else {
     saveInitialServersDoublesReceiver = {
-      gameInitialServers: Object.keys(
-        initialServersDoublesReceiver.gameInitialServers,
-      ) as Player[],
+      gameInitialServers:
+        initialServersDoublesReceiver.gameInitialServers === undefined
+          ? []
+          : (Object.keys(
+              initialServersDoublesReceiver.gameInitialServers,
+            ) as Player[]),
       firstDoublesReceiver: initialServersDoublesReceiver.firstDoublesReceiver,
     };
   }

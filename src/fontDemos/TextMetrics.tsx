@@ -1,12 +1,12 @@
 import { useWebSafeFontSelection } from "./useFontSelection";
-import { getDigitMetrics } from "./getDigitMetrics";
+import { DigitMetrics, getDigitMetrics } from "./getDigitMetrics";
 import { useState } from "react";
 
 export function TextMetrics() {
   const [html, selectedFont] = useWebSafeFontSelection();
   const [vw, setVW] = useState(1);
   const [onlyDescents, setOnlyDescents] = useState(false);
-  let digitsMetrics = [];
+  let digitsMetrics: DigitMetrics[] = [];
   if (selectedFont !== undefined) {
     digitsMetrics = getDigitMetrics(`${vw}vw ${selectedFont}`);
   }

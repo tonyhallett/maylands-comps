@@ -104,7 +104,7 @@ function Coin({
   flipHeads,
   flipTails,
 }: {
-  tossState: Toss;
+  tossState: Toss | undefined;
   flipDurationMilliseconds: number;
   flipHeads: Keyframes;
   flipTails: Keyframes;

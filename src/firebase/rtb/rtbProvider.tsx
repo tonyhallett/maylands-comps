@@ -20,9 +20,9 @@ export function getMaylandsCompRTB() {
   return db;
 }
 
-const DatabaseContext = createContext<Database>(null);
+const DatabaseContext = createContext<Database | null>(null);
 export function useRTB() {
-  return useContext(DatabaseContext);
+  return useContext(DatabaseContext) as Database;
 }
 const DatabaseProviderX = DatabaseContext.Provider;
 export function DatabaseProvider({ children }: { children?: ReactNode }) {

@@ -15,7 +15,7 @@ export const getInitialServerReceiverForGame = (
     const initialServer = initialServersDoublesReceiver.gameInitialServers[0];
     const server = getLast(initialServersDoublesReceiver.gameInitialServers);
     const firstDoublesReceiver =
-      initialServersDoublesReceiver.firstDoublesReceiver;
+      initialServersDoublesReceiver.firstDoublesReceiver!;
     let receiver: Player;
     if (gameNumber === 1) {
       receiver = firstDoublesReceiver;

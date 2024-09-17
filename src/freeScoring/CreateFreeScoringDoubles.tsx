@@ -46,7 +46,7 @@ export default function CreateFreeScoringDoubles() {
         ? selectedPlayers[0].id !== selectedPlayerId &&
           !playersAlreadyInDoublesTeam(
             selectedPlayers[0].id,
-            selectedPlayerId,
+            selectedPlayerId!, // if have a selectedPlayer then must have selected to add
             teams,
           )
         : false;
@@ -102,7 +102,7 @@ export default function CreateFreeScoringDoubles() {
           "aria-label": "Player handicap",
           placeholder: "Handicap",
           value: handicap,
-          onChange: (event, val) => setHandicap(val),
+          onChange: (event, val) => setHandicap(val!),
         }}
       />
       <MarginDivider />

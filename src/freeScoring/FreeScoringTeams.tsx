@@ -9,7 +9,7 @@ import { Box } from "@mui/material";
 export default function FreeScoringTeams() {
   const { teams } = useLoaderDataT<FreeScoringTeamsLoaderData>();
   const navigate = useNavigate();
-  const teamsColumns: GridColDef[] = useMemo<GridColDef<unknown>[]>(
+  const teamsColumns: GridColDef[] = useMemo<GridColDef[]>(
     () => [
       {
         field: "actions",

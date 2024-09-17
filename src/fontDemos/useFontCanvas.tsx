@@ -21,7 +21,7 @@ export interface NameWeightFontInfo extends WeightFontInfo {
 function getWeights(startWeight: string, endWeight: string): string[] {
   const start = parseInt(startWeight);
   const end = parseInt(endWeight);
-  const weights = [];
+  const weights: string[] = [];
   for (let i = start; i <= end; i += 100) {
     weights.push(i.toString());
   }

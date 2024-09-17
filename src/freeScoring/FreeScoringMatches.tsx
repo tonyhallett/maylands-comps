@@ -21,8 +21,8 @@ import EditIcon from "@mui/icons-material/Edit";
 export interface PlayerIds {
   team1Player1Id: number;
   team2Player1Id: number;
-  team1Player2Id?: number;
-  team2Player2Id?: number;
+  team1Player2Id: number | undefined;
+  team2Player2Id: number | undefined;
 }
 export interface PlayerNameAndIds extends PlayerNames, PlayerIds {}
 
@@ -47,7 +47,7 @@ export default function FreeScoringMatches() {
     },
     [navigate],
   );
-  const columns: GridColDef[] = useMemo<GridColDef<unknown>[]>(
+  const columns: GridColDef[] = useMemo<GridColDef[]>(
     () => [
       {
         field: "actions",

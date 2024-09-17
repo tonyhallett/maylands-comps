@@ -7,6 +7,7 @@ import {
   onChildChanged,
   onValue,
   orderByChild,
+  push,
   Query,
   query,
   QueryConstraint,
@@ -71,6 +72,13 @@ export const setTyped = <TRoot, TPath extends Paths<TRoot>>(
   return set(ref, value);
 };
 
+type WithNulls<T> = {
+  [K in keyof T]: T[K] | null;
+};
+type WithoutUndefined<T> = {
+  [K in keyof T]: Exclude<T[K], undefined>;
+};
+type WithNullsWithoutUndefined<T> = WithNulls<WithoutUndefined<T>>;
 export const createTypedValuesUpdater = <TRoot>() => {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const values = {} as any;
@@ -84,7 +92,9 @@ export const createTypedValuesUpdater = <TRoot>() => {
   const updateListItem = <TPath extends Paths<Root>>(
     path: TPath,
     itemId: string,
-    value: Partial<RecordType<PathValue<TRoot, TPath>>>,
+    value: Partial<
+      WithNullsWithoutUndefined<RecordType<PathValue<TRoot, TPath>>>
+    >,
   ) => {
     Object.entries(value).forEach(([key, value]) => {
       values[`${path}/${itemId}/${key}`] = value;
@@ -175,41 +185,6 @@ export const onChildChangedTyped = <T>(
 
 export const nameof = <T>(name: Extract<keyof T, string>): string => name;
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-const demo = () => {
-  interface DemoRoot {
-    child1: Child1;
-    child2: Child2;
-    children: Record<string, ListChild>;
-  }
-  interface ListChild {
-    lc: string;
-  }
-  interface Child1 {
-    c1: string;
-    grandchild: Grandchild;
-  }
-  interface Grandchild {
-    gc: number;
-  }
-  interface Child2 {
-    c2: string;
-    grandchild: Grandchild;
-  }
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const database: Database = null as any;
-  const demoRoot = {} as DemoRoot;
-  const refTyped = createTypedRefHelper(demoRoot);
-
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const deepRefType = refTyped(
-    database,
-    "child1/grandchild/gc",
-  ) as DatabaseReference;
-  const listRef = refTyped(database, "children");
-  const x = orderByChildQuery(listRef, "lc");
-  onChildAddedTyped(x, (snapshot) => {
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const value = snapshot.val();
-  });
+export const getNewKey = (databaseReference: DatabaseReference) => {
+  return push(databaseReference).key!;
 };

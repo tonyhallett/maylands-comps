@@ -15,7 +15,7 @@ import { LeadsStats } from "../matchstats/LeadStatistician";
 import { StreaksStats } from "../matchstats/StreakStatistician";
 import {
   PointsBreakdownStats,
-  ServeReceiveRecord,
+  ServeOrReceiveRecord,
 } from "../matchstats/PointsBreakdownStatistician";
 import {
   availableGameMatchPoints,
@@ -242,11 +242,11 @@ function PointsBreakdownRows({
 }) {
   const team1Serve = pointsBreakdown.team1.serve;
   const team2Serve = pointsBreakdown.team2.serve;
-  const getServeDisplay = (serve: ServeReceiveRecord): string => {
+  const getServeDisplay = (serve: ServeOrReceiveRecord): string => {
     if (serve.num === 0) {
       return "-";
     }
-    return getPercentageDisplay(serve.winPercentage, serve.numWon, serve.num);
+    return getPercentageDisplay(serve.winPercentage!, serve.numWon, serve.num);
   };
   return (
     <>

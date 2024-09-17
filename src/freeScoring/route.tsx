@@ -90,7 +90,7 @@ const getFreeScoringMatchStates = (): FreeScoringMatchState[] => {
     const playerNames: PlayerNames = {
       team1Player1Name: players.find(
         (player) => player.id === matchSaveState.team1Player1Id,
-      )?.name,
+      )!.name,
 
       team1Player2Name:
         matchSaveState.team1Player2Id === undefined
@@ -100,7 +100,7 @@ const getFreeScoringMatchStates = (): FreeScoringMatchState[] => {
             )?.name,
       team2Player1Name: players.find(
         (player) => player.id === matchSaveState.team2Player1Id,
-      )?.name,
+      )!.name,
       team2Player2Name:
         matchSaveState.team2Player2Id === undefined
           ? undefined
@@ -159,7 +159,7 @@ const route: RouteObject = {
     {
       path: "playermatches/:playerId",
       loader: ({ params }) => {
-        return redirectIfNotANumber(params.playerId, (playerId) => {
+        return redirectIfNotANumber(params.playerId!, (playerId) => {
           const matchStates = getFreeScoringMatchStates();
           const playerMatches = matchStates.filter(
             (matchState) =>
@@ -179,7 +179,7 @@ const route: RouteObject = {
     {
       path: "teammatches/:teamId",
       loader: ({ params }) => {
-        return redirectIfNotANumber(params.teamId, (teamId) => {
+        return redirectIfNotANumber(params.teamId!, (teamId) => {
           const teams = getFreeScoringTeams();
           const team = teams.find((team) => team.id === teamId);
           const loaderData: FreeScoringMatchStatesLoaderData = {
@@ -195,9 +195,8 @@ const route: RouteObject = {
                   matchState.team2Player2Id === team.player2Id)
               );
             });
-
-            return loaderData;
           }
+          return loaderData;
         });
       },
       element: <FreeScoringMatches />,
@@ -223,6 +222,9 @@ const route: RouteObject = {
         const matchState = matchStates.find(
           (matchState) => matchState.id === matchId,
         );
+        if (matchState === undefined) {
+          return redirectTo404();
+        }
         return matchState;
       },
       action: async ({ request }) => {
@@ -303,7 +305,7 @@ const route: RouteObject = {
       path: "players/edit/:playerId",
       element: <EditPlayer />,
       loader: ({ params }) => {
-        return redirectIfNotANumber(params.playerId, (playerId) => {
+        return redirectIfNotANumber(params.playerId!, (playerId) => {
           const players = getFreeScoringPlayers();
           const player = players.find((player) => player.id === playerId);
           if (player === undefined) {

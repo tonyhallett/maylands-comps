@@ -21,8 +21,8 @@ import { getTeamInitials } from "./helpers";
 export interface PlayerNames {
   team1Player1Name: string;
   team2Player1Name: string;
-  team1Player2Name?: string;
-  team2Player2Name?: string;
+  team1Player2Name: string | undefined;
+  team2Player2Name: string | undefined;
 }
 
 export type DoublesPlayerNames = Required<PlayerNames>;
@@ -46,16 +46,16 @@ export interface UmpireViewProps extends PlayerNames {
   matchState: MatchState;
   rules: MatchInfo;
   autoShowServerReceiverChooser: boolean;
-  serverReceiverTop?: boolean;
+  serverReceiverTop?: boolean | undefined;
 }
 
 function getServerReceiverName(
   player: Player | undefined,
   team1Player1Name: string,
   team2Player1Name: string,
-  team1Player2Name: string,
-  team2Player2Name: string,
-): string {
+  team1Player2Name: string | undefined,
+  team2Player2Name: string | undefined,
+): string | undefined {
   if (player === undefined) {
     return "";
   }
@@ -245,8 +245,8 @@ export function UmpireView({
                 matchState.matchWinState,
                 matchState.team1Left,
               )}
-              receiverName={getNameOfServerReceiver(false)}
-              serverName={getNameOfServerReceiver(true)}
+              receiverName={getNameOfServerReceiver(false)!}
+              serverName={getNameOfServerReceiver(true)!}
               remainingServes={matchState.remainingServes}
               gamePointFontSize={80}
               setPointFontSize={40}

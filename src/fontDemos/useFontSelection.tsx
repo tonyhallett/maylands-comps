@@ -18,7 +18,7 @@ interface NamedOption {
 }
 
 export function useSelect<T extends NamedOption>(label: string, items: T[]) {
-  const [selected, setSelected] = useState<T>(undefined);
+  const [selected, setSelected] = useState<T | undefined>(undefined);
   const [selectedIndex, setSelectedIndex] = useState<number>(0);
   const html = (
     <>

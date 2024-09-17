@@ -29,7 +29,7 @@ interface CurrentLead {
 }
 export class LeadStatistician {
   private pointCount = 0;
-  private currentLead: CurrentLead = undefined;
+  private currentLead: CurrentLead | undefined = undefined;
   private lastPointState: PointState = PointState.Default;
   private leads: LeadsStats = {
     team1: {
@@ -64,10 +64,10 @@ export class LeadStatistician {
   };
 
   private updateLead(team1: boolean, wonPoint: boolean) {
-    this.currentLead.lead += wonPoint ? 1 : -1;
+    this.currentLead!.lead += wonPoint ? 1 : -1;
     const lead = this.getCurrentTeamLead(team1);
     lead.leadingFor++;
-    lead.biggestLead = Math.max(lead.biggestLead, this.currentLead.lead);
+    lead.biggestLead = Math.max(lead.biggestLead, this.currentLead!.lead);
   }
 
   private getCurrentTeamLead(team1: boolean) {

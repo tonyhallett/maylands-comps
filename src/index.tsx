@@ -28,7 +28,7 @@ const router = createBrowserRouter([
         </Link>
          */}
         <Link style={{ display: "block" }} href={createLeagueSeasonPath}>
-          Demo create league match
+          Create League Season
         </Link>
         <Link style={{ display: "block" }} href={leagueMatchesPath}>
           League matches
@@ -51,7 +51,7 @@ const router = createBrowserRouter([
   freeScoringRoute,
 ]);
 
-createRoot(document.getElementById("root")).render(
+createRoot(document.getElementById("root")!).render(
   <DatabaseProvider>
     <MaylandsThemeProvider>
       <CssBaseline enableColorScheme />

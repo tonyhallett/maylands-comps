@@ -1,34 +1,23 @@
-import { equalTo, ref, Unsubscribe, update } from "firebase/database";
-import { useState, useRef, useEffect } from "react";
+import { ref, update } from "firebase/database";
+import { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
-import { DbMatch } from "../../firebase/rtb/match/dbMatch";
-import { DbPlayer } from "../../firebase/rtb/players";
-import { DbLeagueTeam, DbLeagueMatch } from "../../firebase/rtb/team";
+import {
+  DbMatch,
+  getTeamDoublesPlayerKeys,
+} from "../../firebase/rtb/match/dbMatch";
 import {
   awayPlayerMatchDetails,
   homePlayerMatchDetails,
 } from "./singlesLeagueMatchPlayers";
-import {
-  Root,
-  useLeagueMatchesRef,
-  useMatchesRef,
-  usePlayersRef,
-  useRegisteredPlayersRef,
-  useTeamsRef,
-} from "../../firebase/rtb/root";
-import {
-  createTypedValuesUpdater,
-  onChildAddedTyped,
-  onChildChangedTyped,
-  onListItemValueTyped,
-  orderByChildQuery,
-} from "../../firebase/rtb/typeHelpers";
-import {
-  AutoCompleteProps,
-  TeamsMatchPlayersSelect,
-} from "../teamMatchPlayerSelect";
+import { Root } from "../../firebase/rtb/root";
+import { createTypedValuesUpdater } from "../../firebase/rtb/typeHelpers";
+import { TeamsMatchPlayersSelect } from "../teamMatchPlayerSelect";
 import { useRTB } from "../../firebase/rtb/rtbProvider";
-import { Autocomplete, Box, TextField } from "@mui/material";
+import { AvailableDoubles, DoublesSelect } from "./DoublesSelect";
+import { useLeagueMatchAndMatches } from "./useLeagueMatchAndMatches";
+import { useLeagueTeamsOnValue } from "./useLeagueTeamsOnValue";
+import { useAvailablePlayers } from "./useAvailablePlayers";
+import { isNotNull } from "../../helpers/isNotTypeGuards";
 
 export interface MatchAndKey {
   match: DbMatch;
@@ -46,17 +35,11 @@ export interface AvailablePlayers {
   home: AvailablePlayer[];
   away: AvailablePlayer[];
 }
-type AvailablePlayerOrUndefined = AvailablePlayer | undefined;
+type AvailablePlayerOrNull = AvailablePlayer | null;
 
-interface AvailableDoubles {
-  player1Name: string;
-  player1Id: string;
-  player2Name: string;
-  player2Id: string;
-}
 interface AvailablePlayersForSelection {
-  selectedHomeTeamPlayers: AvailablePlayerOrUndefined[];
-  selectedAwayTeamPlayers: AvailablePlayerOrUndefined[];
+  selectedHomeTeamPlayers: AvailablePlayerOrNull[];
+  selectedAwayTeamPlayers: AvailablePlayerOrNull[];
   homeTeamAvailablePlayers: AvailablePlayer[][];
   awayTeamAvailablePlayers: AvailablePlayer[][];
   homeAvailableDoubles: AvailableDoubles[];
@@ -78,182 +61,19 @@ const findAwayPlayersMatchIndices = awayPlayerMatchDetails.map(
   (playerMatchDetails) => playerMatchDetails.matchIndices[0],
 );
 
-const useLeagueMatchAndMatches = (leagueMatchId: string) => {
-  const matchesRef = useMatchesRef();
-  const leagueMatchesRef = useLeagueMatchesRef();
-  const [leagueMatch, setLeagueMatch] = useState<DbLeagueMatch | undefined>(
-    undefined,
-  );
-  const [matchAndKeys, setMatchAndKeys] = useState<MatchAndKey[]>([]);
-  useEffect(() => {
-    const unlistenThisLeagueMatch = onListItemValueTyped(
-      leagueMatchId,
-      leagueMatchesRef,
-      (snapshot) => {
-        const leagueMatch = snapshot.val();
-        setLeagueMatch(leagueMatch);
-      },
-    );
-    const thisLeagueMatchMatchesQuery = orderByChildQuery(
-      matchesRef,
-      "containerId",
-      equalTo(leagueMatchId),
-    );
-
-    const unsubscribeMatchAdded = onChildAddedTyped(
-      thisLeagueMatchMatchesQuery,
-      (snapshot) => {
-        const match = snapshot.val();
-        setMatchAndKeys((prev) => [...prev, { match, key: snapshot.key }]);
-      },
-    );
-    const unsubscribeMatchChanged = onChildChangedTyped(
-      thisLeagueMatchMatchesQuery,
-      (snapshot) => {
-        const match = snapshot.val();
-        setMatchAndKeys((prev) => {
-          const index = prev.findIndex((mk) => mk.key === snapshot.key);
-          const next = [...prev];
-          next[index] = { match, key: snapshot.key };
-          return next;
-        });
-      },
-    );
-    return () => {
-      unlistenThisLeagueMatch();
-      unsubscribeMatchAdded();
-      unsubscribeMatchChanged();
-    };
-  }, [leagueMatchId, matchesRef, leagueMatchesRef]);
-  return [leagueMatch, matchAndKeys] as const;
-};
-
-const useTeamOnValue = (teamId: string) => {
-  const teamsRef = useTeamsRef();
-  const [team, setTeam] = useState<DbLeagueTeam | undefined>(undefined);
-  const unlistenRef = useRef<Unsubscribe | undefined>(undefined);
-  useEffect(() => {
-    if (teamId !== undefined) {
-      const unlisten = onListItemValueTyped(teamId, teamsRef, (snapshot) => {
-        setTeam(snapshot.val());
-      });
-      unlistenRef.current = () => {
-        unlisten();
-      };
-    }
-  }, [teamId, teamsRef]);
-  useEffect(() => {
-    return () => {
-      unlistenRef.current?.();
-    };
-  }, []);
-  return team;
-};
-
-export const useLeagueTeamsOnValue = (
-  leagueMatch: DbLeagueMatch | undefined,
-) => {
-  const homeTeam = useTeamOnValue(leagueMatch?.homeTeamId);
-  const awayTeam = useTeamOnValue(leagueMatch?.awayTeamId);
-  return [homeTeam, awayTeam] as const;
-};
-
-const useAvailablePlayers = (
-  team: DbLeagueTeam | undefined,
-  isFriendly: boolean | undefined,
-  predicate = () => true,
-) => {
-  const numAvailablePlayers = useRef<number>(0);
-  const playersRef = usePlayersRef();
-  const registeredPlayersRef = useRegisteredPlayersRef();
-  const teamRegisteredPlayersUnsubscribes = useRef<Unsubscribe[]>([]);
-  const [availablePlayers, setAvailablePlayers] = useState<AvailablePlayer[]>(
-    [],
-  );
-  useEffect(() => {
-    if (
-      team !== undefined &&
-      isFriendly !== undefined &&
-      teamRegisteredPlayersUnsubscribes.current.length === 0 &&
-      predicate()
-    ) {
-      const clubRegisteredPlayersQuery = orderByChildQuery(
-        registeredPlayersRef,
-        "clubId",
-        equalTo(team.clubId),
-      );
-
-      const unsubscribeClubRegisteredPlayers = onChildAddedTyped(
-        clubRegisteredPlayersQuery,
-        (snapshot) => {
-          const registeredPlayer = snapshot.val();
-          const isApplicablePlayer =
-            isFriendly || registeredPlayer.rank <= team.rank;
-          if (isApplicablePlayer) {
-            numAvailablePlayers.current++;
-            const playerId = registeredPlayer.playerId;
-            const unsubscribePlayer = onListItemValueTyped(
-              playerId,
-              playersRef,
-              (snapshot) => {
-                const player = snapshot.val() as DbPlayer;
-                setAvailablePlayers((prev) => {
-                  // when player changes will need to check if already added
-                  const availablePlayer: AvailablePlayer = {
-                    name: player.name,
-                    playerId,
-                    registeredPlayerId: snapshot.key,
-                    rank: registeredPlayer.rank,
-                  };
-                  return [...prev, availablePlayer];
-                });
-              },
-            );
-            teamRegisteredPlayersUnsubscribes.current.push(unsubscribePlayer);
-          }
-        },
-      );
-      teamRegisteredPlayersUnsubscribes.current.push(
-        unsubscribeClubRegisteredPlayers,
-      );
-    }
-  }, [
-    team,
-    isFriendly,
-    availablePlayers,
-    playersRef,
-    registeredPlayersRef,
-    predicate,
-  ]);
-  useEffect(() => {
-    const unsubscribes = teamRegisteredPlayersUnsubscribes.current;
-    return () => {
-      unsubscribes.forEach((unsubscribe) => unsubscribe());
-    };
-  }, []);
-  return [
-    availablePlayers,
-    numAvailablePlayers.current > 0 &&
-      numAvailablePlayers.current === availablePlayers.length,
-  ] as const;
-};
-type PlayerKey = keyof Pick<
-  DbMatch,
-  "team1Player1Id" | "team1Player2Id" | "team2Player1Id" | "team2Player2Id"
->;
 export function LeagueMatchView() {
   const params = useParams();
   const db = useRTB();
   const [leagueMatch, matchAndKeys] = useLeagueMatchAndMatches(
-    params.leagueMatchId,
+    params.leagueMatchId!,
   );
   const [homeTeam, awayTeam] = useLeagueTeamsOnValue(leagueMatch);
   const [availablePlayersForSelection, setAvailablePlayersForSelection] =
     useState<AvailablePlayersForSelection>({
       awayTeamAvailablePlayers: [],
       homeTeamAvailablePlayers: [],
-      selectedAwayTeamPlayers: [undefined, undefined, undefined],
-      selectedHomeTeamPlayers: [undefined, undefined, undefined],
+      selectedAwayTeamPlayers: [null, null, null],
+      selectedHomeTeamPlayers: [null, null, null],
       homeAvailableDoubles: [],
       awayAvailableDoubles: [],
       selectedHomeDoubles: null,
@@ -307,18 +127,16 @@ export function LeagueMatchView() {
           const selectedPlayer = teamAvailablePlayers.find(
             (player) => player.playerId === playerId,
           );
-          return selectedPlayer;
+          return selectedPlayer ?? null;
         });
       };
 
       const selectedHomeTeamPlayers = getSelectedPlayers(true);
-      const actualSelectedHomeTeamPlayers = selectedHomeTeamPlayers.filter(
-        (p) => p !== undefined,
-      );
+      const actualSelectedHomeTeamPlayers =
+        selectedHomeTeamPlayers.filter(isNotNull);
       const selectedAwayTeamPlayers = getSelectedPlayers(false);
-      const actualSelectedAwayTeamPlayers = selectedAwayTeamPlayers.filter(
-        (p) => p !== undefined,
-      );
+      const actualSelectedAwayTeamPlayers =
+        selectedAwayTeamPlayers.filter(isNotNull);
       const allActualSelectedPlayers = actualSelectedHomeTeamPlayers.concat(
         actualSelectedAwayTeamPlayers,
       );
@@ -343,7 +161,7 @@ export function LeagueMatchView() {
 
         return selectedTeamPlayers.map((selectedPlayer) => {
           let availablePlayersForSelection = notSelectedTeamAvailablePlayers;
-          if (selectedPlayer !== undefined) {
+          if (selectedPlayer !== null) {
             availablePlayersForSelection = [
               // Each AvailablePlayer[] should include the selected
               selectedPlayer,
@@ -418,7 +236,7 @@ export function LeagueMatchView() {
                     (pair.player1Id === player2Id &&
                       pair.player2Id === player1Id)
                   );
-                }),
+                }) ?? null,
         };
       };
       const doublesMatchAndKey = matchAndKeys[matchAndKeys.length - 1];
@@ -463,7 +281,7 @@ export function LeagueMatchView() {
           : awayPlayerMatchDetails;
         return playerMatchDetails.find((pmd) =>
           pmd.matchIndices.includes(index),
-        ).positionDisplay;
+        )!.positionDisplay;
       };
       const getPlayerDisplay = (isHome: boolean) => {
         const matchPlayerId = isHome
@@ -499,10 +317,10 @@ export function LeagueMatchView() {
         : awayTeamAvailablePlayers;
       const firstPlayer = teamSelectedPlayers.find(
         (player) => player?.playerId === player1Id,
-      );
+      )!;
       const secondPlayer = teamSelectedPlayers.find(
         (player) => player?.playerId === player2Id,
-      );
+      )!;
       return `${firstPlayer.name} - ${secondPlayer.name}`;
     };
     const homeTeamDisplay = getDoublesTeamDisplay(
@@ -522,7 +340,7 @@ export function LeagueMatchView() {
     return <div>loading</div>;
   }
 
-  const getPlayerMatches = (
+  const getPlayerSinglesMatches = (
     isHome: boolean,
     position: number,
   ): MatchAndKey[] => {
@@ -533,53 +351,59 @@ export function LeagueMatchView() {
       (index) => matchAndKeys[index],
     );
   };
-  const playerSelected = (
+
+  const updateMatchesWhenPlayerSelected = (
     isHome: boolean,
     player: AvailablePlayer | null,
     position: number,
   ) => {
     const updater = createTypedValuesUpdater<Root>();
-    getPlayerMatches(isHome, position).forEach((matchAndKey) => {
-      const playerId = player?.playerId ?? null;
-      const playerUpdate: Partial<DbMatch> = isHome
-        ? { team1Player1Id: playerId }
-        : { team2Player1Id: playerId };
-      updater.updateListItem("matches", matchAndKey.key, playerUpdate);
-    });
-
-    if (!player) {
-      const doublesMatchAndKey = matchAndKeys[matchAndKeys.length - 1];
-      interface PlayersInfo {
-        player1: PlayerKey;
-        player2: PlayerKey;
-      }
-      const doublesMatch = doublesMatchAndKey.match;
-      const info: PlayersInfo = isHome
-        ? {
-            player1: "team1Player1Id",
-            player2: "team1Player2Id",
-          }
-        : {
-            player1: "team2Player1Id",
-            player2: "team2Player2Id",
-          };
-
+    const updatePlayerSinglesMatches = () => {
+      getPlayerSinglesMatches(isHome, position).forEach((matchAndKey) => {
+        const playerId = player?.playerId ?? null;
+        updater.updateListItem(
+          "matches",
+          matchAndKey.key,
+          isHome ? { team1Player1Id: playerId } : { team2Player1Id: playerId },
+        );
+      });
+    };
+    const getSelectedPlayerId = () => {
       const selectedPlayers = isHome
         ? availablePlayersForSelection.selectedHomeTeamPlayers
         : availablePlayersForSelection.selectedAwayTeamPlayers;
-      const previouslySelectedPlayerId = selectedPlayers[position].playerId;
-
+      return selectedPlayers[position]!.playerId;
+    };
+    const removePlayerDoublesTeam = () => {
+      const doublesMatchAndKey = matchAndKeys[matchAndKeys.length - 1];
+      const doublesMatch = doublesMatchAndKey.match;
+      const playersKeys = getTeamDoublesPlayerKeys(isHome);
+      const previouslySelectedPlayerId = getSelectedPlayerId();
       if (
-        doublesMatch[info.player1] === previouslySelectedPlayerId ||
-        doublesMatch[info.player2] === previouslySelectedPlayerId
+        doublesMatch[playersKeys.player1] === previouslySelectedPlayerId ||
+        doublesMatch[playersKeys.player2] === previouslySelectedPlayerId
       ) {
         updater.updateListItem("matches", doublesMatchAndKey.key, {
-          [info.player1]: null,
-          [info.player2]: null,
+          [playersKeys.player1]: null,
+          [playersKeys.player2]: null,
         });
       }
+    };
+
+    updatePlayerSinglesMatches();
+
+    if (!player) {
+      removePlayerDoublesTeam();
     }
     update(ref(db), updater.values);
+  };
+
+  const playerSelected = (
+    isHome: boolean,
+    player: AvailablePlayer | null,
+    position: number,
+  ) => {
+    updateMatchesWhenPlayerSelected(isHome, player, position);
   };
 
   const doublesSelected = (
@@ -590,11 +414,10 @@ export function LeagueMatchView() {
     const updater = createTypedValuesUpdater<Root>();
     const player1Id = availableDoubles ? availableDoubles.player1Id : null;
     const player2Id = availableDoubles ? availableDoubles.player2Id : null;
-    const player1Key: PlayerKey = isHome ? "team1Player1Id" : "team2Player1Id";
-    const player2Key: PlayerKey = isHome ? "team1Player2Id" : "team2Player2Id";
+    const playersKeys = getTeamDoublesPlayerKeys(isHome);
     updater.updateListItem("matches", doublesMatchKey, {
-      [player1Key]: player1Id,
-      [player2Key]: player2Id,
+      [playersKeys.player1]: player1Id,
+      [playersKeys.player2]: player2Id,
     });
     update(ref(db), updater.values);
   };
@@ -616,7 +439,7 @@ export function LeagueMatchView() {
           clearOnEscape: true,
         }}
         homeTeam={{
-          teamName: homeTeam.name,
+          teamName: homeTeam!.name,
           labels: homeTeamLabels,
           availablePlayers:
             availablePlayersForSelection.homeTeamAvailablePlayers,
@@ -625,7 +448,7 @@ export function LeagueMatchView() {
             playerSelected(true, player, position),
         }}
         awayTeam={{
-          teamName: awayTeam.name,
+          teamName: awayTeam!.name,
           labels: awayTeamLabels,
           availablePlayers:
             availablePlayersForSelection.awayTeamAvailablePlayers,
@@ -664,70 +487,5 @@ export function LeagueMatchView() {
         );
       })}
     </>
-  );
-}
-
-interface TeamDoublesSelectProps {
-  availableDoubles: AvailableDoubles[];
-  selectedDoubles: AvailableDoubles | undefined;
-  disabled?: boolean;
-  onChange: (availableDoubles: AvailableDoubles | null) => void;
-  autoCompleteProps?: AutoCompleteProps<AvailableDoubles>;
-}
-function TeamDoublesSelect({
-  availableDoubles,
-  selectedDoubles,
-  disabled = false,
-  onChange,
-  autoCompleteProps = {},
-}: TeamDoublesSelectProps) {
-  return (
-    <Autocomplete
-      {...autoCompleteProps}
-      clearOnBlur
-      freeSolo={false}
-      disabled={disabled}
-      options={availableDoubles}
-      // *********************************  renderOption for full alternative
-      getOptionLabel={(option: AvailableDoubles) => {
-        return `${option.player1Name} - ${option.player2Name}`;
-      }}
-      value={selectedDoubles}
-      onChange={(
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        event: React.SyntheticEvent,
-        newValue: AvailableDoubles | null,
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        reason,
-      ) => {
-        onChange(newValue);
-      }}
-      renderInput={(params) => (
-        <TextField {...params} label="Doubles" variant="standard" />
-      )}
-    />
-  );
-}
-interface DoublesSelectProps {
-  home: TeamDoublesSelectProps;
-  away: TeamDoublesSelectProps;
-  autoCompleteProps?: AutoCompleteProps<AvailableDoubles>;
-}
-function DoublesSelect({ home, away, autoCompleteProps }: DoublesSelectProps) {
-  return (
-    <Box display="flex" justifyContent="space-between">
-      <div style={{ flexGrow: 1 }}>
-        <TeamDoublesSelect
-          {...home}
-          autoCompleteProps={autoCompleteProps}
-        ></TeamDoublesSelect>
-      </div>
-      <div style={{ flexGrow: 1 }}>
-        <TeamDoublesSelect
-          {...away}
-          autoCompleteProps={autoCompleteProps}
-        ></TeamDoublesSelect>
-      </div>
-    </Box>
   );
 }

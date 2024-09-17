@@ -51,6 +51,8 @@ describe("<UmpireView/", () => {
           const playerNames: PlayerNames = {
             team1Player1Name: team1PlayerNames[0],
             team2Player1Name: team2PlayerNames[0],
+            team1Player2Name: undefined,
+            team2Player2Name: undefined,
           };
           if (team1PlayerNames.length === 2) {
             playerNames.team1Player2Name = team1PlayerNames[1];
@@ -378,6 +380,8 @@ describe("<UmpireView/", () => {
               autoShowServerReceiverChooser={true}
               team1Player1Name="T1P1"
               team2Player1Name="T2P1"
+              team1Player2Name={undefined}
+              team2Player2Name={undefined}
               matchState={{
                 canUndoPoint: false,
                 isEnds: false,
@@ -451,6 +455,8 @@ describe("<UmpireView/", () => {
             autoShowServerReceiverChooser={false}
             team1Player1Name="T1P1"
             team2Player1Name="T2P1"
+            team1Player2Name={undefined}
+            team2Player2Name={undefined}
             matchState={{
               canUndoPoint: false,
               isEnds: false,
@@ -500,6 +506,8 @@ describe("<UmpireView/", () => {
             autoShowServerReceiverChooser={false}
             team1Player1Name="T1P1"
             team2Player1Name="T2P1"
+            team1Player2Name={undefined}
+            team2Player2Name={undefined}
             matchState={{
               canUndoPoint: false,
               isEnds: false,
@@ -548,6 +556,8 @@ describe("<UmpireView/", () => {
             autoShowServerReceiverChooser={false}
             team1Player1Name="T1P1"
             team2Player1Name="T2P1"
+            team1Player2Name={undefined}
+            team2Player2Name={undefined}
             matchState={{
               canUndoPoint: false,
               isEnds: false,
@@ -597,6 +607,8 @@ describe("<UmpireView/", () => {
             autoShowServerReceiverChooser={false}
             team1Player1Name="T1P1"
             team2Player1Name="T2P1"
+            team1Player2Name={undefined}
+            team2Player2Name={undefined}
             matchState={{
               canUndoPoint: false,
               isEnds: false,
@@ -652,6 +664,8 @@ describe("<UmpireView/", () => {
             autoShowServerReceiverChooser={false}
             team1Player1Name="T1P1"
             team2Player1Name="T2P1"
+            team1Player2Name={undefined}
+            team2Player2Name={undefined}
             matchState={{
               canUndoPoint: false,
               isEnds: false,
@@ -703,6 +717,8 @@ describe("<UmpireView/", () => {
             autoShowServerReceiverChooser={false}
             team1Player1Name="T1P1"
             team2Player1Name="T2P1"
+            team1Player2Name={undefined}
+            team2Player2Name={undefined}
             matchState={{
               canUndoPoint: false,
               isEnds: false,
@@ -750,6 +766,8 @@ describe("<UmpireView/", () => {
             autoShowServerReceiverChooser={false}
             team1Player1Name="T1P1"
             team2Player1Name="T2P1"
+            team1Player2Name={undefined}
+            team2Player2Name={undefined}
             matchState={{
               canUndoPoint: false,
               isEnds: false,
@@ -979,8 +997,10 @@ describe("<UmpireView/", () => {
             }}
           />,
         );
-        const scoreLeftButton = queryByRole("button", { name: "Score left" });
-        const scoreRightButton = queryByRole("button", { name: "Score right" });
+        const scoreLeftButton = queryByRole("button", { name: "Score left" })!;
+        const scoreRightButton = queryByRole("button", {
+          name: "Score right",
+        })!;
         return { scoreLeftButton, scoreRightButton };
       };
 
@@ -1511,6 +1531,8 @@ describe("<UmpireView/", () => {
         <UmpireView
           team1Player1Name="T1P1"
           team2Player1Name="T2P1"
+          team1Player2Name={undefined}
+          team2Player2Name={undefined}
           autoShowServerReceiverChooser={false}
           matchState={{
             canUndoPoint: true,
@@ -1604,6 +1626,8 @@ describe("<UmpireView/", () => {
         <UmpireView
           team1Player1Name="T1P1"
           team2Player1Name="T2P1"
+          team1Player2Name={undefined}
+          team2Player2Name={undefined}
           autoShowServerReceiverChooser={false}
           matchState={{
             canUndoPoint: true,

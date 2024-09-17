@@ -16,22 +16,21 @@ export function DemoFirestoreScorer() {
   const firestore = useFirestore();
   const scoresRef = doc(firestore, "demoscores", "demo");
   const createdDocRef = useRef(false);
-  const demoGameScoreRef = useRef<Score | null>(null);
+  const demoGameScoreRef = useRef<Score>({
+    left: {
+      games: 0,
+      points: 0,
+    },
+    right: {
+      games: 0,
+      points: 0,
+    },
+  });
   const [disabledNetwork, setDisabledNetwork] = useState(false);
   useEffect(() => {
     if (createdDocRef.current) return;
-    const demoScore: Score = {
-      left: {
-        games: 0,
-        points: 0,
-      },
-      right: {
-        games: 0,
-        points: 0,
-      },
-    };
-    demoGameScoreRef.current = demoScore;
-    setDoc(scoresRef, demoScore)
+
+    setDoc(scoresRef, demoGameScoreRef.current)
       .then(() => {
         createdDocRef.current = true;
       })
@@ -122,22 +121,20 @@ export function DemoRtbScorer() {
   const rtb = useRTB();
   const scoresRef = ref(rtb, demoScoreKey);
   const createdDocRef = useRef(false);
-  const demoGameScoreRef = useRef<Score | null>(null);
+  const demoGameScoreRef = useRef<Score>({
+    left: {
+      games: 0,
+      points: 0,
+    },
+    right: {
+      games: 0,
+      points: 0,
+    },
+  });
   const [disabledNetwork, setDisabledNetwork] = useState(false);
   useEffect(() => {
     if (createdDocRef.current) return;
-    const demoScore: Score = {
-      left: {
-        games: 0,
-        points: 0,
-      },
-      right: {
-        games: 0,
-        points: 0,
-      },
-    };
-    demoGameScoreRef.current = demoScore;
-    set(scoresRef, demoScore)
+    set(scoresRef, demoGameScoreRef.current)
       .then(() => {
         createdDocRef.current = true;
       })

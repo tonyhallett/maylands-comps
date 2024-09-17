@@ -1,8 +1,14 @@
 import { MarkElement, MarkElementProps } from "@mui/x-charts";
 
 export interface SmarterMarkElementSlotProps {
-  getColor?: (seriesId, dataIndex: number) => MarkElementProps["color"];
-  getShape?: (seriesId, dataIndex: number) => MarkElementProps["shape"];
+  getColor?: (
+    seriesId,
+    dataIndex: number,
+  ) => MarkElementProps["color"] | undefined;
+  getShape?: (
+    seriesId,
+    dataIndex: number,
+  ) => MarkElementProps["shape"] | undefined;
 }
 export interface SmarterMarkElementProps
   extends MarkElementProps,

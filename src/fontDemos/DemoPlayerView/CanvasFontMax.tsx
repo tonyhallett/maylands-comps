@@ -71,7 +71,7 @@ export function CanvasFontMax<TInstructions>({
     context: CanvasRenderingContext2D,
   ) => {
     const fontKey = getFontKey(fontInfo);
-    let instructions: TInstructions;
+    let instructions: TInstructions | undefined;
     if (
       measureInfoRef.current !== undefined &&
       measureInfoRef.current.fontKey === fontKey

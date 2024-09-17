@@ -1,10 +1,11 @@
-import { push, child, ref, update } from "firebase/database";
+import { child, ref, update } from "firebase/database";
 import { useEffect } from "react";
 import { saveStateToDbMatchSaveState } from "../firebase/rtb/match/conversion";
 import { DbMatch } from "../firebase/rtb/match/dbMatch";
 import { DbPlayer } from "../firebase/rtb/players";
 import { useRTB } from "../firebase/rtb/rtbProvider";
 import { Umpire } from "../umpire";
+import { getNewKey } from "../firebase/rtb/typeHelpers";
 
 export function DemoCreateMatch() {
   const db = useRTB();
@@ -16,7 +17,7 @@ export function DemoCreateMatch() {
       demoPlayer: DbPlayer,
     ) => {
       const playersKey = "players";
-      const newPlayerKey = push(child(ref(db), playersKey)).key;
+      const newPlayerKey = getNewKey(child(ref(db), playersKey));
       updates[`${playersKey}/${newPlayerKey}`] = demoPlayer;
       return newPlayerKey;
     };
@@ -25,7 +26,7 @@ export function DemoCreateMatch() {
     const team2Player1Key = updatePlayer(updates, { name: "D Adcock" });
 
     const matchesKey = "matches";
-    const matchKey = push(child(ref(db), matchesKey)).key;
+    const matchKey = getNewKey(child(ref(db), matchesKey));
     const umpire = new Umpire(
       {
         bestOf: 5,

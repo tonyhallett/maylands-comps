@@ -10,7 +10,7 @@ import { CurrentColorBatButton } from "./CurrentColorBatButton";
 export default function FreeScoringPlayers() {
   const { players } = useLoaderDataT<FreeScoringPlayersLoaderData>();
   const navigate = useNavigate();
-  const playersColumns: GridColDef[] = useMemo<GridColDef<unknown>[]>(
+  const playersColumns: GridColDef[] = useMemo<GridColDef[]>(
     () => [
       {
         field: "actions",

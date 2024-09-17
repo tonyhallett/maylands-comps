@@ -31,11 +31,11 @@ interface TeamMatchPlayersSelectProps<
   TPlayer extends SelectablePlayer = SelectablePlayer,
 > {
   availablePlayers: TPlayer[][];
-  selectedPlayers: TPlayer[];
+  selectedPlayers: (TPlayer | null)[];
   playerSelected: (availablePlayer: TPlayer | null, position: number) => void;
   newPlayerSelected?: (name: string, position: number) => void;
   enabled?: boolean[];
-  autoCompleteProps?: TeamAutoCompleteProps<TPlayer>;
+  autoCompleteProps: TeamAutoCompleteProps<TPlayer> | undefined;
   labels?: string[];
   teamName?: string;
 }
@@ -123,6 +123,7 @@ export function TeamMatchPlayersSelect<
               }
             }}
             renderInput={(params) => (
+              // @ts-expect-error - this is how they document it ! todo look at later
               <TextField
                 {...params}
                 label={labels![position]}

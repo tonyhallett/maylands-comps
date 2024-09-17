@@ -39,7 +39,7 @@ export default function CreateFreeScoringPlayer() {
           "aria-label": "Player handicap",
           placeholder: "Handicap",
           value: handicap,
-          onChange: (event, val) => setHandicap(val),
+          onChange: (event, val) => setHandicap(val!),
         }}
       />
       <MarginDivider />

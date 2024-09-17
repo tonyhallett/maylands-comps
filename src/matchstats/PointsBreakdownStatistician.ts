@@ -34,25 +34,25 @@ interface ServiceRecord {
 }
 
 // ---------------------------------------------------------------------------------
-export interface ServeReceiveRecord {
+export interface ServeOrReceiveRecord {
   num: number;
   numWon: number;
   numLost: number;
   winPercentage: number | undefined;
 }
 
-export interface PlayerServeReceiveRecord extends ServeReceiveRecord {
+export interface PlayerServeOrReceiveRecord extends ServeOrReceiveRecord {
   opponent: Player;
 }
 
 export interface PlayerPointsBreakdown extends ServeAndReceiveRecord {
-  serverRecords: PlayerServeReceiveRecord[];
-  receiverRecords: PlayerServeReceiveRecord[];
+  serverRecords: PlayerServeOrReceiveRecord[];
+  receiverRecords: PlayerServeOrReceiveRecord[];
 }
 
 interface ServeAndReceiveRecord {
-  serve: ServeReceiveRecord;
-  receive: ServeReceiveRecord;
+  serve: ServeOrReceiveRecord;
+  receive: ServeOrReceiveRecord;
 }
 
 export interface TeamPointsBreakdown extends ServeAndReceiveRecord {
@@ -106,14 +106,14 @@ class PlayerPointsBreakdownImpl implements PlayerPointsBreakdown {
     this.serve = new PlayerServeReceiveRecordImpl(this.serverRecords);
     this.receive = new PlayerServeReceiveRecordImpl(this.receiverRecords);
   }
-  serverRecords: PlayerServeReceiveRecord[] = [];
-  receiverRecords: PlayerServeReceiveRecord[] = [];
-  serve: ServeReceiveRecord;
-  receive: ServeReceiveRecord;
+  serverRecords: PlayerServeOrReceiveRecord[] = [];
+  receiverRecords: PlayerServeOrReceiveRecord[] = [];
+  serve: ServeOrReceiveRecord;
+  receive: ServeOrReceiveRecord;
 }
 
-class PlayerServeReceiveRecordImpl implements ServeReceiveRecord {
-  constructor(playerServeReceiveRecords: PlayerServeReceiveRecord[]) {
+class PlayerServeReceiveRecordImpl implements ServeOrReceiveRecord {
+  constructor(playerServeReceiveRecords: PlayerServeOrReceiveRecord[]) {
     playerServeReceiveRecords.forEach((record) => {
       this.num += record.num;
       this.numWon += record.numWon;
@@ -124,7 +124,7 @@ class PlayerServeReceiveRecordImpl implements ServeReceiveRecord {
   num: number = 0;
   numWon: number = 0;
   numLost: number;
-  winPercentage: number;
+  winPercentage: number | undefined;
 }
 
 class TeamPointsBreakdownImpl implements TeamPointsBreakdown {
@@ -148,13 +148,13 @@ class TeamPointsBreakdownImpl implements TeamPointsBreakdown {
     return this.serve.numLost + this.receive.numLost;
   }
   @LazyGetter()
-  get pointWinPercentage(): number {
+  get pointWinPercentage(): number | undefined {
     return getWinPercentage(this.pointsWon, this.pointsWon + this.pointsLost);
   }
   player1PointsBreakdown: PlayerPointsBreakdown;
   player2PointsBreakdown: PlayerPointsBreakdown;
   @LazyGetter()
-  get serve(): ServeReceiveRecord {
+  get serve(): ServeOrReceiveRecord {
     const numWon =
       this.player1PointsBreakdown.serve.numWon +
       this.player2PointsBreakdown.serve.numWon;
@@ -169,7 +169,7 @@ class TeamPointsBreakdownImpl implements TeamPointsBreakdown {
     };
   }
   @LazyGetter()
-  get receive(): ServeReceiveRecord {
+  get receive(): ServeOrReceiveRecord {
     const numWon =
       this.player1PointsBreakdown.receive.numWon +
       this.player2PointsBreakdown.receive.numWon;

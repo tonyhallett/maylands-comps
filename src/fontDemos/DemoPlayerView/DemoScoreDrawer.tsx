@@ -255,19 +255,20 @@ export class DemoScoreDrawer
 
   getInstructions(): CalculatedInstructions {
     const pointsWonCardInstructions =
-      this.uncalculatedInstructions.pointsWonCard;
-    const gamesWonCardInstructions = this.uncalculatedInstructions.gamesWonCard;
+      this.uncalculatedInstructions!.pointsWonCard;
+    const gamesWonCardInstructions =
+      this.uncalculatedInstructions!.gamesWonCard;
 
     return {
-      cardGap: this.uncalculatedInstructions.cardGap,
+      cardGap: this.uncalculatedInstructions!.cardGap,
       centerTranslation: {
         x:
-          (this.uncalculatedInstructions.canvasSize.width -
-            this.uncalculatedInstructions.fullWidth) /
+          (this.uncalculatedInstructions!.canvasSize.width -
+            this.uncalculatedInstructions!.fullWidth) /
           2,
         y:
-          (this.uncalculatedInstructions.canvasSize.height -
-            this.uncalculatedInstructions.fullHeight) /
+          (this.uncalculatedInstructions!.canvasSize.height -
+            this.uncalculatedInstructions!.fullHeight) /
           2,
       },
       pointsWonCard: {

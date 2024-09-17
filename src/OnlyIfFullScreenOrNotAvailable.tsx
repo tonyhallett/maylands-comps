@@ -61,7 +61,7 @@ function useExitFullscreenWhenMouseMoves(delay = 1000) {
 }
 
 type FullScreenWithMouseExitProps = OnlyIfFullScreenOrNotAvailableProps & {
-  delay?: number;
+  delay?: number | undefined;
 };
 export function FullScreenWithMouseExit(props: FullScreenWithMouseExitProps) {
   useExitFullscreenWhenMouseMoves(props.delay);

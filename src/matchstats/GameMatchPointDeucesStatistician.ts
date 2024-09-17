@@ -89,7 +89,7 @@ export class GameMatchPointDeucesStatistician {
     team1: boolean,
   ) => {
     const state = team1 ? team1State : team2State;
-    state.converted = true;
+    state!.converted = true;
     const otherState = team1 ? team2State : team1State;
     if (otherState !== undefined) {
       this.savePoint(otherState);

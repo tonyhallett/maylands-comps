@@ -16,9 +16,9 @@ export function getMaylandsCompFirestore() {
   return db;
 }
 
-const FirestoreContext = createContext<Firestore>(null);
+const FirestoreContext = createContext<Firestore | null>(null);
 export function useFirestore() {
-  return useContext(FirestoreContext);
+  return useContext(FirestoreContext) as Firestore;
 }
 const FirestoreProviderX = FirestoreContext.Provider;
 export function FirestoreProvider({ children }: { children?: ReactNode }) {

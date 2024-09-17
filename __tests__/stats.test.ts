@@ -18,7 +18,7 @@ import {
 import {
   PlayerPointsBreakdown,
   PointsBreakdownStats,
-  ServeReceiveRecord,
+  ServeOrReceiveRecord,
   TeamPointsBreakdown,
 } from "../src/matchstats/PointsBreakdownStatistician";
 import { expect } from "../customMatchers/extendedExpect";
@@ -172,7 +172,7 @@ describe("getGameStats", () => {
           },
         ];
         const numDeuces =
-          getGameStats(gamePointHistory).gameMatchPoints.numDeuces;
+          getGameStats(gamePointHistory).gameMatchPoints!.numDeuces;
 
         expect(numDeuces).toBe(0);
       });
@@ -200,7 +200,7 @@ describe("getGameStats", () => {
           },
         ];
         const numDeuces =
-          getGameStats(gamePointHistory).gameMatchPoints.numDeuces;
+          getGameStats(gamePointHistory).gameMatchPoints!.numDeuces;
 
         expect(numDeuces).toBe(1);
       });
@@ -249,7 +249,7 @@ describe("getGameStats", () => {
           },
         ];
         const numDeuces =
-          getGameStats(gamePointHistory).gameMatchPoints.numDeuces;
+          getGameStats(gamePointHistory).gameMatchPoints!.numDeuces;
 
         expect(numDeuces).toBe(2);
       });
@@ -284,7 +284,7 @@ describe("getGameStats", () => {
           },
         ];
         const savedPointsAt =
-          getGameStats(gamePointHistory).gameMatchPoints.savedPointsAt;
+          getGameStats(gamePointHistory).gameMatchPoints!.savedPointsAt;
 
         expect(savedPointsAt).toHaveLength(0);
       });
@@ -318,7 +318,7 @@ describe("getGameStats", () => {
             },
           ];
           const savedPointsAt =
-            getGameStats(gamePointHistory).gameMatchPoints.savedPointsAt;
+            getGameStats(gamePointHistory).gameMatchPoints!.savedPointsAt;
 
           expect(savedPointsAt).toEqual<SavedPoint[]>([
             {
@@ -560,7 +560,7 @@ describe("getGameStats", () => {
       gamePointHistory.forEach((pointHistory) =>
         gameMatchPointStatistician.nextPoint(pointHistory),
       );
-      const stats = gameMatchPointStatistician.getStats();
+      const stats = gameMatchPointStatistician.getStats()!;
       const expected = [3, 4, 6, 8].map<SavedPoint>((at) => ({
         at,
         isGamePoint: true,
@@ -938,7 +938,7 @@ describe("getGameStats", () => {
 
     describe("availableGameMatchPoints", () => {
       function availableGameMatchPointsTest(
-        expected: AvailableGameMatchPoints,
+        expected: AvailableGameMatchPoints | undefined,
         scorePoints: (umpire: Umpire) => void,
         clearBy2 = true,
         upTo = 11,
@@ -964,7 +964,7 @@ describe("getGameStats", () => {
         gamePointHistory.forEach((pointHistory) => {
           statistician.nextPoint(pointHistory);
         });
-        const stats = statistician.getStats();
+        const stats = statistician.getStats()!;
         const team = team1 ? stats.team1 : stats.team2;
         expect(availableGameMatchPoints(team)).toEqual(expected);
       }
@@ -1595,7 +1595,7 @@ describe("getGameStats", () => {
       const gamePointHistory: GamePointHistory = [];
       const pointsBreakdown = getGameStats(gamePointHistory).pointsBreakdown;
 
-      const expectedServeReceiveRecord: ServeReceiveRecord = {
+      const expectedServeReceiveRecord: ServeOrReceiveRecord = {
         num: 0,
         numLost: 0,
         numWon: 0,

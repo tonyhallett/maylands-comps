@@ -34,7 +34,7 @@ export default function EditPlayer() {
           placeholder: "Handicap",
           value: newPlayer.handicap,
           onChange: (event, val) =>
-            setNewPlayer({ ...newPlayer, handicap: val }),
+            setNewPlayer({ ...newPlayer, handicap: val! }),
         }}
       />
       <MarginDivider />

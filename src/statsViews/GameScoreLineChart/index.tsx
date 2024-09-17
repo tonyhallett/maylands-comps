@@ -25,9 +25,10 @@ export function getAtLeastMinScores(
   min: number,
 ): (GameScoreState | undefined)[] {
   if (scores.length >= min + 1) return scores;
-  scores = [...scores];
-  while (scores.length < min + 1) {
-    scores.push(undefined);
+
+  const atLeastMinScores: (GameScoreState | undefined)[] = [...scores];
+  while (atLeastMinScores.length < min + 1) {
+    atLeastMinScores.push(undefined);
   }
   return scores;
 }
@@ -59,7 +60,7 @@ interface MarkProps<T> {
     team1: boolean,
     score: T,
     pointNumber: number,
-  ): MarkElementProps["color"];
+  ): MarkElementProps["color"] | undefined;
   getShape(
     team1: boolean,
     score: T,
@@ -142,12 +143,12 @@ export function GameScoreLineChart(props: GameScoreLineChartProps) {
     return value.toString();
   };
 
-  const yAxis: SmarterLineChartProps["yAxis"][number] = {
+  const yAxis: Exclude<SmarterLineChartProps["yAxis"], undefined>[number] = {
     label: props.yAxisLabel,
     tickMaxStep: 1,
     tickMinStep: 1,
     valueFormatter(value, context) {
-      if (context.location === "tooltip") return undefined;
+      if (context.location === "tooltip") return "";
       return getYAxisTickTextGamePoint(value);
     },
   };
@@ -181,10 +182,12 @@ export function GameScoreLineChart(props: GameScoreLineChartProps) {
   const team2SeriesData = scoresWithStartScore.map(
     (score) => score.team2Points,
   );
+  const gridProps = props.grid ?? {};
+  const colorsProps = props.colors ?? [];
   return (
     <SmarterLineChart
-      grid={props.grid}
-      colors={props.colors}
+      {...gridProps}
+      {...colorsProps}
       slots={slots}
       slotProps={slotProps}
       tooltip={toolTipProps}
