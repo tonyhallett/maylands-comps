@@ -4,8 +4,10 @@ import { AutoCompleteProps } from "../teamMatchPlayerSelect";
 export interface AvailableDoubles {
   player1Name: string;
   player1Id: string;
+  player1PositionIdentifier: string; // todo do better with typing
   player2Name: string;
   player2Id: string;
+  player2PositionIdentifier: string;
 }
 
 interface TeamDoublesSelectProps {

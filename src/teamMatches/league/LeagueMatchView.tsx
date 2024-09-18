@@ -10,8 +10,11 @@ import {
   awayPlayerMatchDetails,
   homePlayerMatchDetails,
 } from "./singlesLeagueMatchPlayers";
-import { Root } from "../../firebase/rtb/root";
-import { createTypedValuesUpdater } from "../../firebase/rtb/typeHelpers";
+import { Root, refTyped } from "../../firebase/rtb/root";
+import {
+  createTypedValuesUpdater,
+  setTyped,
+} from "../../firebase/rtb/typeHelpers";
 import { TeamsMatchPlayersSelect } from "../teamMatchPlayerSelect";
 import { useRTB } from "../../firebase/rtb/rtbProvider";
 import { AvailableDoubles, DoublesSelect } from "./DoublesSelect";
@@ -19,6 +22,29 @@ import { useLeagueMatchAndMatches } from "./useLeagueMatchAndMatches";
 import { useLeagueTeamsOnValue } from "./useLeagueTeamsOnValue";
 import { useAvailablePlayers } from "./useAvailablePlayers";
 import { isNotNull } from "../../helpers/isNotTypeGuards";
+import {
+  Box,
+  Dialog,
+  DialogContent,
+  DialogTitle,
+  Paper,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+} from "@mui/material";
+import { getInitials } from "../../umpireView/helpers";
+import {
+  dbMatchSaveStateToSaveState,
+  saveStateToDbMatchSaveState,
+} from "../../firebase/rtb/match/conversion";
+import { MatchState, Umpire } from "../../umpire";
+import { MatchWinState, isMatchWon } from "../../umpire/getMatchWinState";
+import { fillArray } from "../../helpers/fillArray";
+import { MatchInfo, PlayerNames, UmpireView } from "../../umpireView";
+import { fontFaces } from "../../fontDemos/fontInfo";
+import { Score, Scoreboard } from "../../fontDemos/DemoPlayerView/Scoreboard";
 
 export interface MatchAndKey {
   match: DbMatch;
@@ -49,14 +75,20 @@ interface AvailablePlayersForSelection {
   selectedAwayDoubles: AvailableDoubles | null;
 }
 
-const getTeamLabels = (playerMatchDetails: PlayerMatchDetails[]) => {
+const getTeamSelectLabels = (playerMatchDetails: PlayerMatchDetails[]) => {
   return playerMatchDetails.map(
     (playerDetails) =>
       `${playerDetails.positionDisplay} - ${playerDetails.matchIndices.map((i) => i + 1).join(", ")}`,
   );
 };
-const homeTeamLabels = getTeamLabels(homePlayerMatchDetails);
-const awayTeamLabels = getTeamLabels(awayPlayerMatchDetails);
+const homeTeamSelectLabels = getTeamSelectLabels(homePlayerMatchDetails);
+const awayTeamSelectLabels = getTeamSelectLabels(awayPlayerMatchDetails);
+const homeTeamPositionIdentifiers = homePlayerMatchDetails.map(
+  (pd) => pd.positionDisplay,
+);
+const awayTeamPositionIdentifiers = awayPlayerMatchDetails.map(
+  (pd) => pd.positionDisplay,
+);
 
 const getFindPlayersMatchIndices = (playerMatchDetails: PlayerMatchDetails[]) =>
   playerMatchDetails.map(
@@ -72,8 +104,15 @@ const findAwayPlayersMatchIndices = getFindPlayersMatchIndices(
 export function LeagueMatchView() {
   const params = useParams();
   const db = useRTB();
+  const [showScoreboard, setShowScoreboard] = useState(false);
   const [leagueMatch, matchAndKeys] = useLeagueMatchAndMatches(
     params.leagueMatchId!,
+  );
+  const [selectedMatchIndex, setSelectedMatchIndex] = useState<
+    number | undefined
+  >(undefined);
+  const [umpireMatchIndex, setUmpireMatchIndex] = useState<number | undefined>(
+    undefined,
   );
   const [homeTeam, awayTeam] = useLeagueTeamsOnValue(leagueMatch);
   const [availablePlayersForSelection, setAvailablePlayersForSelection] =
@@ -190,6 +229,7 @@ export function LeagueMatchView() {
         player1Id: string | undefined,
         player2Id: string | undefined,
         actualSelectedPlayers: AvailablePlayer[],
+        isHome: boolean,
       ): {
         available: AvailableDoubles[];
         selected: AvailableDoubles | null;
@@ -200,13 +240,18 @@ export function LeagueMatchView() {
             selected: null,
           };
         }
+        const positionIdentifiers = isHome
+          ? homeTeamPositionIdentifiers
+          : awayTeamPositionIdentifiers;
         if (actualSelectedPlayers.length === 2) {
           const available: AvailableDoubles[] = [
             {
               player1Id: actualSelectedPlayers[0].playerId,
               player1Name: actualSelectedPlayers[0].name,
+              player1PositionIdentifier: positionIdentifiers[0],
               player2Id: actualSelectedPlayers[1].playerId,
               player2Name: actualSelectedPlayers[1].name,
+              player2PositionIdentifier: positionIdentifiers[1],
             },
           ];
           const selected = player1Id === undefined ? null : available[0];
@@ -225,8 +270,10 @@ export function LeagueMatchView() {
           const availableDoubles: AvailableDoubles = {
             player1Id: actualSelectedPlayers[p1Index].playerId,
             player1Name: actualSelectedPlayers[p1Index].name,
+            player1PositionIdentifier: positionIdentifiers[p1Index],
             player2Id: actualSelectedPlayers[p2Index].playerId,
             player2Name: actualSelectedPlayers[p2Index].name,
+            player2PositionIdentifier: positionIdentifiers[p2Index],
           };
           return availableDoubles;
         });
@@ -254,11 +301,13 @@ export function LeagueMatchView() {
         doublesMatch.team1Player1Id,
         doublesMatch.team1Player2Id,
         actualSelectedHomeTeamPlayers,
+        true,
       );
       const awayDoubles = getDoubles(
         doublesMatch.team2Player1Id,
         doublesMatch.team2Player2Id,
         actualSelectedAwayTeamPlayers,
+        false,
       );
 
       const availablePlayersForSelection: AvailablePlayersForSelection = {
@@ -281,7 +330,14 @@ export function LeagueMatchView() {
     sameClubAndFriendly,
   ]);
 
-  const getIndividualMatchTitle = (match: DbMatch, index: number) => {
+  interface TeamSelectionDisplay {
+    display: string;
+    selected: boolean;
+  }
+  const getMatchTeamsDisplay = (
+    match: DbMatch,
+    index: number,
+  ): { home: TeamSelectionDisplay; away: TeamSelectionDisplay } => {
     if (index < matchAndKeys.length - 1) {
       const getPlayerPositionDisplay = (isHome: boolean) => {
         const playerMatchDetails = isHome
@@ -291,7 +347,7 @@ export function LeagueMatchView() {
           pmd.matchIndices.includes(index),
         )!.positionDisplay;
       };
-      const getPlayerDisplay = (isHome: boolean) => {
+      const getPlayerDisplay = (isHome: boolean): TeamSelectionDisplay => {
         const matchPlayerId = isHome
           ? match.team1Player1Id
           : match.team2Player1Id;
@@ -300,36 +356,37 @@ export function LeagueMatchView() {
             ? actualHomeTeamAvailablePlayers
             : awayTeamAvailablePlayers;
 
-          return teamAvailablePlayers.find(
+          const playerName = teamAvailablePlayers.find(
             (player) => player?.playerId === matchPlayerId,
           )!.name;
+          return { display: getInitials(playerName), selected: true };
+          // would go distinct - need a memo of player names
         }
-        return getPlayerPositionDisplay(isHome);
+        return { display: getPlayerPositionDisplay(isHome), selected: false };
       };
 
-      const homePlayerName: string = getPlayerDisplay(true);
-      const awayPlayerName: string = getPlayerDisplay(false);
-      return `${homePlayerName} vs ${awayPlayerName}`;
+      return {
+        home: getPlayerDisplay(true),
+        away: getPlayerDisplay(false),
+      };
     }
     const doublesMatch = matchAndKeys[matchAndKeys.length - 1].match;
+
     const getDoublesTeamDisplay = (
       player1Id: string | undefined,
       player2Id: string | undefined,
       isHome: boolean,
-    ) => {
+    ): TeamSelectionDisplay => {
       if (player1Id === undefined) {
-        return "TBD";
+        return { display: "TBD", selected: false };
       }
-      const teamSelectedPlayers = isHome
-        ? actualHomeTeamAvailablePlayers
-        : awayTeamAvailablePlayers;
-      const firstPlayer = teamSelectedPlayers.find(
-        (player) => player?.playerId === player1Id,
-      )!;
-      const secondPlayer = teamSelectedPlayers.find(
-        (player) => player?.playerId === player2Id,
-      )!;
-      return `${firstPlayer.name} - ${secondPlayer.name}`;
+      const selectedDoubles = isHome
+        ? availablePlayersForSelection.selectedHomeDoubles
+        : availablePlayersForSelection.selectedAwayDoubles;
+      return {
+        display: `${selectedDoubles?.player1PositionIdentifier} ${selectedDoubles?.player2PositionIdentifier}`,
+        selected: true,
+      };
     };
     const homeTeamDisplay = getDoublesTeamDisplay(
       doublesMatch.team1Player1Id,
@@ -341,7 +398,10 @@ export function LeagueMatchView() {
       doublesMatch.team2Player2Id,
       false,
     );
-    return `${homeTeamDisplay} vs ${awayTeamDisplay}`;
+    return {
+      home: homeTeamDisplay,
+      away: awayTeamDisplay,
+    };
   };
 
   if (!retrievedAvailablePlayers) {
@@ -429,71 +489,339 @@ export function LeagueMatchView() {
     });
     update(ref(db), updater.values);
   };
-  // do I put the scoreboard and the umpiring here
-  //MATCHSCORE
+
+  let umpire: Umpire | undefined = undefined;
+  let rules: MatchInfo | undefined = undefined;
+  let playerNames: PlayerNames | undefined = undefined;
+  let matchState: MatchState | undefined = undefined;
+  if (umpireMatchIndex !== undefined) {
+    const dbMatch = matchAndKeys[umpireMatchIndex].match;
+    const {
+      /* eslint-disable @typescript-eslint/no-unused-vars */
+      team1Player1Id,
+      team1Player2Id,
+      team2Player1Id,
+      team2Player2Id,
+      /* eslint-enable @typescript-eslint/no-unused-vars */
+      ...dbSaveState
+    } = dbMatch;
+    //This was already done in matchAndKeys.map
+    const saveState = dbMatchSaveStateToSaveState(dbSaveState);
+    umpire = new Umpire(saveState);
+    rules = {
+      bestOf: umpire.bestOf,
+      upTo: umpire.upTo,
+      clearBy2: umpire.clearBy2,
+      numServes: umpire.numServes,
+      team1EndsAt: umpire.team1MidwayPoints,
+      team2EndsAt: umpire.team2MidwayPoints,
+    };
+    matchState = umpire.getMatchState();
+
+    const getPlayerName = (playerId: string, isHome: boolean) => {
+      //todo use selected instead ?
+      const teamAvailablePlayers = isHome
+        ? actualHomeTeamAvailablePlayers
+        : awayTeamAvailablePlayers;
+
+      return teamAvailablePlayers.find(
+        (player) => player?.playerId === playerId,
+      )!.name;
+    };
+
+    const getDoublesPlayerNames = (): PlayerNames => {
+      return {
+        team1Player1Name: getPlayerName(dbMatch.team1Player1Id!, true),
+        team2Player1Name: getPlayerName(dbMatch.team2Player1Id!, false),
+        team1Player2Name: getPlayerName(dbMatch.team1Player2Id!, true),
+        team2Player2Name: getPlayerName(dbMatch.team2Player2Id!, false),
+      };
+    };
+    const getSinglesPlayerNames = (): PlayerNames => {
+      return {
+        team1Player1Name: getPlayerName(dbMatch.team1Player1Id!, true),
+        team2Player1Name: getPlayerName(dbMatch.team2Player1Id!, false),
+        team1Player2Name: undefined,
+        team2Player2Name: undefined,
+      };
+    };
+    playerNames =
+      umpireMatchIndex! === 9
+        ? getDoublesPlayerNames()
+        : getSinglesPlayerNames();
+  }
+  const matchStateChanged = () => {
+    const dbMatchAndKey = matchAndKeys[umpireMatchIndex!];
+    const dbMatch = dbMatchAndKey.match;
+    const saveState = umpire!.getSaveState();
+    const dbMatchSaveState = saveStateToDbMatchSaveState(saveState);
+    const updatedMatch: DbMatch = {
+      ...dbMatch,
+      ...dbMatchSaveState,
+    };
+    if (dbMatch.team1Player2Id !== undefined) {
+      updatedMatch.team1Player2Id = dbMatch.team1Player2Id;
+    }
+    if (dbMatch.team2Player2Id !== undefined) {
+      updatedMatch.team2Player2Id = dbMatch.team2Player2Id;
+    }
+    const matchDatabaseRef = refTyped(db, `matches/${dbMatchAndKey.key}`);
+    setTyped(matchDatabaseRef, updatedMatch).catch((reason) =>
+      alert(`error updating - ${reason}`),
+    );
+  };
+
+  if (showScoreboard) {
+    return (
+      <LeagueMatchScoreboard matches={matchAndKeys.map((mk) => mk.match)} />
+    );
+  }
+
   return (
-    <div style={{ margin: 10 }}>
-      <TeamsMatchPlayersSelect<AvailablePlayer>
-        autoCompleteProps={{
-          autoComplete: true, // !!! does not appear to be working
-          /*
+    <>
+      <Dialog
+        open={selectedMatchIndex !== undefined}
+        onClose={() => setSelectedMatchIndex(undefined)}
+      >
+        <DialogTitle>{`Options for game ${selectedMatchIndex! + 1}`}</DialogTitle>
+        <DialogContent>
+          <button
+            onClick={() => {
+              setUmpireMatchIndex(selectedMatchIndex);
+              setSelectedMatchIndex(undefined);
+              const updater = createTypedValuesUpdater<Root>();
+              updater.updateListItem(
+                "matches",
+                matchAndKeys[selectedMatchIndex!].key,
+                { umpired: true },
+              );
+              update(ref(db), updater.values);
+            }}
+          >
+            Umpire game
+          </button>
+        </DialogContent>
+      </Dialog>
+      <div style={{ margin: 10 }}>
+        <TeamsMatchPlayersSelect<AvailablePlayer>
+          autoCompleteProps={{
+            autoComplete: true, // !!! does not appear to be working
+            /*
             If true, the portion of the selected suggestion that the user hasn't typed, known as the completion string, 
             appears inline after the input cursor in the textbox. 
             The inline completion string is visually highlighted and has a selected state.
         */
 
-          autoHighlight: true, //	If true, the first option is automatically highlighted.
-          clearOnEscape: true,
-        }}
-        homeTeam={{
-          teamName: homeTeam!.name,
-          labels: homeTeamLabels,
-          availablePlayers:
-            availablePlayersForSelection.homeTeamAvailablePlayers,
-          selectedPlayers: availablePlayersForSelection.selectedHomeTeamPlayers,
-          playerSelected: (player, position) =>
-            playerSelected(true, player, position),
-        }}
-        awayTeam={{
-          teamName: awayTeam!.name,
-          labels: awayTeamLabels,
-          availablePlayers:
-            availablePlayersForSelection.awayTeamAvailablePlayers,
-          selectedPlayers: availablePlayersForSelection.selectedAwayTeamPlayers,
-          playerSelected: (player, position) =>
-            playerSelected(false, player, position),
-        }}
-      />
-      <DoublesSelect
-        autoCompleteProps={{
-          autoComplete: true,
-          autoHighlight: true,
-          clearOnEscape: true,
-        }}
-        home={{
-          availableDoubles: availablePlayersForSelection.homeAvailableDoubles,
-          selectedDoubles: availablePlayersForSelection.selectedHomeDoubles,
-          onChange(availableDoubles) {
-            doublesSelected(true, availableDoubles);
-          },
-        }}
-        away={{
-          availableDoubles: availablePlayersForSelection.awayAvailableDoubles,
-          selectedDoubles: availablePlayersForSelection.selectedAwayDoubles,
-          onChange(availableDoubles) {
-            doublesSelected(false, availableDoubles);
-          },
-        }}
-      />
-      <br />
-      {matchAndKeys.map((matchAndKey, index) => {
-        const match = matchAndKey.match;
-        return (
-          <div key={matchAndKey.key}>
-            {getIndividualMatchTitle(match, index)}
-          </div>
-        );
-      })}
-    </div>
+            autoHighlight: true, //	If true, the first option is automatically highlighted.
+            clearOnEscape: true,
+          }}
+          homeTeam={{
+            teamName: homeTeam!.name,
+            labels: homeTeamSelectLabels,
+            availablePlayers:
+              availablePlayersForSelection.homeTeamAvailablePlayers,
+            selectedPlayers:
+              availablePlayersForSelection.selectedHomeTeamPlayers,
+            playerSelected: (player, position) =>
+              playerSelected(true, player, position),
+          }}
+          awayTeam={{
+            teamName: awayTeam!.name,
+            labels: awayTeamSelectLabels,
+            availablePlayers:
+              availablePlayersForSelection.awayTeamAvailablePlayers,
+            selectedPlayers:
+              availablePlayersForSelection.selectedAwayTeamPlayers,
+            playerSelected: (player, position) =>
+              playerSelected(false, player, position),
+          }}
+        />
+        <DoublesSelect
+          autoCompleteProps={{
+            autoComplete: true,
+            autoHighlight: true,
+            clearOnEscape: true,
+          }}
+          home={{
+            availableDoubles: availablePlayersForSelection.homeAvailableDoubles,
+            selectedDoubles: availablePlayersForSelection.selectedHomeDoubles,
+            onChange(availableDoubles) {
+              doublesSelected(true, availableDoubles);
+            },
+          }}
+          away={{
+            availableDoubles: availablePlayersForSelection.awayAvailableDoubles,
+            selectedDoubles: availablePlayersForSelection.selectedAwayDoubles,
+            onChange(availableDoubles) {
+              doublesSelected(false, availableDoubles);
+            },
+          }}
+        />
+        <br />
+        <button onClick={() => setShowScoreboard(true)}>Scoreboard</button>
+        <Box sx={{ width: "100%" }}>
+          <Paper sx={{ width: "100%", mb: 2 }}>
+            <TableContainer>
+              <TableHead>
+                <TableRow>
+                  <TableCell>Order</TableCell>
+                  <TableCell>H</TableCell>
+                  <TableCell>A</TableCell>
+                  <TableCell>1st</TableCell>
+                  <TableCell>2nd</TableCell>
+                  <TableCell>3rd</TableCell>
+                  <TableCell>4th</TableCell>
+                  <TableCell>5th</TableCell>
+                  <TableCell>Res</TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {matchAndKeys.map((matchAndKey, index) => {
+                  /* todo 
+                  prevent the table jumping with min widths
+                    placeholders same size
+                  does not fit into mobile view - alternative
+                    Replace 1st, 2nd etc with a scoreboard
+                    res could go go on the end 
+
+                  do not want to be doing unnecessary calculations
+
+                */
+                  const match = matchAndKey.match;
+
+                  // could return more info - player not selected so can display differently
+                  const playersDisplay = getMatchTeamsDisplay(match, index);
+
+                  const saveState = dbMatchSaveStateToSaveState(match);
+                  const matchState = new Umpire(saveState).getMatchState();
+                  const gameScores = [...matchState.gameScores];
+
+                  const matchWon = isMatchWon(matchState.matchWinState);
+                  if (!matchWon) {
+                    gameScores.push({
+                      team1Points: matchState.team1Score.points,
+                      team2Points: matchState.team2Score.points,
+                    });
+                  }
+                  const scoresDisplay = `${matchState.team1Score.games} - ${matchState.team2Score.games}`;
+                  let winnerOrScoreDisplay = scoresDisplay;
+                  if (matchWon) {
+                    const team1Won =
+                      matchState.matchWinState === MatchWinState.Team1Won;
+                    const teamDisplay = team1Won
+                      ? playersDisplay.home.display
+                      : playersDisplay.away.display;
+                    winnerOrScoreDisplay = `${teamDisplay} ( ${scoresDisplay} )`;
+                  }
+
+                  const gameClicked = () => {
+                    if (
+                      playersDisplay.home.selected &&
+                      playersDisplay.away.selected
+                    ) {
+                      setSelectedMatchIndex(index);
+                    }
+                  };
+
+                  // will need to style differently when players have not been selected
+                  return (
+                    <TableRow key={index} onClick={gameClicked}>
+                      <TableCell>{index}</TableCell>
+                      <TableCell>{playersDisplay.home.display}</TableCell>
+                      <TableCell>{playersDisplay.away.display}</TableCell>
+                      {fillArray(5, (i) => {
+                        let gameScoreDisplay = " / ";
+                        const gameScore = gameScores[i];
+                        if (
+                          gameScore !== undefined &&
+                          (gameScore.team1Points !== 0 ||
+                            gameScore.team2Points !== 0)
+                        ) {
+                          gameScoreDisplay = `${gameScore.team1Points} / ${gameScore.team2Points}`;
+                        }
+                        return (
+                          <TableCell key={i}>{gameScoreDisplay}</TableCell>
+                        );
+                      })}
+                      <TableCell>{winnerOrScoreDisplay}</TableCell>
+                    </TableRow>
+                  );
+                })}
+              </TableBody>
+            </TableContainer>
+          </Paper>
+        </Box>
+      </div>
+      {umpireMatchIndex !== undefined && (
+        <UmpireView
+          autoShowServerReceiverChooser={false}
+          matchState={matchState!}
+          rules={rules!}
+          umpire={{
+            // todo - add a scoreboardWithUmpire method changed on the umpire and an optional button/radio to change it
+            pointScored(isTeam1) {
+              umpire!.pointScored(isTeam1);
+              matchStateChanged();
+            },
+            resetServerReceiver() {
+              umpire!.resetServerReceiver();
+              matchStateChanged();
+            },
+            setFirstGameDoublesReceiver(player) {
+              umpire!.setFirstGameDoublesReceiver(player);
+              matchStateChanged();
+            },
+            setServer(player) {
+              umpire!.setServer(player);
+              matchStateChanged();
+            },
+            switchEnds() {
+              umpire!.switchEnds();
+              matchStateChanged();
+            },
+            undoPoint() {
+              umpire!.undoPoint();
+              matchStateChanged();
+            },
+          }}
+          {...playerNames!}
+        />
+      )}
+    </>
+  );
+}
+
+interface LeagueMatchScoreboardProps {
+  matches: DbMatch[];
+}
+function LeagueMatchScoreboard({ matches }: LeagueMatchScoreboardProps) {
+  const umpiredMatch = matches.find((match) => match.umpired);
+  if (umpiredMatch === undefined) {
+    return <div>Awaiting umpire</div>;
+  }
+  let score: Score;
+  const scoreboardWithUmpire = umpiredMatch.scoreboardWithUmpire;
+  const scoreboardTeam1Left = scoreboardWithUmpire
+    ? !umpiredMatch.team1Left
+    : umpiredMatch.team1Left;
+  if (scoreboardTeam1Left) {
+    score = {
+      left: umpiredMatch.team1Score,
+      right: umpiredMatch.team2Score,
+    };
+  } else {
+    score = {
+      left: umpiredMatch.team2Score,
+      right: umpiredMatch.team1Score,
+    };
+  }
+  return (
+    <Scoreboard
+      score={score}
+      fontInfo={{
+        weight: "400",
+        fontInfo: fontFaces[3],
+      }}
+    />
   );
 }

@@ -9,6 +9,7 @@ export interface DbMatch extends DBMatchSaveState {
   team2Player2Id?: string;
   scoreboardWithUmpire: boolean;
   containerId?: string;
+  umpired?: boolean;
 }
 
 export const matchesKey = nameof<Root>("matches");
