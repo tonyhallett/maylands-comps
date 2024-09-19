@@ -12,7 +12,7 @@ interface TeamsMatchPlayersSelectProps<
 type TeamSelectProps<TPlayer extends SelectablePlayer = SelectablePlayer> =
   Omit<
     TeamMatchPlayersSelectProps<TPlayer>,
-    "numPlayers" | "autoCompleteProps"
+    "numPlayers" | "autoCompleteProps" | "isHome"
   >;
 interface SelectablePlayer {
   name: string;
@@ -38,8 +38,10 @@ interface TeamMatchPlayersSelectProps<
   autoCompleteProps: TeamAutoCompleteProps<TPlayer> | undefined;
   labels?: string[];
   teamName?: string;
+  isHome: boolean;
 }
 
+export const teamsMatchPlayersSelectSectionLabel = "Teams Match Players Select";
 export function TeamsMatchPlayersSelect<
   TPlayer extends SelectablePlayer = SelectablePlayer,
 >({
@@ -48,16 +50,20 @@ export function TeamsMatchPlayersSelect<
   autoCompleteProps,
 }: TeamsMatchPlayersSelectProps<TPlayer>) {
   return (
-    <Box display="flex" justifyContent="space-between">
-      <TeamMatchPlayersSelect<TPlayer>
-        {...homeTeam}
-        autoCompleteProps={autoCompleteProps}
-      />
-      <TeamMatchPlayersSelect<TPlayer>
-        {...awayTeam}
-        autoCompleteProps={autoCompleteProps}
-      />
-    </Box>
+    <section aria-label={teamsMatchPlayersSelectSectionLabel}>
+      <Box display="flex" justifyContent="space-between">
+        <TeamMatchPlayersSelect<TPlayer>
+          {...homeTeam}
+          isHome
+          autoCompleteProps={autoCompleteProps}
+        />
+        <TeamMatchPlayersSelect<TPlayer>
+          {...awayTeam}
+          isHome={false}
+          autoCompleteProps={autoCompleteProps}
+        />
+      </Box>
+    </section>
   );
 }
 
@@ -72,6 +78,7 @@ export function TeamMatchPlayersSelect<
   autoCompleteProps = {},
   labels,
   teamName,
+  isHome,
 }: TeamMatchPlayersSelectProps<TPlayer>) {
   const numPlayers = availablePlayers.length;
   if (labels === undefined) {
@@ -92,10 +99,12 @@ export function TeamMatchPlayersSelect<
         if (selectedPlayer === undefined) {
           selectedPlayer = null;
         }
-
+        const homeAwayPrefix = isHome ? "home" : "away";
+        const id = `${homeAwayPrefix}-player-${position + 1}`;
         return (
           // this is generic  but includes FreeSolo as a type parameter
           <Autocomplete
+            id={id}
             {...autoCompleteProps}
             clearOnBlur
             freeSolo={newPlayerSelected !== undefined}

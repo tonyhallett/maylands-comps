@@ -1,5 +1,5 @@
 import { PropsWithChildren, ReactNode } from "react";
-import { useOrientation } from "./useOrientation";
+import { useOrientation } from "../hooks/useOrientation";
 
 export type OnlyInOrientationProps = PropsWithChildren<{
   landscape?: boolean;

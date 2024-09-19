@@ -11,7 +11,7 @@ export function getMaylandsCompRTB() {
   const app = initializeApp(firebaseConfig);
   const db = getDatabase(app);
   /*
-    from docs
+    alternative - from docs
     if(location.hostname === "localhost")
   */
   if (process.env.NODE_ENV === "development") {
@@ -25,10 +25,13 @@ export function useRTB() {
   return useContext(DatabaseContext) as Database;
 }
 const DatabaseProviderX = DatabaseContext.Provider;
-export function DatabaseProvider({ children }: { children?: ReactNode }) {
-  return (
-    <DatabaseProviderX value={getMaylandsCompRTB()}>
-      {children}
-    </DatabaseProviderX>
-  );
+export function DatabaseProvider({
+  children,
+  database,
+}: {
+  children?: ReactNode;
+  database?: Database;
+}) {
+  database = database || getMaylandsCompRTB();
+  return <DatabaseProviderX value={database}>{children}</DatabaseProviderX>;
 }

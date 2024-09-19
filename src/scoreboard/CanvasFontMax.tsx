@@ -1,7 +1,10 @@
 import { useRef, useState, useEffect } from "react";
-import { useFullscreen2dCanvas } from "../../canvasHelpers/useFullscreen2dCanvas";
+import { useFullscreen2dCanvas } from "../canvasHelpers/useFullscreen2dCanvas";
 import { binarySearch } from "./binarySearch";
-import { getCanvasFontString, WeightFontInfo } from "../useFontCanvas";
+import {
+  getCanvasFontString,
+  WeightFontInfo,
+} from "../fontDemos/useFontCanvas";
 
 export interface WidthHeight {
   width: number;

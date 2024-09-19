@@ -1,4 +1,4 @@
-import { GetCanvasFontString } from "./CanvasFontMax";
+import { GetCanvasFontString } from "../../scoreboard/CanvasFontMax";
 import { DigitMetrics, getDigitMetricsForContext } from "../getDigitMetrics";
 
 export interface MaxMetrics {

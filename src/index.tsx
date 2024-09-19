@@ -9,7 +9,7 @@ import MGLogo from "./MaylandsTheming/MGSVGLogo";
 import MaylandsThemeProvider from "./MaylandsTheming/MaylandsThemeProvider";
 import freeScoringRoute from "./freeScoring/route";
 import { DatabaseProvider } from "./firebase/rtb/rtbProvider";
-import { LeagueMatchView } from "./teamMatches/league/LeagueMatchView";
+import { LeagueMatchViewRoute } from "./teamMatches/league/LeagueMatchView";
 import { CreateLeagueSeason } from "./teamMatches/league/CreateLeagueSeason";
 import { LeagueMatchLinks } from "./teamMatches/league/LeagueMatchLinks";
 
@@ -46,7 +46,7 @@ const router = createBrowserRouter([
   },
   {
     path: `${leagueMatchesPath}/:leagueMatchId`,
-    element: <LeagueMatchView />,
+    element: <LeagueMatchViewRoute />,
   },
   freeScoringRoute,
 ]);

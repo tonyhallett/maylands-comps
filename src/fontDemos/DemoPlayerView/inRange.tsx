@@ -1,4 +1,4 @@
-import { WidthHeight } from "./CanvasFontMax";
+import { WidthHeight } from "../../scoreboard/CanvasFontMax";
 
 export function inRange(widthHeight: WidthHeight, constriant: WidthHeight) {
   return (

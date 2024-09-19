@@ -28,6 +28,7 @@ import {
   DialogContent,
   DialogTitle,
   Paper,
+  Table,
   TableBody,
   TableCell,
   TableContainer,
@@ -39,12 +40,11 @@ import {
   dbMatchSaveStateToSaveState,
   saveStateToDbMatchSaveState,
 } from "../../firebase/rtb/match/conversion";
-import { MatchState, Umpire } from "../../umpire";
+import { MatchState, TeamScore, Umpire } from "../../umpire";
 import { MatchWinState, isMatchWon } from "../../umpire/getMatchWinState";
 import { fillArray } from "../../helpers/fillArray";
 import { MatchInfo, PlayerNames, UmpireView } from "../../umpireView";
-import { fontFaces } from "../../fontDemos/fontInfo";
-import { Score, Scoreboard } from "../../fontDemos/DemoPlayerView/Scoreboard";
+import { LeagueMatchScoreboard } from "./LeagueMatchScoreboard";
 
 export interface MatchAndKey {
   match: DbMatch;
@@ -101,13 +101,15 @@ const findAwayPlayersMatchIndices = getFindPlayersMatchIndices(
   awayPlayerMatchDetails,
 );
 
-export function LeagueMatchView() {
+export function LeagueMatchViewRoute() {
   const params = useParams();
+  return <LeagueMatchView leagueMatchId={params.leagueMatchId!} />;
+}
+
+export function LeagueMatchView({ leagueMatchId }: { leagueMatchId: string }) {
   const db = useRTB();
   const [showScoreboard, setShowScoreboard] = useState(false);
-  const [leagueMatch, matchAndKeys] = useLeagueMatchAndMatches(
-    params.leagueMatchId!,
-  );
+  const [leagueMatch, matchAndKeys] = useLeagueMatchAndMatches(leagueMatchId!);
   const [selectedMatchIndex, setSelectedMatchIndex] = useState<
     number | undefined
   >(undefined);
@@ -662,22 +664,23 @@ export function LeagueMatchView() {
         <Box sx={{ width: "100%" }}>
           <Paper sx={{ width: "100%", mb: 2 }}>
             <TableContainer>
-              <TableHead>
-                <TableRow>
-                  <TableCell>Order</TableCell>
-                  <TableCell>H</TableCell>
-                  <TableCell>A</TableCell>
-                  <TableCell>1st</TableCell>
-                  <TableCell>2nd</TableCell>
-                  <TableCell>3rd</TableCell>
-                  <TableCell>4th</TableCell>
-                  <TableCell>5th</TableCell>
-                  <TableCell>Res</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {matchAndKeys.map((matchAndKey, index) => {
-                  /* todo 
+              <Table>
+                <TableHead>
+                  <TableRow>
+                    <TableCell>Order</TableCell>
+                    <TableCell>H</TableCell>
+                    <TableCell>A</TableCell>
+                    <TableCell>1st</TableCell>
+                    <TableCell>2nd</TableCell>
+                    <TableCell>3rd</TableCell>
+                    <TableCell>4th</TableCell>
+                    <TableCell>5th</TableCell>
+                    <TableCell>Res</TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {matchAndKeys.map((matchAndKey, index) => {
+                    /* todo 
                   prevent the table jumping with min widths
                     placeholders same size
                   does not fit into mobile view - alternative
@@ -687,67 +690,80 @@ export function LeagueMatchView() {
                   do not want to be doing unnecessary calculations
 
                 */
-                  const match = matchAndKey.match;
+                    const match = matchAndKey.match;
 
-                  // could return more info - player not selected so can display differently
-                  const playersDisplay = getMatchTeamsDisplay(match, index);
+                    // could return more info - player not selected so can display differently
+                    const playersDisplay = getMatchTeamsDisplay(match, index);
 
-                  const saveState = dbMatchSaveStateToSaveState(match);
-                  const matchState = new Umpire(saveState).getMatchState();
-                  const gameScores = [...matchState.gameScores];
+                    const saveState = dbMatchSaveStateToSaveState(match);
+                    const matchState = new Umpire(saveState).getMatchState();
+                    const gameScores = [...matchState.gameScores];
 
-                  const matchWon = isMatchWon(matchState.matchWinState);
-                  if (!matchWon) {
-                    gameScores.push({
-                      team1Points: matchState.team1Score.points,
-                      team2Points: matchState.team2Score.points,
-                    });
-                  }
-                  const scoresDisplay = `${matchState.team1Score.games} - ${matchState.team2Score.games}`;
-                  let winnerOrScoreDisplay = scoresDisplay;
-                  if (matchWon) {
-                    const team1Won =
-                      matchState.matchWinState === MatchWinState.Team1Won;
-                    const teamDisplay = team1Won
-                      ? playersDisplay.home.display
-                      : playersDisplay.away.display;
-                    winnerOrScoreDisplay = `${teamDisplay} ( ${scoresDisplay} )`;
-                  }
-
-                  const gameClicked = () => {
-                    if (
-                      playersDisplay.home.selected &&
-                      playersDisplay.away.selected
-                    ) {
-                      setSelectedMatchIndex(index);
+                    const matchWon = isMatchWon(matchState.matchWinState);
+                    if (!matchWon) {
+                      gameScores.push({
+                        team1Points: matchState.team1Score.points,
+                        team2Points: matchState.team2Score.points,
+                      });
                     }
-                  };
+                    const scoresDisplay = `${matchState.team1Score.games} - ${matchState.team2Score.games}`;
+                    let winnerOrScoreDisplay = "";
+                    if (matchWon) {
+                      const team1Won =
+                        matchState.matchWinState === MatchWinState.Team1Won;
+                      const teamDisplay = team1Won
+                        ? playersDisplay.home.display
+                        : playersDisplay.away.display;
+                      winnerOrScoreDisplay = `${teamDisplay} ( ${scoresDisplay} )`;
+                    } else {
+                      // need check if this has already been implemented
+                      const teamScored = (teamScore: TeamScore) => {
+                        return teamScore.games > 0 || teamScore.points > 0;
+                      };
 
-                  // will need to style differently when players have not been selected
-                  return (
-                    <TableRow key={index} onClick={gameClicked}>
-                      <TableCell>{index}</TableCell>
-                      <TableCell>{playersDisplay.home.display}</TableCell>
-                      <TableCell>{playersDisplay.away.display}</TableCell>
-                      {fillArray(5, (i) => {
-                        let gameScoreDisplay = " / ";
-                        const gameScore = gameScores[i];
-                        if (
-                          gameScore !== undefined &&
-                          (gameScore.team1Points !== 0 ||
-                            gameScore.team2Points !== 0)
-                        ) {
-                          gameScoreDisplay = `${gameScore.team1Points} / ${gameScore.team2Points}`;
-                        }
-                        return (
-                          <TableCell key={i}>{gameScoreDisplay}</TableCell>
-                        );
-                      })}
-                      <TableCell>{winnerOrScoreDisplay}</TableCell>
-                    </TableRow>
-                  );
-                })}
-              </TableBody>
+                      const hasScored =
+                        teamScored(matchState.team1Score) ||
+                        teamScored(matchState.team2Score);
+                      if (hasScored || match.umpired !== undefined) {
+                        winnerOrScoreDisplay = scoresDisplay;
+                      }
+                    }
+
+                    const gameClicked = () => {
+                      if (
+                        playersDisplay.home.selected &&
+                        playersDisplay.away.selected
+                      ) {
+                        setSelectedMatchIndex(index);
+                      }
+                    };
+
+                    // will need to style differently when players have not been selected
+                    return (
+                      <TableRow key={index} onClick={gameClicked}>
+                        <TableCell>{index}</TableCell>
+                        <TableCell>{playersDisplay.home.display}</TableCell>
+                        <TableCell>{playersDisplay.away.display}</TableCell>
+                        {fillArray(5, (i) => {
+                          let gameScoreDisplay = " / ";
+                          const gameScore = gameScores[i];
+                          if (
+                            gameScore !== undefined &&
+                            (gameScore.team1Points !== 0 ||
+                              gameScore.team2Points !== 0)
+                          ) {
+                            gameScoreDisplay = `${gameScore.team1Points} / ${gameScore.team2Points}`;
+                          }
+                          return (
+                            <TableCell key={i}>{gameScoreDisplay}</TableCell>
+                          );
+                        })}
+                        <TableCell>{winnerOrScoreDisplay}</TableCell>
+                      </TableRow>
+                    );
+                  })}
+                </TableBody>
+              </Table>
             </TableContainer>
           </Paper>
         </Box>
@@ -788,40 +804,5 @@ export function LeagueMatchView() {
         />
       )}
     </>
-  );
-}
-
-interface LeagueMatchScoreboardProps {
-  matches: DbMatch[];
-}
-function LeagueMatchScoreboard({ matches }: LeagueMatchScoreboardProps) {
-  const umpiredMatch = matches.find((match) => match.umpired);
-  if (umpiredMatch === undefined) {
-    return <div>Awaiting umpire</div>;
-  }
-  let score: Score;
-  const scoreboardWithUmpire = umpiredMatch.scoreboardWithUmpire;
-  const scoreboardTeam1Left = scoreboardWithUmpire
-    ? !umpiredMatch.team1Left
-    : umpiredMatch.team1Left;
-  if (scoreboardTeam1Left) {
-    score = {
-      left: umpiredMatch.team1Score,
-      right: umpiredMatch.team2Score,
-    };
-  } else {
-    score = {
-      left: umpiredMatch.team2Score,
-      right: umpiredMatch.team1Score,
-    };
-  }
-  return (
-    <Scoreboard
-      score={score}
-      fontInfo={{
-        weight: "400",
-        fontInfo: fontFaces[3],
-      }}
-    />
   );
 }

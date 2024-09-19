@@ -3,7 +3,7 @@ interface TeamSetup {
   rank: number;
   playerNames: string[];
 }
-interface ClubSetup {
+export interface ClubSetup {
   clubName: string;
   teamSetups: TeamSetup[];
 }

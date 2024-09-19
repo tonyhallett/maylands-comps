@@ -1,13 +1,10 @@
 import { useRef } from "react";
-import { CanvasFontMax } from "./CanvasFontMax";
-import { DemoScoreDrawer, CalculatedInstructions } from "./DemoScoreDrawer";
-import { WeightFontInfo } from "../useFontCanvas";
-import {
-  GoFullScreen,
-  LandscapeFullScreenWithMouseExit,
-} from "../../OnlyIfFullScreenOrNotAvailable";
+import { ScoreDrawer, CalculatedInstructions } from "./ScoreDrawer";
+import { LandscapeFullScreenWithMouseExit } from "../screenComponents/LandscapeFullScreenWithMouseExit";
+import { GoFullScreen } from "../screenComponents/GoFullScreen";
 import { Typography } from "@mui/material";
-import { useWakeLock } from "./useWakeLock";
+import { useWakeLock } from "../hooks/useWakeLock";
+import { CanvasFontMax, CanvasFontMaxProps } from "./CanvasFontMax";
 //import { SerializedSessionStorage } from "./SerializedSessionStorage";
 
 export interface TeamScore {
@@ -18,16 +15,17 @@ export interface Score {
   left: TeamScore;
   right: TeamScore;
 }
+
 export interface ScoreboardProps {
   score: Score;
-  fontInfo: WeightFontInfo;
+  fontInfo: CanvasFontMaxProps<undefined>["fontInfo"];
 }
 
 /* const demoSerializedStorage =
   new SerializedSessionStorage<CalculatedInstructions>(); */
 export function Scoreboard({ score, fontInfo }: ScoreboardProps) {
   useWakeLock();
-  const demoCanvasFontMaxImplRef = useRef(new DemoScoreDrawer());
+  const demoCanvasFontMaxImplRef = useRef(new ScoreDrawer());
   demoCanvasFontMaxImplRef.current.cardBorderColor = "orange";
   demoCanvasFontMaxImplRef.current.digitColor = "pink";
   demoCanvasFontMaxImplRef.current.score = score;

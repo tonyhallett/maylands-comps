@@ -4,9 +4,12 @@ import {
   GetCanvasFontString,
 } from "./CanvasFontMax";
 import { Score } from "./Scoreboard";
-import { getDigit } from "./getDigit";
-import { DigitsMaxMetrics, getDigitsMax } from "./getDigitsMax";
-import { inRange } from "./inRange";
+import { getDigit } from "../fontDemos/DemoPlayerView/getDigit";
+import {
+  DigitsMaxMetrics,
+  getDigitsMax,
+} from "../fontDemos/DemoPlayerView/getDigitsMax";
+import { inRange } from "../fontDemos/DemoPlayerView/inRange";
 
 interface Position {
   x: number;
@@ -89,9 +92,7 @@ export interface CalculatedInstructions {
 }
 //#endregion
 
-export class DemoScoreDrawer
-  implements CanvasFontMaxImpl<CalculatedInstructions>
-{
+export class ScoreDrawer implements CanvasFontMaxImpl<CalculatedInstructions> {
   score: Score;
   private gamesWonFontSizeProportion: number = 0.5;
   public cardBorderColor = "yellow";
@@ -128,9 +129,9 @@ export class DemoScoreDrawer
     if (!inRange(max, canvasSize)) {
       return undefined;
     }
-    const doubleDigitSpacing = DemoScoreDrawer.getDoubleDigitSpacing(max);
-    const padding = DemoScoreDrawer.getPadding(max);
-    const strokeWidth = DemoScoreDrawer.getStrokeWidth(max);
+    const doubleDigitSpacing = ScoreDrawer.getDoubleDigitSpacing(max);
+    const padding = ScoreDrawer.getPadding(max);
+    const strokeWidth = ScoreDrawer.getStrokeWidth(max);
 
     const paddingAndStroke = 2 * (strokeWidth + padding);
     const cardWidth = max.width * 2 + doubleDigitSpacing + paddingAndStroke;
@@ -192,17 +193,16 @@ export class DemoScoreDrawer
     context: CanvasRenderingContext2D,
     getCanvasFontString: GetCanvasFontString,
   ): boolean {
-    const pointsWonCardMeasurement =
-      DemoScoreDrawer.getPointsWonCardMeasurement(
-        fontSize,
-        context,
-        getCanvasFontString,
-        canvasSize,
-      );
+    const pointsWonCardMeasurement = ScoreDrawer.getPointsWonCardMeasurement(
+      fontSize,
+      context,
+      getCanvasFontString,
+      canvasSize,
+    );
     if (pointsWonCardMeasurement == undefined) {
       return true;
     }
-    const cardGap = DemoScoreDrawer.getCardGap(
+    const cardGap = ScoreDrawer.getCardGap(
       pointsWonCardMeasurement.instructions.metrics.max,
     );
     const bothPointsWonCardWidth = 2 * pointsWonCardMeasurement.size.width;

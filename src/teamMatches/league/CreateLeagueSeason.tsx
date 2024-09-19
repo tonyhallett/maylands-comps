@@ -39,43 +39,37 @@ export function CreateLeagueSeason() {
   const playersRef = usePlayersRef();
   useEffect(() => {
     const updater = createTypedValuesUpdater<Root>();
-    const updateClub = (demoDbLeagueClub: DbLeagueClub) => {
+    const updateClub = (leagueClub: DbLeagueClub) => {
       const newClubKey = getNewKey(clubsRef);
-      updater.updateListItem("clubs", newClubKey, demoDbLeagueClub);
+      updater.updateListItem("clubs", newClubKey, leagueClub);
       return newClubKey!;
     };
 
-    const updateTeam = (demoDbLeagueTeam: DbLeagueTeam) => {
+    const updateTeam = (leagueTeam: DbLeagueTeam) => {
       const newTeamKey = getNewKey(teamsRef);
-      updater.updateListItem("teams", newTeamKey!, demoDbLeagueTeam);
+      updater.updateListItem("teams", newTeamKey!, leagueTeam);
       return newTeamKey!;
     };
 
-    const updatePlayer = (demoPlayer: DbPlayer) => {
+    const updatePlayer = (player: DbPlayer) => {
       const newPlayerKey = getNewKey(playersRef);
-      updater.updateListItem("players", newPlayerKey!, demoPlayer);
+      updater.updateListItem("players", newPlayerKey!, player);
       return newPlayerKey!;
     };
 
-    const updateRegisteredPlayer = (
-      demoRegisteredPlayer: DbRegisteredPlayer,
-    ) => {
+    const updateRegisteredPlayer = (registeredPlayer: DbRegisteredPlayer) => {
       const newRegisteredPlayerKey = getNewKey(registeredPlayersRef);
       updater.updateListItem(
         "registeredPlayers",
         newRegisteredPlayerKey,
-        demoRegisteredPlayer,
+        registeredPlayer,
       );
       return newRegisteredPlayerKey;
     };
 
-    const updateLeagueMatch = (demoLeagueMatch: DbLeagueMatch) => {
+    const updateLeagueMatch = (leagueMatch: DbLeagueMatch) => {
       const newLeagueMatchKey = getNewKey(leagueMatchesRef);
-      updater.updateListItem(
-        "leagueMatches",
-        newLeagueMatchKey,
-        demoLeagueMatch,
-      );
+      updater.updateListItem("leagueMatches", newLeagueMatchKey, leagueMatch);
       return newLeagueMatchKey;
     };
 
