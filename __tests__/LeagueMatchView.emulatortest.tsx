@@ -7,15 +7,7 @@ import {
   DatabaseProvider,
   getMaylandsCompRTB,
 } from "../src/firebase/rtb/rtbProvider";
-import {
-  LeagueMatchView,
-  awayTeamSelectLabels,
-  getScoresheetGameAriaLabel,
-  homeTeamSelectLabels,
-  scoresheetAriaLabel,
-  scoresheetGameAwayPlayerAriaLabel,
-  scoresheetGameHomePlayerAriaLabel,
-} from "../src/teamMatches/league/LeagueMatchView";
+import { LeagueMatchView } from "../src/teamMatches/league/LeagueMatchView";
 import { ref, set, update } from "firebase/database";
 import {
   fireEvent,
@@ -44,20 +36,20 @@ import { DbMatch } from "../src/firebase/rtb/match/dbMatch";
 import { Umpire } from "../src/umpire";
 import { getSimpleToday } from "../src/helpers/getSimpleToday";
 import { ClubSetup } from "../src/teamMatches/league/romfordLeagueData";
-import { createWriteStream } from "node:fs";
-import http from "node:http";
-import {
-  getTeamMatchPlayersSelectSectionLabel,
-  teamsMatchPlayersSelectSectionLabel,
-} from "../src/teamMatches/teamMatchPlayerSelect";
-import { roleSelectorFactory } from "../test-helpers/testing-library/selectors/roleSelectorFactory";
-import { from } from "../test-helpers/testing-library/from";
-import { fillArrayWithIndices } from "../src/helpers/fillArray";
 import {
   awayPlayerMatchDetails,
   homePlayerMatchDetails,
 } from "../src/teamMatches/league/singlesLeagueMatchPlayers";
 import { getInitials } from "../src/umpireView/helpers";
+import {
+  findPlayerCombo,
+  findScoresheet,
+  findTeamsMatchPlayersSelectSection,
+  getPlayerCombo,
+  getScoresheetPlayerIdentifier,
+  teamMatchPlayersSelectSection,
+} from "./leagueMatchViewSelectors";
+import { getMatchPlayerIndices } from "../src/teamMatches/league/getMatchPlayerIndices";
 
 // mocking due to import.meta.url
 jest.mock(
@@ -78,55 +70,6 @@ jest.mock("../src/teamMatches/league/LeagueMatchScoreboard", () => {
 });
 //import userEvent from '@testing-library/user-event'
 //import '@testing-library/jest-dom'
-
-// #region database coverage
-function parseHostAndPort(hostAndPort: string): {
-  host: string;
-  port: number;
-} {
-  const pieces = hostAndPort.split(":");
-  return {
-    host: pieces[0],
-    port: parseInt(pieces[1], 10),
-  };
-}
-
-function getDatabaseCoverageMeta(databaseName: string) {
-  /**
-   * The FIREBASE_DATABASE_EMULATOR_HOST environment variable is set automatically
-   * by "firebase emulators:exec"
-   */
-  const hostAndPort = parseHostAndPort(
-    process.env.FIREBASE_DATABASE_EMULATOR_HOST!,
-  );
-  const { host, port } = hostAndPort;
-  const coverageUrl = `http://${host}:${port}/.inspect/coverage?ns=${databaseName}`;
-  return {
-    host,
-    port,
-    coverageUrl,
-  };
-}
-
-//todo
-const DATABASE_NAME = "todo";
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-async function writeDatabaseCoverage() {
-  const { coverageUrl } = getDatabaseCoverageMeta(DATABASE_NAME);
-  // todo use the current file name
-  const coverageFile = "database-coverage.html";
-  const fstream = createWriteStream(coverageFile);
-  await new Promise((resolve, reject) => {
-    http.get(coverageUrl, (res) => {
-      res.pipe(fstream, { end: true });
-      res.on("end", resolve);
-      res.on("error", reject);
-    });
-  });
-
-  console.log(`View database rule coverage information at ${coverageFile}\n`);
-}
-//#endregion
 
 const database = getMaylandsCompRTB();
 
@@ -154,71 +97,10 @@ const teamsRef = refTyped(database, "teams");
 const clubsRef = refTyped(database, "clubs");
 const matchesRef = refTyped(database, "matches");
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-const findTeamsMatchPlayersSelectSection = () =>
-  screen.findByRole("region", {
-    name: teamsMatchPlayersSelectSectionLabel,
-  });
-// this also works
-//screen.findByLabelText(teamsMatchPlayersSelectSectionLabel);
-
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-const findByGetByTeamMatchPlayersSelectSection = roleSelectorFactory(
-  (isHome: boolean) => {
-    return [
-      "region",
-      {
-        name: getTeamMatchPlayersSelectSectionLabel(isHome),
-      },
-    ];
-  },
+export const matchesPlayersIndices = getMatchPlayerIndices(
+  homePlayerMatchDetails.map((p) => p.matchIndices),
+  awayPlayerMatchDetails.map((p) => p.matchIndices),
 );
-
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-const findPlayerCombo = (
-  isHome: boolean,
-  position: number,
-  withinElement?: HTMLElement,
-) => {
-  const labels = isHome ? homeTeamSelectLabels : awayTeamSelectLabels;
-  const label = labels[position];
-  return from(withinElement).findByLabelText<HTMLInputElement>(label);
-};
-const getPlayerCombo = (
-  isHome: boolean,
-  position: number,
-  withinElement?: HTMLElement,
-) => {
-  const labels = isHome ? homeTeamSelectLabels : awayTeamSelectLabels;
-  const label = labels[position];
-  return from(withinElement).getByLabelText<HTMLInputElement>(label);
-};
-
-const findScoresheet = () => screen.findByLabelText(scoresheetAriaLabel);
-const getScoresheetPlayer = (
-  scoresheet: HTMLElement,
-  isHome: boolean,
-  position: number,
-) => {
-  const scoresheetGame = within(scoresheet).getByLabelText(
-    getScoresheetGameAriaLabel(position),
-  );
-
-  const scoresheetPlayer = within(scoresheetGame).getByLabelText(
-    isHome
-      ? scoresheetGameHomePlayerAriaLabel
-      : scoresheetGameAwayPlayerAriaLabel,
-  );
-
-  return scoresheetPlayer;
-};
-const getScoresheetPlayerIdentifier = (
-  scoresheet: HTMLElement,
-  isHome: boolean,
-  position: number,
-): string => {
-  return getScoresheetPlayer(scoresheet, isHome, position).innerHTML;
-};
 
 describe("<LeagueMatchView/> emulator", () => {
   const defaultHomeTeamName = "Maylands A";
@@ -402,10 +284,12 @@ describe("<LeagueMatchView/> emulator", () => {
     await update(ref(database), updater.values);
     return leagueMatchKey;
   }
+
   it("renders without crashing", async () => {
     const leagueMatchKey = await setupDatabase();
     render(createApp(leagueMatchKey));
   });
+
   it("renders section for selecting players, one for each team", async () => {
     const leagueMatchKey = await setupDatabase();
     render(createApp(leagueMatchKey));
@@ -413,16 +297,16 @@ describe("<LeagueMatchView/> emulator", () => {
     const teamsMatchPlayersSelectSection =
       await findTeamsMatchPlayersSelectSection();
 
-    findByGetByTeamMatchPlayersSelectSection()
+    teamMatchPlayersSelectSection()
       .within(teamsMatchPlayersSelectSection)
       .getBy(true);
-    findByGetByTeamMatchPlayersSelectSection().getBy(false);
+    teamMatchPlayersSelectSection().getBy(false);
   });
 
   async function getComboInputs() {
     const teamsMatchPlayersSelectSection =
       await findTeamsMatchPlayersSelectSection();
-    const findWith = findByGetByTeamMatchPlayersSelectSection().within(
+    const findWith = teamMatchPlayersSelectSection().within(
       teamsMatchPlayersSelectSection,
     );
     const homeMatchPlayersSelectSection = findWith.getBy(true);
@@ -441,6 +325,7 @@ describe("<LeagueMatchView/> emulator", () => {
       awayPlayerInputs,
     };
   }
+
   it("should have no selected players if no players have been selected for matches", async () => {
     const leagueMatchKey = await setupDatabase();
     render(createApp(leagueMatchKey));
@@ -519,25 +404,11 @@ describe("<LeagueMatchView/> emulator", () => {
   // not sure if need to check that selecting a player results in the player being selected in the combo
   // have already shown that fills from matches - no if show elsewhere that match.player1Id changes....
 
-  const getPlayerIndex = (isHome: boolean, position: number) => {
-    const playerMatchDetails = isHome
-      ? homePlayerMatchDetails
-      : awayPlayerMatchDetails;
-    return playerMatchDetails.findIndex((playerMatchDetail) =>
-      playerMatchDetail.matchIndices.includes(position),
-    );
-  };
-  const matchesPlayersIndices = fillArrayWithIndices(9).map((i) => {
-    return {
-      home: getPlayerIndex(true, i),
-      away: getPlayerIndex(false, i),
-    };
-  });
-
   type ExpectedScoresheetPlayersIdentifier = {
     home: string;
     away: string;
   };
+
   const expectScoresheetPlayersIdentifiers = (
     scoresheet: HTMLElement,
     expectedScoresheetPlayersIdentifiers: ExpectedScoresheetPlayersIdentifier[],
@@ -553,6 +424,7 @@ describe("<LeagueMatchView/> emulator", () => {
       },
     );
   };
+
   it("should show player identifers in the match scoresheet when no players selected", async () => {
     const leagueMatchKey = await setupDatabase();
     render(createApp(leagueMatchKey));
@@ -650,6 +522,7 @@ describe("<LeagueMatchView/> emulator", () => {
     isHome: boolean;
     expectedPlayerNames: string[];
   }
+
   const sortedAvailabledPlayersTests: SortedAvailabledPlayersTest[] = [
     {
       isHome: true,
@@ -663,10 +536,12 @@ describe("<LeagueMatchView/> emulator", () => {
       expectedPlayerNames: defaultAwayPlayerNames.sort(),
     },
   ];
+
   async function openAutocomplete(isHome: boolean, position: number) {
     const playerCombo = await findPlayerCombo(isHome, position);
     fireEvent.keyDown(playerCombo, { key: "ArrowDown" });
   }
+
   async function openAutocompleteAndGetOptions(
     isHome: boolean,
     position: number,
@@ -683,11 +558,12 @@ describe("<LeagueMatchView/> emulator", () => {
       const leagueMatchKey = await setupDatabase();
       render(createApp(leagueMatchKey));
 
-      const optionDisplays = openAutocompleteAndGetOptions(isHome, 0);
+      const optionDisplays = await openAutocompleteAndGetOptions(isHome, 0);
 
       expect(optionDisplays).toEqual(expectedPlayerNames);
     },
   );
+
   xit("should update all of the player matches when a player is selected", async () => {
     // should be able to as an each
     const leagueMatchKey = await setupDatabase();
@@ -698,6 +574,7 @@ describe("<LeagueMatchView/> emulator", () => {
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const playerXCombo = getPlayerCombo(true, 0);
   });
+
   // selecting a player results in the player being selected in all of the matches that they are in
   // deselecting a player results in the player being deselected in all of the matches that they are in
   // including doubles - which will remove from doubles selection

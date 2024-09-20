@@ -1,5 +1,7 @@
+import { MatchIndices } from "./getMatchPlayerIndices";
+
 export interface PlayerMatchDetails {
-  matchIndices: number[];
+  matchIndices: MatchIndices;
   positionDisplay: string;
 }
 export const homePlayerMatchDetails: PlayerMatchDetails[] = [
