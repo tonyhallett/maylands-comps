@@ -12,7 +12,9 @@
   "include": [
     "src/**/*",
     "__tests__/**/*",
-    "__hacky-mui-tests__/StatsView.test.tsx"
+    "__hacky-mui-tests__/StatsView.test.tsx",
+    "test-helpers/testing-library/selectors/roleSelectorFactory.ts",
+    "test-helpers/testing-library/from.ts"
   ],
   "ts-node": {
     "compilerOptions": {

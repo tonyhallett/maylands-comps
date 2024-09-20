@@ -75,14 +75,19 @@ interface AvailablePlayersForSelection {
   selectedAwayDoubles: AvailableDoubles | null;
 }
 
+export const scoresheetAriaLabel = "Scoresheet";
+export const getScoresheetGameAriaLabel = (index: number) =>
+  `Scoresheet Game ${index}`;
+export const scoresheetGameHomePlayerAriaLabel = "Home Player";
+export const scoresheetGameAwayPlayerAriaLabel = "Away Player";
 const getTeamSelectLabels = (playerMatchDetails: PlayerMatchDetails[]) => {
   return playerMatchDetails.map(
     (playerDetails) =>
       `${playerDetails.positionDisplay} - ${playerDetails.matchIndices.map((i) => i + 1).join(", ")}`,
   );
 };
-const homeTeamSelectLabels = getTeamSelectLabels(homePlayerMatchDetails);
-const awayTeamSelectLabels = getTeamSelectLabels(awayPlayerMatchDetails);
+export const homeTeamSelectLabels = getTeamSelectLabels(homePlayerMatchDetails);
+export const awayTeamSelectLabels = getTeamSelectLabels(awayPlayerMatchDetails);
 const homeTeamPositionIdentifiers = homePlayerMatchDetails.map(
   (pd) => pd.positionDisplay,
 );
@@ -100,6 +105,9 @@ const findHomePlayersMatchIndices = getFindPlayersMatchIndices(
 const findAwayPlayersMatchIndices = getFindPlayersMatchIndices(
   awayPlayerMatchDetails,
 );
+
+const numMatches =
+  homePlayerMatchDetails.flatMap((pmd) => pmd.matchIndices).length + 1;
 
 export function LeagueMatchViewRoute() {
   const params = useParams();
@@ -220,7 +228,7 @@ export function LeagueMatchView({ leagueMatchId }: { leagueMatchId: string }) {
 
           return availablePlayersForSelection.sort((first, second) => {
             if (first.rank !== second.rank) {
-              return second.rank - first.rank;
+              return first.rank - second.rank;
             }
             return first.name.localeCompare(second.name);
           });
@@ -376,7 +384,6 @@ export function LeagueMatchView({ leagueMatchId }: { leagueMatchId: string }) {
 
     const getDoublesTeamDisplay = (
       player1Id: string | undefined,
-      player2Id: string | undefined,
       isHome: boolean,
     ): TeamSelectionDisplay => {
       if (player1Id === undefined) {
@@ -392,12 +399,10 @@ export function LeagueMatchView({ leagueMatchId }: { leagueMatchId: string }) {
     };
     const homeTeamDisplay = getDoublesTeamDisplay(
       doublesMatch.team1Player1Id,
-      doublesMatch.team1Player2Id,
       true,
     );
     const awayTeamDisplay = getDoublesTeamDisplay(
       doublesMatch.team2Player1Id,
-      doublesMatch.team2Player2Id,
       false,
     );
     return {
@@ -406,7 +411,7 @@ export function LeagueMatchView({ leagueMatchId }: { leagueMatchId: string }) {
     };
   };
 
-  if (!retrievedAvailablePlayers) {
+  if (!(retrievedAvailablePlayers && matchAndKeys.length === numMatches)) {
     return <div>loading</div>;
   }
 
@@ -661,10 +666,11 @@ export function LeagueMatchView({ leagueMatchId }: { leagueMatchId: string }) {
         />
         <br />
         <button onClick={() => setShowScoreboard(true)}>Scoreboard</button>
+
         <Box sx={{ width: "100%" }}>
           <Paper sx={{ width: "100%", mb: 2 }}>
             <TableContainer>
-              <Table>
+              <Table aria-label={scoresheetAriaLabel}>
                 <TableHead>
                   <TableRow>
                     <TableCell>Order</TableCell>
@@ -737,13 +743,24 @@ export function LeagueMatchView({ leagueMatchId }: { leagueMatchId: string }) {
                         setSelectedMatchIndex(index);
                       }
                     };
-
                     // will need to style differently when players have not been selected
                     return (
-                      <TableRow key={index} onClick={gameClicked}>
+                      <TableRow
+                        aria-label={getScoresheetGameAriaLabel(index)}
+                        key={index}
+                        onClick={gameClicked}
+                      >
                         <TableCell>{index}</TableCell>
-                        <TableCell>{playersDisplay.home.display}</TableCell>
-                        <TableCell>{playersDisplay.away.display}</TableCell>
+                        <TableCell
+                          aria-label={scoresheetGameHomePlayerAriaLabel}
+                        >
+                          {playersDisplay.home.display}
+                        </TableCell>
+                        <TableCell
+                          aria-label={scoresheetGameAwayPlayerAriaLabel}
+                        >
+                          {playersDisplay.away.display}
+                        </TableCell>
                         {fillArray(5, (i) => {
                           let gameScoreDisplay = " / ";
                           const gameScore = gameScores[i];

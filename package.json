@@ -15,7 +15,7 @@
     "start": "parcel",
     "start-verbose": "parcel --log-level=verbose",
     "emulator-tests": "firebase emulators:exec --only database \"npm run jest-emulator-tests\"",
-    "jest-emulator-tests": "jest -t emulator",
+    "jest-emulator-tests": "jest emulatortest",
     "emulators-start": "firebase emulators:exec --only database \"npm run start\"",
     "start-emulators": "firebase emulators:start --only database ",
     "deploy-rules": "firebase deploy --only database",

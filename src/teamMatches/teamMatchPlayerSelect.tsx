@@ -1,5 +1,6 @@
-import { Autocomplete, AutocompleteProps, Box, TextField } from "@mui/material";
+import { Autocomplete, AutocompleteProps, TextField } from "@mui/material";
 import { fillArray, fillArrayWithIndices } from "../helpers/fillArray";
+import { FirtyFity } from "../layoutComponents/FirtyFity";
 
 interface TeamsMatchPlayersSelectProps<
   TPlayer extends SelectablePlayer = SelectablePlayer,
@@ -42,6 +43,14 @@ interface TeamMatchPlayersSelectProps<
 }
 
 export const teamsMatchPlayersSelectSectionLabel = "Teams Match Players Select";
+export const homeMatchPlayersSelectSectionLabel = "Home Match Players Select";
+export const awayMatchPlayersSelectSectionLabel = "Away Match Players Select";
+export function getTeamMatchPlayersSelectSectionLabel(isHome: boolean) {
+  return isHome
+    ? homeMatchPlayersSelectSectionLabel
+    : awayMatchPlayersSelectSectionLabel;
+}
+
 export function TeamsMatchPlayersSelect<
   TPlayer extends SelectablePlayer = SelectablePlayer,
 >({
@@ -51,18 +60,22 @@ export function TeamsMatchPlayersSelect<
 }: TeamsMatchPlayersSelectProps<TPlayer>) {
   return (
     <section aria-label={teamsMatchPlayersSelectSectionLabel}>
-      <Box display="flex" justifyContent="space-between">
-        <TeamMatchPlayersSelect<TPlayer>
-          {...homeTeam}
-          isHome
-          autoCompleteProps={autoCompleteProps}
-        />
-        <TeamMatchPlayersSelect<TPlayer>
-          {...awayTeam}
-          isHome={false}
-          autoCompleteProps={autoCompleteProps}
-        />
-      </Box>
+      <FirtyFity
+        left={
+          <TeamMatchPlayersSelect<TPlayer>
+            {...homeTeam}
+            isHome
+            autoCompleteProps={autoCompleteProps}
+          />
+        }
+        right={
+          <TeamMatchPlayersSelect<TPlayer>
+            {...awayTeam}
+            isHome={false}
+            autoCompleteProps={autoCompleteProps}
+          />
+        }
+      />
     </section>
   );
 }
@@ -91,8 +104,9 @@ export function TeamMatchPlayersSelect<
     throw new Error("enabled length must match numPlayers");
   }
   const playerPositions = fillArrayWithIndices(numPlayers);
+  const sectionLabel = getTeamMatchPlayersSelectSectionLabel(isHome);
   return (
-    <div style={{ flexGrow: 1, flexBasis: "50%" }}>
+    <section aria-label={sectionLabel}>
       {teamName && <h3>{teamName}</h3>}
       {playerPositions.map((position) => {
         let selectedPlayer = selectedPlayers[position];
@@ -142,6 +156,6 @@ export function TeamMatchPlayersSelect<
           />
         );
       })}
-    </div>
+    </section>
   );
 }

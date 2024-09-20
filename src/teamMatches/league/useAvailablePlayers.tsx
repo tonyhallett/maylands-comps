@@ -37,13 +37,18 @@ export const useAvailablePlayers = (
         "clubId",
         equalTo(team.clubId),
       );
+      const isInTeamOrLowerRankedTeam = (
+        registeredPlayerRank: number,
+        teamRank: number,
+      ) => registeredPlayerRank >= teamRank;
 
       const unsubscribeClubRegisteredPlayers = onChildAddedTyped(
         clubRegisteredPlayersQuery,
         (snapshot) => {
           const registeredPlayer = snapshot.val();
           const isApplicablePlayer =
-            isFriendly || registeredPlayer.rank <= team.rank;
+            isFriendly ||
+            isInTeamOrLowerRankedTeam(registeredPlayer.rank, team.rank);
           if (isApplicablePlayer) {
             numAvailablePlayers.current++;
             const playerId = registeredPlayer.playerId;
