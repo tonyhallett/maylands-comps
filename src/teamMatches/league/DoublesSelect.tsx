@@ -16,13 +16,19 @@ interface TeamDoublesSelectProps {
   disabled?: boolean;
   onChange: (availableDoubles: AvailableDoubles | null) => void;
   autoCompleteProps?: AutoCompleteProps<AvailableDoubles>;
+  isHome: boolean;
 }
+export const getDoublesSelectAriaLavel = (isHome: boolean) => {
+  return isHome ? "home-doubles-select" : "away-doubles-select";
+};
+
 function TeamDoublesSelect({
   availableDoubles,
   selectedDoubles,
   disabled = false,
   onChange,
   autoCompleteProps = {},
+  isHome,
 }: TeamDoublesSelectProps) {
   return (
     <Autocomplete
@@ -47,14 +53,22 @@ function TeamDoublesSelect({
       }}
       renderInput={(params) => (
         // @ts-expect-error - this is how they document it ! todo look at later
-        <TextField {...params} label="Doubles" variant="standard" />
+        <TextField
+          {...params}
+          label="Doubles"
+          variant="standard"
+          inputProps={{
+            ...params.inputProps,
+            "aria-label": getDoublesSelectAriaLavel(isHome),
+          }}
+        />
       )}
     />
   );
 }
 interface DoublesSelectProps {
-  home: TeamDoublesSelectProps;
-  away: TeamDoublesSelectProps;
+  home: Omit<TeamDoublesSelectProps, "isHome">;
+  away: Omit<TeamDoublesSelectProps, "isHome">;
   autoCompleteProps?: AutoCompleteProps<AvailableDoubles>;
 }
 export function DoublesSelect({
@@ -66,12 +80,14 @@ export function DoublesSelect({
     <Box display="flex" justifyContent="space-between">
       <div style={{ flexGrow: 1, flexBasis: "50%" }}>
         <TeamDoublesSelect
+          isHome={true}
           {...home}
           autoCompleteProps={autoCompleteProps}
         ></TeamDoublesSelect>
       </div>
       <div style={{ flexGrow: 1, flexBasis: "50%" }}>
         <TeamDoublesSelect
+          isHome={false}
           {...away}
           autoCompleteProps={autoCompleteProps}
         ></TeamDoublesSelect>

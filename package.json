@@ -16,6 +16,8 @@
     "start-verbose": "parcel --log-level=verbose",
     "emulator-tests": "firebase emulators:exec --only database \"npm run jest-emulator-tests\"",
     "jest-emulator-tests": "jest emulatortest",
+    "debug-emulator-tests": "firebase emulators:exec --only database \"npm run debug-jest-emulator-tests\"",
+    "debug-jest-emulator-tests": "node --inspect-brk ./node_modules/jest/bin/jest.js emulatortest --runInBand --testTimeout=999999",
     "emulators-start": "firebase emulators:exec --only database \"npm run start\"",
     "start-emulators": "firebase emulators:start --only database ",
     "deploy-rules": "firebase deploy --only database",
