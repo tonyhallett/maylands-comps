@@ -522,7 +522,7 @@ describe("<LeagueMatchView/> emulator", () => {
             description: "No selected players",
             isHome: true,
           },
-          /* {
+          {
             description: "A and B",
             isHome: true,
             selectedPlayers: {
@@ -575,9 +575,9 @@ describe("<LeagueMatchView/> emulator", () => {
               player2Index: 2,
               expectedValue: `${defaultAwayPlayerNames[1]} - ${defaultAwayPlayerNames[2]}`,
             },
-          }, */
+          },
         ];
-        it.only.each(doublesSelectionTests)(
+        it.each(doublesSelectionTests)(
           "$description",
           async ({ isHome, selectedPlayers }) => {
             const allPlayersSelected = [true, true, true];
