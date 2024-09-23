@@ -20,7 +20,7 @@ import { useRTB } from "../../firebase/rtb/rtbProvider";
 import { AvailableDoubles, DoublesSelect } from "./DoublesSelect";
 import { useLeagueMatchAndMatches } from "./useLeagueMatchAndMatches";
 import { useLeagueTeamsOnValue } from "./useLeagueTeamsOnValue";
-import { useAvailablePlayers } from "./useAvailablePlayers";
+import { AvailablePlayer, useAvailablePlayers } from "./useAvailablePlayers";
 import { isNotNull } from "../../helpers/isNotTypeGuards";
 import {
   Box,
@@ -49,13 +49,6 @@ import { LeagueMatchScoreboard } from "./LeagueMatchScoreboard";
 export interface MatchAndKey {
   match: DbMatch;
   key: string;
-}
-
-export interface AvailablePlayer {
-  name: string;
-  playerId: string;
-  registeredPlayerId: string;
-  rank: number;
 }
 
 export interface AvailablePlayers {
@@ -290,7 +283,7 @@ export function LeagueMatchView({ leagueMatchId }: LeagueMatchIdProp) {
                             display: string;
                             selected: boolean;
                           }
-                          const getMatchTeamsDisplay = (
+                          const getMatchTeamSelectionDisplays = (
                             match: DbMatch,
                             index: number,
                           ): {
@@ -385,7 +378,7 @@ export function LeagueMatchView({ leagueMatchId }: LeagueMatchIdProp) {
                           const match = matchAndKey.match;
 
                           // could return more info - player not selected so can display differently
-                          const playersDisplay = getMatchTeamsDisplay(
+                          const { home, away } = getMatchTeamSelectionDisplays(
                             match,
                             index,
                           );
@@ -399,8 +392,8 @@ export function LeagueMatchView({ leagueMatchId }: LeagueMatchIdProp) {
                               matchState.matchWinState ===
                               MatchWinState.Team1Won;
                             const teamDisplay = team1Won
-                              ? playersDisplay.home.display
-                              : playersDisplay.away.display;
+                              ? home.display
+                              : away.display;
                             winnerOrScoreDisplay = `${teamDisplay} ( ${scoresDisplay} )`;
                           } else {
                             // need check if this has already been implemented
@@ -419,10 +412,7 @@ export function LeagueMatchView({ leagueMatchId }: LeagueMatchIdProp) {
                           }
 
                           const gameClicked = () => {
-                            if (
-                              playersDisplay.home.selected &&
-                              playersDisplay.away.selected
-                            ) {
+                            if (home.selected && away.selected) {
                               setSelectedMatchIndex(index);
                             }
                           };
@@ -437,12 +427,12 @@ export function LeagueMatchView({ leagueMatchId }: LeagueMatchIdProp) {
                               <TableCell
                                 aria-label={scoresheetGameHomePlayerAriaLabel}
                               >
-                                {playersDisplay.home.display}
+                                {home.display}
                               </TableCell>
                               <TableCell
                                 aria-label={scoresheetGameAwayPlayerAriaLabel}
                               >
-                                {playersDisplay.away.display}
+                                {away.display}
                               </TableCell>
                               {fillArray(5, (i) => {
                                 let gameScoreDisplay = " / ";

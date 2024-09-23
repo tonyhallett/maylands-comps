@@ -11,7 +11,13 @@ import {
   onChildAddedTyped,
   onListItemValueTyped,
 } from "../../firebase/rtb/typeHelpers";
-import { AvailablePlayer } from "./LeagueMatchView";
+
+export interface AvailablePlayer {
+  name: string;
+  playerId: string;
+  registeredPlayerId: string;
+  rank: number;
+}
 
 export const useTeamAvailablePlayers = (
   team: DbLeagueTeam | undefined,
