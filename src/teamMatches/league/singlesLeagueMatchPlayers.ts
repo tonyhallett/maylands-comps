@@ -1,9 +1,8 @@
-import { MatchIndices } from "./getMatchPlayerPositions";
+import {
+  PlayerMatchDetails,
+  getMatchPlayersPositionDisplay,
+} from "./getMatchPlayerPositions";
 
-export interface PlayerMatchDetails {
-  matchIndices: MatchIndices;
-  positionDisplay: string;
-}
 export const homePlayerMatchDetails: PlayerMatchDetails[] = [
   { matchIndices: [0, 4, 8], positionDisplay: "A" },
   { matchIndices: [1, 3, 6], positionDisplay: "B" },
@@ -14,3 +13,9 @@ export const awayPlayerMatchDetails: PlayerMatchDetails[] = [
   { matchIndices: [1, 5, 8], positionDisplay: "Y" },
   { matchIndices: [2, 4, 6], positionDisplay: "Z" },
 ];
+
+export const singlesLeagueMatchPositionDisplays =
+  getMatchPlayersPositionDisplay(
+    homePlayerMatchDetails,
+    awayPlayerMatchDetails,
+  );

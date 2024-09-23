@@ -6,9 +6,9 @@ import {
   getTeamDoublesPlayerKeys,
 } from "../../firebase/rtb/match/dbMatch";
 import {
-  PlayerMatchDetails,
   awayPlayerMatchDetails,
   homePlayerMatchDetails,
+  singlesLeagueMatchPositionDisplays,
 } from "./singlesLeagueMatchPlayers";
 import { Root, refTyped } from "../../firebase/rtb/root";
 import {
@@ -45,6 +45,7 @@ import { MatchWinState, isMatchWon } from "../../umpire/getMatchWinState";
 import { fillArray } from "../../helpers/fillArray";
 import { MatchInfo, PlayerNames, UmpireView } from "../../umpireView";
 import { LeagueMatchScoreboard } from "./LeagueMatchScoreboard";
+import { PlayerMatchDetails } from "./getMatchPlayerPositions";
 
 export interface MatchAndKey {
   match: DbMatch;
@@ -124,6 +125,7 @@ function getFullGameScores(matchState: MatchState) {
       team2Points: matchState.team2Score.points,
     });
   }
+  return gameScores;
 }
 
 export function LeagueMatchViewRoute() {
@@ -133,6 +135,12 @@ export function LeagueMatchViewRoute() {
 interface LeagueMatchIdProp {
   leagueMatchId: string;
 }
+
+const isSingles = (index: number, matchAndKeys: MatchAndKey[]) =>
+  index < matchAndKeys.length - 1;
+const getDoublesMatch = (matchAndKeys: MatchAndKey[]) =>
+  matchAndKeys[matchAndKeys.length - 1].match;
+
 export function LeagueMatchView({ leagueMatchId }: LeagueMatchIdProp) {
   const [selectedMatchIndex, setSelectedMatchIndex] = useState<
     number | undefined
@@ -150,7 +158,116 @@ export function LeagueMatchView({ leagueMatchId }: LeagueMatchIdProp) {
         availablePlayersForSelection,
         homeTeamAvailablePlayers,
         awayTeamAvailablePlayers,
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        singlesMatchesWithNamesAndKeys,
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        doublesMatchWithNamesAndKey,
       ) => {
+        interface TeamSelectionDisplay {
+          display: string;
+          selected: boolean;
+        }
+        const getMatchTeamSelectionDisplays = (
+          match: DbMatch,
+          index: number,
+        ): { home: TeamSelectionDisplay; away: TeamSelectionDisplay } => {
+          if (isSingles(index, matchAndKeys)) {
+            const getPlayerDisplay = (
+              isHome: boolean,
+            ): TeamSelectionDisplay => {
+              const matchPlayerId = isHome
+                ? match.team1Player1Id
+                : match.team2Player1Id;
+              if (matchPlayerId !== undefined) {
+                const teamAvailablePlayers = isHome
+                  ? homeTeamAvailablePlayers
+                  : awayTeamAvailablePlayers;
+
+                const playerName = teamAvailablePlayers.find(
+                  (player) => player?.playerId === matchPlayerId,
+                )!.name;
+                return {
+                  display: getInitials(playerName),
+                  selected: true,
+                };
+                // would go distinct - need a memo of player names
+              }
+              const matchPositionDisplays =
+                singlesLeagueMatchPositionDisplays[index];
+              const positionDisplay = isHome
+                ? matchPositionDisplays.homePositionDisplay
+                : matchPositionDisplays.awayPositionDisplay;
+              return {
+                display: positionDisplay.display,
+                selected: false,
+              };
+            };
+
+            return {
+              home: getPlayerDisplay(true),
+              away: getPlayerDisplay(false),
+            };
+          }
+          const doublesMatch = getDoublesMatch(matchAndKeys);
+
+          const getDoublesTeamDisplay = (
+            player1Id: string | undefined,
+            isHome: boolean,
+          ): TeamSelectionDisplay => {
+            if (player1Id === undefined) {
+              return { display: "TBD", selected: false };
+            }
+            const selectedDoubles = isHome
+              ? availablePlayersForSelection.selectedHomeDoubles
+              : availablePlayersForSelection.selectedAwayDoubles;
+            return {
+              display: `${selectedDoubles?.player1PositionIdentifier} ${selectedDoubles?.player2PositionIdentifier}`,
+              selected: true,
+            };
+          };
+          const homeTeamDisplay = getDoublesTeamDisplay(
+            doublesMatch.team1Player1Id,
+            true,
+          );
+          const awayTeamDisplay = getDoublesTeamDisplay(
+            doublesMatch.team2Player1Id,
+            false,
+          );
+          return {
+            home: homeTeamDisplay,
+            away: awayTeamDisplay,
+          };
+        };
+
+        const getWinnerOrCurrentGamesScoreDisplay = (
+          home: TeamSelectionDisplay,
+          away: TeamSelectionDisplay,
+          matchState: MatchState,
+          umpired: boolean | undefined,
+        ) => {
+          const scoresDisplay = `${matchState.team1Score.games} - ${matchState.team2Score.games}`;
+          let winnerOrScoreDisplay = "";
+          if (isMatchWon(matchState.matchWinState)) {
+            const team1Won =
+              matchState.matchWinState === MatchWinState.Team1Won;
+            const teamDisplay = team1Won ? home.display : away.display;
+            winnerOrScoreDisplay = `${teamDisplay} ( ${scoresDisplay} )`;
+          } else {
+            // need check if this has already been implemented
+            const teamScored = (teamScore: TeamScore) => {
+              return teamScore.games > 0 || teamScore.points > 0;
+            };
+
+            const hasScored =
+              teamScored(matchState.team1Score) ||
+              teamScored(matchState.team2Score);
+            if (hasScored || umpired !== undefined) {
+              winnerOrScoreDisplay = scoresDisplay;
+            }
+          }
+          return winnerOrScoreDisplay;
+        };
+
         let umpireViewInfo: UmpireViewInfo | undefined;
         if (umpireMatchIndex !== undefined) {
           const dbMatch = matchAndKeys[umpireMatchIndex].match;
@@ -194,6 +311,7 @@ export function LeagueMatchView({ leagueMatchId }: LeagueMatchIdProp) {
               team2Player2Name: getPlayerName(dbMatch.team2Player2Id!, false),
             };
           };
+
           const getSinglesPlayerNames = (): PlayerNames => {
             return {
               team1Player1Name: getPlayerName(dbMatch.team1Player1Id!, true),
@@ -202,6 +320,7 @@ export function LeagueMatchView({ leagueMatchId }: LeagueMatchIdProp) {
               team2Player2Name: undefined,
             };
           };
+
           const playerNames =
             umpireMatchIndex! === 9
               ? getDoublesPlayerNames()
@@ -279,92 +398,6 @@ export function LeagueMatchView({ leagueMatchId }: LeagueMatchIdProp) {
                       </TableHead>
                       <TableBody>
                         {matchAndKeys.map((matchAndKey, index) => {
-                          interface TeamSelectionDisplay {
-                            display: string;
-                            selected: boolean;
-                          }
-                          const getMatchTeamSelectionDisplays = (
-                            match: DbMatch,
-                            index: number,
-                          ): {
-                            home: TeamSelectionDisplay;
-                            away: TeamSelectionDisplay;
-                          } => {
-                            if (index < matchAndKeys.length - 1) {
-                              const getPlayerPositionDisplay = (
-                                isHome: boolean,
-                              ) => {
-                                const playerMatchDetails = isHome
-                                  ? homePlayerMatchDetails
-                                  : awayPlayerMatchDetails;
-                                return playerMatchDetails.find((pmd) =>
-                                  pmd.matchIndices.includes(index),
-                                )!.positionDisplay;
-                              };
-                              const getPlayerDisplay = (
-                                isHome: boolean,
-                              ): TeamSelectionDisplay => {
-                                const matchPlayerId = isHome
-                                  ? match.team1Player1Id
-                                  : match.team2Player1Id;
-                                if (matchPlayerId !== undefined) {
-                                  const teamAvailablePlayers = isHome
-                                    ? homeTeamAvailablePlayers
-                                    : awayTeamAvailablePlayers;
-
-                                  const playerName = teamAvailablePlayers.find(
-                                    (player) =>
-                                      player?.playerId === matchPlayerId,
-                                  )!.name;
-                                  return {
-                                    display: getInitials(playerName),
-                                    selected: true,
-                                  };
-                                  // would go distinct - need a memo of player names
-                                }
-                                return {
-                                  display: getPlayerPositionDisplay(isHome),
-                                  selected: false,
-                                };
-                              };
-
-                              return {
-                                home: getPlayerDisplay(true),
-                                away: getPlayerDisplay(false),
-                              };
-                            }
-                            const doublesMatch =
-                              matchAndKeys[matchAndKeys.length - 1].match;
-
-                            const getDoublesTeamDisplay = (
-                              player1Id: string | undefined,
-                              isHome: boolean,
-                            ): TeamSelectionDisplay => {
-                              if (player1Id === undefined) {
-                                return { display: "TBD", selected: false };
-                              }
-                              const selectedDoubles = isHome
-                                ? availablePlayersForSelection.selectedHomeDoubles
-                                : availablePlayersForSelection.selectedAwayDoubles;
-                              return {
-                                display: `${selectedDoubles?.player1PositionIdentifier} ${selectedDoubles?.player2PositionIdentifier}`,
-                                selected: true,
-                              };
-                            };
-                            const homeTeamDisplay = getDoublesTeamDisplay(
-                              doublesMatch.team1Player1Id,
-                              true,
-                            );
-                            const awayTeamDisplay = getDoublesTeamDisplay(
-                              doublesMatch.team2Player1Id,
-                              false,
-                            );
-                            return {
-                              home: homeTeamDisplay,
-                              away: awayTeamDisplay,
-                            };
-                          };
-
                           /* todo 
                     prevent the table jumping with min widths
                       placeholders same size
@@ -385,32 +418,28 @@ export function LeagueMatchView({ leagueMatchId }: LeagueMatchIdProp) {
 
                           const matchState = getMatchState(match);
                           const gameScores = getFullGameScores(matchState);
-                          const scoresDisplay = `${matchState.team1Score.games} - ${matchState.team2Score.games}`;
-                          let winnerOrScoreDisplay = "";
-                          if (isMatchWon(matchState.matchWinState)) {
-                            const team1Won =
-                              matchState.matchWinState ===
-                              MatchWinState.Team1Won;
-                            const teamDisplay = team1Won
-                              ? home.display
-                              : away.display;
-                            winnerOrScoreDisplay = `${teamDisplay} ( ${scoresDisplay} )`;
-                          } else {
-                            // need check if this has already been implemented
-                            const teamScored = (teamScore: TeamScore) => {
-                              return (
-                                teamScore.games > 0 || teamScore.points > 0
-                              );
-                            };
 
-                            const hasScored =
-                              teamScored(matchState.team1Score) ||
-                              teamScored(matchState.team2Score);
-                            if (hasScored || match.umpired !== undefined) {
-                              winnerOrScoreDisplay = scoresDisplay;
-                            }
-                          }
-
+                          const winnerOrCurrentGameScoreDisplay =
+                            getWinnerOrCurrentGamesScoreDisplay(
+                              home,
+                              away,
+                              matchState,
+                              match.umpired,
+                            );
+                          const getGameScoresDisplay = () => {
+                            return fillArray(5, (i) => {
+                              let gameScoreDisplay = " / ";
+                              const gameScore = gameScores[i];
+                              if (
+                                gameScore !== undefined &&
+                                (gameScore.team1Points !== 0 ||
+                                  gameScore.team2Points !== 0)
+                              ) {
+                                gameScoreDisplay = `${gameScore.team1Points} / ${gameScore.team2Points}`;
+                              }
+                              return gameScoreDisplay;
+                            });
+                          };
                           const gameClicked = () => {
                             if (home.selected && away.selected) {
                               setSelectedMatchIndex(index);
@@ -434,23 +463,16 @@ export function LeagueMatchView({ leagueMatchId }: LeagueMatchIdProp) {
                               >
                                 {away.display}
                               </TableCell>
-                              {fillArray(5, (i) => {
-                                let gameScoreDisplay = " / ";
-                                const gameScore = gameScores[i];
-                                if (
-                                  gameScore !== undefined &&
-                                  (gameScore.team1Points !== 0 ||
-                                    gameScore.team2Points !== 0)
-                                ) {
-                                  gameScoreDisplay = `${gameScore.team1Points} / ${gameScore.team2Points}`;
-                                }
-                                return (
+                              {getGameScoresDisplay().map(
+                                (gameScoreDisplay, i) => (
                                   <TableCell key={i}>
                                     {gameScoreDisplay}
                                   </TableCell>
-                                );
-                              })}
-                              <TableCell>{winnerOrScoreDisplay}</TableCell>
+                                ),
+                              )}
+                              <TableCell>
+                                {winnerOrCurrentGameScoreDisplay}
+                              </TableCell>
                             </TableRow>
                           );
                         })}
@@ -508,9 +530,29 @@ export interface LeagueMatchSelectionProps extends LeagueMatchIdProp {
     availablePlayersForSelection: AvailablePlayersForSelection,
     homeTeamAvailablePlayers: AvailablePlayer[],
     awayTeamAvailablePlayers: AvailablePlayer[],
+    singlesMatchesWithNamesAndKeys: SinglesMatchWithNamesAndKey[],
+    doublesMatchWithNamesAndKey: DoublesMatchWithNamesAndKey,
   ) => React.ReactNode;
 }
 
+interface NameOrPositionIdentifier {
+  name?: string;
+  positionDisplay: string;
+}
+interface SinglesMatchWithNamesAndKey {
+  match: DbMatch;
+  key: string;
+  homePlayer1: NameOrPositionIdentifier;
+  awayPlayer1: NameOrPositionIdentifier;
+}
+interface DoublesMatchWithNamesAndKey {
+  match: DbMatch;
+  key: string;
+  homePlayer1?: string;
+  homePlayer2?: string;
+  awayPlayer1?: string;
+  awayPlayer2?: string;
+}
 export function LeagueMatchSelection({
   leagueMatchId,
   renderScoreboard,
@@ -784,6 +826,61 @@ export function LeagueMatchSelection({
       <LeagueMatchScoreboard matches={matchAndKeys.map((mk) => mk.match)} />
     );
   }
+  const singlesMatches = matchAndKeys.filter((_, i) =>
+    isSingles(i, matchAndKeys),
+  );
+
+  const singlesMatchesWithNamePosition = singlesMatches.map(
+    (matchAndKey, i) => {
+      const match = matchAndKey.match;
+      // always need the info on homePlayer1 and awayPlayer1
+      const matchPositionDisplays = singlesLeagueMatchPositionDisplays[i];
+      const getNameOrPositionIdentifier = (
+        isHome: boolean,
+      ): NameOrPositionIdentifier => {
+        const playerId = isHome ? match.team1Player1Id : match.team2Player1Id;
+        const positionDisplay = isHome
+          ? matchPositionDisplays.homePositionDisplay
+          : matchPositionDisplays.awayPositionDisplay;
+        const selectedTeamPlayers = isHome
+          ? availablePlayersForSelection.selectedHomeTeamPlayers
+          : availablePlayersForSelection.selectedAwayTeamPlayers;
+        const nameOrPositionIdentifier: NameOrPositionIdentifier = {
+          positionDisplay: positionDisplay.display,
+        };
+        if (playerId !== undefined) {
+          nameOrPositionIdentifier.name =
+            selectedTeamPlayers[positionDisplay.position]!.name;
+        }
+        return nameOrPositionIdentifier;
+      };
+
+      const matchWithNamesAndKey: SinglesMatchWithNamesAndKey = {
+        ...matchAndKey,
+        homePlayer1: getNameOrPositionIdentifier(true),
+        awayPlayer1: getNameOrPositionIdentifier(false),
+      };
+      return matchWithNamesAndKey;
+    },
+  );
+
+  const doublesMatch = getDoublesMatch(matchAndKeys);
+  const doublesMatchWithNamesAndKey: DoublesMatchWithNamesAndKey = {
+    match: doublesMatch,
+    key: matchAndKeys[matchAndKeys.length - 1].key,
+  };
+  if (availablePlayersForSelection.selectedHomeDoubles !== null) {
+    doublesMatchWithNamesAndKey.homePlayer1 =
+      availablePlayersForSelection.selectedHomeDoubles.player1Name;
+    doublesMatchWithNamesAndKey.homePlayer2 =
+      availablePlayersForSelection.selectedHomeDoubles.player2Name;
+  }
+  if (availablePlayersForSelection.selectedAwayDoubles !== null) {
+    doublesMatchWithNamesAndKey.awayPlayer1 =
+      availablePlayersForSelection.selectedAwayDoubles.player1Name;
+    doublesMatchWithNamesAndKey.awayPlayer2 =
+      availablePlayersForSelection.selectedAwayDoubles.player2Name;
+  }
 
   return (
     <>
@@ -851,6 +948,8 @@ export function LeagueMatchSelection({
             availablePlayersForSelection,
             homeTeamAvailablePlayers,
             awayTeamAvailablePlayers,
+            singlesMatchesWithNamePosition,
+            doublesMatchWithNamesAndKey,
           )}
         </section>
       </div>

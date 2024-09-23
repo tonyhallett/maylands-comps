@@ -48,10 +48,11 @@ import { ClubSetup } from "../src/teamMatches/league/romfordLeagueData";
 import {
   awayPlayerMatchDetails,
   homePlayerMatchDetails,
+  singlesLeagueMatchPositionDisplays,
 } from "../src/teamMatches/league/singlesLeagueMatchPlayers";
 //import { getInitials } from "../src/umpireView/helpers";
 import { findPlayerCombo, findScoresheet } from "./leagueMatchViewSelectors";
-import { getMatchPlayerPositions } from "../src/teamMatches/league/getMatchPlayerPositions";
+//import { getMatchPlayerPositions } from "../src/teamMatches/league/getMatchPlayerPositions";
 import { fillArrayWithIndices } from "../src/helpers/fillArray";
 import { getPlayerComboInputs } from "./leagueMatchViewSelectors";
 import { findDoublesCombo } from "./leagueMatchViewSelectors";
@@ -107,10 +108,10 @@ const teamsRef = refTyped(database, "teams");
 const clubsRef = refTyped(database, "clubs");
 const matchesRef = refTyped(database, "matches");
 
-export const matchesPlayersPositions = getMatchPlayerPositions(
+/* export const matchesPlayersPositions = getMatchPlayerPositions(
   homePlayerMatchDetails.map((p) => p.matchIndices),
   awayPlayerMatchDetails.map((p) => p.matchIndices),
-);
+); */
 
 describe("<LeagueMatchView/>", () => {
   const defaultHomeTeamName = "Maylands A";
@@ -328,20 +329,23 @@ describe("<LeagueMatchView/>", () => {
     const awayTeamPlayerIds: TeamPlayerIds = [undefined, undefined, undefined];
     const setupMatch: SetupMatch = (getPlayerId, dbMatch, index) => {
       if (index !== 9) {
-        const { homePosition, awayPosition } = matchesPlayersPositions[index];
-        if (homePlayersSelected[homePosition]) {
+        const { homePositionDisplay, awayPositionDisplay } =
+          singlesLeagueMatchPositionDisplays[index];
+        if (homePlayersSelected[homePositionDisplay.position]) {
           dbMatch.team1Player1Id = getPlayerId(
             defaultHomeTeamName,
-            defaultHomePlayerNames[homePosition],
+            defaultHomePlayerNames[homePositionDisplay.position],
           ); // Player A
-          homeTeamPlayerIds[homePosition] = dbMatch.team1Player1Id;
+          homeTeamPlayerIds[homePositionDisplay.position] =
+            dbMatch.team1Player1Id;
         }
-        if (awayPlayersSelected[awayPosition]) {
+        if (awayPlayersSelected[awayPositionDisplay.position]) {
           dbMatch.team2Player1Id = getPlayerId(
             defaultAwayTeamName,
-            defaultAwayPlayerNames[awayPosition],
+            defaultAwayPlayerNames[awayPositionDisplay.position],
           ); // Player X
-          awayTeamPlayerIds[awayPosition] = dbMatch.team2Player1Id;
+          awayTeamPlayerIds[awayPositionDisplay.position] =
+            dbMatch.team2Player1Id;
         }
       } else {
         setupDoubles(dbMatch, homeTeamPlayerIds, awayTeamPlayerIds);
@@ -676,10 +680,11 @@ describe("<LeagueMatchView/>", () => {
             waitFor(() => renderCount === 2);
             currentMatchAndKeys.forEach(({ match }, index) => {
               if (index !== 9) {
-                const playerPositions = matchesPlayersPositions[index];
+                const { homePositionDisplay, awayPositionDisplay } =
+                  singlesLeagueMatchPositionDisplays[index];
                 const playerPosition = isHome
-                  ? playerPositions.homePosition
-                  : playerPositions.awayPosition;
+                  ? homePositionDisplay.position
+                  : awayPositionDisplay.position;
                 if (playerPosition === playerComboIndex) {
                   const playerId = isHome
                     ? match.team1Player1Id
@@ -739,10 +744,11 @@ describe("<LeagueMatchView/>", () => {
             waitFor(() => renderCount === 2);
             currentMatchAndKeys.forEach(({ match }, index) => {
               if (index !== 9) {
-                const playerPositions = matchesPlayersPositions[index];
+                const { homePositionDisplay, awayPositionDisplay } =
+                  singlesLeagueMatchPositionDisplays[index];
                 const playerPosition = isHome
-                  ? playerPositions.homePosition
-                  : playerPositions.awayPosition;
+                  ? homePositionDisplay.position
+                  : awayPositionDisplay.position;
                 if (playerPosition === playerComboIndex) {
                   const playerId = isHome
                     ? match.team1Player1Id

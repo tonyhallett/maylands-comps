@@ -2,24 +2,46 @@ import { fillArrayWithIndices } from "../../helpers/fillArray";
 
 export type MatchIndices = number[];
 
-export const getMatchPlayerPositions = (
-  homePlayersMatchIndices: MatchIndices[],
-  awayPlayersMatchIndices: MatchIndices[],
+export interface PlayerMatchDetails {
+  matchIndices: MatchIndices;
+  positionDisplay: string;
+}
+export const getMatchPlayersPositionDisplay = (
+  homePlayerMatchDetails: PlayerMatchDetails[],
+  awayPlayerMatchDetails: PlayerMatchDetails[],
 ) => {
   const numMatches =
-    homePlayersMatchIndices.length * homePlayersMatchIndices[0].length;
+    homePlayerMatchDetails.length *
+    homePlayerMatchDetails[0].matchIndices.length;
+
   return fillArrayWithIndices(numMatches).map((i) => {
-    const getPlayerPosition = (isHome: boolean) => {
-      const playersMatchIndices = isHome
-        ? homePlayersMatchIndices
-        : awayPlayersMatchIndices;
-      return playersMatchIndices.findIndex((playerMatchIndices) =>
-        playerMatchIndices.includes(i),
+    const getPlayerPositionDisplay = (isHome: boolean) => {
+      const playersMatchDetails = isHome
+        ? homePlayerMatchDetails
+        : awayPlayerMatchDetails;
+      const position = playersMatchDetails.findIndex((playerMatchDetails) =>
+        playerMatchDetails.matchIndices.includes(i),
       );
+      return {
+        position,
+        display: playersMatchDetails[position].positionDisplay,
+      };
     };
     return {
-      homePosition: getPlayerPosition(true),
-      awayPosition: getPlayerPosition(false),
+      homePositionDisplay: getPlayerPositionDisplay(true),
+      awayPositionDisplay: getPlayerPositionDisplay(false),
     };
   });
 };
+/*
+const getPlayerPositionDisplay = (
+                                isHome: boolean,
+                              ) => {
+                                const playerMatchDetails = isHome
+                                  ? homePlayerMatchDetails
+                                  : awayPlayerMatchDetails;
+                                return playerMatchDetails.find((pmd) =>
+                                  pmd.matchIndices.includes(index),
+                                )!.positionDisplay;
+                              };
+*/
