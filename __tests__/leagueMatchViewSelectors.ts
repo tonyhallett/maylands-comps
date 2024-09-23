@@ -13,6 +13,8 @@ import {
   scoresheetGameHomePlayerAriaLabel,
 } from "../src/teamMatches/league/LeagueMatchView";
 import { from } from "../test-helpers/testing-library/from";
+import { getDoublesSelectAriaLabel } from "../src/teamMatches/league/DoublesSelect";
+import { openAutocompleteAndGetOptions } from "../test-helpers/mui/autocomplete";
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 export const findTeamsMatchPlayersSelectSection = () =>
@@ -79,3 +81,35 @@ export const getScoresheetPlayerIdentifier = (
 ): string => {
   return getScoresheetPlayer(scoresheet, isHome, position).innerHTML;
 };
+export async function getPlayerComboInputs() {
+  const teamsMatchPlayersSelectSection =
+    await findTeamsMatchPlayersSelectSection();
+  const findWithin = teamMatchPlayersSelectSection().within(
+    teamsMatchPlayersSelectSection,
+  );
+  const homeMatchPlayersSelectSection = findWithin.getBy(true);
+  const awayMatchPlayersSelectSection = findWithin.getBy(false);
+  const homePlayerInputs = within(
+    homeMatchPlayersSelectSection,
+  ).getAllByRole<HTMLInputElement>("combobox");
+  const awayPlayerInputs = within(
+    awayMatchPlayersSelectSection,
+  ).getAllByRole<HTMLInputElement>("combobox");
+
+  return {
+    homePlayerInputs,
+    awayPlayerInputs,
+  };
+}
+export async function findDoublesCombo(isHome): Promise<HTMLInputElement> {
+  return screen.findByLabelText(getDoublesSelectAriaLabel(isHome));
+}
+export async function openPlayerAutocompleteAndGetOptions(
+  isHome: boolean,
+  position: number,
+) {
+  const playerCombo = await findPlayerCombo(isHome, position);
+  return openAutocompleteAndGetOptions(playerCombo).map(
+    (htmlOption) => htmlOption.innerHTML,
+  );
+}

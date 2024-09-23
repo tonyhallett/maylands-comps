@@ -18,7 +18,7 @@ interface TeamDoublesSelectProps {
   autoCompleteProps?: AutoCompleteProps<AvailableDoubles>;
   isHome: boolean;
 }
-export const getDoublesSelectAriaLavel = (isHome: boolean) => {
+export const getDoublesSelectAriaLabel = (isHome: boolean) => {
   return isHome ? "home-doubles-select" : "away-doubles-select";
 };
 
@@ -59,7 +59,7 @@ function TeamDoublesSelect({
           variant="standard"
           inputProps={{
             ...params.inputProps,
-            "aria-label": getDoublesSelectAriaLavel(isHome),
+            "aria-label": getDoublesSelectAriaLabel(isHome),
           }}
         />
       )}
