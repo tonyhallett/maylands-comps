@@ -14,7 +14,10 @@ import {
 } from "../src/teamMatches/league/LeagueMatchView";
 import { from } from "../test-helpers/testing-library/from";
 import { getDoublesSelectAriaLabel } from "../src/teamMatches/league/DoublesSelect";
-import { openAutocompleteAndGetOptions } from "../test-helpers/mui/autocomplete";
+import {
+  clearOptions,
+  openAutocompleteAndGetOptions,
+} from "../test-helpers/mui/autocomplete";
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 export const findTeamsMatchPlayersSelectSection = () =>
@@ -109,7 +112,9 @@ export async function openPlayerAutocompleteAndGetOptions(
   position: number,
 ) {
   const playerCombo = await findPlayerCombo(isHome, position);
-  return openAutocompleteAndGetOptions(playerCombo).map(
+  const options = openAutocompleteAndGetOptions(playerCombo).map(
     (htmlOption) => htmlOption.innerHTML,
   );
+  clearOptions(playerCombo);
+  return options;
 }

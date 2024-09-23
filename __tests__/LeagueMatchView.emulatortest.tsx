@@ -26,6 +26,7 @@ import {
 } from "../src/firebase/rtb/typeHelpers";
 import { Root, refTyped } from "../src/firebase/rtb/root";
 import {
+  clearOptions,
   openAutocompleteAndGetOptions,
   selectNthOption,
 } from "../test-helpers/mui/autocomplete";
@@ -50,7 +51,7 @@ import {
 } from "../src/teamMatches/league/singlesLeagueMatchPlayers";
 //import { getInitials } from "../src/umpireView/helpers";
 import { findPlayerCombo, findScoresheet } from "./leagueMatchViewSelectors";
-import { getMatchPlayerIndices } from "../src/teamMatches/league/getMatchPlayerIndices";
+import { getMatchPlayerPositions } from "../src/teamMatches/league/getMatchPlayerPositions";
 import { fillArrayWithIndices } from "../src/helpers/fillArray";
 import { getPlayerComboInputs } from "./leagueMatchViewSelectors";
 import { findDoublesCombo } from "./leagueMatchViewSelectors";
@@ -106,7 +107,7 @@ const teamsRef = refTyped(database, "teams");
 const clubsRef = refTyped(database, "clubs");
 const matchesRef = refTyped(database, "matches");
 
-export const matchesPlayersIndices = getMatchPlayerIndices(
+export const matchesPlayersPositions = getMatchPlayerPositions(
   homePlayerMatchDetails.map((p) => p.matchIndices),
   awayPlayerMatchDetails.map((p) => p.matchIndices),
 );
@@ -114,6 +115,7 @@ export const matchesPlayersIndices = getMatchPlayerIndices(
 describe("<LeagueMatchView/>", () => {
   const defaultHomeTeamName = "Maylands A";
   const defaultAwayTeamName = "Lower ranked away";
+  const lowerRankedHomeTeamName = "Maylands B";
   const defaultHomePlayerNames = ["DMAP3 E", "BMAP2 C", "AMAP1 B"];
   const defaultAwayPlayerNames = ["JOP3 K", "HOP2 I", "FOP1 G"];
   const lowerRankedDefaultHomePlayerNames = ["P Q", "R S", "T U"];
@@ -129,7 +131,7 @@ describe("<LeagueMatchView/>", () => {
       teamSetups: [
         {
           rank: 2,
-          teamName: "Maylands B",
+          teamName: lowerRankedHomeTeamName,
           playerNames: lowerRankedDefaultHomePlayerNames,
         },
         {
@@ -157,15 +159,22 @@ describe("<LeagueMatchView/>", () => {
   ];
   type getPlayerId = (teamName: string, playerName: string) => string;
 
+  type SetupMatch = (
+    getPlayerId: getPlayerId,
+    dbMatch: DbMatch,
+    index: number,
+  ) => void;
+  type SetupDoubles = (
+    doublesMatch: DbMatch,
+    homeTeamPlayerIds: TeamPlayerIds,
+    awayTeamPlayerIds: TeamPlayerIds,
+  ) => void;
   async function setupDatabase(
-    setUpMatch: (
-      getPlayerId: getPlayerId,
-      dbMatch: DbMatch,
-      index: number,
-    ) => void = () => {},
+    setUpMatch: SetupMatch = () => {},
     testClubSetups = defaultTestClubSetups,
     homeTeamName = defaultHomeTeamName,
     awayTeamName = defaultAwayTeamName,
+    isFriendly = false,
   ) {
     const updater = createTypedValuesUpdater<Root>();
     const updateClub = (leagueClub: DbLeagueClub) => {
@@ -258,7 +267,7 @@ describe("<LeagueMatchView/>", () => {
 
     const leagueMatchKey = updateLeagueMatch({
       date: getSimpleToday(),
-      isFriendly: false,
+      isFriendly,
       homeTeamId: getTeamKey(homeTeamName),
       awayTeamId: getTeamKey(awayTeamName),
       description: "Test match",
@@ -300,78 +309,45 @@ describe("<LeagueMatchView/>", () => {
   }
 
   type TeamPlayerIds = (string | undefined)[];
-  function setUpMinimalMatchesForSelection(
+  function setUpMatchesForSelection(
     homePlayersSelected: boolean[],
     awayPlayersSelected: boolean[],
-    doublesMatchSetup: (
-      doublesMatch: DbMatch,
-      homeTeamPlayerIds: TeamPlayerIds,
-      awayTeamPlayerIds: TeamPlayerIds,
-    ) => void = () => {},
+    setupDoubles: SetupDoubles = () => {},
   ) {
-    /*
-      only the minimal number of matches are looked at to get this information
-      0 - A V X
-      1 - B V Y
-      2 - C V Z
-    */
+    return setupDatabase(
+      getSetupMatches(homePlayersSelected, awayPlayersSelected, setupDoubles),
+    );
+  }
+
+  function getSetupMatches(
+    homePlayersSelected: boolean[],
+    awayPlayersSelected: boolean[],
+    setupDoubles: SetupDoubles = () => {},
+  ) {
     const homeTeamPlayerIds: TeamPlayerIds = [undefined, undefined, undefined];
     const awayTeamPlayerIds: TeamPlayerIds = [undefined, undefined, undefined];
-    return setupDatabase((getPlayerId, dbMatch, index) => {
-      switch (index) {
-        case 0:
-          if (homePlayersSelected[0]) {
-            dbMatch.team1Player1Id = getPlayerId(
-              defaultHomeTeamName,
-              defaultHomePlayerNames[0],
-            ); // Player A
-            homeTeamPlayerIds[0] = dbMatch.team1Player1Id;
-          }
-          if (awayPlayersSelected[0]) {
-            dbMatch.team2Player1Id = getPlayerId(
-              defaultAwayTeamName,
-              defaultAwayPlayerNames[0],
-            ); // Player X
-            awayTeamPlayerIds[0] = dbMatch.team2Player1Id;
-          }
-          break;
-        case 1:
-          if (homePlayersSelected[1]) {
-            dbMatch.team1Player1Id = getPlayerId(
-              defaultHomeTeamName,
-              defaultHomePlayerNames[1],
-            ); // Player B
-            homeTeamPlayerIds[1] = dbMatch.team1Player1Id;
-          }
-          if (awayPlayersSelected[1]) {
-            dbMatch.team2Player1Id = getPlayerId(
-              defaultAwayTeamName,
-              defaultAwayPlayerNames[1],
-            ); // Player Y
-            awayTeamPlayerIds[1] = dbMatch.team2Player1Id;
-          }
-          break;
-        case 2:
-          if (homePlayersSelected[2]) {
-            dbMatch.team1Player1Id = getPlayerId(
-              defaultHomeTeamName,
-              defaultHomePlayerNames[2],
-            ); // Player C
-            homeTeamPlayerIds[2] = dbMatch.team1Player1Id;
-          }
-          if (awayPlayersSelected[2]) {
-            dbMatch.team2Player1Id = getPlayerId(
-              defaultAwayTeamName,
-              defaultAwayPlayerNames[2],
-            ); // Player Z
-            awayTeamPlayerIds[2] = dbMatch.team2Player1Id;
-          }
-          break;
-        case 9:
-          doublesMatchSetup(dbMatch, homeTeamPlayerIds, awayTeamPlayerIds);
-          break;
+    const setupMatch: SetupMatch = (getPlayerId, dbMatch, index) => {
+      if (index !== 9) {
+        const { homePosition, awayPosition } = matchesPlayersPositions[index];
+        if (homePlayersSelected[homePosition]) {
+          dbMatch.team1Player1Id = getPlayerId(
+            defaultHomeTeamName,
+            defaultHomePlayerNames[homePosition],
+          ); // Player A
+          homeTeamPlayerIds[homePosition] = dbMatch.team1Player1Id;
+        }
+        if (awayPlayersSelected[awayPosition]) {
+          dbMatch.team2Player1Id = getPlayerId(
+            defaultAwayTeamName,
+            defaultAwayPlayerNames[awayPosition],
+          ); // Player X
+          awayTeamPlayerIds[awayPosition] = dbMatch.team2Player1Id;
+        }
+      } else {
+        setupDoubles(dbMatch, homeTeamPlayerIds, awayTeamPlayerIds);
       }
-    });
+    };
+    return setupMatch;
   }
 
   describe("match selection", () => {
@@ -404,7 +380,7 @@ describe("<LeagueMatchView/>", () => {
         // value if from getOptionLabel - name property of AvailablePlayer
 
         const allPlayerSelected = [true, true, true];
-        const leagueMatchKey = await setUpMinimalMatchesForSelection(
+        const leagueMatchKey = await setUpMatchesForSelection(
           allPlayerSelected,
           allPlayerSelected,
         );
@@ -478,16 +454,85 @@ describe("<LeagueMatchView/>", () => {
           );
         });
 
-        xit("should not have a selected player in the available players for selection for the other player selections", async () => {});
+        it("should not have a selected player in the available players for selection for the other player selections", async () => {
+          const leagueMatchKey = await setUpMatchesForSelection(
+            [true, false, false],
+            [true, false, false],
+          );
+          render(createApp(leagueMatchKey));
+
+          const selectedOptionDisplays =
+            await openPlayerAutocompleteAndGetOptions(true, 0);
+
+          const notSelectedOptionDisplays =
+            await openPlayerAutocompleteAndGetOptions(true, 1);
+
+          const notIns = selectedOptionDisplays.filter(
+            (selectedOptionDisplay) => {
+              return !notSelectedOptionDisplays.includes(selectedOptionDisplay);
+            },
+          );
+          expect(notIns).toEqual([defaultOrderedHomeAvailablePlayerNames[0]]);
+        });
+
+        describe("same club and friendly", () => {
+          it("should have the same players available for selection", async () => {
+            const friendlyLeagueMatchKey = await setupDatabase(
+              undefined,
+              defaultTestClubSetups,
+              defaultHomeTeamName,
+              lowerRankedHomeTeamName,
+              true,
+            );
+
+            render(createApp(friendlyLeagueMatchKey));
+
+            const optionDisplaysHome =
+              await openPlayerAutocompleteAndGetOptions(true, 0);
+
+            const optionDisplaysAway =
+              await openPlayerAutocompleteAndGetOptions(false, 0);
+
+            expect(optionDisplaysHome).toEqual(optionDisplaysAway);
+            expect(optionDisplaysHome).toEqual(
+              defaultOrderedHomeAvailablePlayerNames,
+            );
+          });
+        });
+
+        it("should not have a selected player in the available players for selection in the other team", async () => {
+          const friendlyLeagueMatchKey = await setupDatabase(
+            getSetupMatches([true, false, false], [false, false, false]),
+            defaultTestClubSetups,
+            defaultHomeTeamName,
+            lowerRankedHomeTeamName,
+            true,
+          );
+
+          render(createApp(friendlyLeagueMatchKey));
+
+          const selectedOptionDisplays =
+            await openPlayerAutocompleteAndGetOptions(true, 0);
+
+          const notSelectedOptionDisplays =
+            await openPlayerAutocompleteAndGetOptions(false, 0);
+
+          const notIns = selectedOptionDisplays.filter(
+            (selectedOptionDisplay) => {
+              return !notSelectedOptionDisplays.includes(selectedOptionDisplay);
+            },
+          );
+          expect(notIns).toEqual([defaultOrderedHomeAvailablePlayerNames[0]]);
+        });
       });
 
-      interface SelectDeselectPlayerTest {
-        isHome: boolean;
-        playerComboIndex: number;
-        selectedPlayerIndex: number;
-      }
       describe("selecting a player", () => {
-        const selectPlayerTest: SelectDeselectPlayerTest[] = [
+        interface SelectPlayerTest {
+          isHome: boolean;
+          playerComboIndex: number;
+          selectedPlayerIndex: number;
+        }
+        const selectPlayerTest: SelectPlayerTest[] = [
           {
             isHome: true,
             playerComboIndex: 0,
@@ -520,13 +565,9 @@ describe("<LeagueMatchView/>", () => {
             selectedPlayerIndex: 1,
           },
         ];
-        it.only.each(selectPlayerTest)(
+        it.each(selectPlayerTest)(
           "should add player to all of the player matches  - $isHome, $playerComboIndex, $selectedPlayerIndex",
-          async ({
-            isHome,
-            playerComboIndex: playerIndex,
-            selectedPlayerIndex,
-          }) => {
+          async ({ isHome, playerComboIndex, selectedPlayerIndex }) => {
             let getThePlayerId: getPlayerId;
             const leagueMatchKey = await setupDatabase((getPlayerId) => {
               getThePlayerId = getPlayerId;
@@ -541,7 +582,7 @@ describe("<LeagueMatchView/>", () => {
               }),
             );
 
-            const playerCombo = await findPlayerCombo(isHome, playerIndex);
+            const playerCombo = await findPlayerCombo(isHome, playerComboIndex);
             selectNthOption(playerCombo, selectedPlayerIndex + 1);
 
             waitFor(() => renderCount === 2);
@@ -555,7 +596,8 @@ describe("<LeagueMatchView/>", () => {
             const matchPlayerDetails = isHome
               ? homePlayerMatchDetails
               : awayPlayerMatchDetails;
-            const matchIndices = matchPlayerDetails[playerIndex].matchIndices;
+            const matchIndices =
+              matchPlayerDetails[playerComboIndex].matchIndices;
             currentMatchAndKeys.forEach(({ match }, index) => {
               if (index !== 9) {
                 if (!matchIndices.includes(index)) {
@@ -579,19 +621,145 @@ describe("<LeagueMatchView/>", () => {
         // not necessary to show that this may add doubles option -  see test doubles selection / available options
       });
       describe("deselecting a player", () => {
-        const deselectPlayerTests: SelectDeselectPlayerTest[] = [];
-        xit.each(deselectPlayerTests)(
-          "should remove player from all of the player matches  - $description",
-          async () => {
-            // check existing code for setting up all of the matches - the last uncommented test
-            // should be able to replace setUpMinimalMatchesForSelection that sets them all
-            // do not care about the players that have been selected
-            // will check the matchAndKeys - match player ids are not undefined for those unaffected
+        interface DeselectPlayerTest {
+          isHome: boolean;
+          playerComboIndex: number;
+        }
+        const deselectPlayerTests: DeselectPlayerTest[] = [
+          {
+            isHome: true,
+            playerComboIndex: 0,
+          },
+          {
+            isHome: true,
+            playerComboIndex: 1,
+          },
+          {
+            isHome: true,
+            playerComboIndex: 2,
+          },
+
+          {
+            isHome: false,
+            playerComboIndex: 0,
+          },
+          {
+            isHome: false,
+            playerComboIndex: 1,
+          },
+          {
+            isHome: false,
+            playerComboIndex: 2,
+          },
+        ];
+        it.each(deselectPlayerTests)(
+          "should remove player from all of the player matches  - $isHome, $playerComboIndex",
+          async ({ isHome, playerComboIndex }) => {
+            const leagueMatchKey = await setUpMatchesForSelection(
+              [true, true, true],
+              [true, true, true],
+            );
+
+            let renderCount = 0;
+            let currentMatchAndKeys: MatchAndKey[] = [];
+            render(
+              createApp(leagueMatchKey, (matchAndKeys) => {
+                currentMatchAndKeys = matchAndKeys;
+                renderCount++;
+                return null;
+              }),
+            );
+
+            const playerCombo = await findPlayerCombo(isHome, playerComboIndex);
+            clearOptions(playerCombo);
+
+            waitFor(() => renderCount === 2);
+            currentMatchAndKeys.forEach(({ match }, index) => {
+              if (index !== 9) {
+                const playerPositions = matchesPlayersPositions[index];
+                const playerPosition = isHome
+                  ? playerPositions.homePosition
+                  : playerPositions.awayPosition;
+                if (playerPosition === playerComboIndex) {
+                  const playerId = isHome
+                    ? match.team1Player1Id
+                    : match.team2Player1Id;
+                  const opponentId = isHome
+                    ? match.team2Player1Id
+                    : match.team1Player1Id;
+                  expect(opponentId).toBeDefined();
+                  expect(playerId).toBeUndefined();
+                } else {
+                  expect(match.team1Player1Id).toBeDefined();
+                  expect(match.team2Player1Id).toBeDefined();
+                }
+              }
+            });
           },
         );
 
-        // should be able to use the same setup for this
-        xit("should remove team doubles players when a player is deselected", () => {});
+        it.each(deselectPlayerTests)(
+          "should remove team doubles players when a player is deselected - $isHome, $playerComboIndex",
+          async ({ isHome, playerComboIndex }) => {
+            const leagueMatchKey = await setUpMatchesForSelection(
+              [true, true, true],
+              [true, true, true],
+              (doublesMatch, homeTeamPlayerIds, awayTeamPlayerIds) => {
+                const playerIds = isHome
+                  ? homeTeamPlayerIds
+                  : awayTeamPlayerIds;
+                const player1Id = playerIds[playerComboIndex]!;
+                const otherPlayerIds = playerIds.filter(
+                  (_, i) => i !== playerComboIndex,
+                );
+                const player2Id = otherPlayerIds[0]!;
+                if (isHome) {
+                  doublesMatch.team1Player1Id = player1Id;
+                  doublesMatch.team1Player2Id = player2Id;
+                } else {
+                  doublesMatch.team2Player1Id = player1Id;
+                  doublesMatch.team2Player2Id = player2Id;
+                }
+              },
+            );
+
+            let renderCount = 0;
+            let currentMatchAndKeys: MatchAndKey[] = [];
+            render(
+              createApp(leagueMatchKey, (matchAndKeys) => {
+                currentMatchAndKeys = matchAndKeys;
+                renderCount++;
+                return null;
+              }),
+            );
+
+            const playerCombo = await findPlayerCombo(isHome, playerComboIndex);
+            clearOptions(playerCombo);
+
+            waitFor(() => renderCount === 2);
+            currentMatchAndKeys.forEach(({ match }, index) => {
+              if (index !== 9) {
+                const playerPositions = matchesPlayersPositions[index];
+                const playerPosition = isHome
+                  ? playerPositions.homePosition
+                  : playerPositions.awayPosition;
+                if (playerPosition === playerComboIndex) {
+                  const playerId = isHome
+                    ? match.team1Player1Id
+                    : match.team2Player1Id;
+                  const opponentId = isHome
+                    ? match.team2Player1Id
+                    : match.team1Player1Id;
+                  expect(opponentId).toBeDefined();
+                  expect(playerId).toBeUndefined();
+                } else {
+                  expect(match.team1Player1Id).toBeDefined();
+                  expect(match.team2Player1Id).toBeDefined();
+                }
+              }
+            });
+          },
+        );
 
         // not necessary to show that this will remove doubles option -  see test doubles selection / available options
       });
@@ -672,7 +840,7 @@ describe("<LeagueMatchView/>", () => {
           "$description",
           async ({ isHome, selectedPlayers }) => {
             const allPlayersSelected = [true, true, true];
-            const leagueMatchKey = await setUpMinimalMatchesForSelection(
+            const leagueMatchKey = await setUpMatchesForSelection(
               allPlayersSelected,
               allPlayersSelected,
               (doublesMatch, homeTeamPlayerIds, awayTeamPlayerIds) => {
@@ -809,7 +977,7 @@ describe("<LeagueMatchView/>", () => {
             const awaySelectedPlayers = isHome
               ? [false, false, false]
               : selectedPlayers;
-            const leagueMatchKey = await setUpMinimalMatchesForSelection(
+            const leagueMatchKey = await setUpMatchesForSelection(
               homeSelectedPlayers,
               awaySelectedPlayers,
             );
@@ -830,20 +998,166 @@ describe("<LeagueMatchView/>", () => {
         );
       });
 
-      type DoublesPairIndex = 1 | 2 | 3;
+      type ZeroOneTwo = 0 | 1 | 2;
+      interface SelectDoublesTest {
+        isHome: boolean;
+        doublePairIndex: ZeroOneTwo;
+        expectedPlayer1Position: ZeroOneTwo;
+        expectedPlayer2Position: ZeroOneTwo;
+      }
       describe("selecting a doubles pair", () => {
-        const doublesPairIndices: DoublesPairIndex[] = [];
-        xit.each(doublesPairIndices)(
-          "should add players to doubles match - $description",
-          async () => {},
+        /*
+            const pairs: [number, number][] = [
+            [0, 1],
+            [0, 2],
+            [1, 2],
+      ];
+        */
+        const selectDoublesTests: SelectDoublesTest[] = [
+          {
+            isHome: true,
+            doublePairIndex: 0,
+            expectedPlayer1Position: 0,
+            expectedPlayer2Position: 1,
+          },
+          {
+            isHome: true,
+            doublePairIndex: 1,
+            expectedPlayer1Position: 0,
+            expectedPlayer2Position: 2,
+          },
+          {
+            isHome: true,
+            doublePairIndex: 2,
+            expectedPlayer1Position: 1,
+            expectedPlayer2Position: 2,
+          },
+
+          {
+            isHome: false,
+            doublePairIndex: 0,
+            expectedPlayer1Position: 0,
+            expectedPlayer2Position: 1,
+          },
+          {
+            isHome: false,
+            doublePairIndex: 1,
+            expectedPlayer1Position: 0,
+            expectedPlayer2Position: 2,
+          },
+          {
+            isHome: false,
+            doublePairIndex: 2,
+            expectedPlayer1Position: 1,
+            expectedPlayer2Position: 2,
+          },
+        ];
+        it.each(selectDoublesTests)(
+          "should add players to doubles match - $isHome, $doublePairIndex",
+          async ({
+            isHome,
+            doublePairIndex,
+            expectedPlayer1Position,
+            expectedPlayer2Position,
+          }) => {
+            let homeTeamPlayerIds: TeamPlayerIds = [
+              undefined,
+              undefined,
+              undefined,
+            ];
+            let awayTeamPlayerIds: TeamPlayerIds = [
+              undefined,
+              undefined,
+              undefined,
+            ];
+            const leagueMatchKey = await setUpMatchesForSelection(
+              [true, true, true],
+              [true, true, true],
+              (_, homePlayerIds, awayPlayerIds) => {
+                homeTeamPlayerIds = homePlayerIds;
+                awayTeamPlayerIds = awayPlayerIds;
+              },
+            );
+
+            let renderCount = 0;
+            let currentMatchAndKeys: MatchAndKey[] = [];
+            render(
+              createApp(leagueMatchKey, (matchAndKeys) => {
+                currentMatchAndKeys = matchAndKeys;
+                renderCount++;
+                return null;
+              }),
+            );
+
+            const doublesCombo = await findDoublesCombo(isHome);
+            selectNthOption(doublesCombo, doublePairIndex + 1);
+
+            waitFor(() => renderCount === 2);
+
+            const doublesMatch = currentMatchAndKeys[9].match;
+            if (isHome) {
+              expect(doublesMatch.team2Player1Id).toBeUndefined();
+              expect(doublesMatch.team2Player2Id).toBeUndefined();
+              expect(doublesMatch.team1Player1Id).toBe(
+                homeTeamPlayerIds[expectedPlayer1Position],
+              );
+              expect(doublesMatch.team1Player2Id).toBe(
+                homeTeamPlayerIds[expectedPlayer2Position],
+              );
+            } else {
+              expect(doublesMatch.team1Player1Id).toBeUndefined();
+              expect(doublesMatch.team1Player2Id).toBeUndefined();
+              expect(doublesMatch.team2Player1Id).toBe(
+                awayTeamPlayerIds[expectedPlayer1Position],
+              );
+              expect(doublesMatch.team2Player2Id).toBe(
+                awayTeamPlayerIds[expectedPlayer2Position],
+              );
+            }
+          },
         );
       });
 
       describe("deselecting a doubles pair", () => {
-        const doublesPairIndices: DoublesPairIndex[] = [];
-        xit.each(doublesPairIndices)(
+        it.each([true, false])(
           "should remove players from doubles match - $description",
-          async () => {},
+          async (isHome) => {
+            const leagueMatchKey = await setUpMatchesForSelection(
+              [true, true, true],
+              [true, true, true],
+              (doublesMatch, homePlayerIds, awayPlayerIds) => {
+                if (isHome) {
+                  doublesMatch.team1Player1Id = homePlayerIds[0]!;
+                  doublesMatch.team1Player2Id = homePlayerIds[1]!;
+                } else {
+                  doublesMatch.team2Player1Id = awayPlayerIds[0]!;
+                  doublesMatch.team2Player2Id = awayPlayerIds[1]!;
+                }
+              },
+            );
+
+            let renderCount = 0;
+            let currentMatchAndKeys: MatchAndKey[] = [];
+            render(
+              createApp(leagueMatchKey, (matchAndKeys) => {
+                currentMatchAndKeys = matchAndKeys;
+                renderCount++;
+                return null;
+              }),
+            );
+
+            const doublesCombo = await findDoublesCombo(isHome);
+            clearOptions(doublesCombo);
+
+            waitFor(() => renderCount === 2);
+
+            const doublesMatch = currentMatchAndKeys[9].match;
+
+            expect(doublesMatch.team1Player1Id).toBeUndefined();
+            expect(doublesMatch.team1Player2Id).toBeUndefined();
+            expect(doublesMatch.team2Player1Id).toBeUndefined();
+            expect(doublesMatch.team2Player2Id).toBeUndefined();
+          },
         );
       });
     });

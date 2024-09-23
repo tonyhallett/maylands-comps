@@ -2,14 +2,14 @@ import { fillArrayWithIndices } from "../../helpers/fillArray";
 
 export type MatchIndices = number[];
 
-export const getMatchPlayerIndices = (
+export const getMatchPlayerPositions = (
   homePlayersMatchIndices: MatchIndices[],
   awayPlayersMatchIndices: MatchIndices[],
 ) => {
   const numMatches =
     homePlayersMatchIndices.length * homePlayersMatchIndices[0].length;
   return fillArrayWithIndices(numMatches).map((i) => {
-    const getPlayerIndex = (isHome: boolean) => {
+    const getPlayerPosition = (isHome: boolean) => {
       const playersMatchIndices = isHome
         ? homePlayersMatchIndices
         : awayPlayersMatchIndices;
@@ -18,8 +18,8 @@ export const getMatchPlayerIndices = (
       );
     };
     return {
-      home: getPlayerIndex(true),
-      away: getPlayerIndex(false),
+      homePosition: getPlayerPosition(true),
+      awayPosition: getPlayerPosition(false),
     };
   });
 };

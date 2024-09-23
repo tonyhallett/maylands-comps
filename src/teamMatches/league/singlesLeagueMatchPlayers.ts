@@ -1,4 +1,4 @@
-import { MatchIndices } from "./getMatchPlayerIndices";
+import { MatchIndices } from "./getMatchPlayerPositions";
 
 export interface PlayerMatchDetails {
   matchIndices: MatchIndices;
