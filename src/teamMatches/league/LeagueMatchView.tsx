@@ -529,32 +529,12 @@ export function LeagueMatchSelection({
   const [showScoreboard, setShowScoreboard] = useState(false);
   const [leagueMatch, matchAndKeys] = useLeagueMatchAndMatches(leagueMatchId!);
   const [homeTeam, awayTeam] = useLeagueTeamsOnValue(leagueMatch);
-  const [awayTeamAvailablePlayers, retrievedAvailableAwayPlayers] =
-    useAvailablePlayers(awayTeam, leagueMatch?.isFriendly);
 
-  const sameClubAndFriendly: boolean | undefined =
-    leagueMatch?.isFriendly === undefined
-      ? undefined
-      : leagueMatch?.isFriendly === false
-        ? false
-        : homeTeam === undefined || awayTeam == undefined
-          ? undefined
-          : homeTeam.clubId === awayTeam.clubId;
-  const [homeTeamAvailablePlayers, retrievedAvailableHomePlayers] =
-    useAvailablePlayers(homeTeam, leagueMatch?.isFriendly, () => {
-      return sameClubAndFriendly === false;
-    });
-
-  const retrievedAvailablePlayers =
-    sameClubAndFriendly === undefined
-      ? false
-      : sameClubAndFriendly
-        ? retrievedAvailableAwayPlayers
-        : retrievedAvailableHomePlayers && retrievedAvailableAwayPlayers;
-
-  const actualHomeTeamAvailablePlayers = sameClubAndFriendly
-    ? awayTeamAvailablePlayers
-    : homeTeamAvailablePlayers;
+  const {
+    retrievedAvailablePlayers,
+    homeTeamAvailablePlayers,
+    awayTeamAvailablePlayers,
+  } = useAvailablePlayers(homeTeam, awayTeam, leagueMatch?.isFriendly);
 
   if (!(retrievedAvailablePlayers && matchAndKeys.length === numMatches)) {
     return <div>loading</div>;
@@ -573,7 +553,7 @@ export function LeagueMatchSelection({
 
     const getSelectedPlayers = (isHome: boolean) => {
       const teamAvailablePlayers = isHome
-        ? actualHomeTeamAvailablePlayers
+        ? homeTeamAvailablePlayers
         : awayTeamAvailablePlayers;
       return getSelectedTeamPlayerIdsFromMatches(isHome).map((playerId) => {
         const selectedPlayer = teamAvailablePlayers.find(
@@ -595,7 +575,7 @@ export function LeagueMatchSelection({
 
     const getAvailablePlayers = (isHome: boolean): AvailablePlayer[][] => {
       const teamAvailablePlayers = isHome
-        ? actualHomeTeamAvailablePlayers
+        ? homeTeamAvailablePlayers
         : awayTeamAvailablePlayers;
 
       const selectedTeamPlayers = isHome
@@ -879,7 +859,7 @@ export function LeagueMatchSelection({
             matchAndKeys,
             db,
             availablePlayersForSelection,
-            actualHomeTeamAvailablePlayers,
+            homeTeamAvailablePlayers,
             awayTeamAvailablePlayers,
           )}
         </section>

@@ -13,7 +13,7 @@ import {
 } from "../../firebase/rtb/typeHelpers";
 import { AvailablePlayer } from "./LeagueMatchView";
 
-export const useAvailablePlayers = (
+export const useTeamAvailablePlayers = (
   team: DbLeagueTeam | undefined,
   isFriendly: boolean | undefined,
   predicate = () => true,
@@ -96,4 +96,43 @@ export const useAvailablePlayers = (
     numAvailablePlayers.current > 0 &&
       numAvailablePlayers.current === availablePlayers.length,
   ] as const;
+};
+
+export const useAvailablePlayers = (
+  homeTeam: DbLeagueTeam | undefined,
+  awayTeam: DbLeagueTeam | undefined,
+  isFriendly: boolean | undefined,
+) => {
+  const [awayTeamAvailablePlayers, retrievedAvailableAwayPlayers] =
+    useTeamAvailablePlayers(awayTeam, isFriendly);
+
+  const sameClubAndFriendly: boolean | undefined =
+    isFriendly === undefined
+      ? undefined
+      : isFriendly === false
+        ? false
+        : homeTeam === undefined || awayTeam == undefined
+          ? undefined
+          : homeTeam.clubId === awayTeam.clubId;
+  const [homeTeamAvailablePlayers, retrievedAvailableHomePlayers] =
+    useTeamAvailablePlayers(homeTeam, isFriendly, () => {
+      return sameClubAndFriendly === false;
+    });
+
+  const retrievedAvailablePlayers =
+    sameClubAndFriendly === undefined
+      ? false
+      : sameClubAndFriendly
+        ? retrievedAvailableAwayPlayers
+        : retrievedAvailableHomePlayers && retrievedAvailableAwayPlayers;
+
+  const actualHomeTeamAvailablePlayers = sameClubAndFriendly
+    ? awayTeamAvailablePlayers
+    : homeTeamAvailablePlayers;
+
+  return {
+    retrievedAvailablePlayers,
+    homeTeamAvailablePlayers: actualHomeTeamAvailablePlayers,
+    awayTeamAvailablePlayers,
+  };
 };
