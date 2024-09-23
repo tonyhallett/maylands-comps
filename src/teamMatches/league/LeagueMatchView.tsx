@@ -116,6 +116,23 @@ interface UmpireViewInfo {
   matchState: MatchState;
 }
 
+function getMatchState(match: DbMatch) {
+  const saveState = dbMatchSaveStateToSaveState(match);
+  return new Umpire(saveState).getMatchState();
+}
+
+function getFullGameScores(matchState: MatchState) {
+  const gameScores = [...matchState.gameScores];
+
+  const matchWon = isMatchWon(matchState.matchWinState);
+  if (!matchWon) {
+    gameScores.push({
+      team1Points: matchState.team1Score.points,
+      team2Points: matchState.team2Score.points,
+    });
+  }
+}
+
 export function LeagueMatchViewRoute() {
   const params = useParams();
   return <LeagueMatchView leagueMatchId={params.leagueMatchId!} />;
@@ -132,7 +149,7 @@ export function LeagueMatchView({ leagueMatchId }: LeagueMatchIdProp) {
   );
 
   return (
-    <LeagueMatchViewX
+    <LeagueMatchSelection
       leagueMatchId={leagueMatchId}
       renderScoreboard={(
         matchAndKeys,
@@ -373,22 +390,11 @@ export function LeagueMatchView({ leagueMatchId }: LeagueMatchIdProp) {
                             index,
                           );
 
-                          const saveState = dbMatchSaveStateToSaveState(match);
-                          const matchState = new Umpire(
-                            saveState,
-                          ).getMatchState();
-                          const gameScores = [...matchState.gameScores];
-
-                          const matchWon = isMatchWon(matchState.matchWinState);
-                          if (!matchWon) {
-                            gameScores.push({
-                              team1Points: matchState.team1Score.points,
-                              team2Points: matchState.team2Score.points,
-                            });
-                          }
+                          const matchState = getMatchState(match);
+                          const gameScores = getFullGameScores(matchState);
                           const scoresDisplay = `${matchState.team1Score.games} - ${matchState.team2Score.games}`;
                           let winnerOrScoreDisplay = "";
-                          if (matchWon) {
+                          if (isMatchWon(matchState.matchWinState)) {
                             const team1Won =
                               matchState.matchWinState ===
                               MatchWinState.Team1Won;
@@ -505,7 +511,7 @@ export function LeagueMatchView({ leagueMatchId }: LeagueMatchIdProp) {
     />
   );
 }
-export interface LeagueMatchViewXProps extends LeagueMatchIdProp {
+export interface LeagueMatchSelectionProps extends LeagueMatchIdProp {
   renderScoreboard: (
     matchAndKeys: MatchAndKey[],
     db: Database,
@@ -515,10 +521,10 @@ export interface LeagueMatchViewXProps extends LeagueMatchIdProp {
   ) => React.ReactNode;
 }
 
-export function LeagueMatchViewX({
+export function LeagueMatchSelection({
   leagueMatchId,
   renderScoreboard,
-}: LeagueMatchViewXProps) {
+}: LeagueMatchSelectionProps) {
   const db = useRTB();
   const [showScoreboard, setShowScoreboard] = useState(false);
   const [leagueMatch, matchAndKeys] = useLeagueMatchAndMatches(leagueMatchId!);

@@ -8,8 +8,8 @@ import {
   getMaylandsCompRTB,
 } from "../src/firebase/rtb/rtbProvider";
 import {
-  LeagueMatchViewX,
-  LeagueMatchViewXProps,
+  LeagueMatchSelection,
+  LeagueMatchSelectionProps,
   MatchAndKey,
 } from "../src/teamMatches/league/LeagueMatchView";
 import { ref, set, update } from "firebase/database";
@@ -85,13 +85,13 @@ beforeEach(async () => {
 
 function createApp(
   leagueMatchId: string,
-  renderScoreboard: LeagueMatchViewXProps["renderScoreboard"] = () => null,
+  renderScoreboard: LeagueMatchSelectionProps["renderScoreboard"] = () => null,
 ) {
   return (
     <DatabaseProvider database={database}>
       <MaylandsThemeProvider>
         <CssBaseline enableColorScheme />
-        <LeagueMatchViewX
+        <LeagueMatchSelection
           leagueMatchId={leagueMatchId}
           renderScoreboard={renderScoreboard}
         />
