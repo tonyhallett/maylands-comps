@@ -46,7 +46,6 @@ import {
   findPlayerCombo,
   findScoresheet,
   findTeamsMatchPlayersSelectSection,
-  getPlayerCombo,
   getScoresheetPlayerIdentifier,
   teamMatchPlayersSelectSection,
 } from "./leagueMatchViewSelectors";
@@ -504,6 +503,46 @@ describe("<LeagueMatchView/> emulator", () => {
 
         xit("should not have a selected player in the available players for selection for the other player selections", async () => {});
       });
+
+      describe("selecting a player", () => {
+        interface SelectPlayerTest {
+          description: string;
+          isHome: boolean;
+          playerIndex: number;
+        }
+        const selectPlayerTest: SelectPlayerTest[] = [];
+        it.each(selectPlayerTest)(
+          "should add player to all of the player matches  - $description",
+          async () => {},
+        );
+
+        // not necessary as doubles options comes from the player matches ?
+        /* interface SelectPlayerCreatesDoublesOptionTest {}
+        const selectPlayerCreatesDoublesOptionTests: SelectPlayerCreatesDoublesOptionTest[] =
+          [];
+        it.each(selectPlayerCreatesDoublesOptionTests)(
+          "should add options to doubles selection - $description",
+          async () => {},
+        ); */
+      });
+      describe("deselecting a player", () => {
+        interface DeselectPlayerTest {
+          description: string;
+        }
+        const deselectPlayerTests: DeselectPlayerTest[] = [];
+        it.each(deselectPlayerTests)(
+          "should remove player from all of the player matches  - $description",
+          async () => {},
+        );
+
+        // not necessary as doubles options comes from the player matches ?
+        /* interface DeselectPlayerRemovesDoublesOptionTest {}
+        const deselectPlayerRemovesDoublesOptionTests: DeselectPlayerRemovesDoublesOptionTest[] =
+          [];
+        it.each(deselectPlayerRemovesDoublesOptionTests)(
+          "should remove options from doubles selection - $description",
+          async () => {}); */
+      });
     });
     describe("doubles selection", () => {
       describe("selected", () => {
@@ -611,7 +650,7 @@ describe("<LeagueMatchView/> emulator", () => {
           },
         );
       });
-      // todo - that the selected is true
+
       describe("available options", () => {
         interface DoublesPlayersSelectionTest {
           description: string;
@@ -738,11 +777,30 @@ describe("<LeagueMatchView/> emulator", () => {
           },
         );
       });
+
+      describe("selecting a doubles pair", () => {
+        interface SelectDoublesPairTest {
+          description: string;
+        }
+        const selectDoublesPairsTests: SelectDoublesPairTest[] = [];
+        it.each(selectDoublesPairsTests)(
+          "should add players to doubles match - $description",
+          async () => {},
+        );
+      });
+
+      describe("deselecting a doubles pair", () => {
+        interface DeselectDoublesPairTest {
+          description: string;
+        }
+        const deselectedDoublesPairsTests: DeselectDoublesPairTest[] = [];
+        it.each(deselectedDoublesPairsTests)(
+          "should remove players from doubles match - $description",
+          async () => {},
+        );
+      });
     });
   });
-
-  // not sure if need to check that selecting a player results in the player being selected in the combo
-  // have already shown that fills from matches - no if show elsewhere that match.player1Id changes....
 
   type ExpectedScoresheetPlayersIdentifier = {
     home: string;
@@ -857,21 +915,4 @@ describe("<LeagueMatchView/> emulator", () => {
       expectedScoresheetPlayersIdentifiers,
     );
   });
-
-  xit("should update all of the player matches when a player is selected", async () => {
-    // should be able to as an each
-    const leagueMatchKey = await setupDatabase();
-    render(createApp(leagueMatchKey));
-
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const scoresheet = await findScoresheet();
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const playerXCombo = getPlayerCombo(true, 0);
-  });
-
-  // selecting a player results in the player being selected in all of the matches that they are in
-  // deselecting a player results in the player being deselected in all of the matches that they are in
-  // including doubles - which will remove from doubles selection
-
-  // doubles available options
 });
