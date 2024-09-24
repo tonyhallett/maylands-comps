@@ -10,7 +10,7 @@ export interface AvailableDoubles {
   player2PositionIdentifier: string;
 }
 
-interface TeamDoublesSelectProps {
+export interface TeamDoublesSelectProps {
   availableDoubles: AvailableDoubles[];
   selectedDoubles: AvailableDoubles | null;
   disabled?: boolean;
@@ -22,7 +22,7 @@ export const getDoublesSelectAriaLabel = (isHome: boolean) => {
   return isHome ? "home-doubles-select" : "away-doubles-select";
 };
 
-function TeamDoublesSelect({
+export function TeamDoublesSelect({
   availableDoubles,
   selectedDoubles,
   disabled = false,

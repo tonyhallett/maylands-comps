@@ -4,6 +4,7 @@ import { refTyped } from "../../firebase/rtb/root";
 import { setTyped } from "../../firebase/rtb/typeHelpers";
 import {
   Box,
+  Button,
   Dialog,
   DialogContent,
   DialogTitle,
@@ -167,8 +168,18 @@ export function LeagueMatchView({ leagueMatchId }: { leagueMatchId: string }) {
               }}
             >
               <TableCell>{index}</TableCell>
-              {getPlayerCell(home, true)}
-              {getPlayerCell(away, false)}
+              {getPlayerCell(
+                home,
+                true,
+                matchState.server,
+                matchState.receiver,
+              )}
+              {getPlayerCell(
+                away,
+                false,
+                matchState.server,
+                matchState.receiver,
+              )}
               {getGameScoresDisplay(
                 gameScores,
                 teamsMatchScoreState,
@@ -186,7 +197,7 @@ export function LeagueMatchView({ leagueMatchId }: { leagueMatchId: string }) {
             >
               <DialogTitle>{`Options for game ${selectedMatchIndex! + 1}`}</DialogTitle>
               <DialogContent>
-                <button
+                <Button
                   onClick={() => {
                     const umpireUpdates: UmpireUpdate[] = [
                       {
@@ -205,29 +216,9 @@ export function LeagueMatchView({ leagueMatchId }: { leagueMatchId: string }) {
                   }}
                 >
                   Umpire game
-                </button>
+                </Button>
               </DialogContent>
             </Dialog>
-            <Box sx={{ width: "100%" }}>
-              <Paper sx={{ width: "100%", mb: 2 }}>
-                <TableContainer>
-                  <Table size="small">
-                    <TableHead>
-                      <TableRow>
-                        <TableCell>O</TableCell>
-                        <TableCell>H</TableCell>
-                        <TableCell>A</TableCell>
-                        <TableCell padding="none" colSpan={5}>
-                          Scores
-                        </TableCell>
-                        <TableCell>Res</TableCell>
-                      </TableRow>
-                    </TableHead>
-                    <TableBody>{rows}</TableBody>
-                  </Table>
-                </TableContainer>
-              </Paper>
-            </Box>
             {umpireMatchIndex !== undefined && (
               <UmpireView
                 autoShowServerReceiverChooser={false}
@@ -263,6 +254,26 @@ export function LeagueMatchView({ leagueMatchId }: { leagueMatchId: string }) {
                 {...umpireViewInfo!.playerNames}
               />
             )}
+            <Box sx={{ width: "100%" }}>
+              <Paper sx={{ width: "100%", mb: 2 }}>
+                <TableContainer>
+                  <Table size="small">
+                    <TableHead>
+                      <TableRow>
+                        <TableCell>O</TableCell>
+                        <TableCell>H</TableCell>
+                        <TableCell>A</TableCell>
+                        <TableCell padding="none" colSpan={5}>
+                          Scores
+                        </TableCell>
+                        <TableCell>Res</TableCell>
+                      </TableRow>
+                    </TableHead>
+                    <TableBody>{rows}</TableBody>
+                  </Table>
+                </TableContainer>
+              </Paper>
+            </Box>
           </>
         );
       }}

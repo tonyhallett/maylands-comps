@@ -8,9 +8,9 @@ import {
 } from "./singlesLeagueMatchPlayers";
 import { Root } from "../../firebase/rtb/root";
 import { createTypedValuesUpdater } from "../../firebase/rtb/typeHelpers";
-import { TeamsMatchPlayersSelect } from "../teamMatchPlayerSelect";
+
 import { useRTB } from "../../firebase/rtb/rtbProvider";
-import { AvailableDoubles, DoublesSelect } from "./DoublesSelect";
+import { AvailableDoubles } from "./DoublesSelect";
 import {
   MatchAndKey,
   useLeagueMatchAndMatches,
@@ -30,6 +30,8 @@ import {
   RenderScoreboard,
   SelectedOrNotSinglePlayerNamePositionDisplay,
 } from "./renderScoreboard";
+import { TeamsSelectPlayersAndDoubles } from "./TeamsSelectPlayersAndDoubles";
+import { Button } from "@mui/material";
 
 export interface LeagueMatchSelectionProps {
   renderScoreboard: RenderScoreboard;
@@ -431,65 +433,71 @@ export function LeagueMatchSelection({
     keyedDoublesMatchNamesPositionDisplay,
   } = getMatchNamePositionDisplays();
 
+  const getTeamNameDisplay = (isHome: boolean) => {
+    const teamName = isHome ? homeTeam!.name : awayTeam!.name;
+    // would use mui media queries - which can mock
+    // todo
+    return teamName;
+  };
   return (
     <>
       <div style={{ margin: 10 }}>
-        <TeamsMatchPlayersSelect<AvailablePlayer>
+        <TeamsSelectPlayersAndDoubles<AvailablePlayer>
           autoCompleteProps={{
             autoComplete: true, // !!! does not appear to be working
-
             /*
-            If true, the portion of the selected suggestion that the user hasn't typed, known as the completion string,
-            appears inline after the input cursor in the textbox.
-            The inline completion string is visually highlighted and has a selected state.
-        */
-            autoHighlight: true, //	If true, the first option is automatically highlighted.
-            clearOnEscape: true,
-          }}
-          homeTeam={{
-            teamName: homeTeam!.name,
-            labels: homeTeamSelectLabels,
-            availablePlayers:
-              availablePlayersForSelection.homeTeamAvailablePlayers,
-            selectedPlayers:
-              availablePlayersForSelection.selectedHomeTeamPlayers,
-            playerSelected: (player, position) =>
-              playerSelected(true, player, position),
-          }}
-          awayTeam={{
-            teamName: awayTeam!.name,
-            labels: awayTeamSelectLabels,
-            availablePlayers:
-              availablePlayersForSelection.awayTeamAvailablePlayers,
-            selectedPlayers:
-              availablePlayersForSelection.selectedAwayTeamPlayers,
-            playerSelected: (player, position) =>
-              playerSelected(false, player, position),
-          }}
-        />
-        <DoublesSelect
-          autoCompleteProps={{
-            autoComplete: true,
+                If true, the portion of the selected suggestion that the user hasn't typed, known as the completion string,
+                appears inline after the input cursor in the textbox.
+                The inline completion string is visually highlighted and has a selected state.
+            */
             autoHighlight: true,
-            clearOnEscape: true,
+            clearOnEscape: true, //	If true, the first option is automatically highlighted.
           }}
           home={{
-            availableDoubles: availablePlayersForSelection.homeAvailableDoubles,
-            selectedDoubles: availablePlayersForSelection.selectedHomeDoubles,
-            onChange(availableDoubles) {
-              doublesSelected(true, availableDoubles);
+            teamName: getTeamNameDisplay(true),
+            singles: {
+              labels: homeTeamSelectLabels,
+              availablePlayers:
+                availablePlayersForSelection.homeTeamAvailablePlayers,
+              selectedPlayers:
+                availablePlayersForSelection.selectedHomeTeamPlayers,
+              playerSelected: (player, position) =>
+                playerSelected(true, player, position),
             },
+            doubles: {
+              availableDoubles:
+                availablePlayersForSelection.homeAvailableDoubles,
+              selectedDoubles: availablePlayersForSelection.selectedHomeDoubles,
+              onChange(availableDoubles) {
+                doublesSelected(true, availableDoubles);
+              },
+            },
+            isHome: true,
           }}
           away={{
-            availableDoubles: availablePlayersForSelection.awayAvailableDoubles,
-            selectedDoubles: availablePlayersForSelection.selectedAwayDoubles,
-            onChange(availableDoubles) {
-              doublesSelected(false, availableDoubles);
+            teamName: getTeamNameDisplay(false),
+            singles: {
+              labels: awayTeamSelectLabels,
+              availablePlayers:
+                availablePlayersForSelection.awayTeamAvailablePlayers,
+              selectedPlayers:
+                availablePlayersForSelection.selectedAwayTeamPlayers,
+              playerSelected: (player, position) =>
+                playerSelected(false, player, position),
             },
+            doubles: {
+              availableDoubles:
+                availablePlayersForSelection.awayAvailableDoubles,
+              selectedDoubles: availablePlayersForSelection.selectedAwayDoubles,
+              onChange(availableDoubles) {
+                doublesSelected(false, availableDoubles);
+              },
+            },
+            isHome: false,
           }}
         />
-        <br />
-        <button onClick={() => setShowScoreboard(true)}>Scoreboard</button>
+
+        <Button onClick={() => setShowScoreboard(true)}>Scoreboard</Button>
         <section aria-label={scoresheetAriaLabel}>
           {renderScoreboard(
             matchAndKeys.map((matchAndKey) => {

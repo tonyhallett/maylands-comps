@@ -15,7 +15,7 @@ export const getGameScoreCell = (
     );
   };
   return (
-    <TableCell padding="none" key={i}>
+    <TableCell align="right" style={{ minWidth: "2em" }} padding="none" key={i}>
       <table>
         <tbody>
           {getGameRow(gameScoreDisplay.home)}

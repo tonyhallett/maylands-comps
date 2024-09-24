@@ -1,6 +1,7 @@
 import { MatchState } from "../../umpire";
 import { hasScored } from "../../umpire/matchStateHelpers";
 import { TeamSelectionDisplay } from "./getMatchTeamSelectionDisplays";
+import { getSimpleTeamDisplay } from "./getPlayerCell";
 import {
   MatchScoreState,
   TeamsMatchScoreState,
@@ -16,15 +17,6 @@ export interface ResultsDisplay {
   away: TeamGamesWonDisplay;
   winner?: string;
 }
-
-export const getWinnerDisplay = (
-  winner: string,
-  isDoubles: boolean,
-  isHome: boolean,
-) => {
-  const doublesWinner = isHome ? "H" : "A";
-  return isDoubles ? doublesWinner : winner;
-};
 
 export const getResultsDisplay = (
   home: TeamSelectionDisplay,
@@ -45,11 +37,11 @@ export const getResultsDisplay = (
         games: matchState.team2Score.games,
         state: teamsMatchScoreState.away,
       },
-      winner: getWinnerDisplay(
-        team1Won ? home.display : away.display,
-        isDoubles,
-        team1Won,
-      ),
+      winner: isDoubles
+        ? team1Won
+          ? "H"
+          : "A"
+        : getSimpleTeamDisplay(team1Won ? home : away),
     };
   }
 

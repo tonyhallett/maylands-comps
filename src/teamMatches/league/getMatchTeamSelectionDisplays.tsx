@@ -7,7 +7,8 @@ import {
 } from "./renderScoreboard";
 
 export interface TeamSelectionDisplay {
-  display: string;
+  player1: string;
+  player2?: string;
   selected: boolean;
 }
 
@@ -28,12 +29,12 @@ export const getMatchTeamSelectionDisplays = (
       if (nameOrPositionIdentifier.name !== undefined) {
         return {
           //todo - being distinct
-          display: getInitials(nameOrPositionIdentifier.name),
+          player1: getInitials(nameOrPositionIdentifier.name),
           selected: true,
         };
       }
       return {
-        display: nameOrPositionIdentifier.positionDisplay,
+        player1: nameOrPositionIdentifier.positionDisplay,
         selected: false,
       };
     };
@@ -49,14 +50,15 @@ export const getMatchTeamSelectionDisplays = (
       ? keyedDoublesMatchNamesPositionDisplay.homePlayer1
       : keyedDoublesMatchNamesPositionDisplay.awayPlayer1;
     if (player1NameAndPositionIdentifier === undefined) {
-      return { display: "-", selected: false };
+      return { player1: "-", player2: "-", selected: false };
     }
     const player2NameAndPositionIdentifier = isHome
       ? keyedDoublesMatchNamesPositionDisplay.homePlayer2
       : keyedDoublesMatchNamesPositionDisplay.awayPlayer2;
 
     return {
-      display: `${player1NameAndPositionIdentifier.positionDisplay} ${player2NameAndPositionIdentifier?.positionDisplay}`,
+      player1: player1NameAndPositionIdentifier.positionDisplay,
+      player2: player2NameAndPositionIdentifier!.positionDisplay,
       selected: true,
     };
   };

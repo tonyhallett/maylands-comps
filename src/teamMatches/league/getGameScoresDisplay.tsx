@@ -38,7 +38,7 @@ export const getGameScoresDisplay = (
 ): GameScoreDisplay[] => {
   return fillArray(5, (i) => {
     const defaultPointsInfo: PointsInfo = {
-      display: "--",
+      display: "-",
       state: GameScorePointState.Normal,
     };
     let gameScoreDisplay: GameScoreDisplay = {
@@ -55,7 +55,6 @@ export const getGameScoresDisplay = (
     const useDefault =
       gameScore === undefined ||
       (firstGameAndNoPointsScored() && umpired === undefined);
-    console.log(`umpired ${umpired}`);
     if (!useDefault) {
       const homeGameScoreDisplay = gameScore.team1Points.toString();
       const awayGameScoreDisplay = gameScore.team2Points.toString();
