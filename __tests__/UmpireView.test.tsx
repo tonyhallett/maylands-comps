@@ -9,7 +9,7 @@ import {
   PlayerNames,
   UmpireView,
 } from "../src/umpireView";
-import { MatchWinState } from "../src/umpire/getMatchWinState";
+import { MatchWinState } from "../src/umpire/matchWinState";
 import * as matchers from "@testing-library/jest-dom/matchers";
 import { expect as jestExpect } from "@jest/globals";
 import { MatchState, Player, TeamScores } from "../src/umpire";

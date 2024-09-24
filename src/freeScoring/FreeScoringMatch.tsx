@@ -2,7 +2,7 @@ import { MatchState, SaveState, Umpire } from "../umpire";
 import { MatchInfo, PlayerNames, UmpireView } from "../umpireView";
 import { usePostJson } from "./hooks/usePostJson";
 import { StatsView } from "../statsViews/StatsView";
-import { isMatchWon } from "../umpire/getMatchWinState";
+import { isMatchWon } from "../umpire/matchWinState";
 import { getTeamInitials } from "../umpireView/helpers";
 import { useRef } from "react";
 import { useLoaderDataOnce } from "./hooks/useLoaderDataOnce";

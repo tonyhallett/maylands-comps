@@ -8,12 +8,12 @@ import {
   shiftInCycle,
 } from "../src/umpire/getServerReceiver";
 import { getInitialServerReceiverForGame } from "../src/umpire/getInitialServerReceiverForGame";
+import { MatchWinState } from "../src/umpire/matchWinState";
 import {
-  MatchWinState,
   MatchWinStateOptions,
   MatchWinStatus,
   getMatchWinStatus,
-} from "../src/umpire/getMatchWinState";
+} from "../src/umpire/getMatchWinStatus";
 import {
   GameScore,
   MatchState,

@@ -9,7 +9,7 @@ import {
   isMatchPointTeam2,
   isMatchWon,
   MatchWinState,
-} from "../umpire/getMatchWinState";
+} from "../umpire/matchWinState";
 import { Box, Card } from "@mui/material";
 import { EndsDialog } from "./dialogs/EndsDialog";
 import {

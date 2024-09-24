@@ -8,7 +8,11 @@ import {
   onChildAddedTyped,
   onChildChangedTyped,
 } from "../../firebase/rtb/typeHelpers";
-import { MatchAndKey } from "./LeagueMatchView";
+import { DbMatch } from "../../firebase/rtb/match/dbMatch";
+export interface MatchAndKey {
+  match: DbMatch;
+  key: string;
+}
 
 export const useLeagueMatchAndMatches = (leagueMatchId: string) => {
   const matchesRef = useMatchesRef();

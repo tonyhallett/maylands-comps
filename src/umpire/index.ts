@@ -1,9 +1,6 @@
 import { getLast, isEven } from "./helpers";
-import {
-  MatchWinState,
-  MatchWinStatus,
-  getMatchWinStatus,
-} from "./getMatchWinState";
+import { MatchWinState } from "./matchWinState";
+import { MatchWinStatus, getMatchWinStatus } from "./getMatchWinStatus";
 import { requiredGamesToWin } from "./requiredGamesToWin";
 import {
   InitialServersDoublesReceiver,

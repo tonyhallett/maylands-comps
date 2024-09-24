@@ -4,20 +4,23 @@ import {
   teamsMatchPlayersSelectSectionLabel,
 } from "../src/teamMatches/teamMatchPlayerSelect";
 import { roleSelectorFactory } from "../test-helpers/testing-library/selectors/roleSelectorFactory";
-import {
-  awayTeamSelectLabels,
-  getScoresheetGameAriaLabel,
-  homeTeamSelectLabels,
-  scoresheetAriaLabel,
-  scoresheetGameAwayPlayerAriaLabel,
-  scoresheetGameHomePlayerAriaLabel,
-} from "../src/teamMatches/league/LeagueMatchView";
+
 import { from } from "../test-helpers/testing-library/from";
 import { getDoublesSelectAriaLabel } from "../src/teamMatches/league/DoublesSelect";
 import {
   clearOptions,
   openAutocompleteAndGetOptions,
 } from "../test-helpers/mui/autocomplete";
+import {
+  awayTeamSelectLabels,
+  homeTeamSelectLabels,
+  scoresheetAriaLabel,
+} from "../src/teamMatches/league/LeagueMatchSelection";
+import { getScoresheetGameAriaLabel } from "../src/teamMatches/league/LeagueMatchView";
+import {
+  scoresheetGameAwayPlayerAriaLabel,
+  scoresheetGameHomePlayerAriaLabel,
+} from "../src/teamMatches/league/getPlayerCell";
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 export const findTeamsMatchPlayersSelectSection = () =>

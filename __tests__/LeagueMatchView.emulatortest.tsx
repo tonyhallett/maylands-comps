@@ -10,8 +10,7 @@ import {
 import {
   LeagueMatchSelection,
   LeagueMatchSelectionProps,
-  MatchAndKey,
-} from "../src/teamMatches/league/LeagueMatchView";
+} from "../src/teamMatches/league/LeagueMatchSelection";
 import { ref, set, update } from "firebase/database";
 import {
   screen,
@@ -57,6 +56,7 @@ import { fillArrayWithIndices } from "../src/helpers/fillArray";
 import { getPlayerComboInputs } from "./leagueMatchViewSelectors";
 import { findDoublesCombo } from "./leagueMatchViewSelectors";
 import { openPlayerAutocompleteAndGetOptions } from "./leagueMatchViewSelectors";
+import { MatchAndKey } from "../src/teamMatches/league/useLeagueMatchAndMatches";
 
 // mocking due to import.meta.url
 jest.mock(

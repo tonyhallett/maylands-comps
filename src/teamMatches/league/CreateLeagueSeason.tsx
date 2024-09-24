@@ -1,9 +1,6 @@
 import { ref, update } from "firebase/database";
 import { useEffect } from "react";
-import {
-  saveStateToDbMatchSaveState,
-  DBMatchSaveState,
-} from "../../firebase/rtb/match/conversion";
+import { DBMatchSaveState } from "../../firebase/rtb/match/conversion";
 import { DbMatch } from "../../firebase/rtb/match/dbMatch";
 import { DbPlayer } from "../../firebase/rtb/players";
 import { useRTB } from "../../firebase/rtb/rtbProvider";
@@ -28,6 +25,7 @@ import {
   useTeamsRef,
 } from "../../firebase/rtb/root";
 import { clubSetups, maylandsFixtures } from "./romfordLeagueData";
+import { getDbMatchSaveStateFromUmpire } from "../../firebase/rtb/match/helpers";
 
 export function CreateLeagueSeason() {
   const db = useRTB();
@@ -125,8 +123,7 @@ export function CreateLeagueSeason() {
           },
           isDoubles,
         );
-        const umpireSaveState = umpire.getSaveState();
-        return saveStateToDbMatchSaveState(umpireSaveState);
+        return getDbMatchSaveStateFromUmpire(umpire);
       };
       const singlesMatchSaveState = getDbMatchSaveState(false);
       const addMatch = (dbMatchSaveState: DBMatchSaveState) => {

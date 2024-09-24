@@ -9,7 +9,7 @@ import MGLogo from "./MaylandsTheming/MGSVGLogo";
 import MaylandsThemeProvider from "./MaylandsTheming/MaylandsThemeProvider";
 import freeScoringRoute from "./freeScoring/route";
 import { DatabaseProvider } from "./firebase/rtb/rtbProvider";
-import { LeagueMatchViewRoute } from "./teamMatches/league/LeagueMatchView";
+import { LeagueMatchViewRoute } from "./teamMatches/league/LeagueMatchViewRoute";
 import { CreateLeagueSeason } from "./teamMatches/league/CreateLeagueSeason";
 import { LeagueMatchLinks } from "./teamMatches/league/LeagueMatchLinks";
 
