@@ -6,9 +6,6 @@ import {
   homePlayerMatchDetails,
   singlesLeagueMatchPositionDisplays,
 } from "./singlesLeagueMatchPlayers";
-import { Root } from "../../firebase/rtb/root";
-import { createTypedValuesUpdater } from "../../firebase/rtb/typeHelpers";
-
 import { useRTB } from "../../firebase/rtb/rtbProvider";
 import { AvailableDoubles } from "./DoublesSelect";
 import {
@@ -32,6 +29,7 @@ import {
 } from "./renderScoreboard";
 import { TeamsSelectPlayersAndDoubles } from "./TeamsSelectPlayersAndDoubles";
 import { Button } from "@mui/material";
+import { createRootUpdater } from "../../firebase/rtb/match/helpers";
 
 export interface LeagueMatchSelectionProps {
   renderScoreboard: RenderScoreboard;
@@ -272,7 +270,7 @@ export function LeagueMatchSelection({
         (index) => matchAndKeys[index],
       );
     };
-    const updater = createTypedValuesUpdater<Root>();
+    const updater = createRootUpdater();
     const updatePlayerSinglesMatches = () => {
       getPlayerSinglesMatches(isHome, position).forEach((matchAndKey) => {
         const playerId = player?.playerId ?? null;
@@ -326,7 +324,7 @@ export function LeagueMatchSelection({
     availableDoubles: AvailableDoubles | null,
   ) => {
     const doublesMatchKey = matchAndKeys[matchAndKeys.length - 1].key;
-    const updater = createTypedValuesUpdater<Root>();
+    const updater = createRootUpdater();
     const player1Id = availableDoubles ? availableDoubles.player1Id : null;
     const player2Id = availableDoubles ? availableDoubles.player2Id : null;
     const playersKeys = getTeamDoublesPlayerKeys(isHome);

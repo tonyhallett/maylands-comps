@@ -21,6 +21,7 @@ const getGamesWonDisplay = (teamGamesWonDisplay: TeamGamesWonDisplay) => {
   return (
     <span
       style={{
+        whiteSpace: "nowrap",
         color: getMatchScoreStateColor(teamGamesWonDisplay.state),
       }}
     >
@@ -38,7 +39,8 @@ export const getResultsCell = (resultsDisplay: ResultsDisplay | undefined) => {
           <div>{resultsDisplay.winner}</div>
         )}
         <div>
-          {getGamesWonDisplay(resultsDisplay.home)} -{" "}
+          {getGamesWonDisplay(resultsDisplay.home)}
+          <span style={{ whiteSpace: "nowrap" }}> - </span>
           {getGamesWonDisplay(resultsDisplay.away)}
         </div>
       </>

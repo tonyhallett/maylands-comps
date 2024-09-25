@@ -19,11 +19,8 @@ import {
   within,
   fireEvent,
 } from "@testing-library/react";
-import {
-  createTypedValuesUpdater,
-  getNewKey,
-} from "../src/firebase/rtb/typeHelpers";
-import { Root, refTyped } from "../src/firebase/rtb/root";
+import { getNewKey } from "../src/firebase/rtb/typeHelpers";
+import { refTyped } from "../src/firebase/rtb/root";
 import {
   clearOptions,
   openAutocompleteAndGetOptions,
@@ -57,6 +54,7 @@ import { getPlayerComboInputs } from "./leagueMatchViewSelectors";
 import { findDoublesCombo } from "./leagueMatchViewSelectors";
 import { openPlayerAutocompleteAndGetOptions } from "./leagueMatchViewSelectors";
 import { MatchAndKey } from "../src/teamMatches/league/useLeagueMatchAndMatches";
+import { createRootUpdater } from "../src/firebase/rtb/match/helpers";
 
 // mocking due to import.meta.url
 jest.mock(
@@ -177,7 +175,7 @@ describe("<LeagueMatchView/>", () => {
     awayTeamName = defaultAwayTeamName,
     isFriendly = false,
   ) {
-    const updater = createTypedValuesUpdater<Root>();
+    const updater = createRootUpdater();
     const updateClub = (leagueClub: DbLeagueClub) => {
       const newClubKey = getNewKey(clubsRef);
       updater.updateListItem("clubs", newClubKey, leagueClub);

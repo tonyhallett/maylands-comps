@@ -4,7 +4,7 @@ import {
   TeamMatchPlayersSelect,
   TeamSelectProps,
 } from "../teamMatchPlayerSelect";
-import { FirtyFity } from "../../layoutComponents/FirtyFity";
+import { FiftyFifty } from "../../layoutComponents/FiftyFifty";
 import { TeamDoublesSelect, TeamDoublesSelectProps } from "./DoublesSelect";
 import { Card } from "@mui/material";
 
@@ -35,33 +35,18 @@ export function TeamSelectPlayersAndDoubles<TPlayer extends SelectablePlayer>({
   teamName,
 }: TeamSelectPlayersAndDoublesProps<TPlayer>) {
   return (
-    <section
-      style={{
-        marginLeft: isHome ? undefined : "2px",
-        marginRight: isHome ? "2px" : undefined,
-      }}
-      aria-label={getTeamSelectPlayersAndDoublesAriaLabel(isHome)}
-    >
-      <Card sx={{ padding: "0 10px" }}>
-        <h3
-          style={{
-            whiteSpace: "nowrap",
-            textOverflow: "ellipsis",
-          }}
-        >
-          {teamName}
-        </h3>
-        <TeamMatchPlayersSelect<TPlayer>
-          {...singles}
-          isHome={isHome}
-          autoCompleteProps={autoCompleteProps}
-        />
-        <TeamDoublesSelect
-          {...doubles}
-          isHome={isHome}
-          autoCompleteProps={autoCompleteProps}
-        />
-      </Card>
+    <section aria-label={getTeamSelectPlayersAndDoublesAriaLabel(isHome)}>
+      <h3>{teamName}</h3>
+      <TeamMatchPlayersSelect<TPlayer>
+        {...singles}
+        isHome={isHome}
+        autoCompleteProps={autoCompleteProps}
+      />
+      <TeamDoublesSelect
+        {...doubles}
+        isHome={isHome}
+        autoCompleteProps={autoCompleteProps}
+      />
     </section>
   );
 }
@@ -72,21 +57,27 @@ export function TeamsSelectPlayersAndDoubles<TPlayer extends SelectablePlayer>({
   autoCompleteProps = {},
 }: TeamsSelectPlayersAndDoublesProps<TPlayer>) {
   return (
-    <FirtyFity
-      left={
-        <TeamSelectPlayersAndDoubles<TPlayer>
-          autoCompleteProps={autoCompleteProps}
-          {...home}
-          isHome={true}
-        />
-      }
-      right={
-        <TeamSelectPlayersAndDoubles<TPlayer>
-          autoCompleteProps={autoCompleteProps}
-          {...away}
-          isHome={false}
-        />
-      }
-    />
+    <Card
+      sx={{
+        padding: 1,
+      }}
+    >
+      <FiftyFifty
+        left={
+          <TeamSelectPlayersAndDoubles<TPlayer>
+            autoCompleteProps={autoCompleteProps}
+            {...home}
+            isHome={true}
+          />
+        }
+        right={
+          <TeamSelectPlayersAndDoubles<TPlayer>
+            autoCompleteProps={autoCompleteProps}
+            {...away}
+            isHome={false}
+          />
+        }
+      />
+    </Card>
   );
 }

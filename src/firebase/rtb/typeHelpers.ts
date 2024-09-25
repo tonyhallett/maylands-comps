@@ -79,6 +79,9 @@ type WithoutUndefined<T> = {
   [K in keyof T]: Exclude<T[K], undefined>;
 };
 type WithNullsWithoutUndefined<T> = WithNulls<WithoutUndefined<T>>;
+export type PartialWithNullsWithoutUndefined<T> = Partial<
+  WithNullsWithoutUndefined<T>
+>;
 export const createTypedValuesUpdater = <TRoot>() => {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const values = {} as any;
@@ -92,8 +95,8 @@ export const createTypedValuesUpdater = <TRoot>() => {
   const updateListItem = <TPath extends Paths<Root>>(
     path: TPath,
     itemId: string,
-    value: Partial<
-      WithNullsWithoutUndefined<RecordType<PathValue<TRoot, TPath>>>
+    value: PartialWithNullsWithoutUndefined<
+      RecordType<PathValue<TRoot, TPath>>
     >,
   ) => {
     Object.entries(value).forEach(([key, value]) => {

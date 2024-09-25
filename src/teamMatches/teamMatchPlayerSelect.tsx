@@ -1,6 +1,6 @@
 import { Autocomplete, AutocompleteProps, TextField } from "@mui/material";
 import { fillArray, fillArrayWithIndices } from "../helpers/fillArray";
-import { FirtyFity } from "../layoutComponents/FirtyFity";
+import { FiftyFifty } from "../layoutComponents/FiftyFifty";
 
 interface TeamsMatchPlayersSelectProps<
   TPlayer extends SelectablePlayer = SelectablePlayer,
@@ -59,7 +59,7 @@ export function TeamsMatchPlayersSelect<
 }: TeamsMatchPlayersSelectProps<TPlayer>) {
   return (
     <section aria-label={teamsMatchPlayersSelectSectionLabel}>
-      <FirtyFity
+      <FiftyFifty
         left={
           <TeamMatchPlayersSelect<TPlayer>
             {...homeTeam}

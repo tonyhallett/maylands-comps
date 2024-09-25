@@ -12,12 +12,8 @@ import {
 } from "../../firebase/rtb/team";
 import { Umpire } from "../../umpire";
 import { getSimpleToday } from "../../helpers/getSimpleToday";
+import { getNewKey } from "../../firebase/rtb/typeHelpers";
 import {
-  createTypedValuesUpdater,
-  getNewKey,
-} from "../../firebase/rtb/typeHelpers";
-import {
-  Root,
   useClubsRef,
   useLeagueMatchesRef,
   usePlayersRef,
@@ -25,7 +21,10 @@ import {
   useTeamsRef,
 } from "../../firebase/rtb/root";
 import { clubSetups, maylandsFixtures } from "./romfordLeagueData";
-import { getDbMatchSaveStateFromUmpire } from "../../firebase/rtb/match/helpers";
+import {
+  createRootUpdater,
+  getDbMatchSaveStateFromUmpire,
+} from "../../firebase/rtb/match/helpers";
 
 export function CreateLeagueSeason() {
   const db = useRTB();
@@ -36,7 +35,7 @@ export function CreateLeagueSeason() {
   const teamsRef = useTeamsRef();
   const playersRef = usePlayersRef();
   useEffect(() => {
-    const updater = createTypedValuesUpdater<Root>();
+    const updater = createRootUpdater();
     const updateClub = (leagueClub: DbLeagueClub) => {
       const newClubKey = getNewKey(clubsRef);
       updater.updateListItem("clubs", newClubKey, leagueClub);

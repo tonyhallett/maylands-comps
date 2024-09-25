@@ -1,13 +1,19 @@
 import { useState } from "react";
-import { DbMatch } from "../../firebase/rtb/match/dbMatch";
+import { ConcedeOrForfeit, DbMatch } from "../../firebase/rtb/match/dbMatch";
 import { refTyped } from "../../firebase/rtb/root";
 import { setTyped } from "../../firebase/rtb/typeHelpers";
 import {
   Box,
-  Button,
+  /* Button,
   Dialog,
   DialogContent,
   DialogTitle,
+  IconButton, */
+  ListItemIcon,
+  ListItemText,
+  Menu,
+  MenuItem,
+  MenuList,
   Paper,
   Table,
   TableBody,
@@ -20,6 +26,7 @@ import { MatchInfo, PlayerNames, UmpireView } from "../../umpireView";
 import {
   UmpireUpdate,
   getDbMatchSaveStateFromUmpire,
+  updateConceded,
   updateUmpired,
 } from "../../firebase/rtb/match/helpers";
 import { getGameScoresDisplay } from "./getGameScoresDisplay";
@@ -32,7 +39,14 @@ import { LeagueMatchSelection } from "./LeagueMatchSelection";
 import { MatchState, Umpire } from "../../umpire";
 import { getMatchTeamSelectionDisplays } from "./getMatchTeamSelectionDisplays";
 import { getGameScoreCell } from "./getGameScoreCell";
-
+import MoreVertIcon from "@mui/icons-material/MoreVert";
+import SportsIcon from "@mui/icons-material/Sports";
+const UmpireIcon = SportsIcon;
+import PersonOffIcon from "@mui/icons-material/PersonOff";
+import { isMatchWon } from "../../umpire/matchWinState";
+const ConcedeIcon = PersonOffIcon;
+import PersonIcon from "@mui/icons-material/Person";
+const UndoConcedeIcon = PersonIcon;
 interface UmpireViewInfo {
   umpire: Umpire;
   rules: MatchInfo;
@@ -43,14 +57,29 @@ interface UmpireViewInfo {
 export const getScoresheetGameAriaLabel = (index: number) =>
   `Scoresheet Game ${index}`;
 
+export const getAllPlayersSelected = (match: DbMatch) => {
+  const player1sSelected =
+    match.team1Player1Id !== undefined && match.team2Player1Id !== undefined;
+  if (!player1sSelected) {
+    return false;
+  }
+  if (match.isDoubles) {
+    const player2sSelected =
+      match.team1Player2Id !== undefined && match.team2Player2Id !== undefined;
+    return player2sSelected;
+  }
+  return true;
+};
+
 export function LeagueMatchView({ leagueMatchId }: { leagueMatchId: string }) {
-  const [selectedMatchIndex, setSelectedMatchIndex] = useState<
-    number | undefined
-  >(undefined);
   const [umpireMatchIndex, setUmpireMatchIndex] = useState<number | undefined>(
     undefined,
   );
-
+  const [gameMenuState, setGameMenuState] = useState<{
+    anchorElement: HTMLElement;
+    index: number;
+  } | null>(null);
+  const showGameMenu = Boolean(gameMenuState);
   return (
     <LeagueMatchSelection
       leagueMatchId={leagueMatchId}
@@ -129,9 +158,8 @@ export function LeagueMatchView({ leagueMatchId }: { leagueMatchId: string }) {
             db,
             `matches/${umpireMatchAndKey.key}`,
           );
-          setTyped(matchDatabaseRef, updatedMatch).catch((reason) =>
-            alert(`error updating - ${reason}`),
-          );
+          // todo error handling
+          setTyped(matchDatabaseRef, updatedMatch);
         };
         const rows = umpireMatchAndKeys.map((umpireMatchAndKey, index) => {
           const match = umpireMatchAndKey.match;
@@ -141,7 +169,6 @@ export function LeagueMatchView({ leagueMatchId }: { leagueMatchId: string }) {
             keyedSinglesMatchNamePositionDisplays,
             keyedDoublesMatchNamesPositionDisplay,
           );
-          const bothSelected = home.selected && away.selected;
           const matchState = umpireMatchAndKey.matchState;
           const teamsMatchScoreState = getTeamsMatchScoreState(
             matchState.matchWinState,
@@ -161,13 +188,20 @@ export function LeagueMatchView({ leagueMatchId }: { leagueMatchId: string }) {
             <TableRow
               aria-label={getScoresheetGameAriaLabel(index)}
               key={index}
-              onClick={() => {
-                if (bothSelected) {
-                  setSelectedMatchIndex(index);
-                }
-              }}
             >
-              <TableCell>{index}</TableCell>
+              <TableCell padding="none">
+                <div
+                  onClick={(event) => {
+                    setGameMenuState({
+                      anchorElement: event.currentTarget,
+                      index,
+                    });
+                  }}
+                >
+                  <MoreVertIcon />
+                </div>
+              </TableCell>
+              <TableCell padding="none">{index}</TableCell>
               {getPlayerCell(
                 home,
                 true,
@@ -189,36 +223,197 @@ export function LeagueMatchView({ leagueMatchId }: { leagueMatchId: string }) {
             </TableRow>
           );
         });
+        //#region match result display - todo and move
+        enum LeadType {
+          Losing,
+          Winning,
+          Draw,
+        }
+        enum MatchResultState {
+          InProgress,
+          Unassailable,
+          Completed,
+        }
+        interface TeamMatchResult {
+          score: number;
+          leadType: LeadType;
+        }
+        interface MatchResult {
+          state: MatchResultState;
+          home: TeamMatchResult;
+          away: TeamMatchResult;
+        }
+        //todo
+        const getMatchResult = (): MatchResult => {
+          return {
+            state: MatchResultState.InProgress,
+            home: {
+              score: 0,
+              leadType: LeadType.Draw,
+            },
+            away: {
+              score: 1,
+              leadType: LeadType.Winning,
+            },
+          };
+        };
+        const matchResult = getMatchResult();
+        // todo - add the leading team initials with the score - only when completed ?
+        const getMatchResultDisplay = (matchResult: MatchResult) => {
+          const winningColor = "green";
+          const unassailableOrWonColor = "yellow";
+          const getLeadingColor = () => {
+            const state = matchResult.state;
+            if (state === MatchResultState.InProgress) {
+              return winningColor;
+            }
+            return unassailableOrWonColor;
+          };
+          const getTeamResult = (isHome: boolean) => {
+            const teamResult = isHome ? matchResult.home : matchResult.away;
+            const teamColor =
+              teamResult.leadType === LeadType.Winning
+                ? getLeadingColor()
+                : "inherit";
+            return (
+              <span style={{ color: teamColor, whiteSpace: "nowrap" }}>
+                {teamResult.score}
+              </span>
+            );
+          };
+
+          return (
+            <>
+              {getTeamResult(true)}
+              <span style={{ whiteSpace: "nowrap" }}> - </span>
+              {getTeamResult(false)}
+            </>
+          );
+        };
+        const matchResultDisplay = getMatchResultDisplay(matchResult);
+        //#endregion
+        const closeMenu = () => setGameMenuState(null);
+        const umpireGame = () => {
+          const selectedMatchIndex = gameMenuState!.index;
+          const umpireUpdates: UmpireUpdate[] = [
+            {
+              key: umpireMatchAndKeys[selectedMatchIndex!].key,
+              umpired: true,
+            },
+          ];
+          if (umpireMatchIndex !== undefined) {
+            umpireUpdates.push({
+              key: umpireMatchAndKeys[umpireMatchIndex].key,
+            });
+          }
+          updateUmpired(umpireUpdates, db);
+          setUmpireMatchIndex(selectedMatchIndex);
+        };
+
+        const getConcedeMenuItems = (
+          match: DbMatch,
+          key: string,
+          matchWon: boolean,
+          allPlayersSelected: boolean,
+        ) => {
+          const homeConcedeOrForfeit = match.team1ConcedeOrForfeit;
+          const awayConcedeOrForfeit = match.team2ConcedeOrForfeit;
+          const getForfeited = (
+            concedeOrForfeit: ConcedeOrForfeit | undefined,
+          ) =>
+            concedeOrForfeit === undefined
+              ? false
+              : !concedeOrForfeit.isConcede;
+
+          const forfeited =
+            getForfeited(homeConcedeOrForfeit) ||
+            getForfeited(awayConcedeOrForfeit);
+
+          const concedeDisabled = matchWon || !allPlayersSelected || forfeited;
+
+          const getConcedeText = (isHome: boolean, conceded: boolean) => {
+            const homeOrAway = isHome ? "Home" : "Away";
+            const prefix = conceded ? "Undo " : "";
+            return `${prefix}${homeOrAway} Concede`;
+          };
+          const getConcedeMenuItem = (isHome: boolean) => {
+            const conceded = !!(isHome
+              ? homeConcedeOrForfeit?.isConcede
+              : awayConcedeOrForfeit?.isConcede);
+            const concedeIcon = conceded ? (
+              <UndoConcedeIcon />
+            ) : (
+              <ConcedeIcon />
+            );
+            return (
+              <MenuItem
+                onClick={() => {
+                  closeMenu();
+                  updateConceded(isHome, !conceded, key, db);
+                }}
+                key={isHome ? "homeConcedeMenuItem" : "awayConcedeMenuItem"}
+                disabled={concedeDisabled}
+              >
+                <ListItemIcon>{concedeIcon}</ListItemIcon>
+                <ListItemText>{getConcedeText(isHome, conceded)}</ListItemText>
+              </MenuItem>
+            );
+          };
+          return [getConcedeMenuItem(true), getConcedeMenuItem(false)];
+        };
+
+        const getUmpireMenuItem = (allPlayersSelected: boolean) => {
+          /*
+            todo - use this to remove umpiring of a game
+            const isUmpiringGame = umpireMatchIndex === gameMenuState!.index;
+          */
+          return (
+            <MenuItem
+              key="umpireMenuItem"
+              disabled={!allPlayersSelected}
+              onClick={() => {
+                umpireGame();
+                closeMenu();
+              }}
+            >
+              <ListItemIcon>
+                <UmpireIcon />
+              </ListItemIcon>
+              <ListItemText>Umpire</ListItemText>
+            </MenuItem>
+          );
+        };
+
+        const getGameMenuItems = () => {
+          const umpireMatchAndKey = umpireMatchAndKeys[gameMenuState!.index];
+          const allPlayersSelected = getAllPlayersSelected(
+            umpireMatchAndKey.match,
+          );
+          const matchWon = isMatchWon(
+            umpireMatchAndKey.matchState.matchWinState,
+          );
+
+          return [
+            getUmpireMenuItem(allPlayersSelected),
+            ...getConcedeMenuItems(
+              umpireMatchAndKey.match,
+              umpireMatchAndKey.key,
+              matchWon,
+              allPlayersSelected,
+            ),
+          ];
+        };
+        const menuItems = gameMenuState === null ? [] : getGameMenuItems();
         return (
           <>
-            <Dialog
-              open={selectedMatchIndex !== undefined}
-              onClose={() => setSelectedMatchIndex(undefined)}
+            <Menu
+              disableScrollLock
+              open={showGameMenu}
+              onClose={closeMenu}
+              anchorEl={gameMenuState?.anchorElement}
             >
-              <DialogTitle>{`Options for game ${selectedMatchIndex! + 1}`}</DialogTitle>
-              <DialogContent>
-                <Button
-                  onClick={() => {
-                    const umpireUpdates: UmpireUpdate[] = [
-                      {
-                        key: umpireMatchAndKeys[selectedMatchIndex!].key,
-                        umpired: true,
-                      },
-                    ];
-                    if (umpireMatchIndex !== undefined) {
-                      umpireUpdates.push({
-                        key: umpireMatchAndKeys[umpireMatchIndex].key,
-                      });
-                    }
-                    updateUmpired(umpireUpdates, db);
-                    setUmpireMatchIndex(selectedMatchIndex);
-                    setSelectedMatchIndex(undefined);
-                  }}
-                >
-                  Umpire game
-                </Button>
-              </DialogContent>
-            </Dialog>
+              <MenuList dense>{menuItems}</MenuList>
+            </Menu>
             {umpireMatchIndex !== undefined && (
               <UmpireView
                 autoShowServerReceiverChooser={false}
@@ -260,7 +455,8 @@ export function LeagueMatchView({ leagueMatchId }: { leagueMatchId: string }) {
                   <Table size="small">
                     <TableHead>
                       <TableRow>
-                        <TableCell>O</TableCell>
+                        <TableCell padding="none"></TableCell>
+                        <TableCell padding="none">O</TableCell>
                         <TableCell>H</TableCell>
                         <TableCell>A</TableCell>
                         <TableCell padding="none" colSpan={5}>
@@ -269,7 +465,21 @@ export function LeagueMatchView({ leagueMatchId }: { leagueMatchId: string }) {
                         <TableCell>Res</TableCell>
                       </TableRow>
                     </TableHead>
-                    <TableBody>{rows}</TableBody>
+                    <TableBody>
+                      {rows}
+                      <TableRow>
+                        <TableCell padding="none"></TableCell>
+                        <TableCell padding="none"></TableCell>
+                        <TableCell></TableCell>
+                        <TableCell></TableCell>
+                        <TableCell padding="none"></TableCell>
+                        <TableCell padding="none"></TableCell>
+                        <TableCell padding="none"></TableCell>
+                        <TableCell padding="none"></TableCell>
+                        <TableCell padding="none"></TableCell>
+                        <TableCell>{matchResultDisplay}</TableCell>
+                      </TableRow>
+                    </TableBody>
                   </Table>
                 </TableContainer>
               </Paper>
