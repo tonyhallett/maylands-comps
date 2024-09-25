@@ -84,7 +84,7 @@ beforeEach(async () => {
 
 function createApp(
   leagueMatchId: string,
-  renderScoreboard: LeagueMatchSelectionProps["renderScoreboard"] = () => null,
+  renderScoreboard: LeagueMatchSelectionProps["renderScoresheet"] = () => null,
 ) {
   return (
     <DatabaseProvider database={database}>
@@ -92,7 +92,7 @@ function createApp(
         <CssBaseline enableColorScheme />
         <LeagueMatchSelection
           leagueMatchId={leagueMatchId}
-          renderScoreboard={renderScoreboard}
+          renderScoresheet={renderScoreboard}
         />
       </MaylandsThemeProvider>
     </DatabaseProvider>

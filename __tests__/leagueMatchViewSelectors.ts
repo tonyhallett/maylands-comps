@@ -1,9 +1,5 @@
 import { screen, within } from "@testing-library/react";
-import {
-  getTeamMatchPlayersSelectSectionLabel,
-  teamsMatchPlayersSelectSectionLabel,
-} from "../src/teamMatches/teamMatchPlayerSelect";
-import { roleSelectorFactory } from "../test-helpers/testing-library/selectors/roleSelectorFactory";
+import { matchPlayersSelectSectionLabel } from "../src/teamMatches/teamMatchPlayerSelect";
 
 import { from } from "../test-helpers/testing-library/from";
 import { getDoublesSelectAriaLabel } from "../src/teamMatches/league/DoublesSelect";
@@ -21,26 +17,10 @@ import {
   scoresheetGameAwayPlayerAriaLabel,
   scoresheetGameHomePlayerAriaLabel,
 } from "../src/teamMatches/league/getPlayerCell";
-
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-export const findTeamsMatchPlayersSelectSection = () =>
-  screen.findByRole("region", {
-    name: teamsMatchPlayersSelectSectionLabel,
-  });
-// this also works
-//screen.findByLabelText(teamsMatchPlayersSelectSectionLabel);
-
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-export const teamMatchPlayersSelectSection = roleSelectorFactory(
-  (isHome: boolean) => {
-    return [
-      "region",
-      {
-        name: getTeamMatchPlayersSelectSectionLabel(isHome),
-      },
-    ];
-  },
-);
+import {
+  getTeamSelectPlayersAndDoublesAriaLabel,
+  teamsSelectionAriaLabel,
+} from "../src/teamMatches/league/TeamsSelectPlayersAndDoubles";
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 export const findPlayerCombo = (
@@ -52,6 +32,7 @@ export const findPlayerCombo = (
   const label = labels[position];
   return from(withinElement).findByLabelText<HTMLInputElement>(label);
 };
+
 export const getPlayerCombo = (
   isHome: boolean,
   position: number,
@@ -63,6 +44,7 @@ export const getPlayerCombo = (
 };
 
 export const findScoresheet = () => screen.findByLabelText(scoresheetAriaLabel);
+
 export const getScoresheetPlayer = (
   scoresheet: HTMLElement,
   isHome: boolean,
@@ -80,6 +62,7 @@ export const getScoresheetPlayer = (
 
   return scoresheetPlayer;
 };
+
 export const getScoresheetPlayerIdentifier = (
   scoresheet: HTMLElement,
   isHome: boolean,
@@ -87,29 +70,51 @@ export const getScoresheetPlayerIdentifier = (
 ): string => {
   return getScoresheetPlayer(scoresheet, isHome, position).innerHTML;
 };
-export async function getPlayerComboInputs() {
-  const teamsMatchPlayersSelectSection =
-    await findTeamsMatchPlayersSelectSection();
-  const findWithin = teamMatchPlayersSelectSection().within(
-    teamsMatchPlayersSelectSection,
-  );
-  const homeMatchPlayersSelectSection = findWithin.getBy(true);
-  const awayMatchPlayersSelectSection = findWithin.getBy(false);
-  const homePlayerInputs = within(
-    homeMatchPlayersSelectSection,
-  ).getAllByRole<HTMLInputElement>("combobox");
-  const awayPlayerInputs = within(
-    awayMatchPlayersSelectSection,
-  ).getAllByRole<HTMLInputElement>("combobox");
 
+export const findTeamsSelectionSection = () => {
+  return screen.findByRole("region", {
+    name: teamsSelectionAriaLabel,
+  });
+};
+
+export const getTeamSelectionSectionWithin = (
+  teamsSelectionSection: HTMLElement,
+  isHome: boolean,
+) => {
+  return within(teamsSelectionSection).getByRole("region", {
+    name: getTeamSelectPlayersAndDoublesAriaLabel(isHome),
+  });
+};
+
+export const getTeamPlayerComboInputs = (
+  teamsSelectionSection: HTMLElement,
+  isHome: boolean,
+) => {
+  const teamSelectionSection = getTeamSelectionSectionWithin(
+    teamsSelectionSection,
+    isHome,
+  );
+  const teamMatchPlayersSelectSection = within(teamSelectionSection).getByRole(
+    "region",
+    { name: matchPlayersSelectSectionLabel },
+  );
+  return within(teamMatchPlayersSelectSection).getAllByRole<HTMLInputElement>(
+    "combobox",
+  );
+};
+
+export async function getPlayerComboInputs() {
+  const teamsSelectionSection = await findTeamsSelectionSection();
   return {
-    homePlayerInputs,
-    awayPlayerInputs,
+    homePlayerInputs: getTeamPlayerComboInputs(teamsSelectionSection, true),
+    awayPlayerInputs: getTeamPlayerComboInputs(teamsSelectionSection, false),
   };
 }
+
 export async function findDoublesCombo(isHome): Promise<HTMLInputElement> {
   return screen.findByLabelText(getDoublesSelectAriaLabel(isHome));
 }
+
 export async function openPlayerAutocompleteAndGetOptions(
   isHome: boolean,
   position: number,

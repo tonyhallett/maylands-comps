@@ -15,6 +15,7 @@ export const getSimpleTeamDisplay = (
 
 export const getPlayerCell = (
   teamSelectionDisplay: TeamSelectionDisplay,
+  conceded: boolean,
   isHome: boolean,
   server: Player | undefined,
   receiver: Player | undefined,
@@ -49,8 +50,14 @@ export const getPlayerCell = (
 
     const isServer = server === matchingPlayer;
     const isReceiver = receiver === matchingPlayer;
-    const textDecorationLine: React.CSSProperties["textDecorationLine"] =
-      isServer ? "underline" : isReceiver ? "overline" : "none";
+    let textDecorationLine: React.CSSProperties["textDecorationLine"] = isServer
+      ? "underline"
+      : isReceiver
+        ? "overline"
+        : "none";
+    if (conceded) {
+      textDecorationLine = "line-through";
+    }
     return (
       <span style={{ textDecorationLine: textDecorationLine }}>
         {playerDisplay}

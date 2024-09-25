@@ -11,6 +11,7 @@ export enum MatchScoreState {
   GamePoint,
   MatchPoint,
   MatchWon,
+  Conceeded,
 }
 export interface TeamsMatchScoreState {
   home: MatchScoreState;

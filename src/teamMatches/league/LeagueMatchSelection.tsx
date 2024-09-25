@@ -30,9 +30,10 @@ import {
 import { TeamsSelectPlayersAndDoubles } from "./TeamsSelectPlayersAndDoubles";
 import { Button } from "@mui/material";
 import { createRootUpdater } from "../../firebase/rtb/match/helpers";
+import { useWakeLock } from "../../hooks/useWakeLock";
 
 export interface LeagueMatchSelectionProps {
-  renderScoreboard: RenderScoreboard;
+  renderScoresheet: RenderScoreboard;
   leagueMatchId: string;
 }
 
@@ -69,12 +70,13 @@ export const numMatches =
 
 export function LeagueMatchSelection({
   leagueMatchId,
-  renderScoreboard,
+  renderScoresheet,
 }: LeagueMatchSelectionProps) {
   const db = useRTB();
   const [showScoreboard, setShowScoreboard] = useState(false);
   const [leagueMatch, matchAndKeys] = useLeagueMatchAndMatches(leagueMatchId!);
   const [homeTeam, awayTeam] = useLeagueTeamsOnValue(leagueMatch);
+  useWakeLock();
 
   const {
     retrievedAvailablePlayers,
@@ -497,7 +499,7 @@ export function LeagueMatchSelection({
 
         <Button onClick={() => setShowScoreboard(true)}>Scoreboard</Button>
         <section aria-label={scoresheetAriaLabel}>
-          {renderScoreboard(
+          {renderScoresheet(
             matchAndKeys.map((matchAndKey) => {
               const umpire = new Umpire(
                 dbMatchSaveStateToSaveState(matchAndKey.match),

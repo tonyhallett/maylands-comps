@@ -11,7 +11,7 @@ import {
   DbLeagueMatch,
 } from "../../firebase/rtb/team";
 import { Umpire } from "../../umpire";
-import { getSimpleToday } from "../../helpers/getSimpleToday";
+import { getDbDate } from "../../helpers/getSimpleToday";
 import { getNewKey } from "../../firebase/rtb/typeHelpers";
 import {
   useClubsRef,
@@ -104,7 +104,7 @@ export function CreateLeagueSeason() {
     };
     maylandsFixtures.forEach((fixture) => {
       const leagueMatchKey = updateLeagueMatch({
-        date: getSimpleToday(), // later will do proper date
+        date: getDbDate(fixture.date), // later will do proper date
         isFriendly: false,
         homeTeamId: getTeamKey(fixture.homeTeam),
         awayTeamId: getTeamKey(fixture.awayTeam),

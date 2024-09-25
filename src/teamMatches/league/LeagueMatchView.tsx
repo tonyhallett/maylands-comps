@@ -1,7 +1,10 @@
 import { useState } from "react";
 import { ConcedeOrForfeit, DbMatch } from "../../firebase/rtb/match/dbMatch";
 import { refTyped } from "../../firebase/rtb/root";
-import { setTyped } from "../../firebase/rtb/typeHelpers";
+import {
+  PartialWithNullsWithoutUndefined,
+  setTyped,
+} from "../../firebase/rtb/typeHelpers";
 import {
   Box,
   /* Button,
@@ -25,8 +28,8 @@ import {
 import { MatchInfo, PlayerNames, UmpireView } from "../../umpireView";
 import {
   UmpireUpdate,
+  createRootUpdater,
   getDbMatchSaveStateFromUmpire,
-  updateConceded,
   updateUmpired,
 } from "../../firebase/rtb/match/helpers";
 import { getGameScoresDisplay } from "./getGameScoresDisplay";
@@ -43,9 +46,14 @@ import MoreVertIcon from "@mui/icons-material/MoreVert";
 import SportsIcon from "@mui/icons-material/Sports";
 const UmpireIcon = SportsIcon;
 import PersonOffIcon from "@mui/icons-material/PersonOff";
-import { isMatchWon } from "../../umpire/matchWinState";
+import { MatchWinState, isMatchWon } from "../../umpire/matchWinState";
 const ConcedeIcon = PersonOffIcon;
 import PersonIcon from "@mui/icons-material/Person";
+import { ref, update } from "firebase/database";
+import {
+  TeamsConcededOrForfeited,
+  getTeamsConcededOrForfeited,
+} from "./getTeamsConcededOrForfeited";
 const UndoConcedeIcon = PersonIcon;
 interface UmpireViewInfo {
   umpire: Umpire;
@@ -83,7 +91,7 @@ export function LeagueMatchView({ leagueMatchId }: { leagueMatchId: string }) {
   return (
     <LeagueMatchSelection
       leagueMatchId={leagueMatchId}
-      renderScoreboard={(
+      renderScoresheet={(
         umpireMatchAndKeys,
         db,
         keyedSinglesMatchNamePositionDisplays,
@@ -163,6 +171,7 @@ export function LeagueMatchView({ leagueMatchId }: { leagueMatchId: string }) {
         };
         const rows = umpireMatchAndKeys.map((umpireMatchAndKey, index) => {
           const match = umpireMatchAndKey.match;
+          const teamsConcededOrDefaulted = getTeamsConcededOrForfeited(match);
           const { home, away } = getMatchTeamSelectionDisplays(
             index,
             umpireMatchAndKeys,
@@ -182,6 +191,7 @@ export function LeagueMatchView({ leagueMatchId }: { leagueMatchId: string }) {
             teamsMatchScoreState,
             match.umpired,
             index === 9,
+            teamsConcededOrDefaulted,
           );
 
           return (
@@ -204,12 +214,14 @@ export function LeagueMatchView({ leagueMatchId }: { leagueMatchId: string }) {
               <TableCell padding="none">{index}</TableCell>
               {getPlayerCell(
                 home,
+                teamsConcededOrDefaulted.home.conceded,
                 true,
                 matchState.server,
                 matchState.receiver,
               )}
               {getPlayerCell(
                 away,
+                teamsConcededOrDefaulted.away.conceded,
                 false,
                 matchState.server,
                 matchState.receiver,
@@ -229,55 +241,109 @@ export function LeagueMatchView({ leagueMatchId }: { leagueMatchId: string }) {
           Winning,
           Draw,
         }
-        enum MatchResultState {
+        enum LeagueMatchResultState {
           InProgress,
           Unassailable,
           Completed,
         }
-        interface TeamMatchResult {
+        interface TeamLeagueMatchResult {
           score: number;
           leadType: LeadType;
         }
-        interface MatchResult {
-          state: MatchResultState;
-          home: TeamMatchResult;
-          away: TeamMatchResult;
+        interface LeagueMatchResult {
+          state: LeagueMatchResultState;
+          home: TeamLeagueMatchResult;
+          away: TeamLeagueMatchResult;
         }
-        //todo
-        const getMatchResult = (): MatchResult => {
-          return {
-            state: MatchResultState.InProgress,
+
+        const getLeagueMatchResult = (): LeagueMatchResult => {
+          const leagueMatchResult: LeagueMatchResult = {
+            state: LeagueMatchResultState.InProgress,
             home: {
               score: 0,
               leadType: LeadType.Draw,
             },
             away: {
-              score: 1,
-              leadType: LeadType.Winning,
+              score: 0,
+              leadType: LeadType.Draw,
             },
           };
+          let numGamesConcluded = 0;
+          umpireMatchAndKeys.forEach((umpireMatchKey) => {
+            const teamsConcededOrForefeited = getTeamsConcededOrForfeited(
+              umpireMatchKey.match,
+            );
+            const homeConcededOrDefaulted =
+              teamsConcededOrForefeited.home.conceded ||
+              teamsConcededOrForefeited.home.forefeited;
+            const awayConcededOrDefaulted =
+              teamsConcededOrForefeited.away.conceded ||
+              teamsConcededOrForefeited.away.forefeited;
+            if (homeConcededOrDefaulted && awayConcededOrDefaulted) {
+              numGamesConcluded++;
+            } else if (homeConcededOrDefaulted) {
+              numGamesConcluded++;
+              leagueMatchResult.away.score++;
+            } else if (awayConcededOrDefaulted) {
+              leagueMatchResult.home.score++;
+              numGamesConcluded++;
+            } else {
+              const matchWinState = umpireMatchKey.matchState.matchWinState;
+              if (matchWinState === MatchWinState.Team1Won) {
+                numGamesConcluded++;
+                leagueMatchResult.home.score++;
+              }
+              if (matchWinState === MatchWinState.Team2Won) {
+                numGamesConcluded++;
+                leagueMatchResult.away.score++;
+              }
+            }
+          });
+          if (leagueMatchResult.home.score > leagueMatchResult.away.score) {
+            leagueMatchResult.home.leadType = LeadType.Winning;
+            leagueMatchResult.away.leadType = LeadType.Losing;
+          }
+          if (leagueMatchResult.home.score < leagueMatchResult.away.score) {
+            leagueMatchResult.home.leadType = LeadType.Losing;
+            leagueMatchResult.away.leadType = LeadType.Winning;
+          }
+          if (numGamesConcluded === 10) {
+            leagueMatchResult.state = LeagueMatchResultState.Completed;
+          } else {
+            if (
+              leagueMatchResult.home.score > 5 ||
+              leagueMatchResult.away.score > 5
+            ) {
+              leagueMatchResult.state = LeagueMatchResultState.Unassailable;
+            }
+          }
+          return leagueMatchResult;
         };
-        const matchResult = getMatchResult();
+        const matchResult = getLeagueMatchResult();
         // todo - add the leading team initials with the score - only when completed ?
-        const getMatchResultDisplay = (matchResult: MatchResult) => {
+        const getMatchResultDisplay = (
+          leagueMatchResult: LeagueMatchResult,
+        ) => {
           const winningColor = "green";
           const unassailableOrWonColor = "yellow";
           const getLeadingColor = () => {
-            const state = matchResult.state;
-            if (state === MatchResultState.InProgress) {
+            const state = leagueMatchResult.state;
+            if (state === LeagueMatchResultState.InProgress) {
               return winningColor;
             }
             return unassailableOrWonColor;
           };
           const getTeamResult = (isHome: boolean) => {
-            const teamResult = isHome ? matchResult.home : matchResult.away;
+            const teamLeagueMatchResult = isHome
+              ? leagueMatchResult.home
+              : leagueMatchResult.away;
             const teamColor =
-              teamResult.leadType === LeadType.Winning
+              teamLeagueMatchResult.leadType === LeadType.Winning
                 ? getLeadingColor()
                 : "inherit";
             return (
               <span style={{ color: teamColor, whiteSpace: "nowrap" }}>
-                {teamResult.score}
+                {teamLeagueMatchResult.score}
               </span>
             );
           };
@@ -311,23 +377,14 @@ export function LeagueMatchView({ leagueMatchId }: { leagueMatchId: string }) {
         };
 
         const getConcedeMenuItems = (
-          match: DbMatch,
+          teamsConcededOrDefaulted: TeamsConcededOrForfeited,
           key: string,
           matchWon: boolean,
           allPlayersSelected: boolean,
         ) => {
-          const homeConcedeOrForfeit = match.team1ConcedeOrForfeit;
-          const awayConcedeOrForfeit = match.team2ConcedeOrForfeit;
-          const getForfeited = (
-            concedeOrForfeit: ConcedeOrForfeit | undefined,
-          ) =>
-            concedeOrForfeit === undefined
-              ? false
-              : !concedeOrForfeit.isConcede;
-
           const forfeited =
-            getForfeited(homeConcedeOrForfeit) ||
-            getForfeited(awayConcedeOrForfeit);
+            teamsConcededOrDefaulted.home.forefeited ||
+            teamsConcededOrDefaulted.away.forefeited;
 
           const concedeDisabled = matchWon || !allPlayersSelected || forfeited;
 
@@ -337,9 +394,9 @@ export function LeagueMatchView({ leagueMatchId }: { leagueMatchId: string }) {
             return `${prefix}${homeOrAway} Concede`;
           };
           const getConcedeMenuItem = (isHome: boolean) => {
-            const conceded = !!(isHome
-              ? homeConcedeOrForfeit?.isConcede
-              : awayConcedeOrForfeit?.isConcede);
+            const conceded = isHome
+              ? teamsConcededOrDefaulted.home.conceded
+              : teamsConcededOrDefaulted.away.conceded;
             const concedeIcon = conceded ? (
               <UndoConcedeIcon />
             ) : (
@@ -349,7 +406,24 @@ export function LeagueMatchView({ leagueMatchId }: { leagueMatchId: string }) {
               <MenuItem
                 onClick={() => {
                   closeMenu();
-                  updateConceded(isHome, !conceded, key, db);
+                  const concededUpdate: ConcedeOrForfeit | null = !conceded
+                    ? {
+                        isConcede: true,
+                      }
+                    : null;
+                  const updater = createRootUpdater();
+                  const updatedMatch: PartialWithNullsWithoutUndefined<DbMatch> =
+                    isHome
+                      ? { team1ConcedeOrForfeit: concededUpdate }
+                      : { team2ConcedeOrForfeit: concededUpdate };
+
+                  updater.updateListItem("matches", key, updatedMatch);
+                  if (umpireMatchIndex === gameMenuState!.index) {
+                    updatedMatch.umpired = null;
+                  }
+                  // todo - error handling
+                  update(ref(db), updater.values);
+                  setUmpireMatchIndex(undefined);
                 }}
                 key={isHome ? "homeConcedeMenuItem" : "awayConcedeMenuItem"}
                 disabled={concedeDisabled}
@@ -362,7 +436,10 @@ export function LeagueMatchView({ leagueMatchId }: { leagueMatchId: string }) {
           return [getConcedeMenuItem(true), getConcedeMenuItem(false)];
         };
 
-        const getUmpireMenuItem = (allPlayersSelected: boolean) => {
+        const getUmpireMenuItem = (
+          allPlayersSelected: boolean,
+          concededOrForfeited: boolean,
+        ) => {
           /*
             todo - use this to remove umpiring of a game
             const isUmpiringGame = umpireMatchIndex === gameMenuState!.index;
@@ -370,7 +447,7 @@ export function LeagueMatchView({ leagueMatchId }: { leagueMatchId: string }) {
           return (
             <MenuItem
               key="umpireMenuItem"
-              disabled={!allPlayersSelected}
+              disabled={!allPlayersSelected || concededOrForfeited}
               onClick={() => {
                 umpireGame();
                 closeMenu();
@@ -392,11 +469,18 @@ export function LeagueMatchView({ leagueMatchId }: { leagueMatchId: string }) {
           const matchWon = isMatchWon(
             umpireMatchAndKey.matchState.matchWinState,
           );
-
+          const teamsConcededOrDefaulted = getTeamsConcededOrForfeited(
+            umpireMatchAndKey.match,
+          );
+          const concededOrForfeited =
+            teamsConcededOrDefaulted.home.conceded ||
+            teamsConcededOrDefaulted.away.conceded ||
+            teamsConcededOrDefaulted.home.forefeited ||
+            teamsConcededOrDefaulted.away.forefeited;
           return [
-            getUmpireMenuItem(allPlayersSelected),
+            getUmpireMenuItem(allPlayersSelected, concededOrForfeited),
             ...getConcedeMenuItems(
-              umpireMatchAndKey.match,
+              teamsConcededOrDefaulted,
               umpireMatchAndKey.key,
               matchWon,
               allPlayersSelected,

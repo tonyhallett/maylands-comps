@@ -14,6 +14,8 @@ const getMatchScoreStateColor = (state: MatchScoreState) => {
       return getGameScorePointStateColor(GameScorePointState.MatchPoint);
     case MatchScoreState.Normal:
       return getGameScorePointStateColor(GameScorePointState.Normal);
+    case MatchScoreState.Conceeded:
+      return "#FC5B5B";
   }
 };
 

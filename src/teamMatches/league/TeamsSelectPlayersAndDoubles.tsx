@@ -8,7 +8,7 @@ import { FiftyFifty } from "../../layoutComponents/FiftyFifty";
 import { TeamDoublesSelect, TeamDoublesSelectProps } from "./DoublesSelect";
 import { Card } from "@mui/material";
 
-const getTeamSelectPlayersAndDoublesAriaLabel = (isHome: boolean) => {
+export const getTeamSelectPlayersAndDoublesAriaLabel = (isHome: boolean) => {
   return isHome ? "home team selection" : "away team selection";
 };
 interface TeamSelectPlayersAndDoublesProps<TPlayer extends SelectablePlayer> {
@@ -51,33 +51,36 @@ export function TeamSelectPlayersAndDoubles<TPlayer extends SelectablePlayer>({
   );
 }
 
+export const teamsSelectionAriaLabel = "Teams Selection";
 export function TeamsSelectPlayersAndDoubles<TPlayer extends SelectablePlayer>({
   home,
   away,
   autoCompleteProps = {},
 }: TeamsSelectPlayersAndDoublesProps<TPlayer>) {
   return (
-    <Card
-      sx={{
-        padding: 1,
-      }}
-    >
-      <FiftyFifty
-        left={
-          <TeamSelectPlayersAndDoubles<TPlayer>
-            autoCompleteProps={autoCompleteProps}
-            {...home}
-            isHome={true}
-          />
-        }
-        right={
-          <TeamSelectPlayersAndDoubles<TPlayer>
-            autoCompleteProps={autoCompleteProps}
-            {...away}
-            isHome={false}
-          />
-        }
-      />
-    </Card>
+    <section aria-label={teamsSelectionAriaLabel}>
+      <Card
+        sx={{
+          padding: 1,
+        }}
+      >
+        <FiftyFifty
+          left={
+            <TeamSelectPlayersAndDoubles<TPlayer>
+              autoCompleteProps={autoCompleteProps}
+              {...home}
+              isHome={true}
+            />
+          }
+          right={
+            <TeamSelectPlayersAndDoubles<TPlayer>
+              autoCompleteProps={autoCompleteProps}
+              {...away}
+              isHome={false}
+            />
+          }
+        />
+      </Card>
+    </section>
   );
 }
