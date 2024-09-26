@@ -1,26 +1,26 @@
 import { screen, within } from "@testing-library/react";
-import { matchPlayersSelectSectionLabel } from "../src/teamMatches/teamMatchPlayerSelect";
+import { matchPlayersSelectSectionLabel } from "../src/teamMatches/league/play/player-selection/TeamMatchPlayerSelect";
 
 import { from } from "../test-helpers/testing-library/from";
-import { getDoublesSelectAriaLabel } from "../src/teamMatches/league/DoublesSelect";
+import { getDoublesSelectAriaLabel } from "../src/teamMatches/league/play/player-selection/DoublesSelect";
 import {
   clearOptions,
   openAutocompleteAndGetOptions,
 } from "../test-helpers/mui/autocomplete";
+import { scoresheetAriaLabel } from "../src/teamMatches/league/play/league-match-selection/LeagueMatchSelection";
 import {
   awayTeamSelectLabels,
   homeTeamSelectLabels,
-  scoresheetAriaLabel,
-} from "../src/teamMatches/league/LeagueMatchSelection";
-import { getScoresheetGameAriaLabel } from "../src/teamMatches/league/LeagueMatchView";
+} from "../src/teamMatches/league/play/league-match-selection/team-select-labels";
+import { getScoresheetGameAriaLabel } from "../src/teamMatches/league/play/league-match-view/LeagueMatchView";
 import {
   scoresheetGameAwayPlayerAriaLabel,
   scoresheetGameHomePlayerAriaLabel,
-} from "../src/teamMatches/league/getPlayerCell";
+} from "../src/teamMatches/league/play/league-match-view/scoresheet/ui/getPlayerCell";
 import {
   getTeamSelectPlayersAndDoublesAriaLabel,
   teamsSelectionAriaLabel,
-} from "../src/teamMatches/league/TeamsSelectPlayersAndDoubles";
+} from "../src/teamMatches/league/play/player-selection/TeamsSelectPlayersAndDoubles";
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 export const findPlayerCombo = (

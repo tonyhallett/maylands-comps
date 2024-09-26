@@ -10,7 +10,7 @@ import {
 import {
   LeagueMatchSelection,
   LeagueMatchSelectionProps,
-} from "../src/teamMatches/league/LeagueMatchSelection";
+} from "../src/teamMatches/league/play/league-match-selection/LeagueMatchSelection";
 import { ref, set, update } from "firebase/database";
 import {
   screen,
@@ -40,21 +40,19 @@ import {
 import { DbMatch } from "../src/firebase/rtb/match/dbMatch";
 import { Umpire } from "../src/umpire";
 import { getSimpleToday } from "../src/helpers/getSimpleToday";
-import { ClubSetup } from "../src/teamMatches/league/romfordLeagueData";
+import { ClubSetup } from "../src/teamMatches/league/db-population/data/romfordLeagueData";
 import {
-  awayPlayerMatchDetails,
-  homePlayerMatchDetails,
-  singlesLeagueMatchPositionDisplays,
-} from "../src/teamMatches/league/singlesLeagueMatchPlayers";
-//import { getInitials } from "../src/umpireView/helpers";
+  awayPlayersMatchIndicesAndDisplay,
+  homePlayersMatchIndicesAndDisplay,
+  leagueMatchPlayersPositionDisplays,
+} from "../src/teamMatches/league/play/format/singlesLeagueMatchPlayers";
 import { findPlayerCombo, findScoresheet } from "./leagueMatchViewSelectors";
-//import { getMatchPlayerPositions } from "../src/teamMatches/league/getMatchPlayerPositions";
 import { fillArrayWithIndices } from "../src/helpers/fillArray";
 import { getPlayerComboInputs } from "./leagueMatchViewSelectors";
 import { findDoublesCombo } from "./leagueMatchViewSelectors";
 import { openPlayerAutocompleteAndGetOptions } from "./leagueMatchViewSelectors";
-import { MatchAndKey } from "../src/teamMatches/league/useLeagueMatchAndMatches";
-import { createRootUpdater } from "../src/firebase/rtb/match/helpers";
+import { MatchAndKey } from "../src/teamMatches/league/db-hooks/useLeagueMatchAndMatches";
+import { createRootUpdater } from "../src/firebase/rtb/match/db-helpers";
 
 // mocking due to import.meta.url
 jest.mock(
@@ -66,7 +64,7 @@ jest.mock(
   },
 );
 
-jest.mock("../src/teamMatches/league/LeagueMatchScoreboard", () => {
+jest.mock("../src/teamMatches/league/play/LeagueMatchScoreboard", () => {
   return {
     LeagueMatchScoreboard: () => (
       <div data-testid="leaguematchscoreboard"></div>
@@ -328,7 +326,7 @@ describe("<LeagueMatchView/>", () => {
     const setupMatch: SetupMatch = (getPlayerId, dbMatch, index) => {
       if (index !== 9) {
         const { homePositionDisplay, awayPositionDisplay } =
-          singlesLeagueMatchPositionDisplays[index];
+          leagueMatchPlayersPositionDisplays[index];
         if (homePlayersSelected[homePositionDisplay.position]) {
           dbMatch.team1Player1Id = getPlayerId(
             defaultHomeTeamName,
@@ -596,8 +594,8 @@ describe("<LeagueMatchView/>", () => {
             const teamName = isHome ? defaultHomeTeamName : defaultAwayTeamName;
             const expectedPlayerId = getThePlayerId!(teamName, playerName);
             const matchPlayerDetails = isHome
-              ? homePlayerMatchDetails
-              : awayPlayerMatchDetails;
+              ? homePlayersMatchIndicesAndDisplay
+              : awayPlayersMatchIndicesAndDisplay;
             const matchIndices =
               matchPlayerDetails[playerComboIndex].matchIndices;
             currentMatchAndKeys.forEach(({ match }, index) => {
@@ -679,7 +677,7 @@ describe("<LeagueMatchView/>", () => {
             currentMatchAndKeys.forEach(({ match }, index) => {
               if (index !== 9) {
                 const { homePositionDisplay, awayPositionDisplay } =
-                  singlesLeagueMatchPositionDisplays[index];
+                  leagueMatchPlayersPositionDisplays[index];
                 const playerPosition = isHome
                   ? homePositionDisplay.position
                   : awayPositionDisplay.position;
@@ -743,7 +741,7 @@ describe("<LeagueMatchView/>", () => {
             currentMatchAndKeys.forEach(({ match }, index) => {
               if (index !== 9) {
                 const { homePositionDisplay, awayPositionDisplay } =
-                  singlesLeagueMatchPositionDisplays[index];
+                  leagueMatchPlayersPositionDisplays[index];
                 const playerPosition = isHome
                   ? homePositionDisplay.position
                   : awayPositionDisplay.position;
