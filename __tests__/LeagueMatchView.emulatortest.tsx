@@ -88,6 +88,8 @@ const teamsRef = refTyped(database, "teams");
 const clubsRef = refTyped(database, "clubs");
 const matchesRef = refTyped(database, "matches");
 
+const allPlayersSelected = [true, true, true];
+
 describe("<LeagueMatchView/>", () => {
   const defaultHomeTeamName = "Maylands A";
   const defaultAwayTeamName = "Lower ranked away";
@@ -140,11 +142,7 @@ describe("<LeagueMatchView/>", () => {
     dbMatch: DbMatch,
     index: number,
   ) => void;
-  type SetupDoubles = (
-    doublesMatch: DbMatch,
-    homeTeamPlayerIds: TeamPlayerIds,
-    awayTeamPlayerIds: TeamPlayerIds,
-  ) => void;
+
   async function setupDatabase(
     setUpMatch: SetupMatch = () => {},
     testClubSetups = defaultTestClubSetups,
@@ -285,32 +283,32 @@ describe("<LeagueMatchView/>", () => {
   }
 
   type TeamPlayerIds = (string | undefined)[];
-  function setUpMatchesForSelection(
-    homePlayersSelected: boolean[],
-    awayPlayersSelected: boolean[],
-    setupDoubles: SetupDoubles = () => {},
-  ) {
-    return setupDatabase(
-      getSetupMatches(homePlayersSelected, awayPlayersSelected, setupDoubles),
-    );
-  }
+  type SetupDoubles = (
+    doublesMatch: DbMatch,
+    homeTeamPlayerIds: TeamPlayerIds,
+    awayTeamPlayerIds: TeamPlayerIds,
+  ) => void;
 
-  function getSetupMatches(
-    homePlayersSelected: boolean[],
-    awayPlayersSelected: boolean[],
+  // and passes the player ids to the setupDoubles function
+  function getMatchSetupThatSetsDefaultPlayersThatAreSelected(
+    homePlayersSelected: boolean[], // each index is a player position - A, B, C
+    awayPlayersSelected: boolean[], // each index is a player position - X, Y, Z
     setupDoubles: SetupDoubles = () => {},
   ) {
+    // if selected collect the player ids for setupDoubles
     const homeTeamPlayerIds: TeamPlayerIds = [undefined, undefined, undefined];
     const awayTeamPlayerIds: TeamPlayerIds = [undefined, undefined, undefined];
     const setupMatch: SetupMatch = (getPlayerId, dbMatch, index) => {
       if (index !== 9) {
         const { homePositionDisplay, awayPositionDisplay } =
           leagueMatchPlayersPositionDisplays[index];
+        // the position corresponds to the combobox
+        // if selected set the player id to that of the default at that position
         if (homePlayersSelected[homePositionDisplay.position]) {
           dbMatch.team1Player1Id = getPlayerId(
             defaultHomeTeamName,
             defaultHomePlayerNames[homePositionDisplay.position],
-          ); // Player A
+          );
           homeTeamPlayerIds[homePositionDisplay.position] =
             dbMatch.team1Player1Id;
         }
@@ -318,7 +316,7 @@ describe("<LeagueMatchView/>", () => {
           dbMatch.team2Player1Id = getPlayerId(
             defaultAwayTeamName,
             defaultAwayPlayerNames[awayPositionDisplay.position],
-          ); // Player X
+          );
           awayTeamPlayerIds[awayPositionDisplay.position] =
             dbMatch.team2Player1Id;
         }
@@ -327,6 +325,21 @@ describe("<LeagueMatchView/>", () => {
       }
     };
     return setupMatch;
+  }
+
+  // shortcut
+  function setUpDatabaseWithDefaultPlayersThatAreSelected(
+    homePlayersSelected: boolean[],
+    awayPlayersSelected: boolean[],
+    setupDoubles: SetupDoubles = () => {},
+  ) {
+    return setupDatabase(
+      getMatchSetupThatSetsDefaultPlayersThatAreSelected(
+        homePlayersSelected,
+        awayPlayersSelected,
+        setupDoubles,
+      ),
+    );
   }
 
   describe("match selection", () => {
@@ -358,11 +371,11 @@ describe("<LeagueMatchView/>", () => {
       it("should have selected players if players have been selected for matches", async () => {
         // value if from getOptionLabel - name property of AvailablePlayer
 
-        const allPlayerSelected = [true, true, true];
-        const leagueMatchKey = await setUpMatchesForSelection(
-          allPlayerSelected,
-          allPlayerSelected,
-        );
+        const leagueMatchKey =
+          await setUpDatabaseWithDefaultPlayersThatAreSelected(
+            allPlayersSelected,
+            allPlayersSelected,
+          );
         render(createApp(leagueMatchKey));
         const { homePlayerInputs, awayPlayerInputs } =
           await getPlayerComboInputs();
@@ -434,10 +447,11 @@ describe("<LeagueMatchView/>", () => {
         });
 
         it("should not have a selected player in the available players for selection for the other player selections", async () => {
-          const leagueMatchKey = await setUpMatchesForSelection(
-            [true, false, false],
-            [true, false, false],
-          );
+          const leagueMatchKey =
+            await setUpDatabaseWithDefaultPlayersThatAreSelected(
+              [true, false, false],
+              [true, false, false],
+            );
           render(createApp(leagueMatchKey));
 
           const selectedOptionDisplays =
@@ -481,7 +495,10 @@ describe("<LeagueMatchView/>", () => {
 
         it("should not have a selected player in the available players for selection in the other team", async () => {
           const friendlyLeagueMatchKey = await setupDatabase(
-            getSetupMatches([true, false, false], [false, false, false]),
+            getMatchSetupThatSetsDefaultPlayersThatAreSelected(
+              [true, false, false],
+              [false, false, false],
+            ),
             defaultTestClubSetups,
             defaultHomeTeamName,
             lowerRankedHomeTeamName,
@@ -634,10 +651,11 @@ describe("<LeagueMatchView/>", () => {
         it.each(deselectPlayerTests)(
           "should remove player from all of the player matches  - $isHome, $playerComboIndex",
           async ({ isHome, playerComboIndex }) => {
-            const leagueMatchKey = await setUpMatchesForSelection(
-              [true, true, true],
-              [true, true, true],
-            );
+            const leagueMatchKey =
+              await setUpDatabaseWithDefaultPlayersThatAreSelected(
+                allPlayersSelected,
+                allPlayersSelected,
+              );
 
             let renderCount = 0;
             let currentMatchAndKeys: MatchAndKey[] = [];
@@ -681,27 +699,28 @@ describe("<LeagueMatchView/>", () => {
         it.each(deselectPlayerTests)(
           "should remove team doubles players when a player is deselected - $isHome, $playerComboIndex",
           async ({ isHome, playerComboIndex }) => {
-            const leagueMatchKey = await setUpMatchesForSelection(
-              [true, true, true],
-              [true, true, true],
-              (doublesMatch, homeTeamPlayerIds, awayTeamPlayerIds) => {
-                const playerIds = isHome
-                  ? homeTeamPlayerIds
-                  : awayTeamPlayerIds;
-                const player1Id = playerIds[playerComboIndex]!;
-                const otherPlayerIds = playerIds.filter(
-                  (_, i) => i !== playerComboIndex,
-                );
-                const player2Id = otherPlayerIds[0]!;
-                if (isHome) {
-                  doublesMatch.team1Player1Id = player1Id;
-                  doublesMatch.team1Player2Id = player2Id;
-                } else {
-                  doublesMatch.team2Player1Id = player1Id;
-                  doublesMatch.team2Player2Id = player2Id;
-                }
-              },
-            );
+            const leagueMatchKey =
+              await setUpDatabaseWithDefaultPlayersThatAreSelected(
+                allPlayersSelected,
+                allPlayersSelected,
+                (doublesMatch, homeTeamPlayerIds, awayTeamPlayerIds) => {
+                  const playerIds = isHome
+                    ? homeTeamPlayerIds
+                    : awayTeamPlayerIds;
+                  const player1Id = playerIds[playerComboIndex]!;
+                  const otherPlayerIds = playerIds.filter(
+                    (_, i) => i !== playerComboIndex,
+                  );
+                  const player2Id = otherPlayerIds[0]!;
+                  if (isHome) {
+                    doublesMatch.team1Player1Id = player1Id;
+                    doublesMatch.team1Player2Id = player2Id;
+                  } else {
+                    doublesMatch.team2Player1Id = player1Id;
+                    doublesMatch.team2Player2Id = player2Id;
+                  }
+                },
+              );
 
             let renderCount = 0;
             let currentMatchAndKeys: MatchAndKey[] = [];
@@ -820,26 +839,26 @@ describe("<LeagueMatchView/>", () => {
         it.each(doublesSelectionTests)(
           "$description",
           async ({ isHome, selectedPlayers }) => {
-            const allPlayersSelected = [true, true, true];
-            const leagueMatchKey = await setUpMatchesForSelection(
-              allPlayersSelected,
-              allPlayersSelected,
-              (doublesMatch, homeTeamPlayerIds, awayTeamPlayerIds) => {
-                if (selectedPlayers !== undefined) {
-                  if (isHome) {
-                    doublesMatch.team1Player1Id =
-                      homeTeamPlayerIds[selectedPlayers.player1Index]!;
-                    doublesMatch.team1Player2Id =
-                      homeTeamPlayerIds[selectedPlayers.player2Index]!;
-                  } else {
-                    doublesMatch.team2Player1Id =
-                      awayTeamPlayerIds[selectedPlayers.player1Index]!;
-                    doublesMatch.team2Player2Id =
-                      awayTeamPlayerIds[selectedPlayers.player2Index]!;
+            const leagueMatchKey =
+              await setUpDatabaseWithDefaultPlayersThatAreSelected(
+                allPlayersSelected,
+                allPlayersSelected,
+                (doublesMatch, homeTeamPlayerIds, awayTeamPlayerIds) => {
+                  if (selectedPlayers !== undefined) {
+                    if (isHome) {
+                      doublesMatch.team1Player1Id =
+                        homeTeamPlayerIds[selectedPlayers.player1Index]!;
+                      doublesMatch.team1Player2Id =
+                        homeTeamPlayerIds[selectedPlayers.player2Index]!;
+                    } else {
+                      doublesMatch.team2Player1Id =
+                        awayTeamPlayerIds[selectedPlayers.player1Index]!;
+                      doublesMatch.team2Player2Id =
+                        awayTeamPlayerIds[selectedPlayers.player2Index]!;
+                    }
                   }
-                }
-              },
-            );
+                },
+              );
             render(createApp(leagueMatchKey));
 
             const doublesCombo = await findDoublesCombo(isHome);
@@ -904,7 +923,7 @@ describe("<LeagueMatchView/>", () => {
               `${defaultHomePlayerNames[1]} - ${defaultHomePlayerNames[2]}`,
             ],
             isHome: true,
-            selectedPlayers: [true, true, true],
+            selectedPlayers: allPlayersSelected,
           },
 
           // away
@@ -946,7 +965,7 @@ describe("<LeagueMatchView/>", () => {
               `${defaultAwayPlayerNames[1]} - ${defaultAwayPlayerNames[2]}`,
             ],
             isHome: false,
-            selectedPlayers: [true, true, true],
+            selectedPlayers: allPlayersSelected,
           },
         ];
         it.each(doublesPlayersSelectionTests)(
@@ -958,10 +977,11 @@ describe("<LeagueMatchView/>", () => {
             const awaySelectedPlayers = isHome
               ? [false, false, false]
               : selectedPlayers;
-            const leagueMatchKey = await setUpMatchesForSelection(
-              homeSelectedPlayers,
-              awaySelectedPlayers,
-            );
+            const leagueMatchKey =
+              await setUpDatabaseWithDefaultPlayersThatAreSelected(
+                homeSelectedPlayers,
+                awaySelectedPlayers,
+              );
             render(createApp(leagueMatchKey));
 
             const doublesCombo = await findDoublesCombo(isHome);
@@ -1051,14 +1071,15 @@ describe("<LeagueMatchView/>", () => {
               undefined,
               undefined,
             ];
-            const leagueMatchKey = await setUpMatchesForSelection(
-              [true, true, true],
-              [true, true, true],
-              (_, homePlayerIds, awayPlayerIds) => {
-                homeTeamPlayerIds = homePlayerIds;
-                awayTeamPlayerIds = awayPlayerIds;
-              },
-            );
+            const leagueMatchKey =
+              await setUpDatabaseWithDefaultPlayersThatAreSelected(
+                allPlayersSelected,
+                allPlayersSelected,
+                (_, homePlayerIds, awayPlayerIds) => {
+                  homeTeamPlayerIds = homePlayerIds;
+                  awayTeamPlayerIds = awayPlayerIds;
+                },
+              );
 
             let renderCount = 0;
             let currentMatchAndKeys: MatchAndKey[] = [];
@@ -1103,19 +1124,20 @@ describe("<LeagueMatchView/>", () => {
         it.each([true, false])(
           "should remove players from doubles match - $description",
           async (isHome) => {
-            const leagueMatchKey = await setUpMatchesForSelection(
-              [true, true, true],
-              [true, true, true],
-              (doublesMatch, homePlayerIds, awayPlayerIds) => {
-                if (isHome) {
-                  doublesMatch.team1Player1Id = homePlayerIds[0]!;
-                  doublesMatch.team1Player2Id = homePlayerIds[1]!;
-                } else {
-                  doublesMatch.team2Player1Id = awayPlayerIds[0]!;
-                  doublesMatch.team2Player2Id = awayPlayerIds[1]!;
-                }
-              },
-            );
+            const leagueMatchKey =
+              await setUpDatabaseWithDefaultPlayersThatAreSelected(
+                allPlayersSelected,
+                allPlayersSelected,
+                (doublesMatch, homePlayerIds, awayPlayerIds) => {
+                  if (isHome) {
+                    doublesMatch.team1Player1Id = homePlayerIds[0]!;
+                    doublesMatch.team1Player2Id = homePlayerIds[1]!;
+                  } else {
+                    doublesMatch.team2Player1Id = awayPlayerIds[0]!;
+                    doublesMatch.team2Player2Id = awayPlayerIds[1]!;
+                  }
+                },
+              );
 
             let renderCount = 0;
             let currentMatchAndKeys: MatchAndKey[] = [];
