@@ -14,12 +14,12 @@ export default function createEmulatorTests() {
   const database = getMaylandsCompRTB();
 
   beforeEach(async () => {
-    await set(ref(database), null); // todo check the promise
+    await set(ref(database), null);
   });
 
   //afterAll(async () => {}); // database coverage
 
-  const createApp = (node: ReactNode) => {
+  const createMaylandsComps = (node: ReactNode) => {
     return (
       <DatabaseProvider database={database}>
         <MaylandsThemeProvider>
@@ -29,5 +29,8 @@ export default function createEmulatorTests() {
       </DatabaseProvider>
     );
   };
-  return createApp;
+  return {
+    createMaylandsComps,
+    database,
+  };
 }

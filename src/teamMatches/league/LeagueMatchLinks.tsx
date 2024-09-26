@@ -9,8 +9,9 @@ import {
   ref,
 } from "firebase/database";
 import { DbLeagueMatch, leagueMatchesKey } from "../../firebase/rtb/team";
-import { Link } from "@mui/material";
 import { getDbToday } from "../../helpers/getDbDate";
+import CenteredCircularProgress from "../../helper-components/CenteredCircularProgress";
+import Link from "@mui/material/Link/Link";
 
 export interface LeagueMatchAndKey {
   leagueMatch: DbLeagueMatch;
@@ -53,7 +54,7 @@ export function LeagueMatchLinks() {
   }
 
   if (loading) {
-    return <div>loading</div>;
+    return <CenteredCircularProgress />;
   }
 
   return leagueMatches.map((leagueMatch) => (

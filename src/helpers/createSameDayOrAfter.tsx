@@ -25,5 +25,3 @@ export const createSameDayOrAfter = (compareToDate: Date) => {
     return isItSameDayOrAfterApproxDays >= compareToApproxDays;
   };
 };
-
-export const todayOrAfter = createSameDayOrAfter(new Date());

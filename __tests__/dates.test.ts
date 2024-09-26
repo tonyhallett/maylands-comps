@@ -1,5 +1,6 @@
 import { getDbDate, getDbToday } from "../src/helpers/getDbDate";
-import { todayOrAfter } from "../src/helpers/sameDate";
+import todayOrAfter from "../src/helpers/todayOrAfter";
+import { getTomorrow, getYesterday } from "../test-helpers/addDays";
 
 describe("db date", () => {
   it("should have the same value for dates on the same day", async () => {
@@ -22,19 +23,11 @@ describe("todayOrAfter", () => {
     const today = new Date();
     expect(todayOrAfter(today)).toBe(true);
   });
-  function addDays(date: Date, days: number) {
-    const result = new Date(date);
-    result.setDate(result.getDate() + days);
-    return result;
-  }
+
   it("should return true for after today", () => {
-    const today = new Date();
-    const tomorrow = addDays(today, 1);
-    expect(todayOrAfter(tomorrow)).toBe(true);
+    expect(todayOrAfter(getTomorrow())).toBe(true);
   });
   it("should return false for before today", () => {
-    const today = new Date();
-    const yesterday = addDays(today, -1);
-    expect(todayOrAfter(yesterday)).toBe(false);
+    expect(todayOrAfter(getYesterday())).toBe(false);
   });
 });

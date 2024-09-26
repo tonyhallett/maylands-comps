@@ -2120,3 +2120,4 @@ export const maylandsFixtures = fixedFixtureWeeks.filter((fixture) => {
     fixture.awayTeam.startsWith(maylands)
   );
 });
+export type MaylandsFixture = (typeof maylandsFixtures)[0];

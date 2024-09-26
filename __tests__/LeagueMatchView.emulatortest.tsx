@@ -1,17 +1,11 @@
 /**
  * @jest-environment jsdom
  */
-import { CssBaseline } from "@mui/material";
-import MaylandsThemeProvider from "../src/MaylandsTheming/MaylandsThemeProvider";
-import {
-  DatabaseProvider,
-  getMaylandsCompRTB,
-} from "../src/firebase/rtb/rtbProvider";
 import {
   LeagueMatchSelection,
   LeagueMatchSelectionProps,
 } from "../src/teamMatches/league/play/league-match-selection/LeagueMatchSelection";
-import { ref, set, update } from "firebase/database";
+import { ref, update } from "firebase/database";
 import {
   screen,
   render,
@@ -53,6 +47,7 @@ import { findDoublesCombo } from "./leagueMatchViewSelectors";
 import { openPlayerAutocompleteAndGetOptions } from "./leagueMatchViewSelectors";
 import { MatchAndKey } from "../src/teamMatches/league/db-hooks/useLeagueMatchAndMatches";
 import { createRootUpdater } from "../src/firebase/rtb/match/db-helpers";
+import createEmulatorTests from "./createEmulatorTests";
 
 // mocking due to import.meta.url
 jest.mock(
@@ -72,28 +67,17 @@ jest.mock("../src/teamMatches/league/play/LeagueMatchScoreboard", () => {
   };
 });
 
-const database = getMaylandsCompRTB();
-
-beforeEach(async () => {
-  await set(ref(database), null); // todo check the promise
-});
-
-//afterAll(async () => {}); // database coverage
+const { createMaylandsComps, database } = createEmulatorTests();
 
 function createApp(
   leagueMatchId: string,
-  renderScoreboard: LeagueMatchSelectionProps["renderScoresheet"] = () => null,
+  renderScoresheet: LeagueMatchSelectionProps["renderScoresheet"] = () => null,
 ) {
-  return (
-    <DatabaseProvider database={database}>
-      <MaylandsThemeProvider>
-        <CssBaseline enableColorScheme />
-        <LeagueMatchSelection
-          leagueMatchId={leagueMatchId}
-          renderScoresheet={renderScoreboard}
-        />
-      </MaylandsThemeProvider>
-    </DatabaseProvider>
+  return createMaylandsComps(
+    <LeagueMatchSelection
+      leagueMatchId={leagueMatchId}
+      renderScoresheet={renderScoresheet}
+    />,
   );
 }
 
