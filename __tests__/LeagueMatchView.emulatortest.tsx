@@ -5,7 +5,7 @@ import {
   LeagueMatchSelection,
   LeagueMatchSelectionProps,
 } from "../src/teamMatches/league/play/league-match-selection/LeagueMatchSelection";
-import { ref, update } from "firebase/database";
+import { ref, set } from "firebase/database";
 import {
   screen,
   render,
@@ -14,19 +14,13 @@ import {
   fireEvent,
 } from "@testing-library/react";
 import { getNewKey } from "../src/firebase/rtb/typeHelpers";
-import { refTyped } from "../src/firebase/rtb/root";
+import { Root, refTyped } from "../src/firebase/rtb/root";
 import {
   clearOptions,
   openAutocompleteAndGetOptions,
   selectNthOption,
 } from "../test-helpers/mui/autocomplete";
-import {
-  DbLeagueClub,
-  DbLeagueMatch,
-  DbLeagueTeam,
-  DbRegisteredPlayer,
-} from "../src/firebase/rtb/team";
-import { DbPlayer } from "../src/firebase/rtb/players";
+
 import {
   DBMatchSaveState,
   saveStateToDbMatchSaveState,
@@ -46,7 +40,6 @@ import { getPlayerComboInputs } from "./leagueMatchViewSelectors";
 import { findDoublesCombo } from "./leagueMatchViewSelectors";
 import { openPlayerAutocompleteAndGetOptions } from "./leagueMatchViewSelectors";
 import { MatchAndKey } from "../src/teamMatches/league/db-hooks/useLeagueMatchAndMatches";
-import { createRootUpdater } from "../src/firebase/rtb/match/db-helpers";
 import createEmulatorTests from "./createEmulatorTests";
 
 // mocking due to import.meta.url
@@ -80,13 +73,6 @@ function createApp(
     />,
   );
 }
-
-const leagueMatchesRef = refTyped(database, "leagueMatches");
-const registeredPlayersRef = refTyped(database, "registeredPlayers");
-const playersRef = refTyped(database, "players");
-const teamsRef = refTyped(database, "teams");
-const clubsRef = refTyped(database, "clubs");
-const matchesRef = refTyped(database, "matches");
 
 const allPlayersSelected = [true, true, true];
 
@@ -135,13 +121,8 @@ describe("<LeagueMatchView/>", () => {
       ],
     },
   ];
-  type getPlayerId = (teamName: string, playerName: string) => string;
 
-  type SetupMatch = (
-    getPlayerId: getPlayerId,
-    dbMatch: DbMatch,
-    index: number,
-  ) => void;
+  type SetupMatch = (dbMatch: DbMatch, index: number) => void;
 
   async function setupDatabase(
     setUpMatch: SetupMatch = () => {},
@@ -150,102 +131,46 @@ describe("<LeagueMatchView/>", () => {
     awayTeamName = defaultAwayTeamName,
     isFriendly = false,
   ) {
-    const updater = createRootUpdater();
-    const updateClub = (leagueClub: DbLeagueClub) => {
-      const newClubKey = getNewKey(clubsRef);
-      updater.updateListItem("clubs", newClubKey, leagueClub);
-      return newClubKey!;
+    const root: Root = {
+      clubs: {},
+      teams: {},
+      players: {},
+      registeredPlayers: {},
+      leagueMatches: {},
+      matches: {},
     };
 
-    const updateTeam = (leagueTeam: DbLeagueTeam) => {
-      const newTeamKey = getNewKey(teamsRef);
-      updater.updateListItem("teams", newTeamKey!, leagueTeam);
-      return newTeamKey!;
-    };
+    testClubSetups.forEach((clubSetup) => {
+      root.clubs[clubSetup.clubName] = { name: clubSetup.clubName };
 
-    const updatePlayer = (player: DbPlayer) => {
-      const newPlayerKey = getNewKey(playersRef);
-      updater.updateListItem("players", newPlayerKey!, player);
-      return newPlayerKey!;
-    };
-
-    const updateRegisteredPlayer = (registeredPlayer: DbRegisteredPlayer) => {
-      const newRegisteredPlayerKey = getNewKey(registeredPlayersRef);
-      updater.updateListItem(
-        "registeredPlayers",
-        newRegisteredPlayerKey,
-        registeredPlayer,
-      );
-      return newRegisteredPlayerKey;
-    };
-
-    const updateLeagueMatch = (leagueMatch: DbLeagueMatch) => {
-      const newLeagueMatchKey = getNewKey(leagueMatchesRef);
-      updater.updateListItem("leagueMatches", newLeagueMatchKey, leagueMatch);
-      return newLeagueMatchKey;
-    };
-
-    const teamNameKeys = testClubSetups.flatMap((clubSetup) => {
-      const clubKey = updateClub({ name: clubSetup.clubName });
-      return clubSetup.teamSetups.map((teamSetup) => {
-        const teamKey = updateTeam({
+      clubSetup.teamSetups.forEach((teamSetup) => {
+        root.teams[teamSetup.teamName] = {
           rank: teamSetup.rank,
           name: teamSetup.teamName,
-          clubId: clubKey,
-        });
-        const playerNameKeys = teamSetup.playerNames.map((playerName) => {
-          const playerKey = updatePlayer({ name: playerName });
-          updateRegisteredPlayer({
-            clubId: clubKey,
-            teamId: teamKey,
-            playerId: playerKey,
+          clubId: clubSetup.clubName,
+        };
+
+        teamSetup.playerNames.forEach((playerName) => {
+          root.players[playerName] = { name: playerName };
+          root.registeredPlayers[playerName] = {
+            clubId: clubSetup.clubName,
+            teamId: teamSetup.teamName,
             rank: teamSetup.rank,
-          });
-          return {
-            name: playerName,
-            key: playerKey,
+            playerId: playerName,
           };
         });
-        return {
-          teamKey,
-          name: teamSetup.teamName,
-          playerNameKeys,
-        };
       });
     });
 
-    const getTeamKey = (teamName: string) => {
-      const teamNameKey = teamNameKeys.find(
-        (teamNameKey) => teamNameKey.name === teamName,
-      );
-      if (!teamNameKey) {
-        throw new Error(`team not found - ${teamName}`);
-      }
-      return teamNameKey.teamKey;
-    };
-    const getPlayerId = (teamName: string, playerName: string) => {
-      const teamNameKey = teamNameKeys.find(
-        (teamNameKey) => teamNameKey.name === teamName,
-      );
-      if (!teamNameKey) {
-        throw new Error(`team not found - ${teamName}`);
-      }
-      const playerNameKey = teamNameKey.playerNameKeys.find(
-        (playerNameKey) => playerNameKey.name === playerName,
-      );
-      if (!playerNameKey) {
-        throw new Error(`player not found - ${playerName}`);
-      }
-      return playerNameKey.key;
-    };
-
-    const leagueMatchKey = updateLeagueMatch({
+    const leagueMatchKey = "league match";
+    root.leagueMatches[leagueMatchKey] = {
       date: getDbToday(),
       isFriendly,
-      homeTeamId: getTeamKey(homeTeamName),
-      awayTeamId: getTeamKey(awayTeamName),
+      homeTeamId: homeTeamName,
+      awayTeamId: awayTeamName,
       description: "Test match",
-    });
+    };
+
     const getDbMatchSaveState = (isDoubles: boolean) => {
       const umpire = new Umpire(
         {
@@ -261,24 +186,26 @@ describe("<LeagueMatchView/>", () => {
       const umpireSaveState = umpire.getSaveState();
       return saveStateToDbMatchSaveState(umpireSaveState);
     };
-    const singlesMatchSaveState = getDbMatchSaveState(false);
+
     const addMatch = (dbMatchSaveState: DBMatchSaveState, index: number) => {
-      const matchKey = getNewKey(matchesRef);
+      const matchKey = getNewKey(refTyped(database, "matches"));
       const newMatch: DbMatch = {
         scoreboardWithUmpire: true,
         ...dbMatchSaveState,
         containerId: leagueMatchKey,
       };
-      setUpMatch(getPlayerId, newMatch, index);
-      updater.updateListItem("matches", matchKey, newMatch);
+      setUpMatch(newMatch, index);
+      root.matches[matchKey] = newMatch;
     };
+
+    const singlesMatchSaveState = getDbMatchSaveState(false);
     for (let i = 0; i < 9; i++) {
       addMatch(singlesMatchSaveState, i);
     }
     const doublesMatchSaveState = getDbMatchSaveState(true);
     addMatch(doublesMatchSaveState, 9);
 
-    await update(ref(database), updater.values);
+    await set(ref(database), root);
     return leagueMatchKey;
   }
 
@@ -298,25 +225,21 @@ describe("<LeagueMatchView/>", () => {
     // if selected collect the player ids for setupDoubles
     const homeTeamPlayerIds: TeamPlayerIds = [undefined, undefined, undefined];
     const awayTeamPlayerIds: TeamPlayerIds = [undefined, undefined, undefined];
-    const setupMatch: SetupMatch = (getPlayerId, dbMatch, index) => {
+    const setupMatch: SetupMatch = (dbMatch, index) => {
       if (index !== 9) {
         const { homePositionDisplay, awayPositionDisplay } =
           leagueMatchPlayersPositionDisplays[index];
         // the position corresponds to the combobox
         // if selected set the player id to that of the default at that position
         if (homePlayersSelected[homePositionDisplay.position]) {
-          dbMatch.team1Player1Id = getPlayerId(
-            defaultHomeTeamName,
-            defaultHomePlayerNames[homePositionDisplay.position],
-          );
+          dbMatch.team1Player1Id =
+            defaultHomePlayerNames[homePositionDisplay.position];
           homeTeamPlayerIds[homePositionDisplay.position] =
             dbMatch.team1Player1Id;
         }
         if (awayPlayersSelected[awayPositionDisplay.position]) {
-          dbMatch.team2Player1Id = getPlayerId(
-            defaultAwayTeamName,
-            defaultAwayPlayerNames[awayPositionDisplay.position],
-          );
+          dbMatch.team2Player1Id =
+            defaultAwayPlayerNames[awayPositionDisplay.position];
           awayTeamPlayerIds[awayPositionDisplay.position] =
             dbMatch.team2Player1Id;
         }
@@ -564,10 +487,7 @@ describe("<LeagueMatchView/>", () => {
         it.each(selectPlayerTest)(
           "should add player to all of the player matches  - $isHome, $playerComboIndex, $selectedPlayerIndex",
           async ({ isHome, playerComboIndex, selectedPlayerIndex }) => {
-            let getThePlayerId: getPlayerId;
-            const leagueMatchKey = await setupDatabase((getPlayerId) => {
-              getThePlayerId = getPlayerId;
-            });
+            const leagueMatchKey = await setupDatabase();
             let renderCount = 0;
             let currentMatchAndKeys: MatchAndKey[] = [];
             render(
@@ -587,8 +507,7 @@ describe("<LeagueMatchView/>", () => {
               ? defaultOrderedHomeAvailablePlayerNames
               : defaultOrderedAwayAvailablePlayerNames;
             const playerName = orderedAvailablePlayerNames[selectedPlayerIndex];
-            const teamName = isHome ? defaultHomeTeamName : defaultAwayTeamName;
-            const expectedPlayerId = getThePlayerId!(teamName, playerName);
+            const expectedPlayerId = playerName;
             const matchPlayerDetails = isHome
               ? homePlayersMatchIndicesAndDisplay
               : awayPlayersMatchIndicesAndDisplay;
