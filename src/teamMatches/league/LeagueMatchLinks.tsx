@@ -10,7 +10,7 @@ import {
 } from "firebase/database";
 import { DbLeagueMatch, leagueMatchesKey } from "../../firebase/rtb/team";
 import { Link } from "@mui/material";
-import { getSimpleToday } from "../../helpers/getSimpleToday";
+import { getDbToday } from "../../helpers/getDbDate";
 
 export interface LeagueMatchAndKey {
   leagueMatch: DbLeagueMatch;
@@ -26,7 +26,7 @@ export function LeagueMatchLinks() {
     const leagueMatchesRef = child(ref(db), leagueMatchesKey);
     const dateQuery = query(
       leagueMatchesRef,
-      equalTo(getSimpleToday()),
+      equalTo(getDbToday()),
       orderByChild("date"),
     );
     // should use get as should not need to get any others

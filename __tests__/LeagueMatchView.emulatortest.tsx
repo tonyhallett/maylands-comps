@@ -39,7 +39,7 @@ import {
 } from "../src/firebase/rtb/match/conversion";
 import { DbMatch } from "../src/firebase/rtb/match/dbMatch";
 import { Umpire } from "../src/umpire";
-import { getSimpleToday } from "../src/helpers/getSimpleToday";
+import { getDbToday } from "../src/helpers/getDbDate";
 import { ClubSetup } from "../src/teamMatches/league/db-population/data/romfordLeagueData";
 import {
   awayPlayersMatchIndicesAndDisplay,
@@ -103,11 +103,6 @@ const playersRef = refTyped(database, "players");
 const teamsRef = refTyped(database, "teams");
 const clubsRef = refTyped(database, "clubs");
 const matchesRef = refTyped(database, "matches");
-
-/* export const matchesPlayersPositions = getMatchPlayerPositions(
-  homePlayerMatchDetails.map((p) => p.matchIndices),
-  awayPlayerMatchDetails.map((p) => p.matchIndices),
-); */
 
 describe("<LeagueMatchView/>", () => {
   const defaultHomeTeamName = "Maylands A";
@@ -263,7 +258,7 @@ describe("<LeagueMatchView/>", () => {
     };
 
     const leagueMatchKey = updateLeagueMatch({
-      date: getSimpleToday(),
+      date: getDbToday(),
       isFriendly,
       homeTeamId: getTeamKey(homeTeamName),
       awayTeamId: getTeamKey(awayTeamName),

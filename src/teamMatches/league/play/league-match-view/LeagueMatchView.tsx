@@ -216,7 +216,7 @@ export function LeagueMatchView({ leagueMatchId }: { leagueMatchId: string }) {
                   <MoreVertIcon />
                 </div>
               </TableCell>
-              <TableCell padding="none">{index}</TableCell>
+              <TableCell padding="none">{index + 1}</TableCell>
               {getPlayerCell(
                 home,
                 teamsConcededOrDefaulted.team1.conceded,

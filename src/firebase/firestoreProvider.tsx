@@ -6,11 +6,12 @@ import {
 } from "firebase/firestore";
 import firebaseConfig from "./firebaseConfig";
 import { createContext, ReactNode, useContext } from "react";
+import isDevelopment from "../helpers/isDevelopment";
 
 export function getMaylandsCompFirestore() {
   const app = initializeApp(firebaseConfig);
   const db = getFirestore(app);
-  if (process.env.NODE_ENV === "development") {
+  if (isDevelopment()) {
     connectFirestoreEmulator(db, "127.0.0.1", 8080);
   }
   return db;

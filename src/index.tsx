@@ -12,6 +12,7 @@ import { DatabaseProvider } from "./firebase/rtb/rtbProvider";
 import { CreateLeagueSeason } from "./teamMatches/league/db-population/CreateLeagueSeason";
 import { LeagueMatchLinks } from "./teamMatches/league/LeagueMatchLinks";
 import { LeagueMatchViewRoute } from "./teamMatches/league/play/LeagueMatchViewRoute";
+import { CreateLeagueSeasonForEmulator } from "./teamMatches/league/db-population/CreateLeagueSeasonForEmulator";
 
 const leagueMatchesPath = "leagueMatches";
 const createLeagueSeasonPath = "createLeagueSeason";
@@ -39,6 +40,10 @@ const router = createBrowserRouter([
   {
     path: createLeagueSeasonPath,
     element: <CreateLeagueSeason />,
+  },
+  {
+    path: "setupemulator",
+    element: <CreateLeagueSeasonForEmulator />,
   },
   {
     path: leagueMatchesPath,

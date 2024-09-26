@@ -29,7 +29,7 @@ import {
   SelectedOrNotSinglePlayerNamePositionDisplay,
 } from "./renderScoresheet-type";
 import { TeamsSelectPlayersAndDoubles } from "../player-selection/TeamsSelectPlayersAndDoubles";
-import { Button, CircularProgress } from "@mui/material";
+import { Button } from "@mui/material";
 import { createRootUpdater } from "../../../../firebase/rtb/match/db-helpers";
 import { useWakeLock } from "../../../../hooks/useWakeLock";
 import {
@@ -37,6 +37,7 @@ import {
   awayTeamSelectLabels,
 } from "./team-select-labels";
 import { getAvailablePlayersForSelection } from "./getAvailablePlayersForSelection";
+import CenteredCircularProgress from "../../../../helper-components/CenteredCircularProgress";
 
 export interface LeagueMatchSelectionProps {
   renderScoresheet: RenderScoresheet;
@@ -67,7 +68,7 @@ export function LeagueMatchSelection({
       matchAndKeys.length === leagueMatchNumberOfSingles + 1
     )
   ) {
-    return <CircularProgress />;
+    return <CenteredCircularProgress />;
   }
 
   const availablePlayersForSelection = getAvailablePlayersForSelection(
