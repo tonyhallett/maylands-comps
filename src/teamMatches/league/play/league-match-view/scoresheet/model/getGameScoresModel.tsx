@@ -30,6 +30,82 @@ export interface GameScoreModel {
   home: PointsInfo;
   away: PointsInfo;
 }
+const firstGameAndNoPointsScored = (
+  firstGame: boolean,
+  gameScore: GameScore,
+) => {
+  return (
+    firstGame && gameScore.team1Points === 0 && gameScore.team2Points === 0
+  );
+};
+
+const getDefaultGameScoreModel = () => {
+  const defaultPointsInfo: PointsInfo = {
+    display: "-",
+    state: GameScorePointState.Normal,
+  };
+  const gameScoreDisplay: GameScoreModel = {
+    home: defaultPointsInfo,
+    away: defaultPointsInfo,
+  };
+  return gameScoreDisplay;
+};
+const getDefaultGameScoreModelIfNecessary = (
+  firstGame: boolean,
+  gameScore: GameScore,
+  umpired: boolean | undefined,
+) => {
+  const useDefault =
+    gameScore === undefined ||
+    (firstGameAndNoPointsScored(firstGame, gameScore) && umpired === undefined);
+  if (useDefault) {
+    return getDefaultGameScoreModel();
+  }
+};
+
+export const getGameScoreModelWithPoints = (
+  gameScore: GameScore,
+  teamsMatchScoreState: TeamsMatchScoreState,
+  isLastGame: boolean,
+) => {
+  const homeGameScoreDisplay = gameScore.team1Points.toString();
+  const awayGameScoreDisplay = gameScore.team2Points.toString();
+
+  const gameWon =
+    teamsMatchScoreState.home === TeamMatchScoreState.MatchWon ||
+    teamsMatchScoreState.away === TeamMatchScoreState.MatchWon;
+
+  const useTeamsMatchScoreState = isLastGame && !gameWon;
+
+  if (useTeamsMatchScoreState) {
+    return {
+      home: {
+        display: homeGameScoreDisplay,
+        state: convertMatchScoreState(teamsMatchScoreState.home),
+      },
+      away: {
+        display: awayGameScoreDisplay,
+        state: convertMatchScoreState(teamsMatchScoreState.away),
+      },
+    };
+  } else {
+    const homeTeamWon = gameScore.team1Points > gameScore.team2Points;
+    return {
+      home: {
+        display: homeGameScoreDisplay,
+        state: homeTeamWon
+          ? GameScorePointState.Won
+          : GameScorePointState.Normal,
+      },
+      away: {
+        display: awayGameScoreDisplay,
+        state: homeTeamWon
+          ? GameScorePointState.Normal
+          : GameScorePointState.Won,
+      },
+    };
+  }
+};
 
 export const getGameScoresModel = (
   gameScores: GameScore[],
@@ -37,63 +113,14 @@ export const getGameScoresModel = (
   umpired: boolean | undefined,
 ): GameScoreModel[] => {
   return fillArray(5, (i) => {
-    const defaultPointsInfo: PointsInfo = {
-      display: "-",
-      state: GameScorePointState.Normal,
-    };
-    let gameScoreDisplay: GameScoreModel = {
-      home: defaultPointsInfo,
-      away: defaultPointsInfo,
-    };
     const gameScore = gameScores[i];
-    const firstGameAndNoPointsScored = () => {
-      return (
-        i === 0 && gameScore.team1Points === 0 && gameScore.team2Points === 0
-      );
-    };
-
-    const useDefault =
-      gameScore === undefined ||
-      (firstGameAndNoPointsScored() && umpired === undefined);
-    if (!useDefault) {
-      const homeGameScoreDisplay = gameScore.team1Points.toString();
-      const awayGameScoreDisplay = gameScore.team2Points.toString();
-
-      const gameWon =
-        teamsMatchScoreState.home === TeamMatchScoreState.MatchWon ||
-        teamsMatchScoreState.away === TeamMatchScoreState.MatchWon;
-      const isLastGame = i === gameScores.length - 1;
-      const useTeamsMatchScoreState = isLastGame && !gameWon;
-
-      if (useTeamsMatchScoreState) {
-        gameScoreDisplay = {
-          home: {
-            display: homeGameScoreDisplay,
-            state: convertMatchScoreState(teamsMatchScoreState.home),
-          },
-          away: {
-            display: awayGameScoreDisplay,
-            state: convertMatchScoreState(teamsMatchScoreState.away),
-          },
-        };
-      } else {
-        const homeTeamWon = gameScore.team1Points > gameScore.team2Points;
-        gameScoreDisplay = {
-          home: {
-            display: homeGameScoreDisplay,
-            state: homeTeamWon
-              ? GameScorePointState.Won
-              : GameScorePointState.Normal,
-          },
-          away: {
-            display: awayGameScoreDisplay,
-            state: homeTeamWon
-              ? GameScorePointState.Normal
-              : GameScorePointState.Won,
-          },
-        };
-      }
-    }
-    return gameScoreDisplay;
+    return (
+      getDefaultGameScoreModelIfNecessary(i === 0, gameScore, umpired) ??
+      getGameScoreModelWithPoints(
+        gameScore,
+        teamsMatchScoreState,
+        i === gameScores.length - 1,
+      )
+    );
   });
 };

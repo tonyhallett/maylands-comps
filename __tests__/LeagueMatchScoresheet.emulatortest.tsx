@@ -554,7 +554,7 @@ describe("render scoresheet", () => {
           },
         ];
 
-      it.only.each(previousGamesAndCurrentGamesTests)(
+      it.each(previousGamesAndCurrentGamesTests)(
         "should show game scores for previous games and current games",
         async (test) => {
           const gameScoreTeamCells = await setupGetFirstMatchGameScoreCells(
