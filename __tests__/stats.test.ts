@@ -26,7 +26,7 @@ import {
   isGamePoint,
   team1WonGameOrMatch,
 } from "../src/umpire/pointStateHelpers";
-import { getLast } from "../src/umpire/helpers";
+import { getLast } from "../src/helpers/getLast";
 
 describe("getGameStats", () => {
   describe("streaks", () => {

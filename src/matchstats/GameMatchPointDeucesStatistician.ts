@@ -1,5 +1,5 @@
 import { PointHistory, PointState } from "../umpire";
-import { getLast } from "../umpire/helpers";
+import { getLast } from "../helpers/getLast";
 import {
   isGamePointTeam1,
   isGamePointTeam2,

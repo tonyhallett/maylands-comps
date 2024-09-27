@@ -7,6 +7,7 @@ const config: JestConfigWithTsJest = {
       preset: "ts-jest",
       displayName: "tests",
       testRegex: ["/__tests__/.*.test.ts"],
+      setupFilesAfterEnv: ["<rootDir>/jest-setup.ts"],
     },
     // https://github.com/mui/mui-x/issues/11568 [charts][ESM] @mui/x-charts does not work with jest
     {

@@ -35,7 +35,8 @@ import {
   getPlayers,
 } from "../src/umpire/playersHelpers";
 import { ServerReceiver } from "../src/umpire/commonTypes";
-import { getLast } from "../src/umpire/helpers";
+import { getLast } from "../src/helpers/getLast";
+import { scoreGames, scorePoints } from "./umpireScoringHelpers";
 
 describe("umpiring", () => {
   const singlesPlayers = getPlayers(false);
@@ -416,24 +417,11 @@ describe("umpiring", () => {
     });
   });
 
-  const scorePoints = (umpire: Umpire, team1: boolean, n: number) => {
-    [...Array(n)].forEach(() => umpire.pointScored(team1));
-    return umpire.getMatchState();
-  };
   const oneThenOtherScores = (umpire: Umpire, n: number) => {
     for (let i = 0; i < n; i++) {
       umpire.pointScored(true);
       umpire.pointScored(false);
     }
-  };
-  const scoreGames = (
-    umpire: Umpire,
-    team1: boolean,
-    n: number,
-    gamePoints = 11,
-  ) => {
-    [...Array(n)].forEach(() => scorePoints(umpire, team1, gamePoints));
-    return umpire.getMatchState();
   };
 
   describe("scoring", () => {

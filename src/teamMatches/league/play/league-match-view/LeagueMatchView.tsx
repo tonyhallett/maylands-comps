@@ -59,6 +59,7 @@ import {
   getDbMatchSaveStateFromUmpire,
   getFullGameScores,
 } from "../../helpers";
+import { getAreAllPlayersSelected } from "../../../../firebase/rtb/match/helpers/getAllPlayersSelected";
 const UndoConcedeIcon = PersonIcon;
 interface UmpireViewInfo {
   umpire: Umpire;
@@ -67,23 +68,10 @@ interface UmpireViewInfo {
   matchState: MatchState;
 }
 
-export const getScoresheetGameAriaLabel = (index: number) =>
-  `Scoresheet Game ${index}`;
-
-export const getAllPlayersSelected = (match: DbMatch) => {
-  const player1sSelected =
-    match.team1Player1Id !== undefined && match.team2Player1Id !== undefined;
-  if (!player1sSelected) {
-    return false;
-  }
-  if (match.isDoubles) {
-    const player2sSelected =
-      match.team1Player2Id !== undefined && match.team2Player2Id !== undefined;
-    return player2sSelected;
-  }
-  return true;
-};
-
+export const scoresheetTableAriaLabel = "Scoresheet Table";
+export const getScoresheetGameRowAriaLabel = (index: number) => `Game ${index}`;
+export const scoresheetLeagueMatchResultsRowAriaLabel =
+  "League Match Results Row";
 export function LeagueMatchView({ leagueMatchId }: { leagueMatchId: string }) {
   const [umpireMatchIndex, setUmpireMatchIndex] = useState<number | undefined>(
     undefined,
@@ -179,7 +167,7 @@ export function LeagueMatchView({ leagueMatchId }: { leagueMatchId: string }) {
           const teamsConcededOrDefaulted = getTeamsConcededOrForfeited(match);
           const { home, away } = getMatchTeamsSelectionModel(
             index,
-            umpireMatchAndKeys,
+            !match.isDoubles,
             keyedSinglesMatchNamePositionDisplays,
             keyedDoublesMatchNamesPositionDisplay,
           );
@@ -201,7 +189,7 @@ export function LeagueMatchView({ leagueMatchId }: { leagueMatchId: string }) {
 
           return (
             <TableRow
-              aria-label={getScoresheetGameAriaLabel(index)}
+              aria-label={getScoresheetGameRowAriaLabel(index + 1)}
               key={index}
             >
               <TableCell padding="none">
@@ -219,14 +207,14 @@ export function LeagueMatchView({ leagueMatchId }: { leagueMatchId: string }) {
               <TableCell padding="none">{index + 1}</TableCell>
               {getPlayerCell(
                 home,
-                teamsConcededOrDefaulted.team1.conceded,
+                teamsConcededOrDefaulted.team1,
                 true,
                 matchState.server,
                 matchState.receiver,
               )}
               {getPlayerCell(
                 away,
-                teamsConcededOrDefaulted.team2.conceded,
+                teamsConcededOrDefaulted.team2,
                 false,
                 matchState.server,
                 matchState.receiver,
@@ -280,10 +268,10 @@ export function LeagueMatchView({ leagueMatchId }: { leagueMatchId: string }) {
             );
             const homeConcededOrDefaulted =
               teamsConcededOrForefeited.team1.conceded ||
-              teamsConcededOrForefeited.team1.forefeited;
+              teamsConcededOrForefeited.team1.forfeited;
             const awayConcededOrDefaulted =
               teamsConcededOrForefeited.team2.conceded ||
-              teamsConcededOrForefeited.team2.forefeited;
+              teamsConcededOrForefeited.team2.forfeited;
             if (homeConcededOrDefaulted && awayConcededOrDefaulted) {
               numGamesConcluded++;
             } else if (homeConcededOrDefaulted) {
@@ -388,8 +376,8 @@ export function LeagueMatchView({ leagueMatchId }: { leagueMatchId: string }) {
           allPlayersSelected: boolean,
         ) => {
           const forfeited =
-            teamsConcededOrDefaulted.team1.forefeited ||
-            teamsConcededOrDefaulted.team2.forefeited;
+            teamsConcededOrDefaulted.team1.forfeited ||
+            teamsConcededOrDefaulted.team2.forfeited;
 
           const concedeDisabled = matchWon || !allPlayersSelected || forfeited;
 
@@ -468,7 +456,7 @@ export function LeagueMatchView({ leagueMatchId }: { leagueMatchId: string }) {
 
         const getGameMenuItems = () => {
           const umpireMatchAndKey = umpireMatchAndKeys[gameMenuState!.index];
-          const allPlayersSelected = getAllPlayersSelected(
+          const allPlayersSelected = getAreAllPlayersSelected(
             umpireMatchAndKey.match,
           );
           const matchWon = isMatchWon(
@@ -480,8 +468,8 @@ export function LeagueMatchView({ leagueMatchId }: { leagueMatchId: string }) {
           const concededOrForfeited =
             teamsConcededOrDefaulted.team1.conceded ||
             teamsConcededOrDefaulted.team2.conceded ||
-            teamsConcededOrDefaulted.team1.forefeited ||
-            teamsConcededOrDefaulted.team2.forefeited;
+            teamsConcededOrDefaulted.team1.forfeited ||
+            teamsConcededOrDefaulted.team2.forfeited;
           return [
             getUmpireMenuItem(allPlayersSelected, concededOrForfeited),
             ...getConcedeMenuItems(
@@ -541,7 +529,7 @@ export function LeagueMatchView({ leagueMatchId }: { leagueMatchId: string }) {
             <Box sx={{ width: "100%" }}>
               <Paper sx={{ width: "100%", mb: 2 }}>
                 <TableContainer>
-                  <Table size="small">
+                  <Table size="small" aria-label={scoresheetTableAriaLabel}>
                     <TableHead>
                       <TableRow>
                         <TableCell padding="none"></TableCell>
@@ -556,7 +544,9 @@ export function LeagueMatchView({ leagueMatchId }: { leagueMatchId: string }) {
                     </TableHead>
                     <TableBody>
                       {rows}
-                      <TableRow>
+                      <TableRow
+                        aria-label={scoresheetLeagueMatchResultsRowAriaLabel}
+                      >
                         <TableCell padding="none"></TableCell>
                         <TableCell padding="none"></TableCell>
                         <TableCell></TableCell>

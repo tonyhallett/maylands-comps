@@ -3,8 +3,6 @@ import { DbMatch } from "../../firebase/rtb/match/dbMatch";
 import { MatchState, Umpire } from "../../umpire";
 import { isMatchWon } from "../../umpire/matchWinState";
 
-export const isSingles = (index: number, matches: unknown[]) =>
-  index < matches.length - 1;
 interface WithMatch {
   match: DbMatch;
 }

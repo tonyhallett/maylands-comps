@@ -21,7 +21,7 @@ import {
 import { dbMatchSaveStateToSaveState } from "../../../../firebase/rtb/match/conversion";
 import { Umpire } from "../../../../umpire";
 import { LeagueMatchScoreboard } from "../LeagueMatchScoreboard";
-import { getDoublesMatch, isSingles } from "../../helpers";
+import { getDoublesMatch } from "../../helpers";
 import {
   KeyedDoublesMatchNamesPositionDisplay,
   KeyedSinglesMatchNamePositionDisplay,
@@ -44,7 +44,7 @@ export interface LeagueMatchSelectionProps {
   leagueMatchId: string;
 }
 
-export const scoresheetAriaLabel = "Scoresheet";
+export const scoresheetSectionAriaLabel = "Scoresheet";
 
 export function LeagueMatchSelection({
   leagueMatchId,
@@ -165,8 +165,8 @@ export function LeagueMatchSelection({
   }
   const getMatchNamePositionDisplays = () => {
     const getKeyedSinglesMatchNamePositionDisplays = () => {
-      const singlesMatches = matchAndKeys.filter((_, i) =>
-        isSingles(i, matchAndKeys),
+      const singlesMatches = matchAndKeys.filter(
+        (matchAndKey) => !matchAndKey.match.isDoubles,
       );
 
       return singlesMatches.map((matchAndKey, i) => {
@@ -319,7 +319,7 @@ export function LeagueMatchSelection({
         />
 
         <Button onClick={() => setShowScoreboard(true)}>Scoreboard</Button>
-        <section aria-label={scoresheetAriaLabel}>
+        <section aria-label={scoresheetSectionAriaLabel}>
           {renderScoresheet(
             matchAndKeys.map((matchAndKey) => {
               const umpire = new Umpire(

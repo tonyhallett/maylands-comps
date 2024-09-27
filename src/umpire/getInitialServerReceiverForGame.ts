@@ -1,4 +1,5 @@
-import { getLast, isEven } from "./helpers";
+import { isEven } from "./helpers";
+import { getLast } from "../helpers/getLast";
 import { ServerReceiver } from "./commonTypes";
 import { Player } from ".";
 import { InitialServersDoublesReceiver } from "./availableServerReceiverChoice";

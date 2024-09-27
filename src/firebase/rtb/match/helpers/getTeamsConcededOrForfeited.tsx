@@ -2,7 +2,7 @@ import { ConcedeOrForfeit, DbMatch } from "../dbMatch";
 
 export interface TeamConcededOrForfeited {
   conceded: boolean;
-  forefeited: boolean;
+  forfeited: boolean;
 }
 
 export interface TeamsConcededOrForfeited {
@@ -23,7 +23,7 @@ export const getTeamsConcededOrForfeited = (
   ): TeamConcededOrForfeited => {
     return {
       conceded: getConceded(concedeOrForfeit),
-      forefeited: getForfeited(concedeOrForfeit),
+      forfeited: getForfeited(concedeOrForfeit),
     };
   };
 

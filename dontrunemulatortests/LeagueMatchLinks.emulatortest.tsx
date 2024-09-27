@@ -3,7 +3,7 @@
  */
 import { render, screen } from "@testing-library/react";
 import { CreateLeagueSeason } from "../src/teamMatches/league/db-population/CreateLeagueSeason";
-import createEmulatorTests from "./createEmulatorTests";
+import createEmulatorTests from "../__tests__/createEmulatorTests";
 import { LeagueMatchLinks } from "../src/teamMatches/league/LeagueMatchLinks";
 import { MaylandsFixture } from "../src/teamMatches/league/db-population/data/romfordLeagueData";
 import { LinkProps } from "@mui/material";
@@ -46,9 +46,9 @@ jest.mock(
   },
 );
 
-describe.only("<LeagueMatchLinks />", () => {
-  const { createMaylandsComps } = createEmulatorTests();
+const { createMaylandsComps } = createEmulatorTests();
 
+describe("<LeagueMatchLinks />", () => {
   beforeEach(async () => {
     let resolver: (value: void) => void = () => {};
     const waitForSetupDatabasePromise = new Promise<void>((resolve) => {

@@ -1,42 +1,64 @@
 import { TableCell } from "@mui/material";
 import { TeamSelectionModel } from "../model/getMatchTeamsSelectionModel";
 import { Player } from "../../../../../../umpire";
+import { TeamConcededOrForfeited } from "../../../../../../firebase/rtb/match/helpers/getTeamsConcededOrForfeited";
 
-export const scoresheetGameHomePlayerAriaLabel = "Home Player";
-export const scoresheetGameAwayPlayerAriaLabel = "Away Player";
+export const getScoresheetGamePlayerCellAriaLabel = (isHome: boolean) => {
+  return isHome ? "Home Team Player/s" : "Away Team Players";
+};
 
 export const getSimpleTeamDisplay = (
   teamSelectionDisplay: TeamSelectionModel,
 ) => {
+  if (
+    teamSelectionDisplay.player1 === undefined &&
+    teamSelectionDisplay.player2 === undefined
+  ) {
+    return "?";
+  }
   return teamSelectionDisplay.player2 === undefined
-    ? teamSelectionDisplay.player1
-    : `${teamSelectionDisplay.player1} ${teamSelectionDisplay.player2}`;
+    ? teamSelectionDisplay.player1!
+    : `${teamSelectionDisplay.player1!} ${teamSelectionDisplay.player2}`;
 };
-
+export const doublesPlayerAriaLabel = "Doubles Player";
+export const unselectedPlayerCellColor = "#FC5B5B";
+const getConcededOrForefeitedTextDecorationLine = (
+  concededOrDefaulted: boolean,
+): React.CSSProperties["textDecorationLine"] => {
+  return concededOrDefaulted ? "line-through" : "none";
+};
 export const getPlayerCell = (
-  teamSelectionDisplay: TeamSelectionModel,
-  conceded: boolean,
+  teamSelectionModel: TeamSelectionModel,
+  concededOrForfeited: TeamConcededOrForfeited,
   isHome: boolean,
   server: Player | undefined,
   receiver: Player | undefined,
 ) => {
-  const ariaLabel = isHome
-    ? scoresheetGameHomePlayerAriaLabel
-    : scoresheetGameAwayPlayerAriaLabel;
-
-  if (!teamSelectionDisplay.selected) {
+  const ariaLabel = getScoresheetGamePlayerCellAriaLabel(isHome);
+  if (!teamSelectionModel.selected) {
+    const color = concededOrForfeited.forfeited
+      ? "inherit"
+      : unselectedPlayerCellColor;
     return (
       <TableCell
         sx={{
-          color: "#FC5B5B",
+          color,
+          textDecorationLine: getConcededOrForefeitedTextDecorationLine(
+            concededOrForfeited.forfeited,
+          ),
         }}
         aria-label={ariaLabel}
       >
-        {getSimpleTeamDisplay(teamSelectionDisplay)}
+        {getSimpleTeamDisplay(teamSelectionModel)}
       </TableCell>
     );
   }
-  const getPlayer = (playerDisplay: string | undefined, isPlayer1: boolean) => {
+  const getPlayer = (
+    playerDisplay: string | undefined,
+    isPlayer1: boolean,
+    conceded: boolean,
+    isDoubles: boolean,
+  ) => {
     if (playerDisplay === undefined) {
       return "";
     }
@@ -50,29 +72,33 @@ export const getPlayerCell = (
 
     const isServer = server === matchingPlayer;
     const isReceiver = receiver === matchingPlayer;
-    let textDecorationLine: React.CSSProperties["textDecorationLine"] = isServer
-      ? "underline"
-      : isReceiver
-        ? "overline"
-        : "none";
-    if (conceded) {
-      textDecorationLine = "line-through";
+    let textDecorationLine: React.CSSProperties["textDecorationLine"] = "none";
+    if (!conceded) {
+      textDecorationLine = isServer
+        ? "underline"
+        : isReceiver
+          ? "overline"
+          : "none";
     }
+    const ariaLabel = isDoubles ? doublesPlayerAriaLabel : "Singles Player";
     return (
-      <span style={{ textDecorationLine: textDecorationLine }}>
+      <span aria-label={ariaLabel} style={{ textDecorationLine }}>
         {playerDisplay}
       </span>
     );
   };
+  const conceded = concededOrForfeited.conceded;
+  const isDoubles = teamSelectionModel.player2 !== undefined;
   return (
     <TableCell
       sx={{
         color: "inherit",
+        textDecorationLine: getConcededOrForefeitedTextDecorationLine(conceded),
       }}
       aria-label={ariaLabel}
     >
-      {getPlayer(teamSelectionDisplay.player1, true)}
-      {getPlayer(teamSelectionDisplay.player2, false)}
+      {getPlayer(teamSelectionModel.player1, true, conceded, isDoubles)}
+      {getPlayer(teamSelectionModel.player2, false, conceded, isDoubles)}
     </TableCell>
   );
 };

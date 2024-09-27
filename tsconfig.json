@@ -14,7 +14,10 @@
     "__tests__/**/*",
     "__hacky-mui-tests__/StatsView.test.tsx",
     "test-helpers/testing-library/selectors/roleSelectorFactory.ts",
-    "test-helpers/testing-library/from.ts"
+    "test-helpers/testing-library/from.ts",
+    "dontrunemulatortests/LeagueMatchLinks.emulatortest.tsx",
+    "dontrunemulatortests/LeagueMatchView.emulatortest.tsx",
+    "jest-setup.ts"
   ],
   "ts-node": {
     "compilerOptions": {

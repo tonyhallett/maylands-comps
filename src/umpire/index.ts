@@ -1,4 +1,5 @@
-import { getLast, isEven } from "./helpers";
+import { isEven } from "./helpers";
+import { getLast } from "../helpers/getLast";
 import { MatchWinState } from "./matchWinState";
 import { MatchWinStatus, getMatchWinStatus } from "./getMatchWinStatus";
 import { requiredGamesToWin } from "./requiredGamesToWin";

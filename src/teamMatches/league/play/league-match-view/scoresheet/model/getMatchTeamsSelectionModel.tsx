@@ -1,24 +1,22 @@
 import { getInitials } from "../../../../../../umpireView/helpers";
-import { isSingles } from "../../../../helpers";
 import {
   KeyedDoublesMatchNamesPositionDisplay,
   KeyedSinglesMatchNamePositionDisplay,
-  UmpireMatchAndKey,
 } from "../../../league-match-selection/renderScoresheet-type";
 
 export interface TeamSelectionModel {
-  player1: string;
+  player1?: string;
   player2?: string;
   selected: boolean;
 }
 
 export const getMatchTeamsSelectionModel = (
   index: number,
-  umpireMatchAndKeys: UmpireMatchAndKey[],
+  isSingles: boolean,
   keyedSinglesMatchNamePositionDisplays: KeyedSinglesMatchNamePositionDisplay[],
   keyedDoublesMatchNamesPositionDisplay: KeyedDoublesMatchNamesPositionDisplay,
 ): { home: TeamSelectionModel; away: TeamSelectionModel } => {
-  if (isSingles(index, umpireMatchAndKeys)) {
+  if (isSingles) {
     const keyedSinglesMatchNamePositionDisplay =
       keyedSinglesMatchNamePositionDisplays[index];
 
@@ -50,7 +48,7 @@ export const getMatchTeamsSelectionModel = (
       ? keyedDoublesMatchNamesPositionDisplay.homePlayer1
       : keyedDoublesMatchNamesPositionDisplay.awayPlayer1;
     if (player1NameAndPositionIdentifier === undefined) {
-      return { player1: "-", player2: "-", selected: false };
+      return { selected: false };
     }
     const player2NameAndPositionIdentifier = isHome
       ? keyedDoublesMatchNamesPositionDisplay.homePlayer2

@@ -7,16 +7,12 @@ import {
   clearOptions,
   openAutocompleteAndGetOptions,
 } from "../test-helpers/mui/autocomplete";
-import { scoresheetAriaLabel } from "../src/teamMatches/league/play/league-match-selection/LeagueMatchSelection";
+import { scoresheetSectionAriaLabel } from "../src/teamMatches/league/play/league-match-selection/LeagueMatchSelection";
 import {
   awayTeamSelectLabels,
   homeTeamSelectLabels,
 } from "../src/teamMatches/league/play/league-match-selection/team-select-labels";
-import { getScoresheetGameAriaLabel } from "../src/teamMatches/league/play/league-match-view/LeagueMatchView";
-import {
-  scoresheetGameAwayPlayerAriaLabel,
-  scoresheetGameHomePlayerAriaLabel,
-} from "../src/teamMatches/league/play/league-match-view/scoresheet/ui/getPlayerCell";
+
 import {
   getTeamSelectPlayersAndDoublesAriaLabel,
   teamsSelectionAriaLabel,
@@ -43,33 +39,8 @@ export const getPlayerCombo = (
   return from(withinElement).getByLabelText<HTMLInputElement>(label);
 };
 
-export const findScoresheet = () => screen.findByLabelText(scoresheetAriaLabel);
-
-export const getScoresheetPlayer = (
-  scoresheet: HTMLElement,
-  isHome: boolean,
-  position: number,
-) => {
-  const scoresheetGame = within(scoresheet).getByLabelText(
-    getScoresheetGameAriaLabel(position),
-  );
-
-  const scoresheetPlayer = within(scoresheetGame).getByLabelText(
-    isHome
-      ? scoresheetGameHomePlayerAriaLabel
-      : scoresheetGameAwayPlayerAriaLabel,
-  );
-
-  return scoresheetPlayer;
-};
-
-export const getScoresheetPlayerIdentifier = (
-  scoresheet: HTMLElement,
-  isHome: boolean,
-  position: number,
-): string => {
-  return getScoresheetPlayer(scoresheet, isHome, position).innerHTML;
-};
+export const findScoresheetSection = () =>
+  screen.findByLabelText(scoresheetSectionAriaLabel);
 
 export const findTeamsSelectionSection = () => {
   return screen.findByRole("region", {
