@@ -3,12 +3,7 @@
  */
 import { render, within } from "@testing-library/react";
 import createEmulatorTests from "./createEmulatorTests";
-import {
-  LeagueMatchView,
-  getScoresheetGameRowAriaLabel,
-  scoresheetLeagueMatchResultsRowAriaLabel as scoresheetLeagueMatchResultRowAriaLabel,
-  scoresheetTableAriaLabel,
-} from "../src/teamMatches/league/play/league-match-view/LeagueMatchView";
+import { LeagueMatchView } from "../src/teamMatches/league/play/league-match-view/LeagueMatchView";
 import {
   SetupDoubles,
   allPlayersSelected,
@@ -19,7 +14,6 @@ import {
   setUpDatabaseWithDefaultPlayersThatAreSelected,
   setupDatabase,
 } from "./setupDatabase";
-import { findScoresheetSection } from "./leagueMatchViewSelectors";
 import { fillArray } from "../src/helpers/fillArray";
 import {
   doublesPlayerAriaLabel,
@@ -48,7 +42,18 @@ import {
   getGameScoreCellAriaLabel,
   getGameScoreCellTeamAriaLabel,
 } from "../src/teamMatches/league/play/league-match-view/scoresheet/ui/getGameScoreCell";
-import { scorePoints } from "./umpireScoringHelpers";
+import { scoreGameScores } from "./umpireScoringHelpers";
+import {
+  findAllGameRows,
+  findFirstGameRow,
+  findLeagueMatchResultRow,
+} from "./LeagueMatchScoresheetSelectors";
+import {
+  gamePointColor,
+  matchPointColor,
+  normalColor,
+  winColor,
+} from "../src/teamMatches/league/play/league-match-view/scoresheet/ui/colors";
 
 // mocking due to import.meta.url
 jest.mock(
@@ -69,40 +74,6 @@ jest.mock("../src/teamMatches/league/play/LeagueMatchScoreboard", () => {
 });
 
 const { createMaylandsComps, database } = createEmulatorTests();
-
-const findScoresheetTable = async () => {
-  const scoresheetSection = await findScoresheetSection();
-  return within(scoresheetSection).getByLabelText<HTMLTableElement>(
-    scoresheetTableAriaLabel,
-  );
-};
-const findAllGameRows = async () => {
-  const scoresheetTable = await findScoresheetTable();
-  return fillArray(10, (i) => {
-    return findGameRowWithin(scoresheetTable, i);
-  });
-};
-
-const findGameRowWithin = (
-  scoresheetTable: HTMLTableElement,
-  index: number,
-) => {
-  return within(scoresheetTable).getByLabelText<HTMLTableRowElement>(
-    getScoresheetGameRowAriaLabel(index + 1),
-  );
-};
-
-const findFirstGameRow = async () => {
-  const scoresheetTable = await findScoresheetTable();
-  return findGameRowWithin(scoresheetTable, 0);
-};
-
-const findLeagueMatchResultRow = async () => {
-  const scoresheetTable = await findScoresheetTable();
-  within(scoresheetTable).findByLabelText<HTMLTableRowElement>(
-    scoresheetLeagueMatchResultRowAriaLabel,
-  );
-};
 
 const updateDbMatchWithSaveState = (match: DbMatch, saveState: SaveState) => {
   const dbMatchSaveState = saveStateToDbMatchSaveState(saveState);
@@ -521,6 +492,7 @@ describe("render scoresheet", () => {
           ),
         );
       }
+
       const expectScores = (
         gameScoreTeamCells: GameScoreTeamCells,
         expectedHome: string,
@@ -540,7 +512,6 @@ describe("render scoresheet", () => {
         expectScores(gameScoreTeamCells[0], "0", "0");
       });
 
-      // team1 must win the first game !
       interface PreviousGamesAndCurrentGamesTest {
         gameScores: [GameScore, GameScore]; // previous game, current game
       }
@@ -549,7 +520,13 @@ describe("render scoresheet", () => {
           {
             gameScores: [
               { team1Points: 11, team2Points: 6 },
-              { team1Points: 4, team2Points: 4 },
+              { team1Points: 0, team2Points: 0 },
+            ],
+          },
+          {
+            gameScores: [
+              { team1Points: 2, team2Points: 11 },
+              { team1Points: 1, team2Points: 3 },
             ],
           },
         ];
@@ -561,11 +538,7 @@ describe("render scoresheet", () => {
             (firstMatch) => {
               updateMatchViaUmpire(firstMatch, (umpire) => {
                 umpire.setServer("Team1Player1");
-                scorePoints(umpire, false, test.gameScores[0].team2Points);
-                scorePoints(umpire, true, test.gameScores[0].team1Points);
-
-                scorePoints(umpire, true, test.gameScores[1].team1Points);
-                scorePoints(umpire, false, test.gameScores[1].team2Points);
+                scoreGameScores(umpire, test.gameScores);
               });
             },
           );
@@ -605,6 +578,55 @@ describe("render scoresheet", () => {
             .forEach((gameScoreTeamCells) =>
               expectDashScores(gameScoreTeamCells),
             );
+        });
+      });
+
+      describe("game score cells styling", () => {
+        it("should color game score cell of the winner and not for the loser if game won", async () => {
+          const gameScoreTeamCells = await setupGetFirstMatchGameScoreCells(
+            (firstMatch) => {
+              updateMatchViaUmpire(firstMatch, (umpire) => {
+                umpire.setServer("Team1Player1");
+                scoreGameScores(umpire, [{ team1Points: 11, team2Points: 6 }]);
+              });
+            },
+          );
+          const { homeTeamScoreCell, awayTeamScoreCell } =
+            gameScoreTeamCells[0];
+          expect(homeTeamScoreCell).toHaveStyle({ color: winColor });
+          expect(awayTeamScoreCell).toHaveStyle({ color: normalColor });
+        });
+        it("should color the game score cell if game point", async () => {
+          const gameScoreTeamCells = await setupGetFirstMatchGameScoreCells(
+            (firstMatch) => {
+              updateMatchViaUmpire(firstMatch, (umpire) => {
+                umpire.setServer("Team1Player1");
+                scoreGameScores(umpire, [{ team1Points: 10, team2Points: 6 }]);
+              });
+            },
+          );
+          const { homeTeamScoreCell, awayTeamScoreCell } =
+            gameScoreTeamCells[0];
+          expect(homeTeamScoreCell).toHaveStyle({ color: gamePointColor });
+          expect(awayTeamScoreCell).toHaveStyle({ color: normalColor });
+        });
+        it("should color the game score cell if match point", async () => {
+          const gameScoreTeamCells = await setupGetFirstMatchGameScoreCells(
+            (firstMatch) => {
+              updateMatchViaUmpire(firstMatch, (umpire) => {
+                umpire.setServer("Team1Player1");
+                scoreGameScores(umpire, [
+                  { team1Points: 11, team2Points: 6 },
+                  { team1Points: 11, team2Points: 6 },
+                  { team1Points: 10, team2Points: 6 },
+                ]);
+              });
+            },
+          );
+          const { homeTeamScoreCell, awayTeamScoreCell } =
+            gameScoreTeamCells[2];
+          expect(homeTeamScoreCell).toHaveStyle({ color: matchPointColor });
+          expect(awayTeamScoreCell).toHaveStyle({ color: normalColor });
         });
       });
     });

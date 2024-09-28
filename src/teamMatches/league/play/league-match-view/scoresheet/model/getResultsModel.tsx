@@ -4,13 +4,20 @@ import { TeamSelectionModel } from "./getMatchTeamsSelectionModel";
 import { getSimpleTeamDisplay } from "../ui/getPlayerCell";
 import { TeamsConcededOrForfeited } from "../../../../../../firebase/rtb/match/helpers/getTeamsConcededOrForfeited";
 import {
-  TeamMatchScoreState,
-  TeamsMatchScoreState,
-} from "../../helpers/getTeamsMatchScoreState";
+  TeamMatchWinState,
+  TeamsMatchWinState,
+} from "../../helpers/getTeamsMatchWinState";
 
+export enum TeamGamesWonState {
+  Normal,
+  GamePoint,
+  MatchPoint,
+  MatchWon,
+  Conceeded,
+}
 export interface TeamGamesWonModel {
   games: number;
-  state: TeamMatchScoreState;
+  state: TeamGamesWonState;
 }
 
 export interface ResultsModel {
@@ -32,11 +39,24 @@ const getWinnerDisplay = (
     : getSimpleTeamDisplay(team1Won ? home : away);
 };
 
+const convertTeamMatchWinState = (teamMatchWinState: TeamMatchWinState) => {
+  switch (teamMatchWinState) {
+    case TeamMatchWinState.GamePoint:
+      return TeamGamesWonState.GamePoint;
+    case TeamMatchWinState.MatchPoint:
+      return TeamGamesWonState.MatchPoint;
+    case TeamMatchWinState.MatchWon:
+      return TeamGamesWonState.MatchWon;
+    case TeamMatchWinState.Normal:
+      return TeamGamesWonState.Normal;
+  }
+};
+
 export const getResultsModel = (
   home: TeamSelectionModel,
   away: TeamSelectionModel,
   matchState: MatchState,
-  teamsMatchScoreState: TeamsMatchScoreState,
+  teamsMatchScoreState: TeamsMatchWinState,
   umpired: boolean | undefined,
   isDoubles: boolean,
   teamsConcededOrForfeited: TeamsConcededOrForfeited,
@@ -47,11 +67,11 @@ export const getResultsModel = (
     return {
       home: {
         games: 0,
-        state: TeamMatchScoreState.Conceeded,
+        state: TeamGamesWonState.Conceeded,
       },
       away: {
         games: 0,
-        state: TeamMatchScoreState.Conceeded,
+        state: TeamGamesWonState.Conceeded,
       },
     };
   }
@@ -61,26 +81,26 @@ export const getResultsModel = (
     return {
       [conceededKey]: {
         games: 0,
-        state: TeamMatchScoreState.Conceeded,
+        state: TeamGamesWonState.Conceeded,
       },
       [notConceededKey]: {
         games: 3,
-        state: TeamMatchScoreState.MatchWon,
+        state: TeamGamesWonState.MatchWon,
       },
       winner: getWinnerDisplay(isDoubles, !homeConceded, home, away),
     } as unknown as ResultsModel;
   }
 
-  const team1Won = teamsMatchScoreState.home === TeamMatchScoreState.MatchWon;
-  if (team1Won || teamsMatchScoreState.away === TeamMatchScoreState.MatchWon) {
+  const team1Won = teamsMatchScoreState.home === TeamMatchWinState.MatchWon;
+  if (team1Won || teamsMatchScoreState.away === TeamMatchWinState.MatchWon) {
     return {
       home: {
         games: matchState.team1Score.games,
-        state: teamsMatchScoreState.home,
+        state: convertTeamMatchWinState(teamsMatchScoreState.home),
       },
       away: {
         games: matchState.team2Score.games,
-        state: teamsMatchScoreState.away,
+        state: convertTeamMatchWinState(teamsMatchScoreState.away),
       },
       winner: getWinnerDisplay(isDoubles, team1Won, home, away),
     };
@@ -90,11 +110,11 @@ export const getResultsModel = (
     return {
       home: {
         games: matchState.team1Score.games,
-        state: teamsMatchScoreState.home,
+        state: convertTeamMatchWinState(teamsMatchScoreState.home),
       },
       away: {
         games: matchState.team2Score.games,
-        state: teamsMatchScoreState.away,
+        state: convertTeamMatchWinState(teamsMatchScoreState.away),
       },
     };
   }

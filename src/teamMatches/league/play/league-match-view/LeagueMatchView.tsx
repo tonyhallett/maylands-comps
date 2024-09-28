@@ -36,7 +36,7 @@ import {
 } from "../../../../firebase/rtb/match/db-helpers";
 import { getGameScoresModel } from "./scoresheet/model/getGameScoresModel";
 import { getResultsCell } from "./scoresheet/ui/getResultsCell";
-import { getTeamsMatchScoreState } from "./helpers/getTeamsMatchScoreState";
+import { getTeamsMatchWinState } from "./helpers/getTeamsMatchWinState";
 import { getResultsModel } from "./scoresheet/model/getResultsModel";
 import { getPlayerCell } from "./scoresheet/ui/getPlayerCell";
 import { LeagueMatchSelection } from "../league-match-selection/LeagueMatchSelection";
@@ -172,16 +172,16 @@ export function LeagueMatchView({ leagueMatchId }: { leagueMatchId: string }) {
             keyedDoublesMatchNamesPositionDisplay,
           );
           const matchState = umpireMatchAndKey.matchState;
-          const teamsMatchScoreState = getTeamsMatchScoreState(
+          const teamsMatchWinState = getTeamsMatchWinState(
             matchState.matchWinState,
           );
 
           const gameScores = getFullGameScores(matchState);
-          const resultsDisplay = getResultsModel(
+          const resultsModel = getResultsModel(
             home,
             away,
             matchState,
-            teamsMatchScoreState,
+            teamsMatchWinState,
             match.umpired,
             index === 9,
             teamsConcededOrDefaulted,
@@ -221,10 +221,10 @@ export function LeagueMatchView({ leagueMatchId }: { leagueMatchId: string }) {
               )}
               {getGameScoresModel(
                 gameScores,
-                teamsMatchScoreState,
+                teamsMatchWinState,
                 match.umpired,
               ).map(getGameScoreCell)}
-              {getResultsCell(resultsDisplay)}
+              {getResultsCell(resultsModel)}
             </TableRow>
           );
         });

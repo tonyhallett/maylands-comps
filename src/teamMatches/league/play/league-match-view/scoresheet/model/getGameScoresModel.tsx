@@ -1,9 +1,9 @@
 import { GameScore } from "../../../../../../umpire";
 import { fillArray } from "../../../../../../helpers/fillArray";
 import {
-  TeamMatchScoreState,
-  TeamsMatchScoreState,
-} from "../../helpers/getTeamsMatchScoreState";
+  TeamMatchWinState,
+  TeamsMatchWinState,
+} from "../../helpers/getTeamsMatchWinState";
 
 export enum GameScorePointState {
   Normal,
@@ -11,25 +11,26 @@ export enum GameScorePointState {
   MatchPoint,
   Won,
 }
-const convertMatchScoreState = (matchScoreState: TeamMatchScoreState) => {
-  switch (matchScoreState) {
-    case TeamMatchScoreState.GamePoint:
-      return GameScorePointState.GamePoint;
-    case TeamMatchScoreState.MatchPoint:
-      return GameScorePointState.MatchPoint;
-    case TeamMatchScoreState.Normal:
-      return GameScorePointState.Normal;
-  }
-  throw new Error("Invalid state");
-};
+const gameScorePointStateLookup = new Map<
+  TeamMatchWinState,
+  GameScorePointState
+>([
+  [TeamMatchWinState.Normal, GameScorePointState.Normal],
+  [TeamMatchWinState.GamePoint, GameScorePointState.GamePoint],
+  [TeamMatchWinState.MatchPoint, GameScorePointState.MatchPoint],
+  [TeamMatchWinState.MatchWon, GameScorePointState.Won],
+]);
+
 export interface PointsInfo {
   display: string;
   state: GameScorePointState;
 }
+
 export interface GameScoreModel {
   home: PointsInfo;
   away: PointsInfo;
 }
+
 const firstGameAndNoPointsScored = (
   firstGame: boolean,
   gameScore: GameScore,
@@ -50,6 +51,7 @@ const getDefaultGameScoreModel = () => {
   };
   return gameScoreDisplay;
 };
+
 const getDefaultGameScoreModelIfNecessary = (
   firstGame: boolean,
   gameScore: GameScore,
@@ -63,53 +65,75 @@ const getDefaultGameScoreModelIfNecessary = (
   }
 };
 
-export const getGameScoreModelWithPoints = (
-  gameScore: GameScore,
-  teamsMatchScoreState: TeamsMatchScoreState,
+const matchWon = (teamsMatchWinState: TeamsMatchWinState) =>
+  teamsMatchWinState.home === TeamMatchWinState.MatchWon ||
+  teamsMatchWinState.away === TeamMatchWinState.MatchWon;
+
+const getGameNotWonGameScoreModel = (
+  homeGameScoreDisplay: string,
+  awayGameScoreDisplay: string,
   isLastGame: boolean,
+  teamsMatchWinState: TeamsMatchWinState,
 ) => {
-  const homeGameScoreDisplay = gameScore.team1Points.toString();
-  const awayGameScoreDisplay = gameScore.team2Points.toString();
+  const gameNotWon = isLastGame && !matchWon(teamsMatchWinState);
 
-  const gameWon =
-    teamsMatchScoreState.home === TeamMatchScoreState.MatchWon ||
-    teamsMatchScoreState.away === TeamMatchScoreState.MatchWon;
-
-  const useTeamsMatchScoreState = isLastGame && !gameWon;
-
-  if (useTeamsMatchScoreState) {
+  if (gameNotWon) {
     return {
       home: {
         display: homeGameScoreDisplay,
-        state: convertMatchScoreState(teamsMatchScoreState.home),
+        state: gameScorePointStateLookup.get(teamsMatchWinState.home)!,
       },
       away: {
         display: awayGameScoreDisplay,
-        state: convertMatchScoreState(teamsMatchScoreState.away),
-      },
-    };
-  } else {
-    const homeTeamWon = gameScore.team1Points > gameScore.team2Points;
-    return {
-      home: {
-        display: homeGameScoreDisplay,
-        state: homeTeamWon
-          ? GameScorePointState.Won
-          : GameScorePointState.Normal,
-      },
-      away: {
-        display: awayGameScoreDisplay,
-        state: homeTeamWon
-          ? GameScorePointState.Normal
-          : GameScorePointState.Won,
+        state: gameScorePointStateLookup.get(teamsMatchWinState.away)!,
       },
     };
   }
 };
 
+export const getGameScoreModelWithPoints = (
+  gameScore: GameScore,
+  teamsMatchWinState: TeamsMatchWinState,
+  isLastGame: boolean,
+): GameScoreModel => {
+  const homeGameScoreDisplay = gameScore.team1Points.toString();
+  const awayGameScoreDisplay = gameScore.team2Points.toString();
+  return (
+    getGameNotWonGameScoreModel(
+      homeGameScoreDisplay,
+      awayGameScoreDisplay,
+      isLastGame,
+      teamsMatchWinState,
+    ) ??
+    getGameWonGameScoreModel(
+      homeGameScoreDisplay,
+      awayGameScoreDisplay,
+      gameScore,
+    )
+  );
+};
+
+const getGameWonGameScoreModel = (
+  homeGameScoreDisplay: string,
+  awayGameScoreDisplay: string,
+  gameScore: GameScore,
+) => {
+  const homeTeamWon = gameScore.team1Points > gameScore.team2Points;
+  return {
+    home: {
+      display: homeGameScoreDisplay,
+      state: homeTeamWon ? GameScorePointState.Won : GameScorePointState.Normal,
+    },
+    away: {
+      display: awayGameScoreDisplay,
+      state: homeTeamWon ? GameScorePointState.Normal : GameScorePointState.Won,
+    },
+  };
+};
+
 export const getGameScoresModel = (
   gameScores: GameScore[],
-  teamsMatchScoreState: TeamsMatchScoreState,
+  teamsMatchScoreState: TeamsMatchWinState,
   umpired: boolean | undefined,
 ): GameScoreModel[] => {
   return fillArray(5, (i) => {

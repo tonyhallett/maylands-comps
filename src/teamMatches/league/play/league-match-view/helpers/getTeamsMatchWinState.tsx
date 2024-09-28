@@ -6,43 +6,42 @@ import {
   isMatchPointTeam2,
 } from "../../../../../umpire/matchWinState";
 
-export enum TeamMatchScoreState {
+export enum TeamMatchWinState {
   Normal,
   GamePoint,
   MatchPoint,
   MatchWon,
-  Conceeded,
 }
-export interface TeamsMatchScoreState {
-  home: TeamMatchScoreState;
-  away: TeamMatchScoreState;
+export interface TeamsMatchWinState {
+  home: TeamMatchWinState;
+  away: TeamMatchWinState;
 }
 
-export const getTeamsMatchScoreState = (
+export const getTeamsMatchWinState = (
   matchWinState: MatchWinState,
-): TeamsMatchScoreState => {
-  let homeScoreState = TeamMatchScoreState.Normal;
-  let awayScoreState = TeamMatchScoreState.Normal;
+): TeamsMatchWinState => {
+  let homeScoreState = TeamMatchWinState.Normal;
+  let awayScoreState = TeamMatchWinState.Normal;
   if (matchWinState === MatchWinState.NotWon) {
     return { home: homeScoreState, away: awayScoreState };
   }
   if (matchWinState === MatchWinState.Team1Won) {
-    return { home: TeamMatchScoreState.MatchWon, away: awayScoreState };
+    return { home: TeamMatchWinState.MatchWon, away: awayScoreState };
   }
   if (matchWinState === MatchWinState.Team2Won) {
-    return { home: homeScoreState, away: TeamMatchScoreState.MatchWon };
+    return { home: homeScoreState, away: TeamMatchWinState.MatchWon };
   }
   if (isGamePointTeam1(matchWinState)) {
-    homeScoreState = TeamMatchScoreState.GamePoint;
+    homeScoreState = TeamMatchWinState.GamePoint;
   }
   if (isGamePointTeam2(matchWinState)) {
-    awayScoreState = TeamMatchScoreState.GamePoint;
+    awayScoreState = TeamMatchWinState.GamePoint;
   }
   if (isMatchPointTeam1(matchWinState)) {
-    homeScoreState = TeamMatchScoreState.MatchPoint;
+    homeScoreState = TeamMatchWinState.MatchPoint;
   }
   if (isMatchPointTeam2(matchWinState)) {
-    awayScoreState = TeamMatchScoreState.MatchPoint;
+    awayScoreState = TeamMatchWinState.MatchPoint;
   }
   return { home: homeScoreState, away: awayScoreState };
 };

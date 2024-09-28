@@ -1,21 +1,29 @@
 import { TableCell } from "@mui/material";
-import { getGameScorePointStateColor } from "./getGameScorePointStateColor";
-import { TeamMatchScoreState } from "../../helpers/getTeamsMatchScoreState";
-import { ResultsModel, TeamGamesWonModel } from "../model/getResultsModel";
-import { GameScorePointState } from "../model/getGameScoresModel";
+import {
+  ResultsModel,
+  TeamGamesWonModel,
+  TeamGamesWonState,
+} from "../model/getResultsModel";
+import {
+  concededColor,
+  gamePointColor,
+  matchPointColor,
+  normalColor,
+  winColor,
+} from "./colors";
 
-const getMatchScoreStateColor = (state: TeamMatchScoreState) => {
+const getMatchScoreStateColor = (state: TeamGamesWonState) => {
   switch (state) {
-    case TeamMatchScoreState.MatchWon:
-      return getGameScorePointStateColor(GameScorePointState.Won);
-    case TeamMatchScoreState.GamePoint:
-      return getGameScorePointStateColor(GameScorePointState.GamePoint);
-    case TeamMatchScoreState.MatchPoint:
-      return getGameScorePointStateColor(GameScorePointState.MatchPoint);
-    case TeamMatchScoreState.Normal:
-      return getGameScorePointStateColor(GameScorePointState.Normal);
-    case TeamMatchScoreState.Conceeded:
-      return "#FC5B5B";
+    case TeamGamesWonState.MatchWon:
+      return winColor;
+    case TeamGamesWonState.GamePoint:
+      return gamePointColor;
+    case TeamGamesWonState.MatchPoint:
+      return matchPointColor;
+    case TeamGamesWonState.Normal:
+      return normalColor;
+    case TeamGamesWonState.Conceeded:
+      return concededColor;
   }
 };
 
@@ -31,6 +39,7 @@ const getGamesWonDisplay = (teamGamesWonDisplay: TeamGamesWonModel) => {
     </span>
   );
 };
+
 export const getResultsCell = (resultsDisplay: ResultsModel | undefined) => {
   let resultsNode: React.ReactNode = null;
 
