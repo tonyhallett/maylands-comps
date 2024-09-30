@@ -44,6 +44,7 @@ import {
 import {
   GameScoreTeamCells,
   findAllGameRows,
+  findAllOrderCells,
   findGameRow,
   findGameWinnerAndGamesWonCell,
   findLeagueMatchResultCell,
@@ -477,11 +478,6 @@ describe("render scoresheet", () => {
         render(createApp(leagueMatchKey));
 
         const firstGameRow = await findGameRow(0);
-        /* return fillArray(5, (i) =>
-          getGameScoreTeamCells(
-            within(firstGameRow).getByLabelText(getGameScoreCellAriaLabel(i)),
-          ),
-        ); */
         return getAllGameScoreTeamCells(firstGameRow);
       }
 
@@ -1003,7 +999,16 @@ describe("render scoresheet", () => {
     });
   });
 
-  xit("should display cell with the order that match should be played in", () => {});
+  it.only("should display cell with the order that match should be played in", async () => {
+    const leagueMatchKey = await setupDatabase(database);
+    render(createApp(leagueMatchKey));
+
+    const allMatchOrderCells = await findAllOrderCells();
+    allMatchOrderCells.forEach((matchOrderCell, i) => {
+      expect(matchOrderCell).toHaveTextContent((i + 1).toString());
+    });
+  });
+
   describe("league match results row", () => {
     interface LeagueMatchResultRowTest {
       description: string;

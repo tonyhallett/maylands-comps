@@ -82,6 +82,8 @@ export const scoresheetLeagueMatchResultCellAriaLabel =
   "League Match Result Cell";
 export const getLeagueMatchResultTeamElementAriaLabel = (isHome: boolean) =>
   `League Match Result ${isHome ? "Home" : "Away"}`;
+export const getMatchOrderCellAriaLabel = (index: number) =>
+  `Match order cell ${index}`;
 export function LeagueMatchView({ leagueMatchId }: { leagueMatchId: string }) {
   const [umpireMatchIndex, setUmpireMatchIndex] = useState<number | undefined>(
     undefined,
@@ -214,7 +216,12 @@ export function LeagueMatchView({ leagueMatchId }: { leagueMatchId: string }) {
                   <MoreVertIcon />
                 </div>
               </TableCell>
-              <TableCell padding="none">{index + 1}</TableCell>
+              <TableCell
+                aria-label={getMatchOrderCellAriaLabel(index)}
+                padding="none"
+              >
+                {index + 1}
+              </TableCell>
               {getPlayerCell(
                 home,
                 teamsConcededOrDefaulted.team1,

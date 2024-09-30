@@ -2,6 +2,7 @@ import { within } from "@testing-library/react";
 import { findScoresheetSection } from "./leagueMatchViewSelectors";
 import {
   getLeagueMatchResultTeamElementAriaLabel,
+  getMatchOrderCellAriaLabel,
   getScoresheetGameRowAriaLabel,
   scoresheetLeagueMatchResultCellAriaLabel,
   scoresheetLeagueMatchResultRowAriaLabel,
@@ -145,4 +146,11 @@ export const getAllGameScoreTeamCells = (gameRow: HTMLTableRowElement) => {
       within(gameRow).getByLabelText(getGameScoreCellAriaLabel(i)),
     ),
   );
+};
+
+export const findAllOrderCells = async () => {
+  const allGameRows = await findAllGameRows();
+  return allGameRows.map((gameRow, i) => {
+    return within(gameRow).getByLabelText(getMatchOrderCellAriaLabel(i));
+  });
 };
