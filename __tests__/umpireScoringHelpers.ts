@@ -14,6 +14,23 @@ export const scoreGames = (
   return umpire.getMatchState();
 };
 
+export const winGame = (umpire: Umpire, team1: boolean) => {
+  scoreGames(umpire, team1, 3);
+};
+export const scoreGamesWon = (
+  umpire: Umpire,
+  team1GamesWon: number,
+  team2GamesWon: number,
+) => {
+  if (team1GamesWon > team2GamesWon) {
+    scoreGames(umpire, false, team2GamesWon);
+    scoreGames(umpire, true, team1GamesWon);
+  } else {
+    scoreGames(umpire, true, team1GamesWon);
+    scoreGames(umpire, false, team2GamesWon);
+  }
+};
+
 export const scoreGameScores = (umpire: Umpire, gameScores: GameScore[]) => {
   const scorePointsIfNotZero = (homeTeam: boolean, scores: number) => {
     if (scores > 0) {

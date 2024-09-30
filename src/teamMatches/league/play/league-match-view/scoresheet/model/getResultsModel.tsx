@@ -13,7 +13,7 @@ export enum TeamGamesWonState {
   GamePoint,
   MatchPoint,
   MatchWon,
-  Conceeded,
+  ConceededOrForefeited,
 }
 export interface TeamGamesWonModel {
   games: number;
@@ -61,33 +61,58 @@ export const getResultsModel = (
   isDoubles: boolean,
   teamsConcededOrForfeited: TeamsConcededOrForfeited,
 ): ResultsModel | undefined => {
+  // there is nothing in the TTE League scoring system that describes this situation.
   const homeConceded = teamsConcededOrForfeited.team1.conceded;
   const awayConceded = teamsConcededOrForfeited.team2.conceded;
-  if (homeConceded && awayConceded) {
+  const homeForfeited = teamsConcededOrForfeited.team1.forfeited;
+  const awayForfeited = teamsConcededOrForfeited.team2.forfeited;
+
+  if ((homeConceded && awayConceded) || (homeForfeited && awayForfeited)) {
     return {
       home: {
         games: 0,
-        state: TeamGamesWonState.Conceeded,
+        state: TeamGamesWonState.ConceededOrForefeited,
       },
       away: {
         games: 0,
-        state: TeamGamesWonState.Conceeded,
+        state: TeamGamesWonState.ConceededOrForefeited,
       },
     };
   }
   if (homeConceded || awayConceded) {
     const conceededKey = homeConceded ? "home" : "away";
     const notConceededKey = homeConceded ? "away" : "home";
+    const concededGamesWon = homeConceded
+      ? matchState.team1Score.games
+      : matchState.team2Score.games;
+
     return {
       [conceededKey]: {
-        games: 0,
-        state: TeamGamesWonState.Conceeded,
+        games: concededGamesWon,
+        state: TeamGamesWonState.ConceededOrForefeited,
       },
       [notConceededKey]: {
         games: 3,
         state: TeamGamesWonState.MatchWon,
       },
       winner: getWinnerDisplay(isDoubles, !homeConceded, home, away),
+    } as unknown as ResultsModel;
+  }
+
+  if (homeForfeited || awayForfeited) {
+    const forfeitedKey = homeForfeited ? "home" : "away";
+    const notForfeitedKey = homeForfeited ? "away" : "home";
+
+    return {
+      [forfeitedKey]: {
+        games: 0,
+        state: TeamGamesWonState.ConceededOrForefeited,
+      },
+      [notForfeitedKey]: {
+        games: 3,
+        state: TeamGamesWonState.MatchWon,
+      },
+      winner: getWinnerDisplay(isDoubles, !homeForfeited, home, away),
     } as unknown as ResultsModel;
   }
 

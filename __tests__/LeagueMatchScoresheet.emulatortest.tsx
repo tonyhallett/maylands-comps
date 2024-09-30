@@ -1,11 +1,12 @@
 /**
  * @jest-environment jsdom
  */
-import { render, within } from "@testing-library/react";
+import { render } from "@testing-library/react";
 import createEmulatorTests from "./createEmulatorTests";
 import { LeagueMatchView } from "../src/teamMatches/league/play/league-match-view/LeagueMatchView";
 import {
   SetupDoubles,
+  SetupMatch,
   allPlayersSelected,
   defaultAwayPlayerNames,
   defaultHomePlayerNames,
@@ -14,12 +15,7 @@ import {
   setUpDatabaseWithDefaultPlayersThatAreSelected,
   setupDatabase,
 } from "./setupDatabase";
-import { fillArray } from "../src/helpers/fillArray";
-import {
-  doublesPlayerAriaLabel,
-  getScoresheetGamePlayerCellAriaLabel,
-  unselectedPlayerCellColor,
-} from "../src/teamMatches/league/play/league-match-view/scoresheet/ui/getPlayerCell";
+import { unselectedPlayerCellColor } from "../src/teamMatches/league/play/league-match-view/scoresheet/ui/getPlayerCell";
 import {
   leagueMatchPlayersPositionDisplays,
   leagueMatchTeamsPlayersPositionDisplay,
@@ -39,20 +35,36 @@ import { getLast } from "../src/helpers/getLast";
 import { ServerReceiver } from "../src/umpire/commonTypes";
 import { getInitials } from "../src/umpireView/helpers";
 import {
-  getGameScoreCellAriaLabel,
-  getGameScoreCellTeamAriaLabel,
-} from "../src/teamMatches/league/play/league-match-view/scoresheet/ui/getGameScoreCell";
-import { scoreGameScores } from "./umpireScoringHelpers";
+  scoreGameScores,
+  scoreGames,
+  scoreGamesWon,
+  scorePoints,
+  winGame,
+} from "./umpireScoringHelpers";
 import {
+  GameScoreTeamCells,
   findAllGameRows,
-  findFirstGameRow,
-  findLeagueMatchResultRow,
+  findGameRow,
+  findGameWinnerAndGamesWonCell,
+  findLeagueMatchResultCell,
+  getAllGameScoreTeamCells,
+  getGameWinner,
+  getGamesWon,
+  getPlayerCell,
+  getTeamGameWon,
+  getTeamMatchScore,
+  getTeamPlayerSpans,
 } from "./LeagueMatchScoresheetSelectors";
 import {
+  concededOrForfeitedColor,
   gamePointColor,
   matchPointColor,
+  matchWonColor,
   normalColor,
+  notLeadingColor,
+  unassailableColor,
   winColor,
+  winningMatchColor,
 } from "../src/teamMatches/league/play/league-match-view/scoresheet/ui/colors";
 
 // mocking due to import.meta.url
@@ -98,6 +110,15 @@ describe("render scoresheet", () => {
       <LeagueMatchView leagueMatchId={leagueMatchId} />,
     );
   }
+
+  const expectScoreTextContent = (
+    element: HTMLElement,
+    homeGamesWon: number,
+    awayGamesWon: number,
+  ) => {
+    expect(element).toHaveTextContent(`${homeGamesWon} - ${awayGamesWon}`);
+  };
+
   describe("games", () => {
     it("should render scoresheet table with 10 game rows", async () => {
       const leagueMatchKey = await setupDatabase(database);
@@ -112,16 +133,8 @@ describe("render scoresheet", () => {
         const gameRows = await findAllGameRows();
         return gameRows.map((gameRow) => {
           return {
-            homePlayerCell: within(
-              gameRow,
-            ).getByLabelText<HTMLTableCellElement>(
-              getScoresheetGamePlayerCellAriaLabel(true),
-            ),
-            awayPlayerCell: within(
-              gameRow,
-            ).getByLabelText<HTMLTableCellElement>(
-              getScoresheetGamePlayerCellAriaLabel(false),
-            ),
+            homePlayerCell: getPlayerCell(true, gameRow),
+            awayPlayerCell: getPlayerCell(false, gameRow),
           };
         });
       }
@@ -301,9 +314,6 @@ describe("render scoresheet", () => {
             return getLast(cells);
           }
 
-          const getTeamPlayerSpans = (cell: HTMLTableCellElement) => {
-            return within(cell).getAllByLabelText(doublesPlayerAriaLabel);
-          };
           const serverReceiverUnderlineOverlineTests: ServerReceiver[] = [
             {
               server: "Team1Player1",
@@ -447,25 +457,6 @@ describe("render scoresheet", () => {
     });
 
     describe("game score cells", () => {
-      interface GameScoreTeamCells {
-        homeTeamScoreCell: HTMLElement;
-        awayTeamScoreCell: HTMLElement;
-      }
-      const getGameScoreTeamCells = (
-        gameScoreCell: HTMLElement,
-      ): GameScoreTeamCells => {
-        const homeTeamScoreCell = within(gameScoreCell).getByLabelText(
-          getGameScoreCellTeamAriaLabel(true),
-        );
-        const awayTeamScoreCell = within(gameScoreCell).getByLabelText(
-          getGameScoreCellTeamAriaLabel(false),
-        );
-        return {
-          homeTeamScoreCell,
-          awayTeamScoreCell,
-        };
-      };
-
       async function setupGetFirstMatchGameScoreCells(
         setupFirstMatch: (firstMatch: DbMatch) => void = () => {},
       ) {
@@ -485,12 +476,13 @@ describe("render scoresheet", () => {
 
         render(createApp(leagueMatchKey));
 
-        const firstGameRow = await findFirstGameRow();
-        return fillArray(5, (i) =>
+        const firstGameRow = await findGameRow(0);
+        /* return fillArray(5, (i) =>
           getGameScoreTeamCells(
             within(firstGameRow).getByLabelText(getGameScoreCellAriaLabel(i)),
           ),
-        );
+        ); */
+        return getAllGameScoreTeamCells(firstGameRow);
       }
 
       const expectScores = (
@@ -630,13 +622,658 @@ describe("render scoresheet", () => {
         });
       });
     });
+
+    describe("winner and games won cell", () => {
+      interface GameWinnerAndGamesWonCellTest {
+        description: string;
+        setupMatch?: (dbMatch: DbMatch) => void;
+        isSingles?: boolean;
+        expectation: (gameWinnerAndGamesWonCell: HTMLTableCellElement) => void;
+      }
+
+      type GamesWon = 0 | 1 | 2 | 3;
+      const expectWinnerAndGamesWon = (
+        gameWinnerAndGamesWonCell: HTMLTableCellElement,
+        winner: string,
+        homeGamesWon: GamesWon,
+        awayGamesWon: GamesWon,
+      ) => {
+        const gameWinnerElement = getGameWinner(gameWinnerAndGamesWonCell);
+        expect(gameWinnerElement).toHaveTextContent(winner);
+
+        const gamesWonElement = getGamesWon(gameWinnerAndGamesWonCell);
+        expectScoreTextContent(gamesWonElement, homeGamesWon, awayGamesWon);
+      };
+
+      const expectGamesWonColor = (
+        gameWinnerAndGamesWonCell: HTMLTableCellElement,
+        isHome: boolean,
+        expectedColor: string,
+      ) => {
+        const teamGamesWonElement = getTeamGameWon(
+          isHome,
+          gameWinnerAndGamesWonCell,
+        );
+        expect(teamGamesWonElement).toHaveStyle({ color: expectedColor });
+      };
+
+      const gameWinnerAndGamesWonCellTests: GameWinnerAndGamesWonCellTest[] = [
+        // not won
+        {
+          description:
+            "should show the game scores ( 0 - 0 ) when a point has been scored but no winner",
+          setupMatch(dbMatch) {
+            updateMatchViaUmpire(dbMatch, (umpire) => {
+              umpire.setServer("Team1Player1");
+              umpire.pointScored(true);
+            });
+          },
+          expectation(gameWinnerAndGamesWonCell) {
+            expectScoreTextContent(gameWinnerAndGamesWonCell, 0, 0);
+          },
+        },
+        {
+          description:
+            "should show the game scores ( 2 - 1) when a point has been scored but no winner",
+          setupMatch(dbMatch) {
+            updateMatchViaUmpire(dbMatch, (umpire) => {
+              umpire.setServer("Team1Player1");
+              scoreGames(umpire, true, 2);
+              scoreGames(umpire, false, 1);
+            });
+          },
+          expectation(gameWinnerAndGamesWonCell) {
+            expectScoreTextContent(gameWinnerAndGamesWonCell, 2, 1);
+          },
+        },
+        {
+          description:
+            "should show 0 - 0 when no points scored but is being umpired",
+          setupMatch(dbMatch) {
+            dbMatch.umpired = true;
+          },
+          expectation(gameWinnerAndGamesWonCell) {
+            expectScoreTextContent(gameWinnerAndGamesWonCell, 0, 0);
+          },
+        },
+        {
+          description:
+            "should show no score when no points scored and is not being umpired",
+          expectation(gameWinnerAndGamesWonCell) {
+            expect(gameWinnerAndGamesWonCell).toBeEmptyDOMElement();
+          },
+        },
+        // ------- concede
+        {
+          description:
+            "should show 3 - 2 when away conceded at 2-2 with winner initials",
+          setupMatch(dbMatch) {
+            updateMatchViaUmpire(dbMatch, (umpire) => {
+              umpire.setServer("Team1Player1");
+              scoreGamesWon(umpire, 2, 2);
+              dbMatch.team2ConcedeOrForfeit = {
+                isConcede: true,
+              };
+            });
+          },
+          expectation(gameWinnerAndGamesWonCell) {
+            expectWinnerAndGamesWon(
+              gameWinnerAndGamesWonCell,
+              getInitials(defaultHomePlayerNames[0]),
+              3,
+              2,
+            );
+          },
+        },
+        {
+          description:
+            "should show 1 - 3 when home conceded at 1-1 with winner initials",
+          setupMatch(dbMatch) {
+            updateMatchViaUmpire(dbMatch, (umpire) => {
+              umpire.setServer("Team1Player1");
+              scoreGamesWon(umpire, 1, 1);
+              dbMatch.team1ConcedeOrForfeit = {
+                isConcede: true,
+              };
+            });
+          },
+          expectation(gameWinnerAndGamesWonCell) {
+            expectWinnerAndGamesWon(
+              gameWinnerAndGamesWonCell,
+              getInitials(defaultAwayPlayerNames[0]),
+              1,
+              3,
+            );
+          },
+        },
+        // ------- forfeit
+        {
+          description:
+            "should show 3 - 0 when away forfeit with winner initials",
+          setupMatch(dbMatch) {
+            dbMatch.team2ConcedeOrForfeit = {
+              isConcede: false,
+            };
+          },
+          expectation(gameWinnerAndGamesWonCell) {
+            expectWinnerAndGamesWon(
+              gameWinnerAndGamesWonCell,
+              getInitials(defaultHomePlayerNames[0]),
+              3,
+              0,
+            );
+          },
+        },
+        {
+          description:
+            "should show 0 - 3 when home forfeit with winner initials",
+          setupMatch(dbMatch) {
+            dbMatch.team1ConcedeOrForfeit = {
+              isConcede: false,
+            };
+          },
+          expectation(gameWinnerAndGamesWonCell) {
+            expectWinnerAndGamesWon(
+              gameWinnerAndGamesWonCell,
+              getInitials(defaultAwayPlayerNames[0]),
+              0,
+              3,
+            );
+          },
+        },
+        {
+          description: "should show 0 - 0 when both forfeit",
+          setupMatch(dbMatch) {
+            dbMatch.team1ConcedeOrForfeit = {
+              isConcede: false,
+            };
+            dbMatch.team2ConcedeOrForfeit = {
+              isConcede: false,
+            };
+          },
+          expectation(gameWinnerAndGamesWonCell) {
+            expectScoreTextContent(gameWinnerAndGamesWonCell, 0, 0);
+          },
+        },
+        //------- team wins
+        {
+          description:
+            "should show show score and winner initials when home wins",
+          setupMatch(dbMatch) {
+            updateMatchViaUmpire(dbMatch, (umpire) => {
+              umpire.setServer("Team1Player1");
+              scoreGamesWon(umpire, 3, 1);
+            });
+          },
+          expectation(gameWinnerAndGamesWonCell) {
+            expectWinnerAndGamesWon(
+              gameWinnerAndGamesWonCell,
+              getInitials(defaultHomePlayerNames[0]),
+              3,
+              1,
+            );
+          },
+        },
+        {
+          description:
+            "should show show score and winner initials when away wins",
+          setupMatch(dbMatch) {
+            updateMatchViaUmpire(dbMatch, (umpire) => {
+              umpire.setServer("Team1Player1");
+              scoreGamesWon(umpire, 2, 3);
+            });
+          },
+          expectation(gameWinnerAndGamesWonCell) {
+            expectWinnerAndGamesWon(
+              gameWinnerAndGamesWonCell,
+              getInitials(defaultAwayPlayerNames[0]),
+              2,
+              3,
+            );
+          },
+        },
+        {
+          description:
+            "should show show score and A as winner when away wins doubles",
+          isSingles: false,
+          setupMatch(dbMatch) {
+            dbMatch.team1Player1Id = defaultHomePlayerNames[0];
+            dbMatch.team1Player2Id = defaultHomePlayerNames[1];
+            dbMatch.team2Player1Id = defaultAwayPlayerNames[0];
+            dbMatch.team2Player2Id = defaultAwayPlayerNames[1];
+            updateMatchViaUmpire(dbMatch, (umpire) => {
+              umpire.setServer("Team1Player1");
+              umpire.setFirstGameDoublesReceiver("Team2Player1");
+              scoreGames(umpire, false, 1);
+              umpire.setServer("Team2Player1");
+              scoreGames(umpire, false, 1);
+              umpire.setServer("Team1Player1");
+              scoreGames(umpire, false, 1);
+            });
+          },
+          expectation(gameWinnerAndGamesWonCell) {
+            expectWinnerAndGamesWon(gameWinnerAndGamesWonCell, "A", 0, 3);
+          },
+        },
+        {
+          description:
+            "should show show score and H as winner when home wins doubles",
+          isSingles: false,
+          setupMatch(dbMatch) {
+            dbMatch.team1Player1Id = defaultHomePlayerNames[0];
+            dbMatch.team1Player2Id = defaultHomePlayerNames[1];
+            dbMatch.team2Player1Id = defaultAwayPlayerNames[0];
+            dbMatch.team2Player2Id = defaultAwayPlayerNames[1];
+            updateMatchViaUmpire(dbMatch, (umpire) => {
+              umpire.setServer("Team1Player1");
+              umpire.setFirstGameDoublesReceiver("Team2Player1");
+              scoreGames(umpire, true, 1);
+              umpire.setServer("Team2Player1");
+              scoreGames(umpire, true, 1);
+              umpire.setServer("Team1Player1");
+              scoreGames(umpire, true, 1);
+            });
+          },
+          expectation(gameWinnerAndGamesWonCell) {
+            expectWinnerAndGamesWon(gameWinnerAndGamesWonCell, "H", 3, 0);
+          },
+        },
+        // -------------------------------- styling
+        {
+          description: "should color the team score if have game point",
+          setupMatch(dbMatch) {
+            updateMatchViaUmpire(dbMatch, (umpire) => {
+              umpire.setServer("Team1Player1");
+              scorePoints(umpire, true, 10);
+            });
+          },
+          expectation(gameWinnerAndGamesWonCell) {
+            expectGamesWonColor(
+              gameWinnerAndGamesWonCell,
+              true,
+              gamePointColor,
+            );
+          },
+        },
+        {
+          description: "should color the team score if have match point",
+          setupMatch(dbMatch) {
+            updateMatchViaUmpire(dbMatch, (umpire) => {
+              umpire.setServer("Team1Player1");
+              scoreGames(umpire, true, 2);
+              scorePoints(umpire, true, 10);
+            });
+          },
+          expectation(gameWinnerAndGamesWonCell) {
+            expectGamesWonColor(
+              gameWinnerAndGamesWonCell,
+              true,
+              matchPointColor,
+            );
+          },
+        },
+        {
+          description:
+            "should color the team score if won match ( without conceded / forfeit )",
+          setupMatch(dbMatch) {
+            updateMatchViaUmpire(dbMatch, (umpire) => {
+              umpire.setServer("Team1Player1");
+              winGame(umpire, false);
+            });
+          },
+          expectation(gameWinnerAndGamesWonCell) {
+            expectGamesWonColor(gameWinnerAndGamesWonCell, false, winColor);
+          },
+        },
+        {
+          description: "should color the team score if conceded",
+          setupMatch(dbMatch) {
+            dbMatch.team1ConcedeOrForfeit = {
+              isConcede: true,
+            };
+          },
+          expectation(gameWinnerAndGamesWonCell) {
+            expectGamesWonColor(
+              gameWinnerAndGamesWonCell,
+              true,
+              concededOrForfeitedColor,
+            );
+          },
+        },
+        {
+          description: "should color the team score if forfeited",
+          setupMatch(dbMatch) {
+            dbMatch.team2ConcedeOrForfeit = {
+              isConcede: false,
+            };
+          },
+          expectation(gameWinnerAndGamesWonCell) {
+            expectGamesWonColor(
+              gameWinnerAndGamesWonCell,
+              false,
+              concededOrForfeitedColor,
+            );
+          },
+        },
+        {
+          description:
+            "should not color the team score if none of the previous states",
+          setupMatch(dbMatch) {
+            updateMatchViaUmpire(dbMatch, (umpire) => {
+              umpire.setServer("Team1Player1");
+              umpire.pointScored(true);
+            });
+          },
+          expectation(gameWinnerAndGamesWonCell) {
+            expectGamesWonColor(gameWinnerAndGamesWonCell, true, normalColor);
+          },
+        },
+      ];
+      it.each(gameWinnerAndGamesWonCellTests)(
+        "$description",
+        async ({ setupMatch, expectation, isSingles = true }) => {
+          const leagueMatchKey = await setupDatabase(
+            database,
+            getMatchSetupThatSetsDefaultPlayersThatAreSelected(
+              // for forfeited matches should not have all players selected - but ok for these tests
+              allPlayersSelected,
+              allPlayersSelected,
+              undefined,
+              (match, index) => {
+                if (isSingles) {
+                  if (index === 0) {
+                    setupMatch?.(match);
+                  }
+                } else {
+                  if (index === 9) {
+                    setupMatch?.(match);
+                  }
+                }
+              },
+            ),
+          );
+          render(createApp(leagueMatchKey));
+
+          const gameWinnerAndGamesWonCell = await findGameWinnerAndGamesWonCell(
+            isSingles ? 0 : 9,
+          );
+          expectation(gameWinnerAndGamesWonCell);
+        },
+      );
+    });
   });
 
   xit("should display cell with the order that match should be played in", () => {});
-  it("should have a league match results row", async () => {
-    const leagueMatchKey = await setupDatabase(database);
-    render(createApp(leagueMatchKey));
+  describe("league match results row", () => {
+    interface LeagueMatchResultRowTest {
+      description: string;
+      setupDoubles?: SetupDoubles;
+      afterSetupMatch?: SetupMatch;
+      expectation: (leagueMatchResultCell: HTMLTableCellElement) => void;
+    }
 
-    await findLeagueMatchResultRow();
+    const expectTeamColor = (
+      leagueMatchResultCell: HTMLTableCellElement,
+      isHome: boolean,
+      color: string,
+    ) => {
+      const teamMatchScore = getTeamMatchScore(isHome, leagueMatchResultCell);
+      expect(teamMatchScore).toHaveStyle({ color });
+    };
+    const leagueMatchResultRowTests: LeagueMatchResultRowTest[] = [
+      {
+        description: "should have score 0 - 0 when no games have been played",
+        expectation(leagueMatchResultCell) {
+          expectScoreTextContent(leagueMatchResultCell, 0, 0);
+        },
+      },
+      {
+        description: "should have score 0 - 0 when game is in progress",
+        afterSetupMatch(dbMatch, index) {
+          if (index === 0) {
+            updateMatchViaUmpire(dbMatch, (umpire) => {
+              umpire.setServer("Team1Player1");
+              umpire.pointScored(true);
+            });
+          }
+        },
+        expectation(leagueMatchResultCell) {
+          expectScoreTextContent(leagueMatchResultCell, 0, 0);
+        },
+      },
+      {
+        description:
+          "should have score 1 - 0 when single game has been won by the home team",
+        afterSetupMatch(dbMatch, index) {
+          if (index === 0) {
+            updateMatchViaUmpire(dbMatch, (umpire) => {
+              umpire.setServer("Team1Player1");
+              winGame(umpire, true);
+            });
+          }
+        },
+        expectation(leagueMatchResultCell) {
+          expectScoreTextContent(leagueMatchResultCell, 1, 0);
+        },
+      },
+      {
+        description:
+          "should have score 0 - 1 when single game has been won by the away team",
+        afterSetupMatch(dbMatch, index) {
+          if (index === 0) {
+            updateMatchViaUmpire(dbMatch, (umpire) => {
+              umpire.setServer("Team1Player1");
+              winGame(umpire, false);
+            });
+          }
+        },
+        expectation(leagueMatchResultCell) {
+          expectScoreTextContent(leagueMatchResultCell, 0, 1);
+        },
+      },
+      {
+        description: "should have score 1 - 0 when away team conceded a game",
+        afterSetupMatch(dbMatch, index) {
+          if (index === 0) {
+            updateMatchViaUmpire(dbMatch, (umpire) => {
+              umpire.setServer("Team1Player1");
+              dbMatch.team2ConcedeOrForfeit = {
+                isConcede: true,
+              };
+            });
+          }
+        },
+        expectation(leagueMatchResultCell) {
+          expectScoreTextContent(leagueMatchResultCell, 1, 0);
+        },
+      },
+      {
+        description: "should have score 0 - 1 when home team conceded a game",
+        afterSetupMatch(dbMatch, index) {
+          if (index === 0) {
+            updateMatchViaUmpire(dbMatch, (umpire) => {
+              umpire.setServer("Team1Player1");
+              dbMatch.team1ConcedeOrForfeit = {
+                isConcede: true,
+              };
+            });
+          }
+        },
+        expectation(leagueMatchResultCell) {
+          expectScoreTextContent(leagueMatchResultCell, 0, 1);
+        },
+      },
+      // to be precise forefeited should not have all players selected
+      {
+        description: "should have score 1 - 0 when away team forfeit a game",
+        afterSetupMatch(dbMatch, index) {
+          if (index === 0) {
+            dbMatch.team2ConcedeOrForfeit = {
+              isConcede: false,
+            };
+          }
+        },
+        expectation(leagueMatchResultCell) {
+          expectScoreTextContent(leagueMatchResultCell, 1, 0);
+        },
+      },
+      {
+        description: "should have score 0 - 1 when home team forfeit a game",
+        afterSetupMatch(dbMatch, index) {
+          if (index === 0) {
+            dbMatch.team1ConcedeOrForfeit = {
+              isConcede: false,
+            };
+          }
+        },
+        expectation(leagueMatchResultCell) {
+          expectScoreTextContent(leagueMatchResultCell, 0, 1);
+        },
+      },
+      {
+        description: "should have score 0 - 0 when both teams concede a game",
+        afterSetupMatch(dbMatch, index) {
+          if (index === 0) {
+            updateMatchViaUmpire(dbMatch, (umpire) => {
+              umpire.setServer("Team1Player1");
+              dbMatch.team1ConcedeOrForfeit = {
+                isConcede: true,
+              };
+              dbMatch.team2ConcedeOrForfeit = {
+                isConcede: true,
+              };
+            });
+          }
+        },
+        expectation(leagueMatchResultCell) {
+          expectScoreTextContent(leagueMatchResultCell, 0, 0);
+        },
+      },
+      {
+        description: "should have score 0 - 0 when both teams forfeit a game",
+        afterSetupMatch(dbMatch, index) {
+          if (index === 0) {
+            dbMatch.team1ConcedeOrForfeit = {
+              isConcede: false,
+            };
+            dbMatch.team2ConcedeOrForfeit = {
+              isConcede: false,
+            };
+          }
+        },
+        expectation(leagueMatchResultCell) {
+          expectScoreTextContent(leagueMatchResultCell, 0, 0);
+        },
+      },
+      {
+        description: "should sum each game",
+        afterSetupMatch(dbMatch, index) {
+          switch (index) {
+            case 0:
+            case 1:
+            case 2:
+              // home team win game
+              updateMatchViaUmpire(dbMatch, (umpire) => {
+                umpire.setServer("Team1Player1");
+                winGame(umpire, true);
+              });
+              break;
+            case 3:
+            case 4:
+              // away team win game
+              updateMatchViaUmpire(dbMatch, (umpire) => {
+                umpire.setServer("Team1Player1");
+                winGame(umpire, false);
+              });
+              break;
+          }
+        },
+        expectation(leagueMatchResultCell) {
+          expectScoreTextContent(leagueMatchResultCell, 3, 2);
+        },
+      },
+      {
+        description: "should use not leading color if the team is not winning",
+        expectation(leagueMatchResultCell) {
+          expectTeamColor(leagueMatchResultCell, true, notLeadingColor);
+          expectTeamColor(leagueMatchResultCell, true, notLeadingColor);
+        },
+      },
+      {
+        description:
+          "should use the match completed color for the winning team when all matches concluded",
+        setupDoubles(doublesMatch) {
+          doublesMatch.team1ConcedeOrForfeit = {
+            isConcede: true,
+          };
+        },
+        afterSetupMatch(dbMatch, index) {
+          if (index !== 9) {
+            // home team win game
+            updateMatchViaUmpire(dbMatch, (umpire) => {
+              umpire.setServer("Team1Player1");
+              winGame(umpire, true);
+            });
+          }
+        },
+        expectation(leagueMatchResultCell) {
+          expectTeamColor(leagueMatchResultCell, true, matchWonColor);
+          expectTeamColor(leagueMatchResultCell, false, notLeadingColor);
+        },
+      },
+      {
+        description:
+          "should use the unassailabble color for the winning team when has won the match with games to spare",
+        afterSetupMatch(dbMatch, index) {
+          if (index < 6) {
+            // home team win game
+            updateMatchViaUmpire(dbMatch, (umpire) => {
+              umpire.setServer("Team1Player1");
+              winGame(umpire, true);
+            });
+          }
+        },
+        expectation(leagueMatchResultCell) {
+          expectTeamColor(leagueMatchResultCell, true, unassailableColor);
+          expectTeamColor(leagueMatchResultCell, false, notLeadingColor);
+        },
+      },
+      {
+        description:
+          "should use the winning color for the winning team when winning and not all matches concluded and not unassailable",
+        afterSetupMatch(dbMatch, index) {
+          if (index < 5) {
+            // away team win game
+            updateMatchViaUmpire(dbMatch, (umpire) => {
+              umpire.setServer("Team1Player1");
+              winGame(umpire, false);
+            });
+          }
+        },
+        expectation(leagueMatchResultCell) {
+          expectTeamColor(leagueMatchResultCell, true, notLeadingColor);
+          expectTeamColor(leagueMatchResultCell, false, winningMatchColor);
+        },
+      },
+    ];
+    it.each(leagueMatchResultRowTests)(
+      "$description",
+      async ({ setupDoubles, afterSetupMatch, expectation }) => {
+        const leagueMatchKey = await setupDatabase(
+          database,
+          getMatchSetupThatSetsDefaultPlayersThatAreSelected(
+            // for forfeited matches should not have all players selected - but ok for these tests
+            allPlayersSelected,
+            allPlayersSelected,
+            setupDoubles,
+            afterSetupMatch,
+          ),
+        );
+        render(createApp(leagueMatchKey));
+
+        const leagueMatchResultCell = await findLeagueMatchResultCell();
+        expectation(leagueMatchResultCell);
+      },
+    );
   });
 });

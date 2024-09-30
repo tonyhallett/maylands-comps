@@ -51,7 +51,7 @@ export const defaultTestClubSetups: ClubSetup[] = [
   },
 ];
 
-type SetupMatch = (dbMatch: DbMatch, index: number) => void;
+export type SetupMatch = (dbMatch: DbMatch, index: number) => void;
 
 export async function setupDatabase(
   database: Database,
@@ -128,9 +128,8 @@ export async function setupDatabase(
     root.matches[matchKey] = newMatch;
   };
 
-  const singlesMatchSaveState = getDbMatchSaveState(false);
   for (let i = 0; i < 9; i++) {
-    addMatch(singlesMatchSaveState, i);
+    addMatch(getDbMatchSaveState(false), i);
   }
   const doublesMatchSaveState = getDbMatchSaveState(true);
   addMatch(doublesMatchSaveState, 9);

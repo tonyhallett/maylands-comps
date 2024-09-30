@@ -5,7 +5,7 @@ import {
   TeamGamesWonState,
 } from "../model/getResultsModel";
 import {
-  concededColor,
+  concededOrForfeitedColor,
   gamePointColor,
   matchPointColor,
   normalColor,
@@ -22,14 +22,20 @@ const getMatchScoreStateColor = (state: TeamGamesWonState) => {
       return matchPointColor;
     case TeamGamesWonState.Normal:
       return normalColor;
-    case TeamGamesWonState.Conceeded:
-      return concededColor;
+    case TeamGamesWonState.ConceededOrForefeited:
+      return concededOrForfeitedColor;
   }
 };
-
-const getGamesWonDisplay = (teamGamesWonDisplay: TeamGamesWonModel) => {
+export const getTeamGamesWonAriaLabel = (isHome: boolean) =>
+  `${isHome ? "Home" : "Away"} games won`;
+const getGamesWonDisplay = (
+  teamGamesWonDisplay: TeamGamesWonModel,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  isHome: boolean,
+) => {
   return (
     <span
+      aria-label={getTeamGamesWonAriaLabel(isHome)}
       style={{
         whiteSpace: "nowrap",
         color: getMatchScoreStateColor(teamGamesWonDisplay.state),
@@ -39,7 +45,9 @@ const getGamesWonDisplay = (teamGamesWonDisplay: TeamGamesWonModel) => {
     </span>
   );
 };
-
+export const gameWinnerAriaLabel = "Winner";
+export const gamesWonAriaLabel = "Games won";
+export const winnerAndGamesWonCellAriaLabel = "Winner and games won cell";
 export const getResultsCell = (resultsDisplay: ResultsModel | undefined) => {
   let resultsNode: React.ReactNode = null;
 
@@ -47,15 +55,19 @@ export const getResultsCell = (resultsDisplay: ResultsModel | undefined) => {
     resultsNode = (
       <>
         {resultsDisplay.winner !== undefined && (
-          <div>{resultsDisplay.winner}</div>
+          <div aria-label={gameWinnerAriaLabel}>{resultsDisplay.winner}</div>
         )}
-        <div>
-          {getGamesWonDisplay(resultsDisplay.home)}
+        <div aria-label={gamesWonAriaLabel}>
+          {getGamesWonDisplay(resultsDisplay.home, true)}
           <span style={{ whiteSpace: "nowrap" }}> - </span>
-          {getGamesWonDisplay(resultsDisplay.away)}
+          {getGamesWonDisplay(resultsDisplay.away, false)}
         </div>
       </>
     );
   }
-  return <TableCell>{resultsNode}</TableCell>;
+  return (
+    <TableCell aria-label={winnerAndGamesWonCellAriaLabel}>
+      {resultsNode}
+    </TableCell>
+  );
 };

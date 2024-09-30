@@ -60,6 +60,12 @@ import {
   getFullGameScores,
 } from "../../helpers";
 import { getAreAllPlayersSelected } from "../../../../firebase/rtb/match/helpers/getAllPlayersSelected";
+import {
+  matchWonColor,
+  notLeadingColor,
+  unassailableColor,
+  winningMatchColor,
+} from "./scoresheet/ui/colors";
 const UndoConcedeIcon = PersonIcon;
 interface UmpireViewInfo {
   umpire: Umpire;
@@ -70,8 +76,12 @@ interface UmpireViewInfo {
 
 export const scoresheetTableAriaLabel = "Scoresheet Table";
 export const getScoresheetGameRowAriaLabel = (index: number) => `Game ${index}`;
-export const scoresheetLeagueMatchResultsRowAriaLabel =
-  "League Match Results Row";
+export const scoresheetLeagueMatchResultRowAriaLabel =
+  "League Match Result Row";
+export const scoresheetLeagueMatchResultCellAriaLabel =
+  "League Match Result Cell";
+export const getLeagueMatchResultTeamElementAriaLabel = (isHome: boolean) =>
+  `League Match Result ${isHome ? "Home" : "Away"}`;
 export function LeagueMatchView({ leagueMatchId }: { leagueMatchId: string }) {
   const [umpireMatchIndex, setUmpireMatchIndex] = useState<number | undefined>(
     undefined,
@@ -314,28 +324,33 @@ export function LeagueMatchView({ leagueMatchId }: { leagueMatchId: string }) {
         };
         const matchResult = getLeagueMatchResult();
         // todo - add the leading team initials with the score - only when completed ?
+        const leadingLeagueMatchResultStateColorLookup = new Map<
+          LeagueMatchResultState,
+          string
+        >([
+          [LeagueMatchResultState.InProgress, winningMatchColor],
+          [LeagueMatchResultState.Unassailable, unassailableColor],
+          [LeagueMatchResultState.Completed, matchWonColor],
+        ]);
         const getMatchResultDisplay = (
           leagueMatchResult: LeagueMatchResult,
         ) => {
-          const winningColor = "green";
-          const unassailableOrWonColor = "yellow";
-          const getLeadingColor = () => {
-            const state = leagueMatchResult.state;
-            if (state === LeagueMatchResultState.InProgress) {
-              return winningColor;
-            }
-            return unassailableOrWonColor;
-          };
           const getTeamResult = (isHome: boolean) => {
             const teamLeagueMatchResult = isHome
               ? leagueMatchResult.home
               : leagueMatchResult.away;
+
             const teamColor =
               teamLeagueMatchResult.leadType === LeadType.Winning
-                ? getLeadingColor()
-                : "inherit";
+                ? leadingLeagueMatchResultStateColorLookup.get(
+                    leagueMatchResult.state,
+                  )!
+                : notLeadingColor;
             return (
-              <span style={{ color: teamColor, whiteSpace: "nowrap" }}>
+              <span
+                aria-label={getLeagueMatchResultTeamElementAriaLabel(isHome)}
+                style={{ color: teamColor, whiteSpace: "nowrap" }}
+              >
                 {teamLeagueMatchResult.score}
               </span>
             );
@@ -545,7 +560,7 @@ export function LeagueMatchView({ leagueMatchId }: { leagueMatchId: string }) {
                     <TableBody>
                       {rows}
                       <TableRow
-                        aria-label={scoresheetLeagueMatchResultsRowAriaLabel}
+                        aria-label={scoresheetLeagueMatchResultRowAriaLabel}
                       >
                         <TableCell padding="none"></TableCell>
                         <TableCell padding="none"></TableCell>
@@ -556,7 +571,11 @@ export function LeagueMatchView({ leagueMatchId }: { leagueMatchId: string }) {
                         <TableCell padding="none"></TableCell>
                         <TableCell padding="none"></TableCell>
                         <TableCell padding="none"></TableCell>
-                        <TableCell>{matchResultDisplay}</TableCell>
+                        <TableCell
+                          aria-label={scoresheetLeagueMatchResultCellAriaLabel}
+                        >
+                          {matchResultDisplay}
+                        </TableCell>
                       </TableRow>
                     </TableBody>
                   </Table>
