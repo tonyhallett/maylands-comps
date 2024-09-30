@@ -28,7 +28,7 @@ import {
   TableHead,
   TableRow,
 } from "@mui/material";
-import { MatchInfo, PlayerNames, UmpireView } from "../../../../umpireView";
+import { UmpireView } from "../../../../umpireView";
 import {
   UmpireUpdate,
   createRootUpdater,
@@ -40,14 +40,13 @@ import { getTeamsMatchWinState } from "./helpers/getTeamsMatchWinState";
 import { getResultsModel } from "./scoresheet/model/getResultsModel";
 import { getPlayerCell } from "./scoresheet/ui/getPlayerCell";
 import { LeagueMatchSelection } from "../league-match-selection/LeagueMatchSelection";
-import { MatchState, Umpire } from "../../../../umpire";
 import { getMatchTeamsSelectionModel } from "./scoresheet/model/getMatchTeamsSelectionModel";
 import { getGameScoreCell } from "./scoresheet/ui/getGameScoreCell";
 import MoreVertIcon from "@mui/icons-material/MoreVert";
 import SportsIcon from "@mui/icons-material/Sports";
 const UmpireIcon = SportsIcon;
 import PersonOffIcon from "@mui/icons-material/PersonOff";
-import { MatchWinState, isMatchWon } from "../../../../umpire/matchWinState";
+import { isMatchWon } from "../../../../umpire/matchWinState";
 const ConcedeIcon = PersonOffIcon;
 import PersonIcon from "@mui/icons-material/Person";
 import { ref, update } from "firebase/database";
@@ -60,20 +59,12 @@ import {
   getFullGameScores,
 } from "../../helpers";
 import { getAreAllPlayersSelected } from "../../../../firebase/rtb/match/helpers/getAllPlayersSelected";
-import {
-  matchWonColor,
-  notLeadingColor,
-  unassailableColor,
-  winningMatchColor,
-} from "./scoresheet/ui/colors";
+import { getLeagueMatchResultModel } from "./scoresheet/model/getLeagueMatchResultModel";
+import { getMatchResultDisplay } from "./scoresheet/ui/getMatchResultDisplay";
+import { getUmpireViewInfo } from "./getUmpireViewInfo";
 const UndoConcedeIcon = PersonIcon;
-interface UmpireViewInfo {
-  umpire: Umpire;
-  rules: MatchInfo;
-  playerNames: PlayerNames;
-  matchState: MatchState;
-}
 
+// #region aria labels
 export const scoresheetTableAriaLabel = "Scoresheet Table";
 export const getScoresheetGameRowAriaLabel = (index: number) => `Game ${index}`;
 export const scoresheetLeagueMatchResultRowAriaLabel =
@@ -84,6 +75,8 @@ export const getLeagueMatchResultTeamElementAriaLabel = (isHome: boolean) =>
   `League Match Result ${isHome ? "Home" : "Away"}`;
 export const getMatchOrderCellAriaLabel = (index: number) =>
   `Match order cell ${index}`;
+//#endregion
+
 export function LeagueMatchView({ leagueMatchId }: { leagueMatchId: string }) {
   const [umpireMatchIndex, setUmpireMatchIndex] = useState<number | undefined>(
     undefined,
@@ -102,55 +95,13 @@ export function LeagueMatchView({ leagueMatchId }: { leagueMatchId: string }) {
         keyedSinglesMatchNamePositionDisplays,
         keyedDoublesMatchNamesPositionDisplay,
       ) => {
-        let umpireViewInfo: UmpireViewInfo | undefined;
-        if (umpireMatchIndex !== undefined) {
-          const umpireMatchAndKey = umpireMatchAndKeys[umpireMatchIndex];
-          const umpire = umpireMatchAndKey.umpire;
-          const rules = {
-            bestOf: umpire.bestOf,
-            upTo: umpire.upTo,
-            clearBy2: umpire.clearBy2,
-            numServes: umpire.numServes,
-            team1EndsAt: umpire.team1MidwayPoints,
-            team2EndsAt: umpire.team2MidwayPoints,
-          };
-          const matchState = umpireMatchAndKey.matchState;
-          const getDoublesPlayerNames = (): PlayerNames => {
-            return {
-              team1Player1Name:
-                keyedDoublesMatchNamesPositionDisplay.homePlayer1!.name,
-              team2Player1Name:
-                keyedDoublesMatchNamesPositionDisplay.awayPlayer1!.name,
-              team1Player2Name:
-                keyedDoublesMatchNamesPositionDisplay.homePlayer2!.name,
-              team2Player2Name:
-                keyedDoublesMatchNamesPositionDisplay.awayPlayer2!.name,
-            };
-          };
+        const umpireViewInfo = getUmpireViewInfo(
+          umpireMatchIndex,
+          umpireMatchAndKeys,
+          keyedSinglesMatchNamePositionDisplays,
+          keyedDoublesMatchNamesPositionDisplay,
+        );
 
-          const getSinglesPlayerNames = (): PlayerNames => {
-            const singles =
-              keyedSinglesMatchNamePositionDisplays[umpireMatchIndex!];
-            return {
-              team1Player1Name: singles.homePlayer1.name!,
-              team2Player1Name: singles.awayPlayer1.name!,
-              team1Player2Name: undefined,
-              team2Player2Name: undefined,
-            };
-          };
-
-          const playerNames =
-            umpireMatchIndex! === 9
-              ? getDoublesPlayerNames()
-              : getSinglesPlayerNames();
-
-          umpireViewInfo = {
-            umpire,
-            rules,
-            playerNames,
-            matchState,
-          };
-        }
         const matchStateChanged = () => {
           const umpireMatchAndKey = umpireMatchAndKeys[umpireMatchIndex!];
           const dbMatch = umpireMatchAndKey.match;
@@ -245,134 +196,7 @@ export function LeagueMatchView({ leagueMatchId }: { leagueMatchId: string }) {
             </TableRow>
           );
         });
-        //#region match result display - todo and move
-        enum LeadType {
-          Losing,
-          Winning,
-          Draw,
-        }
-        enum LeagueMatchResultState {
-          InProgress,
-          Unassailable,
-          Completed,
-        }
-        interface TeamLeagueMatchResult {
-          score: number;
-          leadType: LeadType;
-        }
-        interface LeagueMatchResult {
-          state: LeagueMatchResultState;
-          home: TeamLeagueMatchResult;
-          away: TeamLeagueMatchResult;
-        }
 
-        const getLeagueMatchResult = (): LeagueMatchResult => {
-          const leagueMatchResult: LeagueMatchResult = {
-            state: LeagueMatchResultState.InProgress,
-            home: {
-              score: 0,
-              leadType: LeadType.Draw,
-            },
-            away: {
-              score: 0,
-              leadType: LeadType.Draw,
-            },
-          };
-          let numGamesConcluded = 0;
-          umpireMatchAndKeys.forEach((umpireMatchKey) => {
-            const teamsConcededOrForefeited = getTeamsConcededOrForfeited(
-              umpireMatchKey.match,
-            );
-            const homeConcededOrDefaulted =
-              teamsConcededOrForefeited.team1.conceded ||
-              teamsConcededOrForefeited.team1.forfeited;
-            const awayConcededOrDefaulted =
-              teamsConcededOrForefeited.team2.conceded ||
-              teamsConcededOrForefeited.team2.forfeited;
-            if (homeConcededOrDefaulted && awayConcededOrDefaulted) {
-              numGamesConcluded++;
-            } else if (homeConcededOrDefaulted) {
-              numGamesConcluded++;
-              leagueMatchResult.away.score++;
-            } else if (awayConcededOrDefaulted) {
-              leagueMatchResult.home.score++;
-              numGamesConcluded++;
-            } else {
-              const matchWinState = umpireMatchKey.matchState.matchWinState;
-              if (matchWinState === MatchWinState.Team1Won) {
-                numGamesConcluded++;
-                leagueMatchResult.home.score++;
-              }
-              if (matchWinState === MatchWinState.Team2Won) {
-                numGamesConcluded++;
-                leagueMatchResult.away.score++;
-              }
-            }
-          });
-          if (leagueMatchResult.home.score > leagueMatchResult.away.score) {
-            leagueMatchResult.home.leadType = LeadType.Winning;
-            leagueMatchResult.away.leadType = LeadType.Losing;
-          }
-          if (leagueMatchResult.home.score < leagueMatchResult.away.score) {
-            leagueMatchResult.home.leadType = LeadType.Losing;
-            leagueMatchResult.away.leadType = LeadType.Winning;
-          }
-          if (numGamesConcluded === 10) {
-            leagueMatchResult.state = LeagueMatchResultState.Completed;
-          } else {
-            if (
-              leagueMatchResult.home.score > 5 ||
-              leagueMatchResult.away.score > 5
-            ) {
-              leagueMatchResult.state = LeagueMatchResultState.Unassailable;
-            }
-          }
-          return leagueMatchResult;
-        };
-        const matchResult = getLeagueMatchResult();
-        // todo - add the leading team initials with the score - only when completed ?
-        const leadingLeagueMatchResultStateColorLookup = new Map<
-          LeagueMatchResultState,
-          string
-        >([
-          [LeagueMatchResultState.InProgress, winningMatchColor],
-          [LeagueMatchResultState.Unassailable, unassailableColor],
-          [LeagueMatchResultState.Completed, matchWonColor],
-        ]);
-        const getMatchResultDisplay = (
-          leagueMatchResult: LeagueMatchResult,
-        ) => {
-          const getTeamResult = (isHome: boolean) => {
-            const teamLeagueMatchResult = isHome
-              ? leagueMatchResult.home
-              : leagueMatchResult.away;
-
-            const teamColor =
-              teamLeagueMatchResult.leadType === LeadType.Winning
-                ? leadingLeagueMatchResultStateColorLookup.get(
-                    leagueMatchResult.state,
-                  )!
-                : notLeadingColor;
-            return (
-              <span
-                aria-label={getLeagueMatchResultTeamElementAriaLabel(isHome)}
-                style={{ color: teamColor, whiteSpace: "nowrap" }}
-              >
-                {teamLeagueMatchResult.score}
-              </span>
-            );
-          };
-
-          return (
-            <>
-              {getTeamResult(true)}
-              <span style={{ whiteSpace: "nowrap" }}> - </span>
-              {getTeamResult(false)}
-            </>
-          );
-        };
-        const matchResultDisplay = getMatchResultDisplay(matchResult);
-        //#endregion
         const closeMenu = () => setGameMenuState(null);
         const umpireGame = () => {
           const selectedMatchIndex = gameMenuState!.index;
@@ -581,7 +405,9 @@ export function LeagueMatchView({ leagueMatchId }: { leagueMatchId: string }) {
                         <TableCell
                           aria-label={scoresheetLeagueMatchResultCellAriaLabel}
                         >
-                          {matchResultDisplay}
+                          {getMatchResultDisplay(
+                            getLeagueMatchResultModel(umpireMatchAndKeys),
+                          )}
                         </TableCell>
                       </TableRow>
                     </TableBody>

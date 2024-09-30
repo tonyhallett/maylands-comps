@@ -68,7 +68,7 @@ describe("<LeagueMatchLinks />", () => {
     await waitForSetupDatabasePromise;
   });
 
-  it("should have some links", async () => {
+  it("should have some links for today's fixtures", async () => {
     render(createMaylandsComps(<LeagueMatchLinks />));
 
     await screen.findByText("Maylands Green 1 vs Maylands Green 2", {

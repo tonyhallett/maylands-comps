@@ -999,7 +999,7 @@ describe("render scoresheet", () => {
     });
   });
 
-  it.only("should display cell with the order that match should be played in", async () => {
+  it("should display cell with the order that match should be played in", async () => {
     const leagueMatchKey = await setupDatabase(database);
     render(createApp(leagueMatchKey));
 
