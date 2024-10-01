@@ -18,8 +18,6 @@ import {
   AvailablePlayer,
   useAvailablePlayers,
 } from "../../db-hooks/useAvailablePlayers";
-import { dbMatchSaveStateToSaveState } from "../../../../firebase/rtb/match/conversion";
-import { Umpire } from "../../../../umpire";
 import { LeagueMatchScoreboard } from "../LeagueMatchScoreboard";
 import { getDoublesMatch } from "../../helpers";
 import {
@@ -38,6 +36,7 @@ import {
 } from "./team-select-labels";
 import { getAvailablePlayersForSelection } from "./getAvailablePlayersForSelection";
 import CenteredCircularProgress from "../../../../helper-components/CenteredCircularProgress";
+import { addUmpireToMatchAndKeys } from "./addUmpireToMatchAndKeys";
 
 export interface LeagueMatchSelectionProps {
   renderScoresheet: RenderScoresheet;
@@ -321,17 +320,7 @@ export function LeagueMatchSelection({
         <Button onClick={() => setShowScoreboard(true)}>Scoreboard</Button>
         <section aria-label={scoresheetSectionAriaLabel}>
           {renderScoresheet(
-            matchAndKeys.map((matchAndKey) => {
-              const umpire = new Umpire(
-                dbMatchSaveStateToSaveState(matchAndKey.match),
-              );
-              const matchState = umpire.getMatchState();
-              return {
-                ...matchAndKey,
-                umpire,
-                matchState,
-              };
-            }),
+            addUmpireToMatchAndKeys(matchAndKeys),
             db,
             keyedSinglesMatchNamePositionDisplays,
             keyedDoublesMatchNamesPositionDisplay,

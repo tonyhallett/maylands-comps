@@ -3,11 +3,7 @@ import {
   ConcedeOrForfeit,
   DbMatch,
 } from "../../../../firebase/rtb/match/dbMatch";
-import { refTyped } from "../../../../firebase/rtb/root";
-import {
-  PartialWithNullsWithoutUndefined,
-  setTyped,
-} from "../../../../firebase/rtb/typeHelpers";
+import { PartialWithNullsWithoutUndefined } from "../../../../firebase/rtb/typeHelpers";
 import {
   Box,
   /* Button,
@@ -19,7 +15,6 @@ import {
   ListItemText,
   Menu,
   MenuItem,
-  MenuList,
   Paper,
   Table,
   TableBody,
@@ -54,14 +49,12 @@ import {
   TeamsConcededOrForfeited,
   getTeamsConcededOrForfeited,
 } from "../../../../firebase/rtb/match/helpers/getTeamsConcededOrForfeited";
-import {
-  getDbMatchSaveStateFromUmpire,
-  getFullGameScores,
-} from "../../helpers";
+import { getFullGameScores } from "../../helpers";
 import { getAreAllPlayersSelected } from "../../../../firebase/rtb/match/helpers/getAllPlayersSelected";
 import { getLeagueMatchResultModel } from "./scoresheet/model/getLeagueMatchResultModel";
 import { getMatchResultDisplay } from "./scoresheet/ui/getMatchResultDisplay";
 import { getUmpireViewInfo } from "./getUmpireViewInfo";
+import { updateMatchFromUmpire } from "./updateMatchFromUmpire";
 const UndoConcedeIcon = PersonIcon;
 
 // #region aria labels
@@ -77,6 +70,7 @@ export const getMatchOrderCellAriaLabel = (index: number) =>
   `Match order cell ${index}`;
 //#endregion
 
+export const gameMenuButtonAriaLabel = "Game Menu Button";
 export function LeagueMatchView({ leagueMatchId }: { leagueMatchId: string }) {
   const [umpireMatchIndex, setUmpireMatchIndex] = useState<number | undefined>(
     undefined,
@@ -105,26 +99,15 @@ export function LeagueMatchView({ leagueMatchId }: { leagueMatchId: string }) {
         const matchStateChanged = () => {
           const umpireMatchAndKey = umpireMatchAndKeys[umpireMatchIndex!];
           const dbMatch = umpireMatchAndKey.match;
-          const dbMatchSaveState = getDbMatchSaveStateFromUmpire(
-            umpireMatchAndKey.umpire,
-          );
-          const updatedMatch: DbMatch = {
-            ...dbMatch,
-            ...dbMatchSaveState,
-          };
-          if (dbMatch.team1Player2Id !== undefined) {
-            updatedMatch.team1Player2Id = dbMatch.team1Player2Id;
-          }
-          if (dbMatch.team2Player2Id !== undefined) {
-            updatedMatch.team2Player2Id = dbMatch.team2Player2Id;
-          }
-          const matchDatabaseRef = refTyped(
-            db,
-            `matches/${umpireMatchAndKey.key}`,
-          );
           // todo error handling
-          setTyped(matchDatabaseRef, updatedMatch);
+          updateMatchFromUmpire(
+            dbMatch,
+            umpireMatchAndKey.key,
+            umpireMatchAndKey.umpire,
+            db,
+          );
         };
+
         const rows = umpireMatchAndKeys.map((umpireMatchAndKey, index) => {
           const match = umpireMatchAndKey.match;
           const teamsConcededOrDefaulted = getTeamsConcededOrForfeited(match);
@@ -157,6 +140,8 @@ export function LeagueMatchView({ leagueMatchId }: { leagueMatchId: string }) {
             >
               <TableCell padding="none">
                 <div
+                  role="button"
+                  aria-label={gameMenuButtonAriaLabel}
                   onClick={(event) => {
                     setGameMenuState({
                       anchorElement: event.currentTarget,
@@ -335,9 +320,9 @@ export function LeagueMatchView({ leagueMatchId }: { leagueMatchId: string }) {
               onClose={closeMenu}
               anchorEl={gameMenuState?.anchorElement}
             >
-              <MenuList dense>{menuItems}</MenuList>
+              {menuItems}
             </Menu>
-            {umpireMatchIndex !== undefined && (
+            {umpireViewInfo !== undefined && (
               <UmpireView
                 autoShowServerReceiverChooser={false}
                 matchState={umpireViewInfo!.matchState}

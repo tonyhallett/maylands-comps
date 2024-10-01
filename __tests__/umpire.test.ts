@@ -36,7 +36,7 @@ import {
 } from "../src/umpire/playersHelpers";
 import { ServerReceiver } from "../src/umpire/commonTypes";
 import { getLast } from "../src/helpers/getLast";
-import { scoreGames, scorePoints } from "./umpireScoringHelpers";
+import { scoreGames, scorePoints } from "./umpireHelpers";
 
 describe("umpiring", () => {
   const singlesPlayers = getPlayers(false);

@@ -1,9 +1,16 @@
 /**
  * @jest-environment jsdom
  */
-import { render } from "@testing-library/react";
+import { render, within } from "@testing-library/react";
+import {
+  openMenuClickMenuItem,
+  openMenuExpectMenuItemDisabled,
+} from "../test-helpers/mui/menu";
 import createEmulatorTests from "./createEmulatorTests";
-import { LeagueMatchView } from "../src/teamMatches/league/play/league-match-view/LeagueMatchView";
+import {
+  LeagueMatchView,
+  gameMenuButtonAriaLabel,
+} from "../src/teamMatches/league/play/league-match-view/LeagueMatchView";
 import {
   SetupDoubles,
   SetupMatch,
@@ -26,11 +33,8 @@ import {
   expectSingleTextDecorationLine,
 } from "../test-helpers/testing-library/expectations";
 import { DbMatch } from "../src/firebase/rtb/match/dbMatch";
-import { GameScore, Player, SaveState, Umpire } from "../src/umpire";
-import {
-  dbMatchSaveStateToSaveState,
-  saveStateToDbMatchSaveState,
-} from "../src/firebase/rtb/match/conversion";
+import { GameScore, Player } from "../src/umpire";
+
 import { getLast } from "../src/helpers/getLast";
 import { ServerReceiver } from "../src/umpire/commonTypes";
 import { getInitials } from "../src/umpireView/helpers";
@@ -39,8 +43,9 @@ import {
   scoreGames,
   scoreGamesWon,
   scorePoints,
+  updateMatchViaUmpire,
   winGame,
-} from "./umpireScoringHelpers";
+} from "./umpireHelpers";
 import {
   GameScoreTeamCells,
   findAllGameRows,
@@ -67,6 +72,7 @@ import {
   winColor,
   winningMatchColor,
 } from "../src/teamMatches/league/play/league-match-view/scoresheet/ui/colors";
+import { ExtractKey } from "../src/firebase/rtb/typeHelpers";
 
 // mocking due to import.meta.url
 jest.mock(
@@ -87,23 +93,6 @@ jest.mock("../src/teamMatches/league/play/LeagueMatchScoreboard", () => {
 });
 
 const { createMaylandsComps, database } = createEmulatorTests();
-
-const updateDbMatchWithSaveState = (match: DbMatch, saveState: SaveState) => {
-  const dbMatchSaveState = saveStateToDbMatchSaveState(saveState);
-  for (const key in dbMatchSaveState) {
-    match[key] = dbMatchSaveState[key];
-  }
-};
-
-const updateMatchViaUmpire = (
-  match: DbMatch,
-  umpireUpdate: (umpire: Umpire) => void,
-) => {
-  const umpire = new Umpire(dbMatchSaveStateToSaveState(match));
-  umpireUpdate(umpire);
-  const saveState = umpire.getSaveState();
-  updateDbMatchWithSaveState(match, saveState);
-};
 
 describe("render scoresheet", () => {
   function createApp(leagueMatchId: string) {
@@ -1280,5 +1269,283 @@ describe("render scoresheet", () => {
         expectation(leagueMatchResultCell);
       },
     );
+  });
+
+  describe("menu", () => {
+    type ConcededOrForfeitKeys = ExtractKey<
+      DbMatch,
+      "team1ConcedeOrForfeit" | "team2ConcedeOrForfeit"
+    >;
+    describe("enablement", () => {
+      interface MenuItemEnablementTest {
+        description: string;
+        homePlayersSelected: boolean[];
+        awayPlayersSelected: boolean[];
+        isSingles?: boolean;
+        setupMatch?: (dbMatch: DbMatch) => void;
+        disabled: boolean;
+        menuItemName: string;
+      }
+
+      const menuItemEnablementTests: MenuItemEnablementTest[] = [
+        // umpire menu item
+        {
+          description:
+            "should have disabled umpire menu item if all players have not been selected for singles",
+          homePlayersSelected: noPlayerSelected,
+          awayPlayersSelected: allPlayersSelected,
+          disabled: true,
+          menuItemName: "Umpire",
+        },
+        {
+          description:
+            "should have disabled umpire menu item if all players have not been selected for doubles",
+          homePlayersSelected: noPlayerSelected,
+          awayPlayersSelected: allPlayersSelected,
+          isSingles: false,
+          disabled: true,
+          menuItemName: "Umpire",
+        },
+        ...[
+          [true, true],
+          [true, false],
+          [false, true],
+          [false, false],
+        ].map(([homeTeam, conceded]) => {
+          return {
+            description: `should have disabled umpire menu item if ${homeTeam ? "home" : "away"} team has ${conceded ? "conceded" : "forfeited"}`,
+            homePlayersSelected: allPlayersSelected,
+            awayPlayersSelected: allPlayersSelected,
+            disabled: true,
+            menuItemName: "Umpire",
+            setupMatch(dbMatch) {
+              const key: ConcededOrForfeitKeys = homeTeam
+                ? "team1ConcedeOrForfeit"
+                : "team2ConcedeOrForfeit";
+              dbMatch[key] = {
+                isConcede: conceded,
+              };
+            },
+          };
+        }),
+        {
+          description:
+            "should have enabled umpire menu item when all players have been selected for singles and not conceded or forfeited",
+          homePlayersSelected: allPlayersSelected,
+          awayPlayersSelected: allPlayersSelected,
+          disabled: false,
+          menuItemName: "Umpire",
+        },
+        {
+          description:
+            "should have enabled umpire menu item when all players have been selected for doubles and not conceded or forfeited",
+          homePlayersSelected: allPlayersSelected,
+          awayPlayersSelected: allPlayersSelected,
+          disabled: false,
+          menuItemName: "Umpire",
+          isSingles: false,
+          setupMatch(dbMatch) {
+            dbMatch.team1Player1Id = defaultHomePlayerNames[0];
+            dbMatch.team1Player2Id = defaultHomePlayerNames[1];
+            dbMatch.team2Player1Id = defaultAwayPlayerNames[0];
+            dbMatch.team2Player2Id = defaultAwayPlayerNames[1];
+          },
+        },
+        // concede menu items
+        ...[true, false].flatMap((homeWins) => {
+          return [true, false].map((homeConcededMenuItem) => {
+            const test: MenuItemEnablementTest = {
+              description: `should have disabled ${homeConcededMenuItem ? "Home" : "Away"} Concede menu item  if the match has been won by the ${homeWins ? "home" : "away"} team`,
+              homePlayersSelected: allPlayersSelected,
+              awayPlayersSelected: allPlayersSelected,
+              disabled: true,
+              menuItemName: `${homeConcededMenuItem ? "Home" : "Away"} Concede`,
+              setupMatch(dbMatch) {
+                updateMatchViaUmpire(dbMatch, (umpire) => {
+                  umpire.setServer("Team1Player1");
+                  winGame(umpire, homeWins);
+                });
+              },
+            };
+            return test;
+          });
+        }),
+        ...[true, false].flatMap((homeForfeited) => {
+          return [true, false].map((homeConcededMenuItem) => {
+            const test: MenuItemEnablementTest = {
+              description: `should have disabled ${homeConcededMenuItem ? "Home" : "Away"} Concede menu item if the match has been forfeited by the ${homeForfeited ? "home" : "away"} team`,
+              homePlayersSelected: allPlayersSelected,
+              awayPlayersSelected: allPlayersSelected,
+              disabled: true,
+              menuItemName: `${homeConcededMenuItem ? "Home" : "Away"} Concede`,
+              setupMatch(dbMatch) {
+                const key: ConcededOrForfeitKeys = homeForfeited
+                  ? "team1ConcedeOrForfeit"
+                  : "team2ConcedeOrForfeit";
+                dbMatch[key] = {
+                  isConcede: false,
+                };
+              },
+            };
+            return test;
+          });
+        }),
+        ...[true, false].map((homeConcededMenuItem) => {
+          const test: MenuItemEnablementTest = {
+            description: `should have disabled ${homeConcededMenuItem ? "Home" : "Away"} Concede menu item if not all players selected`,
+            homePlayersSelected: noPlayerSelected,
+            awayPlayersSelected: noPlayerSelected,
+            disabled: true,
+            menuItemName: `${homeConcededMenuItem ? "Home" : "Away"} Concede`,
+          };
+          return test;
+        }),
+        ...[true, false].map((homeConcededMenuItem) => {
+          const test: MenuItemEnablementTest = {
+            description: `should have enabled ${homeConcededMenuItem ? "Home" : "Away"} Concede menu item if ok to concede`,
+            homePlayersSelected: allPlayersSelected,
+            awayPlayersSelected: allPlayersSelected,
+            disabled: false,
+            menuItemName: `${homeConcededMenuItem ? "Home" : "Away"} Concede`,
+          };
+          return test;
+        }),
+        ...[true, false].map((homeConceded) => {
+          const test: MenuItemEnablementTest = {
+            description: `should have enabled Undo ${homeConceded ? "Home" : "Away"} Concede menu item if ${homeConceded ? "home" : "away"} team conceded`,
+            homePlayersSelected: allPlayersSelected,
+            awayPlayersSelected: allPlayersSelected,
+            disabled: false,
+            menuItemName: `Undo ${homeConceded ? "Home" : "Away"} Concede`,
+            setupMatch(dbMatch) {
+              const key: ConcededOrForfeitKeys = homeConceded
+                ? "team1ConcedeOrForfeit"
+                : "team2ConcedeOrForfeit";
+              dbMatch[key] = {
+                isConcede: true,
+              };
+            },
+          };
+          return test;
+        }),
+      ];
+      it.each(menuItemEnablementTests)(
+        "$description",
+        async ({
+          homePlayersSelected,
+          awayPlayersSelected,
+          isSingles = true,
+          setupMatch,
+          disabled,
+          menuItemName,
+        }) => {
+          const leagueMatchKey = await setupDatabase(
+            database,
+            getMatchSetupThatSetsDefaultPlayersThatAreSelected(
+              homePlayersSelected,
+              awayPlayersSelected,
+              undefined,
+              (dbMatch, index) => {
+                if (index === 0) {
+                  if (isSingles) {
+                    setupMatch?.(dbMatch);
+                  }
+                }
+                if (index === 9) {
+                  if (!isSingles) {
+                    setupMatch?.(dbMatch);
+                  }
+                }
+              },
+            ),
+          );
+          render(createApp(leagueMatchKey));
+
+          const gameRow = await findGameRow(isSingles ? 0 : 9);
+          const menuButton = within(gameRow).getByLabelText(
+            gameMenuButtonAriaLabel,
+          );
+          openMenuExpectMenuItemDisabled(menuButton, menuItemName, disabled);
+        },
+      );
+    });
+    describe("clicking concede / undo concede menu item", () => {
+      interface ConcedeUnconcedeTest {
+        description: string;
+        homeTeam: boolean;
+        initiallyConceded: boolean;
+      }
+      const concedeUnconcedeTests: ConcedeUnconcedeTest[] = [
+        true,
+        false,
+      ].flatMap((homeTeam) => {
+        return [true, false].map((initiallyConceded) => {
+          return {
+            description: `should ${initiallyConceded ? "undo" : "concede"} the ${homeTeam ? "home" : "away"} team`,
+            homeTeam,
+            initiallyConceded,
+          };
+        });
+      });
+      it.each(concedeUnconcedeTests)(
+        "$description",
+        async ({ homeTeam, initiallyConceded }) => {
+          const getExpectedScore = (conceded) => {
+            const concededTeam = homeTeam ? "home" : "away";
+            const unconceededTeam = homeTeam ? "away" : "home";
+            return {
+              [concededTeam]: 0,
+              [unconceededTeam]: conceded ? 1 : 0,
+            };
+          };
+          const leagueMatchKey = await setupDatabase(
+            database,
+            getMatchSetupThatSetsDefaultPlayersThatAreSelected(
+              allPlayersSelected,
+              allPlayersSelected,
+              undefined,
+              (dbMatch, index) => {
+                if (index === 0 && initiallyConceded) {
+                  const key: ConcededOrForfeitKeys = homeTeam
+                    ? "team1ConcedeOrForfeit"
+                    : "team2ConcedeOrForfeit";
+                  dbMatch[key] = {
+                    isConcede: true,
+                  };
+                }
+              },
+            ),
+          );
+          render(createApp(leagueMatchKey));
+
+          const gameRow = await findGameRow(0);
+          // before
+          const expectedBeforeScore = getExpectedScore(initiallyConceded);
+          let leagueMatchResultCell = await findLeagueMatchResultCell();
+          expectScoreTextContent(
+            leagueMatchResultCell,
+            expectedBeforeScore.home,
+            expectedBeforeScore.away,
+          );
+
+          const menuButton = within(gameRow).getByLabelText(
+            gameMenuButtonAriaLabel,
+          );
+          const menuItemName = initiallyConceded
+            ? `Undo ${homeTeam ? "Home" : "Away"} Concede`
+            : `${homeTeam ? "Home" : "Away"} Concede`;
+          openMenuClickMenuItem(menuButton, menuItemName);
+
+          // after
+          const expectedAfterScore = getExpectedScore(!initiallyConceded);
+          leagueMatchResultCell = await findLeagueMatchResultCell();
+          expectScoreTextContent(
+            leagueMatchResultCell,
+            expectedAfterScore.home,
+            expectedAfterScore.away,
+          );
+        },
+      );
+    });
   });
 });
