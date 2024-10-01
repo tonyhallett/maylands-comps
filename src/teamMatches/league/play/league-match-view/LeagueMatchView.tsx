@@ -23,7 +23,6 @@ import {
   TableHead,
   TableRow,
 } from "@mui/material";
-import { UmpireView } from "../../../../umpireView";
 import {
   UmpireUpdate,
   createRootUpdater,
@@ -54,7 +53,7 @@ import { getAreAllPlayersSelected } from "../../../../firebase/rtb/match/helpers
 import { getLeagueMatchResultModel } from "./scoresheet/model/getLeagueMatchResultModel";
 import { getMatchResultDisplay } from "./scoresheet/ui/getMatchResultDisplay";
 import { getUmpireViewInfo } from "./getUmpireViewInfo";
-import { updateMatchFromUmpire } from "./updateMatchFromUmpire";
+import { DbUmpireView } from "./DbUmpireView";
 const UndoConcedeIcon = PersonIcon;
 
 // #region aria labels
@@ -68,9 +67,9 @@ export const getLeagueMatchResultTeamElementAriaLabel = (isHome: boolean) =>
   `League Match Result ${isHome ? "Home" : "Away"}`;
 export const getMatchOrderCellAriaLabel = (index: number) =>
   `Match order cell ${index}`;
+export const gameMenuButtonAriaLabel = "Game Menu Button";
 //#endregion
 
-export const gameMenuButtonAriaLabel = "Game Menu Button";
 export function LeagueMatchView({ leagueMatchId }: { leagueMatchId: string }) {
   const [umpireMatchIndex, setUmpireMatchIndex] = useState<number | undefined>(
     undefined,
@@ -95,18 +94,6 @@ export function LeagueMatchView({ leagueMatchId }: { leagueMatchId: string }) {
           keyedSinglesMatchNamePositionDisplays,
           keyedDoublesMatchNamesPositionDisplay,
         );
-
-        const matchStateChanged = () => {
-          const umpireMatchAndKey = umpireMatchAndKeys[umpireMatchIndex!];
-          const dbMatch = umpireMatchAndKey.match;
-          // todo error handling
-          updateMatchFromUmpire(
-            dbMatch,
-            umpireMatchAndKey.key,
-            umpireMatchAndKey.umpire,
-            db,
-          );
-        };
 
         const rows = umpireMatchAndKeys.map((umpireMatchAndKey, index) => {
           const match = umpireMatchAndKey.match;
@@ -323,38 +310,12 @@ export function LeagueMatchView({ leagueMatchId }: { leagueMatchId: string }) {
               {menuItems}
             </Menu>
             {umpireViewInfo !== undefined && (
-              <UmpireView
-                autoShowServerReceiverChooser={false}
-                matchState={umpireViewInfo!.matchState}
-                rules={umpireViewInfo!.rules}
-                umpire={{
-                  // todo - add a scoreboardWithUmpire method changed on the umpire and an optional button/radio to change it
-                  pointScored(isTeam1) {
-                    umpireViewInfo!.umpire.pointScored(isTeam1);
-                    matchStateChanged();
-                  },
-                  resetServerReceiver() {
-                    umpireViewInfo!.umpire.resetServerReceiver();
-                    matchStateChanged();
-                  },
-                  setFirstGameDoublesReceiver(player) {
-                    umpireViewInfo!.umpire.setFirstGameDoublesReceiver(player);
-                    matchStateChanged();
-                  },
-                  setServer(player) {
-                    umpireViewInfo!.umpire.setServer(player);
-                    matchStateChanged();
-                  },
-                  switchEnds() {
-                    umpireViewInfo!.umpire.switchEnds();
-                    matchStateChanged();
-                  },
-                  undoPoint() {
-                    umpireViewInfo!.umpire.undoPoint();
-                    matchStateChanged();
-                  },
-                }}
+              <DbUmpireView
+                {...umpireViewInfo}
                 {...umpireViewInfo!.playerNames}
+                autoShowServerReceiverChooser={false}
+                dbMatch={umpireMatchAndKeys[umpireMatchIndex!].match}
+                matchKey={umpireMatchAndKeys[umpireMatchIndex!].key}
               />
             )}
             <Box sx={{ width: "100%" }}>
