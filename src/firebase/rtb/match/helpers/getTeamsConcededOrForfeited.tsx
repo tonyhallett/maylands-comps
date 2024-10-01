@@ -10,6 +10,17 @@ export interface TeamsConcededOrForfeited {
   team2: TeamConcededOrForfeited;
 }
 
+export const anyConcededOrForfeited = (
+  teamsConcededOrForfeited: TeamsConcededOrForfeited,
+) => {
+  return (
+    teamsConcededOrForfeited.team1.conceded ||
+    teamsConcededOrForfeited.team2.conceded ||
+    teamsConcededOrForfeited.team1.forfeited ||
+    teamsConcededOrForfeited.team2.forfeited
+  );
+};
+
 export const getTeamsConcededOrForfeited = (
   match: DbMatch,
 ): TeamsConcededOrForfeited => {

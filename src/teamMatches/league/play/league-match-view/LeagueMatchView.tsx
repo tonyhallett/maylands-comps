@@ -6,15 +6,6 @@ import {
 import { PartialWithNullsWithoutUndefined } from "../../../../firebase/rtb/typeHelpers";
 import {
   Box,
-  /* Button,
-  Dialog,
-  DialogContent,
-  DialogTitle,
-  IconButton, */
-  ListItemIcon,
-  ListItemText,
-  Menu,
-  MenuItem,
   Paper,
   Table,
   TableBody,
@@ -37,24 +28,14 @@ import { LeagueMatchSelection } from "../league-match-selection/LeagueMatchSelec
 import { getMatchTeamsSelectionModel } from "./scoresheet/model/getMatchTeamsSelectionModel";
 import { getGameScoreCell } from "./scoresheet/ui/getGameScoreCell";
 import MoreVertIcon from "@mui/icons-material/MoreVert";
-import SportsIcon from "@mui/icons-material/Sports";
-const UmpireIcon = SportsIcon;
-import PersonOffIcon from "@mui/icons-material/PersonOff";
-import { isMatchWon } from "../../../../umpire/matchWinState";
-const ConcedeIcon = PersonOffIcon;
-import PersonIcon from "@mui/icons-material/Person";
 import { ref, update } from "firebase/database";
-import {
-  TeamsConcededOrForfeited,
-  getTeamsConcededOrForfeited,
-} from "../../../../firebase/rtb/match/helpers/getTeamsConcededOrForfeited";
+import { getTeamsConcededOrForfeited } from "../../../../firebase/rtb/match/helpers/getTeamsConcededOrForfeited";
 import { getFullGameScores } from "../../helpers";
-import { getAreAllPlayersSelected } from "../../../../firebase/rtb/match/helpers/getAllPlayersSelected";
 import { getLeagueMatchResultModel } from "./scoresheet/model/getLeagueMatchResultModel";
 import { getMatchResultDisplay } from "./scoresheet/ui/getMatchResultDisplay";
 import { getUmpireViewInfo } from "./getUmpireViewInfo";
 import { DbUmpireView } from "./DbUmpireView";
-const UndoConcedeIcon = PersonIcon;
+import { ScoresheetGameMenu } from "./ScoresheetGameMenu";
 
 // #region aria labels
 export const scoresheetTableAriaLabel = "Scoresheet Table";
@@ -78,7 +59,6 @@ export function LeagueMatchView({ leagueMatchId }: { leagueMatchId: string }) {
     anchorElement: HTMLElement;
     index: number;
   } | null>(null);
-  const showGameMenu = Boolean(gameMenuState);
   return (
     <LeagueMatchSelection
       leagueMatchId={leagueMatchId}
@@ -169,146 +149,58 @@ export function LeagueMatchView({ leagueMatchId }: { leagueMatchId: string }) {
           );
         });
 
-        const closeMenu = () => setGameMenuState(null);
-        const umpireGame = () => {
-          const selectedMatchIndex = gameMenuState!.index;
-          const umpireUpdates: UmpireUpdate[] = [
-            {
-              key: umpireMatchAndKeys[selectedMatchIndex!].key,
-              umpired: true,
-            },
-          ];
+        const removeExistingUmpiredGame = (umpireUpdates: UmpireUpdate[]) => {
           if (umpireMatchIndex !== undefined) {
             umpireUpdates.push({
               key: umpireMatchAndKeys[umpireMatchIndex].key,
             });
           }
+        };
+        const umpireGame = (key: string) => {
+          const selectedMatchIndex = gameMenuState!.index;
+          const umpireUpdates: UmpireUpdate[] = [
+            {
+              key,
+              umpired: true,
+            },
+          ];
+          removeExistingUmpiredGame(umpireUpdates);
           updateUmpired(umpireUpdates, db);
           setUmpireMatchIndex(selectedMatchIndex);
         };
 
-        const getConcedeMenuItems = (
-          teamsConcededOrDefaulted: TeamsConcededOrForfeited,
-          key: string,
-          matchWon: boolean,
-          allPlayersSelected: boolean,
-        ) => {
-          const forfeited =
-            teamsConcededOrDefaulted.team1.forfeited ||
-            teamsConcededOrDefaulted.team2.forfeited;
-
-          const concedeDisabled = matchWon || !allPlayersSelected || forfeited;
-
-          const getConcedeText = (isHome: boolean, conceded: boolean) => {
-            const homeOrAway = isHome ? "Home" : "Away";
-            const prefix = conceded ? "Undo " : "";
-            return `${prefix}${homeOrAway} Concede`;
-          };
-          const getConcedeMenuItem = (isHome: boolean) => {
-            const conceded = isHome
-              ? teamsConcededOrDefaulted.team1.conceded
-              : teamsConcededOrDefaulted.team2.conceded;
-            const concedeIcon = conceded ? (
-              <UndoConcedeIcon />
-            ) : (
-              <ConcedeIcon />
-            );
-            return (
-              <MenuItem
-                onClick={() => {
-                  closeMenu();
-                  const concededUpdate: ConcedeOrForfeit | null = !conceded
-                    ? {
-                        isConcede: true,
-                      }
-                    : null;
-                  const updater = createRootUpdater();
-                  const updatedMatch: PartialWithNullsWithoutUndefined<DbMatch> =
-                    isHome
-                      ? { team1ConcedeOrForfeit: concededUpdate }
-                      : { team2ConcedeOrForfeit: concededUpdate };
-
-                  updater.updateListItem("matches", key, updatedMatch);
-                  if (umpireMatchIndex === gameMenuState!.index) {
-                    updatedMatch.umpired = null;
-                  }
-                  // todo - error handling
-                  update(ref(db), updater.values);
-                  setUmpireMatchIndex(undefined);
-                }}
-                key={isHome ? "homeConcedeMenuItem" : "awayConcedeMenuItem"}
-                disabled={concedeDisabled}
-              >
-                <ListItemIcon>{concedeIcon}</ListItemIcon>
-                <ListItemText>{getConcedeText(isHome, conceded)}</ListItemText>
-              </MenuItem>
-            );
-          };
-          return [getConcedeMenuItem(true), getConcedeMenuItem(false)];
-        };
-
-        const getUmpireMenuItem = (
-          allPlayersSelected: boolean,
-          concededOrForfeited: boolean,
-        ) => {
-          /*
-            todo - use this to remove umpiring of a game
-            const isUmpiringGame = umpireMatchIndex === gameMenuState!.index;
-          */
-          return (
-            <MenuItem
-              key="umpireMenuItem"
-              disabled={!allPlayersSelected || concededOrForfeited}
-              onClick={() => {
-                umpireGame();
-                closeMenu();
-              }}
-            >
-              <ListItemIcon>
-                <UmpireIcon />
-              </ListItemIcon>
-              <ListItemText>Umpire</ListItemText>
-            </MenuItem>
-          );
-        };
-
-        const getGameMenuItems = () => {
-          const umpireMatchAndKey = umpireMatchAndKeys[gameMenuState!.index];
-          const allPlayersSelected = getAreAllPlayersSelected(
-            umpireMatchAndKey.match,
-          );
-          const matchWon = isMatchWon(
-            umpireMatchAndKey.matchState.matchWinState,
-          );
-          const teamsConcededOrDefaulted = getTeamsConcededOrForfeited(
-            umpireMatchAndKey.match,
-          );
-          const concededOrForfeited =
-            teamsConcededOrDefaulted.team1.conceded ||
-            teamsConcededOrDefaulted.team2.conceded ||
-            teamsConcededOrDefaulted.team1.forfeited ||
-            teamsConcededOrDefaulted.team2.forfeited;
-          return [
-            getUmpireMenuItem(allPlayersSelected, concededOrForfeited),
-            ...getConcedeMenuItems(
-              teamsConcededOrDefaulted,
-              umpireMatchAndKey.key,
-              matchWon,
-              allPlayersSelected,
-            ),
-          ];
-        };
-        const menuItems = gameMenuState === null ? [] : getGameMenuItems();
         return (
           <>
-            <Menu
-              disableScrollLock
-              open={showGameMenu}
-              onClose={closeMenu}
-              anchorEl={gameMenuState?.anchorElement}
-            >
-              {menuItems}
-            </Menu>
+            <ScoresheetGameMenu
+              closeMenu={() => setGameMenuState(null)}
+              anchorElement={gameMenuState?.anchorElement}
+              umpireMatchAndKey={
+                gameMenuState === null
+                  ? undefined
+                  : umpireMatchAndKeys[gameMenuState.index]
+              }
+              umpireGame={umpireGame}
+              updateConceded={(conceded, isHome, key) => {
+                const concededUpdate: ConcedeOrForfeit | null = conceded
+                  ? {
+                      isConcede: true,
+                    }
+                  : null;
+                const updater = createRootUpdater();
+                const updatedMatch: PartialWithNullsWithoutUndefined<DbMatch> =
+                  isHome
+                    ? { team1ConcedeOrForfeit: concededUpdate }
+                    : { team2ConcedeOrForfeit: concededUpdate };
+
+                updater.updateListItem("matches", key, updatedMatch);
+                if (umpireMatchIndex === gameMenuState!.index) {
+                  updatedMatch.umpired = null;
+                }
+                // todo - error handling
+                update(ref(db), updater.values);
+                setUmpireMatchIndex(undefined);
+              }}
+            />
             {umpireViewInfo !== undefined && (
               <DbUmpireView
                 {...umpireViewInfo}
