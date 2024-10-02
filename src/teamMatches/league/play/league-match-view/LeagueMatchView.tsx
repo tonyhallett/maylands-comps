@@ -1,10 +1,5 @@
 import { useState } from "react";
 import {
-  ConcedeOrForfeit,
-  DbMatch,
-} from "../../../../firebase/rtb/match/dbMatch";
-import { PartialWithNullsWithoutUndefined } from "../../../../firebase/rtb/typeHelpers";
-import {
   Box,
   Paper,
   Table,
@@ -16,7 +11,7 @@ import {
 } from "@mui/material";
 import {
   UmpireUpdate,
-  createRootUpdater,
+  updateConcededOrForfeited,
   updateUmpired,
 } from "../../../../firebase/rtb/match/db-helpers";
 import { getGameScoresModel } from "./scoresheet/model/getGameScoresModel";
@@ -28,7 +23,6 @@ import { LeagueMatchSelection } from "../league-match-selection/LeagueMatchSelec
 import { getMatchTeamsSelectionModel } from "./scoresheet/model/getMatchTeamsSelectionModel";
 import { getGameScoreCell } from "./scoresheet/ui/getGameScoreCell";
 import MoreVertIcon from "@mui/icons-material/MoreVert";
-import { ref, update } from "firebase/database";
 import { getTeamsConcededOrForfeited } from "../../../../firebase/rtb/match/helpers/getTeamsConcededOrForfeited";
 import { getFullGameScores } from "../../helpers";
 import { getLeagueMatchResultModel } from "./scoresheet/model/getLeagueMatchResultModel";
@@ -181,23 +175,19 @@ export function LeagueMatchView({ leagueMatchId }: { leagueMatchId: string }) {
               }
               umpireGame={umpireGame}
               updateConceded={(conceded, isHome, key) => {
-                const concededUpdate: ConcedeOrForfeit | null = conceded
-                  ? {
-                      isConcede: true,
-                    }
-                  : null;
-                const updater = createRootUpdater();
-                const updatedMatch: PartialWithNullsWithoutUndefined<DbMatch> =
-                  isHome
-                    ? { team1ConcedeOrForfeit: concededUpdate }
-                    : { team2ConcedeOrForfeit: concededUpdate };
-
-                updater.updateListItem("matches", key, updatedMatch);
-                if (umpireMatchIndex === gameMenuState!.index) {
-                  updatedMatch.umpired = null;
-                }
                 // todo - error handling
-                update(ref(db), updater.values);
+                updateConcededOrForfeited(
+                  conceded,
+                  true,
+                  isHome,
+                  key,
+                  db,
+                  (updatedMatch) => {
+                    if (umpireMatchIndex === gameMenuState!.index) {
+                      updatedMatch.umpired = null;
+                    }
+                  },
+                );
                 setUmpireMatchIndex(undefined);
               }}
             />

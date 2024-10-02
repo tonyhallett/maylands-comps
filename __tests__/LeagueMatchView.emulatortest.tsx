@@ -25,13 +25,13 @@ import {
 import {
   findPlayerCombo,
   findScoresheetSection,
-} from "../__tests__/leagueMatchViewSelectors";
+} from "./leagueMatchViewSelectors";
 import { fillArrayWithIndices } from "../src/helpers/fillArray";
-import { getPlayerComboInputs } from "../__tests__/leagueMatchViewSelectors";
-import { findDoublesCombo } from "../__tests__/leagueMatchViewSelectors";
-import { openPlayerAutocompleteAndGetOptions } from "../__tests__/leagueMatchViewSelectors";
+import { getPlayerComboInputs } from "./leagueMatchViewSelectors";
+import { findDoublesCombo } from "./leagueMatchViewSelectors";
+import { openPlayerAutocompleteAndGetOptions } from "./leagueMatchViewSelectors";
 import { MatchAndKey } from "../src/teamMatches/league/db-hooks/useLeagueMatchAndMatches";
-import createEmulatorTests from "../__tests__/createEmulatorTests";
+import createEmulatorTests from "./createEmulatorTests";
 import {
   TeamPlayerIds,
   allPlayersSelected,
@@ -44,7 +44,7 @@ import {
   lowerRankedHomeTeamName,
   setUpDatabaseWithDefaultPlayersThatAreSelected,
   setupDatabase,
-} from "../__tests__/setupDatabase";
+} from "./setupDatabase";
 
 // mocking due to import.meta.url
 jest.mock(
