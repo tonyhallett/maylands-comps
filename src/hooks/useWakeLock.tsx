@@ -1,4 +1,5 @@
 import { useRef, useEffect } from "react";
+import { isTestEnvironment } from "../helpers/environment";
 export function useWakeLock() {
   const wakeLockSupportedRef = useRef("wakeLock" in navigator);
   const wakeLockSentinelRef = useRef<WakeLockSentinel | null>(null);
@@ -11,7 +12,9 @@ export function useWakeLock() {
         })
         .catch((e) => console.log("Wake lock request failed", e));
     } else {
-      alert("Wake lock not supported");
+      if (!isTestEnvironment()) {
+        alert("Wake lock not supported");
+      }
     }
     return () => {
       if (wakeLockSentinelRef.current) {

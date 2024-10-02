@@ -4,7 +4,8 @@ import { useRTB } from "../../../../firebase/rtb/rtbProvider";
 import { Umpire } from "../../../../umpire";
 import { DbMatch } from "../../../../firebase/rtb/match/dbMatch";
 
-export type DbUmpireViewProps = Omit<UmpireViewProps, "umpire"> & {
+export type UmpireViewPropsNoUmpire = Omit<UmpireViewProps, "umpire">;
+export type DbUmpireViewProps = UmpireViewPropsNoUmpire & {
   umpire: Umpire;
   dbMatch: DbMatch;
   matchKey: string;

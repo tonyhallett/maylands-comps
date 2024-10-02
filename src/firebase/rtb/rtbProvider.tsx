@@ -6,6 +6,7 @@ import {
   Database,
   getDatabase,
 } from "firebase/database";
+import { isDevelopmentEnvironment } from "../../helpers/environment";
 
 export function getMaylandsCompRTB() {
   const app = initializeApp(firebaseConfig);
@@ -14,7 +15,7 @@ export function getMaylandsCompRTB() {
     alternative - from docs
     if(location.hostname === "localhost")
   */
-  if (process.env.NODE_ENV === "development") {
+  if (isDevelopmentEnvironment()) {
     connectDatabaseEmulator(db, "127.0.0.1", 9000);
   }
   return db;

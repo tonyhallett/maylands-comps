@@ -26,6 +26,7 @@ export interface UmpireToolbarProps extends ServerReceiverButtonProps {
   undoPoint: () => void;
   rules: RulesViewProps;
   switchEnds: () => void;
+  showRules?: boolean;
 }
 
 export function UmpireToolbar({
@@ -38,6 +39,7 @@ export function UmpireToolbar({
   serverReceiverButtonAriaLabel,
   rules,
   switchEnds,
+  showRules = false,
 }: UmpireToolbarProps) {
   const theme = useTheme();
   const [anchorEl, setAnchorEl] = useState<HTMLButtonElement | null>(null);
@@ -98,12 +100,14 @@ export function UmpireToolbar({
           >
             <EndsIcon />
           </IconButton>
-          <IconButton
-            sx={{ border: 1, borderRadius: 1, m: 1 }}
-            onClick={rulesClicked}
-          >
-            <RuleIcon />
-          </IconButton>
+          {showRules && (
+            <IconButton
+              sx={{ border: 1, borderRadius: 1, m: 1 }}
+              onClick={rulesClicked}
+            >
+              <RuleIcon />
+            </IconButton>
+          )}
         </Box>
         <Divider />
         <div style={{ display: "flex", justifyContent: "space-between" }}>

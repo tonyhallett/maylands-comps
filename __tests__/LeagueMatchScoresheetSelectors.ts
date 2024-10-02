@@ -1,6 +1,7 @@
 import { within } from "@testing-library/react";
 import { findScoresheetSection } from "./leagueMatchViewSelectors";
 import {
+  gameMenuButtonAriaLabel,
   getLeagueMatchResultTeamElementAriaLabel,
   getMatchOrderCellAriaLabel,
   getScoresheetGameRowAriaLabel,
@@ -49,6 +50,11 @@ const findGameRowWithin = (
 export const findGameRow = async (index: number) => {
   const scoresheetTable = await findScoresheetTable();
   return findGameRowWithin(scoresheetTable, index);
+};
+
+export const findGameMenuButton = async (index: number) => {
+  const gameRow = await findGameRow(index);
+  return within(gameRow).getByLabelText(gameMenuButtonAriaLabel);
 };
 
 const findLeagueMatchResultRow = async () => {

@@ -49,6 +49,16 @@ const getSinglesPlayerNames = (
     team2Player2Name: undefined,
   };
 };
+export const getRulesFromUmpire = (umpire: Umpire): MatchInfo => {
+  return {
+    bestOf: umpire.bestOf,
+    upTo: umpire.upTo,
+    clearBy2: umpire.clearBy2,
+    numServes: umpire.numServes,
+    team1EndsAt: umpire.team1MidwayPoints,
+    team2EndsAt: umpire.team2MidwayPoints,
+  };
+};
 
 export const getUmpireViewInfo = (
   umpireMatchIndex: number | undefined,
@@ -59,15 +69,6 @@ export const getUmpireViewInfo = (
   if (umpireMatchIndex !== undefined) {
     const umpireMatchAndKey = umpireMatchAndKeys[umpireMatchIndex];
     const umpire = umpireMatchAndKey.umpire;
-    const rules = {
-      bestOf: umpire.bestOf,
-      upTo: umpire.upTo,
-      clearBy2: umpire.clearBy2,
-      numServes: umpire.numServes,
-      team1EndsAt: umpire.team1MidwayPoints,
-      team2EndsAt: umpire.team2MidwayPoints,
-    };
-    const matchState = umpireMatchAndKey.matchState;
 
     const playerNames = getPlayerNames(
       keyedSinglesMatchNamePositionDisplays,
@@ -77,9 +78,9 @@ export const getUmpireViewInfo = (
 
     const umpireViewInfo: UmpireViewInfo = {
       umpire,
-      rules,
+      rules: getRulesFromUmpire(umpire),
       playerNames,
-      matchState,
+      matchState: umpireMatchAndKey.matchState,
     };
     return umpireViewInfo;
   }

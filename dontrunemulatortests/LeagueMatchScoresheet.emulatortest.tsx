@@ -6,7 +6,7 @@ import {
   openMenuClickMenuItem,
   openMenuExpectMenuItemDisabled,
 } from "../test-helpers/mui/menu";
-import createEmulatorTests from "./createEmulatorTests";
+import createEmulatorTests from "../__tests__/createEmulatorTests";
 import {
   LeagueMatchView,
   gameMenuButtonAriaLabel,
@@ -21,7 +21,7 @@ import {
   noPlayerSelected,
   setUpDatabaseWithDefaultPlayersThatAreSelected,
   setupDatabase,
-} from "./setupDatabase";
+} from "../__tests__/setupDatabase";
 import { unselectedPlayerCellColor } from "../src/teamMatches/league/play/league-match-view/scoresheet/ui/getPlayerCell";
 import {
   leagueMatchPlayersPositionDisplays,
@@ -45,11 +45,12 @@ import {
   scorePoints,
   updateMatchViaUmpire,
   winGame,
-} from "./umpireHelpers";
+} from "../__tests__/umpireHelpers";
 import {
   GameScoreTeamCells,
   findAllGameRows,
   findAllOrderCells,
+  findGameMenuButton,
   findGameRow,
   findGameWinnerAndGamesWonCell,
   findLeagueMatchResultCell,
@@ -60,7 +61,7 @@ import {
   getTeamGameWon,
   getTeamMatchScore,
   getTeamPlayerSpans,
-} from "./LeagueMatchScoresheetSelectors";
+} from "../__tests__/LeagueMatchScoresheetSelectors";
 import {
   concededOrForfeitedColor,
   gamePointColor,
@@ -1461,14 +1462,12 @@ describe("render scoresheet", () => {
           );
           render(createApp(leagueMatchKey));
 
-          const gameRow = await findGameRow(isSingles ? 0 : 9);
-          const menuButton = within(gameRow).getByLabelText(
-            gameMenuButtonAriaLabel,
-          );
+          const menuButton = await findGameMenuButton(isSingles ? 0 : 9);
           openMenuExpectMenuItemDisabled(menuButton, menuItemName, disabled);
         },
       );
     });
+
     describe("clicking concede / undo concede menu item", () => {
       interface ConcedeUnconcedeTest {
         description: string;

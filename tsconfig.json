@@ -18,7 +18,8 @@
     "dontrunemulatortests/LeagueMatchLinks.emulatortest.tsx",
     "dontrunemulatortests/LeagueMatchView.emulatortest.tsx",
     "jest-setup.ts",
-    "__tests__/LeagueMatchScoresheet.emulatortest.tsx"
+    "dontrunemulatortests/LeagueMatchScoresheet.emulatortest.tsx",
+    "dontrunemulatortests/LeagueMatchScoresheet-Umpiring.emulatortest.tsx"
   ],
   "ts-node": {
     "compilerOptions": {
