@@ -1,9 +1,10 @@
-import { Database, ref, update } from "firebase/database";
+import { ref, update } from "firebase/database";
 import { useState } from "react";
 import { getTeamDoublesPlayerKeys } from "../../../../firebase/rtb/match/helpers/getTeamDoublesPlayerKeys";
 import {
   awayPlayersMatchIndicesAndDisplay,
   homePlayersMatchIndicesAndDisplay,
+  leagueMatchFindPlayersMatchIndices,
   leagueMatchNumberOfSingles,
   leagueMatchPlayersPositionDisplays,
 } from "../format/singlesLeagueMatchPlayers";
@@ -27,17 +28,8 @@ import {
   SelectedOrNotSinglePlayerNamePositionDisplay,
 } from "./renderScoresheet-type";
 import { TeamsSelectPlayersAndDoubles } from "../player-selection/TeamsSelectPlayersAndDoubles";
-import {
-  Button,
-  Dialog,
-  DialogContent,
-  DialogTitle,
-  IconButton,
-} from "@mui/material";
-import {
-  createRootUpdater,
-  updateConcededOrForfeited,
-} from "../../../../firebase/rtb/match/db-helpers";
+import { Button, DialogContent, DialogTitle, IconButton } from "@mui/material";
+import { createRootUpdater } from "../../../../firebase/rtb/match/db-helpers";
 import { useWakeLock } from "../../../../hooks/useWakeLock";
 import {
   homeTeamSelectLabels,
@@ -46,8 +38,9 @@ import {
 import { getAvailablePlayersForSelection } from "./getAvailablePlayersForSelection";
 import CenteredCircularProgress from "../../../../helper-components/CenteredCircularProgress";
 import { addUmpireToMatchAndKeys } from "./addUmpireToMatchAndKeys";
-import { DbMatch } from "../../../../firebase/rtb/match/dbMatch";
 import PersonOffIcon from "@mui/icons-material/PersonOff";
+import { useForfeit } from "./useForfeit";
+import { getForfeitButtons } from "./getForfeitButtons";
 const ForfeitIcon = PersonOffIcon;
 
 export interface LeagueMatchSelectionProps {
@@ -56,26 +49,6 @@ export interface LeagueMatchSelectionProps {
 }
 
 export const scoresheetSectionAriaLabel = "Scoresheet";
-
-function getForfeitButtons(
-  gameForfeitModels: GameForfeitModel[],
-  isHome: boolean,
-) {
-  const buttons = gameForfeitModels.map((gameForfeitModel) => {
-    return (
-      <Button
-        key={`${isHome ? "H" : "A"}${gameForfeitModel.identifier}`}
-        onClick={gameForfeitModel.act}
-      >
-        {`${gameForfeitModel.identifier} ${gameForfeitModel.forfeitActionType === ForfeitActionType.forfeit ? "Forfeit" : "Undo"}`}
-      </Button>
-    );
-  });
-  if (buttons.length === 0) {
-    return null;
-  }
-  return <div>{buttons}</div>;
-}
 
 export function LeagueMatchSelection({
   leagueMatchId,
@@ -307,6 +280,32 @@ export function LeagueMatchSelection({
     // todo
     return teamName;
   };
+  const getEnabled = () => {
+    const getTeamEnabled = (isHome: boolean) => {
+      const doublesMatch = matchAndKeys[matchAndKeys.length - 1].match;
+      const concedeOrForfeitKey = isHome
+        ? "team1ConcedeOrForfeit"
+        : "team2ConcedeOrForfeit";
+
+      const findPlayersMatchIndices = isHome
+        ? leagueMatchFindPlayersMatchIndices.findHomePlayersMatchIndices
+        : leagueMatchFindPlayersMatchIndices.findAwayPlayersMatchIndices;
+
+      const singles = findPlayersMatchIndices.map((matchIndex) => {
+        const match = matchAndKeys[matchIndex].match;
+        return !match[concedeOrForfeitKey];
+      });
+      return {
+        singles,
+        doubles: !doublesMatch[concedeOrForfeitKey],
+      };
+    };
+    return {
+      home: getTeamEnabled(true),
+      away: getTeamEnabled(false),
+    };
+  };
+  const autoCompletesEnabled = getEnabled();
   return (
     <>
       <div style={{ margin: 10 }}>
@@ -324,6 +323,7 @@ export function LeagueMatchSelection({
           home={{
             teamName: getTeamNameDisplay(true),
             singles: {
+              enabled: autoCompletesEnabled.home.singles,
               labels: homeTeamSelectLabels,
               availablePlayers:
                 availablePlayersForSelection.homeTeamAvailablePlayers,
@@ -333,6 +333,7 @@ export function LeagueMatchSelection({
                 playerSelected(true, player, position),
             },
             doubles: {
+              enabled: autoCompletesEnabled.home.doubles,
               availableDoubles:
                 availablePlayersForSelection.homeAvailableDoubles,
               selectedDoubles: availablePlayersForSelection.selectedHomeDoubles,
@@ -345,6 +346,7 @@ export function LeagueMatchSelection({
           away={{
             teamName: getTeamNameDisplay(false),
             singles: {
+              enabled: autoCompletesEnabled.away.singles,
               labels: awayTeamSelectLabels,
               availablePlayers:
                 availablePlayersForSelection.awayTeamAvailablePlayers,
@@ -354,6 +356,7 @@ export function LeagueMatchSelection({
                 playerSelected(false, player, position),
             },
             doubles: {
+              enabled: autoCompletesEnabled.away.doubles,
               availableDoubles:
                 availablePlayersForSelection.awayAvailableDoubles,
               selectedDoubles: availablePlayersForSelection.selectedAwayDoubles,
@@ -384,141 +387,4 @@ export function LeagueMatchSelection({
       </div>
     </>
   );
-}
-
-enum ForfeitActionType {
-  forfeit,
-  undoForfeit,
-}
-interface GameForfeitModel {
-  identifier: string; // which will be doubles or player positions
-  forfeitActionType: ForfeitActionType;
-  act: () => void;
-}
-interface ForfeitModel {
-  home: GameForfeitModel[];
-  away: GameForfeitModel[];
-}
-function useForfeit(
-  matchAndKeys: MatchAndKey[],
-
-  getDialogContents: (forfeitModel: ForfeitModel) => React.ReactNode,
-  db: Database,
-) {
-  const [showForfeitDialog, setShowForfeitDialog] = useState(false);
-  const ready = matchAndKeys.length === 10;
-  const getDisabled = () => {
-    // should be disabled if all players are selected
-
-    let allPlayersSelected = true;
-    for (let i = 0; i < 3; i++) {
-      const match = matchAndKeys[i].match;
-      allPlayersSelected =
-        match.team1Player1Id !== undefined &&
-        match.team2Player1Id !== undefined;
-      if (!allPlayersSelected) {
-        break;
-      }
-    }
-    if (allPlayersSelected) {
-      const doublesMatch = matchAndKeys[9].match;
-      allPlayersSelected =
-        doublesMatch.team1Player1Id !== undefined &&
-        doublesMatch.team1Player2Id !== undefined &&
-        doublesMatch.team2Player1Id !== undefined &&
-        doublesMatch.team2Player2Id !== undefined;
-    }
-
-    return allPlayersSelected;
-  };
-  const getFofeitModel = () => {
-    const forfeitModel: ForfeitModel = {
-      home: [],
-      away: [],
-    };
-    const addIfPlayerUndefined = (
-      match: DbMatch,
-      isHome: boolean,
-      matchIndex: number,
-      getIdentifier: (isHome: boolean, matchIndex: number) => string,
-    ) => {
-      const playerKey = isHome ? "team1Player1Id" : "team2Player1Id"; //todo type these keys
-      if (match[playerKey] === undefined) {
-        const teamConcedeOrDefault = isHome
-          ? match.team1ConcedeOrForfeit
-          : match.team2ConcedeOrForfeit;
-        const forfeitActionType =
-          teamConcedeOrDefault !== undefined
-            ? ForfeitActionType.undoForfeit
-            : ForfeitActionType.forfeit;
-        forfeitModel[isHome ? "home" : "away"].push({
-          identifier: getIdentifier(isHome, matchIndex),
-          forfeitActionType,
-          act: () => {
-            // todo - error handling
-            updateConcededOrForfeited(
-              forfeitActionType === ForfeitActionType.forfeit,
-              true,
-              isHome,
-              matchAndKeys[matchIndex].key,
-              db,
-            );
-            setShowForfeitDialog(false);
-          },
-        });
-      }
-    };
-    const addIfSinglesPlayerUndefined = (
-      match: DbMatch,
-      isHome: boolean,
-      matchIndex: number,
-    ) => {
-      addIfPlayerUndefined(match, isHome, matchIndex, (isHome, matchIndex) => {
-        const playersMatchIndicesAndDisplay = isHome
-          ? homePlayersMatchIndicesAndDisplay
-          : awayPlayersMatchIndicesAndDisplay;
-        return playersMatchIndicesAndDisplay[matchIndex].positionDisplay;
-      });
-    };
-    for (let i = 0; i < 3; i++) {
-      const match = matchAndKeys[i].match;
-      addIfSinglesPlayerUndefined(match, true, i);
-      addIfSinglesPlayerUndefined(match, false, i);
-    }
-    const doublesMatch = matchAndKeys[9].match;
-    const addDoublesIfPlayerUndefined = (match: DbMatch, isHome: boolean) => {
-      addIfPlayerUndefined(match, isHome, 9, () => "D");
-    };
-    addDoublesIfPlayerUndefined(doublesMatch, true);
-    addDoublesIfPlayerUndefined(doublesMatch, false);
-
-    return forfeitModel;
-  };
-  const showForfeitDialogDisabled = ready ? getDisabled() : true;
-  const openForfeitDialog = () => {
-    if (!showForfeitDialogDisabled) {
-      setShowForfeitDialog(true);
-    }
-  };
-  const forfeitModel = ready ? getFofeitModel() : undefined;
-  const getForfeitDialog = () => {
-    if (!forfeitModel) {
-      return null;
-    }
-    return (
-      <Dialog
-        onClose={() => setShowForfeitDialog(false)}
-        open={showForfeitDialog}
-      >
-        {getDialogContents(forfeitModel)}
-      </Dialog>
-    );
-  };
-
-  return {
-    showForfeitDialogDisabled,
-    openForfeitDialog,
-    getForfeitDialog,
-    forfeitModel,
-  };
 }

@@ -13,10 +13,10 @@ export interface AvailableDoubles {
 export interface TeamDoublesSelectProps {
   availableDoubles: AvailableDoubles[];
   selectedDoubles: AvailableDoubles | null;
-  disabled?: boolean;
   onChange: (availableDoubles: AvailableDoubles | null) => void;
   autoCompleteProps?: AutoCompleteProps<AvailableDoubles>;
   isHome: boolean;
+  enabled?: boolean;
 }
 export const getDoublesSelectAriaLabel = (isHome: boolean) => {
   return isHome ? "home-doubles-select" : "away-doubles-select";
@@ -25,17 +25,17 @@ export const getDoublesSelectAriaLabel = (isHome: boolean) => {
 export function TeamDoublesSelect({
   availableDoubles,
   selectedDoubles,
-  disabled = false,
   onChange,
   autoCompleteProps = {},
   isHome,
+  enabled = true,
 }: TeamDoublesSelectProps) {
   return (
     <Autocomplete
       {...autoCompleteProps}
       clearOnBlur
       freeSolo={false}
-      disabled={disabled}
+      disabled={!enabled}
       options={availableDoubles}
       // *********************************  renderOption for full alternative
       getOptionLabel={(option: AvailableDoubles) => {

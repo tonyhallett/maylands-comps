@@ -38,9 +38,8 @@ export const getLeagueMatchResultModel = (
   };
   let numGamesConcluded = 0;
   umpireMatchAndKeys.forEach((umpireMatchKey) => {
-    const teamsConcededOrForefeited = getTeamsConcededOrForfeited(
-      umpireMatchKey.match,
-    );
+    const match = umpireMatchKey.match;
+    const teamsConcededOrForefeited = getTeamsConcededOrForfeited(match);
     const homeConcededOrDefaulted =
       teamsConcededOrForefeited.team1.conceded ||
       teamsConcededOrForefeited.team1.forfeited;
@@ -50,11 +49,15 @@ export const getLeagueMatchResultModel = (
     if (homeConcededOrDefaulted && awayConcededOrDefaulted) {
       numGamesConcluded++;
     } else if (homeConcededOrDefaulted) {
-      numGamesConcluded++;
-      leagueMatchResult.away.score++;
+      if (match.team2Player1Id !== undefined) {
+        numGamesConcluded++;
+        leagueMatchResult.away.score++;
+      }
     } else if (awayConcededOrDefaulted) {
-      leagueMatchResult.home.score++;
-      numGamesConcluded++;
+      if (match.team1Player1Id !== undefined) {
+        numGamesConcluded++;
+        leagueMatchResult.home.score++;
+      }
     } else {
       const matchWinState = umpireMatchKey.matchState.matchWinState;
       if (matchWinState === MatchWinState.Team1Won) {

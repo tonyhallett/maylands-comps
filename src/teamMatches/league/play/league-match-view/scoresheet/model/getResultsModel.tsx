@@ -100,20 +100,23 @@ export const getResultsModel = (
   }
 
   if (homeForfeited || awayForfeited) {
-    const forfeitedKey = homeForfeited ? "home" : "away";
-    const notForfeitedKey = homeForfeited ? "away" : "home";
+    const oppositionTeamSelectionModel = homeForfeited ? away : home;
+    if (oppositionTeamSelectionModel.selected) {
+      const forfeitedKey = homeForfeited ? "home" : "away";
+      const notForfeitedKey = homeForfeited ? "away" : "home";
 
-    return {
-      [forfeitedKey]: {
-        games: 0,
-        state: TeamGamesWonState.ConceededOrForefeited,
-      },
-      [notForfeitedKey]: {
-        games: 3,
-        state: TeamGamesWonState.MatchWon,
-      },
-      winner: getWinnerDisplay(isDoubles, !homeForfeited, home, away),
-    } as unknown as ResultsModel;
+      return {
+        [forfeitedKey]: {
+          games: 0,
+          state: TeamGamesWonState.ConceededOrForefeited,
+        },
+        [notForfeitedKey]: {
+          games: 3,
+          state: TeamGamesWonState.MatchWon,
+        },
+        winner: getWinnerDisplay(isDoubles, !homeForfeited, home, away),
+      } as unknown as ResultsModel;
+    }
   }
 
   const team1Won = teamsMatchScoreState.home === TeamMatchWinState.MatchWon;
