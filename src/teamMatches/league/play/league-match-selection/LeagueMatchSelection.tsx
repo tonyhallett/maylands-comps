@@ -41,6 +41,7 @@ import { addUmpireToMatchAndKeys } from "./addUmpireToMatchAndKeys";
 import PersonOffIcon from "@mui/icons-material/PersonOff";
 import { useForfeit } from "./useForfeit";
 import { getForfeitButtons } from "./getForfeitButtons";
+import { TeamConcedeOrForfeitKey } from "../../../../firebase/rtb/match/dbMatch";
 const ForfeitIcon = PersonOffIcon;
 
 export interface LeagueMatchSelectionProps {
@@ -284,7 +285,7 @@ export function LeagueMatchSelection({
   const getEnabled = () => {
     const getTeamEnabled = (isHome: boolean) => {
       const doublesMatch = matchAndKeys[matchAndKeys.length - 1].match;
-      const concedeOrForfeitKey = isHome
+      const concedeOrForfeitKey: TeamConcedeOrForfeitKey = isHome
         ? "team1ConcedeOrForfeit"
         : "team2ConcedeOrForfeit";
 
