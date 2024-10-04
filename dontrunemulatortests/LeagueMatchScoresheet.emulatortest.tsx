@@ -12,13 +12,14 @@ import {
   gameMenuButtonAriaLabel,
 } from "../src/teamMatches/league/play/league-match-view/LeagueMatchView";
 import {
+  SelectedPlayers,
   SetupDoubles,
   SetupMatch,
   allPlayersSelected,
   defaultAwayPlayerNames,
   defaultHomePlayerNames,
   getMatchSetupThatSetsDefaultPlayersThatAreSelected,
-  noPlayerSelected,
+  noPlayersSelected,
   setUpDatabaseWithDefaultPlayersThatAreSelected,
   setupDatabase,
 } from "../__tests__/setupDatabase";
@@ -131,8 +132,8 @@ describe("render scoresheet", () => {
       }
 
       async function gamePlayersCellTest(
-        homePlayersSelected: boolean[],
-        awayPlayersSelected: boolean[],
+        homePlayersSelected: SelectedPlayers,
+        awayPlayersSelected: SelectedPlayers,
         setupDoubles: SetupDoubles = () => {},
       ) {
         const leagueMatchKey =
@@ -146,8 +147,8 @@ describe("render scoresheet", () => {
       }
 
       async function singlesGamePlayersCellTest(
-        homePlayersSelected: boolean[],
-        awayPlayersSelected: boolean[],
+        homePlayersSelected: SelectedPlayers,
+        awayPlayersSelected: SelectedPlayers,
       ) {
         const allGames = await gamePlayersCellTest(
           homePlayersSelected,
@@ -159,8 +160,8 @@ describe("render scoresheet", () => {
       }
 
       async function doublesGamePlayersCellTest(
-        homePlayersSelected: boolean[],
-        awayPlayersSelected: boolean[],
+        homePlayersSelected: SelectedPlayers,
+        awayPlayersSelected: SelectedPlayers,
         setupDoubles: SetupDoubles = () => {},
       ) {
         const allGames = await gamePlayersCellTest(
@@ -187,10 +188,16 @@ describe("render scoresheet", () => {
 
       describe("unselected", () => {
         function unselectedSinglesGamePlayersCellTest() {
-          return singlesGamePlayersCellTest(noPlayerSelected, noPlayerSelected);
+          return singlesGamePlayersCellTest(
+            noPlayersSelected,
+            noPlayersSelected,
+          );
         }
         function unselectedDoublesGamePlayersCellTest() {
-          return doublesGamePlayersCellTest(noPlayerSelected, noPlayerSelected);
+          return doublesGamePlayersCellTest(
+            noPlayersSelected,
+            noPlayersSelected,
+          );
         }
 
         describe("common styling", () => {
@@ -199,8 +206,8 @@ describe("render scoresheet", () => {
               const leagueMatchKey = await setupDatabase(
                 database,
                 getMatchSetupThatSetsDefaultPlayersThatAreSelected(
-                  noPlayerSelected,
-                  noPlayerSelected,
+                  noPlayersSelected,
+                  noPlayersSelected,
                   undefined,
                   (dbMatch, index) => {
                     if (index === 0) {
@@ -615,6 +622,8 @@ describe("render scoresheet", () => {
         setupMatch?: (dbMatch: DbMatch) => void;
         isSingles?: boolean;
         expectation: (gameWinnerAndGamesWonCell: HTMLTableCellElement) => void;
+        homePlayersSelected?: SelectedPlayers;
+        awayPlayersSelected?: SelectedPlayers;
       }
 
       type GamesWon = 0 | 1 | 2 | 3;
@@ -736,6 +745,7 @@ describe("render scoresheet", () => {
         {
           description:
             "should show 3 - 0 when away forfeit with winner initials",
+          awayPlayersSelected: [false, true, true],
           setupMatch(dbMatch) {
             dbMatch.team2ConcedeOrForfeit = {
               isConcede: false,
@@ -753,6 +763,7 @@ describe("render scoresheet", () => {
         {
           description:
             "should show 0 - 3 when home forfeit with winner initials",
+          homePlayersSelected: [false, true, true],
           setupMatch(dbMatch) {
             dbMatch.team1ConcedeOrForfeit = {
               isConcede: false,
@@ -765,6 +776,20 @@ describe("render scoresheet", () => {
               0,
               3,
             );
+          },
+        },
+        {
+          description:
+            "should show no score when home forfeit and away player not selected",
+          homePlayersSelected: [false, true, true],
+          awayPlayersSelected: noPlayersSelected,
+          setupMatch(dbMatch) {
+            dbMatch.team1ConcedeOrForfeit = {
+              isConcede: false,
+            };
+          },
+          expectation(gameWinnerAndGamesWonCell) {
+            expect(gameWinnerAndGamesWonCell).toBeEmptyDOMElement();
           },
         },
         {
@@ -957,13 +982,18 @@ describe("render scoresheet", () => {
       ];
       it.each(gameWinnerAndGamesWonCellTests)(
         "$description",
-        async ({ setupMatch, expectation, isSingles = true }) => {
+        async ({
+          setupMatch,
+          expectation,
+          homePlayersSelected = allPlayersSelected,
+          awayPlayersSelected = allPlayersSelected,
+          isSingles = true,
+        }) => {
           const leagueMatchKey = await setupDatabase(
             database,
             getMatchSetupThatSetsDefaultPlayersThatAreSelected(
-              // for forfeited matches should not have all players selected - but ok for these tests
-              allPlayersSelected,
-              allPlayersSelected,
+              homePlayersSelected,
+              awayPlayersSelected,
               undefined,
               (match, index) => {
                 if (isSingles) {
@@ -1005,6 +1035,8 @@ describe("render scoresheet", () => {
       setupDoubles?: SetupDoubles;
       afterSetupMatch?: SetupMatch;
       expectation: (leagueMatchResultCell: HTMLTableCellElement) => void;
+      homeSelectedPlayers?: SelectedPlayers;
+      awaySelectedPlayers?: SelectedPlayers;
     }
 
     const expectTeamColor = (
@@ -1067,19 +1099,32 @@ describe("render scoresheet", () => {
         },
       },
       {
-        description: "should have score 1 - 0 when away team conceded a game",
+        description:
+          "should have score 1 - 0 when away team conceded a game and opponent selected",
         afterSetupMatch(dbMatch, index) {
           if (index === 0) {
-            updateMatchViaUmpire(dbMatch, (umpire) => {
-              umpire.setServer("Team1Player1");
-              dbMatch.team2ConcedeOrForfeit = {
-                isConcede: true,
-              };
-            });
+            dbMatch.team2ConcedeOrForfeit = {
+              isConcede: true,
+            };
           }
         },
         expectation(leagueMatchResultCell) {
           expectScoreTextContent(leagueMatchResultCell, 1, 0);
+        },
+      },
+      {
+        description:
+          "should have score 0 - 0 when away team conceded a game and opponent not selected",
+        homeSelectedPlayers: noPlayersSelected,
+        afterSetupMatch(dbMatch, index) {
+          if (index === 0) {
+            dbMatch.team2ConcedeOrForfeit = {
+              isConcede: true,
+            };
+          }
+        },
+        expectation(leagueMatchResultCell) {
+          expectScoreTextContent(leagueMatchResultCell, 0, 0);
         },
       },
       {
@@ -1187,6 +1232,7 @@ describe("render scoresheet", () => {
           expectScoreTextContent(leagueMatchResultCell, 3, 2);
         },
       },
+      // styling
       {
         description: "should use not leading color if the team is not winning",
         expectation(leagueMatchResultCell) {
@@ -1201,6 +1247,10 @@ describe("render scoresheet", () => {
           doublesMatch.team1ConcedeOrForfeit = {
             isConcede: true,
           };
+          doublesMatch.team1Player1Id = defaultHomePlayerNames[0];
+          doublesMatch.team1Player2Id = defaultHomePlayerNames[1];
+          doublesMatch.team2Player1Id = defaultAwayPlayerNames[0];
+          doublesMatch.team2Player2Id = defaultAwayPlayerNames[1];
         },
         afterSetupMatch(dbMatch, index) {
           if (index !== 9) {
@@ -1253,13 +1303,19 @@ describe("render scoresheet", () => {
     ];
     it.each(leagueMatchResultRowTests)(
       "$description",
-      async ({ setupDoubles, afterSetupMatch, expectation }) => {
+      async ({
+        setupDoubles,
+        afterSetupMatch,
+        expectation,
+        homeSelectedPlayers,
+        awaySelectedPlayers,
+      }) => {
         const leagueMatchKey = await setupDatabase(
           database,
           getMatchSetupThatSetsDefaultPlayersThatAreSelected(
             // for forfeited matches should not have all players selected - but ok for these tests
-            allPlayersSelected,
-            allPlayersSelected,
+            homeSelectedPlayers ?? allPlayersSelected,
+            awaySelectedPlayers ?? allPlayersSelected,
             setupDoubles,
             afterSetupMatch,
           ),
@@ -1280,8 +1336,8 @@ describe("render scoresheet", () => {
     describe("enablement", () => {
       interface MenuItemEnablementTest {
         description: string;
-        homePlayersSelected: boolean[];
-        awayPlayersSelected: boolean[];
+        homePlayersSelected: SelectedPlayers;
+        awayPlayersSelected: SelectedPlayers;
         isSingles?: boolean;
         setupMatch?: (dbMatch: DbMatch) => void;
         disabled: boolean;
@@ -1293,7 +1349,7 @@ describe("render scoresheet", () => {
         {
           description:
             "should have disabled umpire menu item if all players have not been selected for singles",
-          homePlayersSelected: noPlayerSelected,
+          homePlayersSelected: noPlayersSelected,
           awayPlayersSelected: allPlayersSelected,
           disabled: true,
           menuItemName: "Umpire",
@@ -1301,7 +1357,7 @@ describe("render scoresheet", () => {
         {
           description:
             "should have disabled umpire menu item if all players have not been selected for doubles",
-          homePlayersSelected: noPlayerSelected,
+          homePlayersSelected: noPlayersSelected,
           awayPlayersSelected: allPlayersSelected,
           isSingles: false,
           disabled: true,
@@ -1394,8 +1450,8 @@ describe("render scoresheet", () => {
         ...[true, false].map((homeConcededMenuItem) => {
           const test: MenuItemEnablementTest = {
             description: `should have disabled ${homeConcededMenuItem ? "Home" : "Away"} Concede menu item if not all players selected`,
-            homePlayersSelected: noPlayerSelected,
-            awayPlayersSelected: noPlayerSelected,
+            homePlayersSelected: noPlayersSelected,
+            awayPlayersSelected: noPlayersSelected,
             disabled: true,
             menuItemName: `${homeConcededMenuItem ? "Home" : "Away"} Concede`,
           };

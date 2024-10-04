@@ -16,7 +16,7 @@
     "test-helpers/testing-library/selectors/roleSelectorFactory.ts",
     "test-helpers/testing-library/from.ts",
     "dontrunemulatortests/LeagueMatchLinks.emulatortest.tsx",
-    "__tests__/LeagueMatchView.emulatortest.tsx",
+    "dontrunemulatortests/LeagueMatchView.emulatortest.tsx",
     "jest-setup.ts",
     "dontrunemulatortests/LeagueMatchScoresheet.emulatortest.tsx",
     "dontrunemulatortests/LeagueMatchScoresheet-Umpiring.emulatortest.tsx",

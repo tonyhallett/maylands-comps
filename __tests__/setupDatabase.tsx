@@ -145,12 +145,13 @@ export type SetupDoubles = (
   awayTeamPlayerIds: TeamPlayerIds,
 ) => void;
 
-export const allPlayersSelected = [true, true, true];
-export const noPlayerSelected = [false, false, false];
+export const allPlayersSelected: SelectedPlayers = [true, true, true];
+export const noPlayersSelected: SelectedPlayers = [false, false, false];
+export type SelectedPlayers = [boolean, boolean, boolean];
 // and passes the player ids to the setupDoubles function
 export function getMatchSetupThatSetsDefaultPlayersThatAreSelected(
-  homePlayersSelected: boolean[], // each index is a player position - A, B, C
-  awayPlayersSelected: boolean[], // each index is a player position - X, Y, Z
+  homePlayersSelected: SelectedPlayers, // each index is a player position - A, B, C
+  awayPlayersSelected: SelectedPlayers, // each index is a player position - X, Y, Z
   setupDoubles: SetupDoubles = () => {},
   afterSetupMatch: SetupMatch = () => {},
 ) {
@@ -186,8 +187,8 @@ export function getMatchSetupThatSetsDefaultPlayersThatAreSelected(
 // shortcut
 export function setUpDatabaseWithDefaultPlayersThatAreSelected(
   database: Database,
-  homePlayersSelected: boolean[],
-  awayPlayersSelected: boolean[],
+  homePlayersSelected: SelectedPlayers,
+  awayPlayersSelected: SelectedPlayers,
   setupDoubles: SetupDoubles = () => {},
 ) {
   return setupDatabase(

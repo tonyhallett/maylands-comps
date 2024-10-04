@@ -25,14 +25,15 @@ import {
 import {
   findPlayerCombo,
   findScoresheetSection,
-} from "./leagueMatchViewSelectors";
+} from "../__tests__/leagueMatchViewSelectors";
 import { fillArrayWithIndices } from "../src/helpers/fillArray";
-import { getPlayerComboInputs } from "./leagueMatchViewSelectors";
-import { findDoublesCombo } from "./leagueMatchViewSelectors";
-import { openPlayerAutocompleteAndGetOptions } from "./leagueMatchViewSelectors";
+import { getPlayerComboInputs } from "../__tests__/leagueMatchViewSelectors";
+import { findDoublesCombo } from "../__tests__/leagueMatchViewSelectors";
+import { openPlayerAutocompleteAndGetOptions } from "../__tests__/leagueMatchViewSelectors";
 import { MatchAndKey } from "../src/teamMatches/league/db-hooks/useLeagueMatchAndMatches";
-import createEmulatorTests from "./createEmulatorTests";
+import createEmulatorTests from "../__tests__/createEmulatorTests";
 import {
+  SelectedPlayers,
   TeamPlayerIds,
   allPlayersSelected,
   defaultAwayPlayerNames,
@@ -42,9 +43,10 @@ import {
   getMatchSetupThatSetsDefaultPlayersThatAreSelected,
   lowerRankedDefaultHomePlayerNames,
   lowerRankedHomeTeamName,
+  noPlayersSelected,
   setUpDatabaseWithDefaultPlayersThatAreSelected,
   setupDatabase,
-} from "./setupDatabase";
+} from "../__tests__/setupDatabase";
 
 // mocking due to import.meta.url
 jest.mock(
@@ -621,7 +623,7 @@ describe("<LeagueMatchView/>", () => {
         interface DoublesPlayersSelectionTest {
           description: string;
           isHome: boolean;
-          selectedPlayers: boolean[];
+          selectedPlayers: SelectedPlayers;
           expectedOptions: string[];
         }
         const doublesPlayersSelectionTests: DoublesPlayersSelectionTest[] = [
@@ -719,9 +721,9 @@ describe("<LeagueMatchView/>", () => {
           async ({ isHome, selectedPlayers, expectedOptions }) => {
             const homeSelectedPlayers = isHome
               ? selectedPlayers
-              : [false, false, false];
+              : noPlayersSelected;
             const awaySelectedPlayers = isHome
-              ? [false, false, false]
+              ? noPlayersSelected
               : selectedPlayers;
             const leagueMatchKey =
               await setUpDatabaseWithDefaultPlayersThatAreSelected(
