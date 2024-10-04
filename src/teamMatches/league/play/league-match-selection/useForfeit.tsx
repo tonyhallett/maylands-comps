@@ -109,12 +109,8 @@ export function useForfeit(
             }
 
             updateForfeited(
-              allMatches.map((matchIndex) => {
-                return {
-                  key: matchAndKeys[matchIndex].key,
-                  forfeited: forfeitActionType === ForfeitActionType.forfeit,
-                };
-              }),
+              allMatches.map((matchIndex) => matchAndKeys[matchIndex].key),
+              forfeitActionType === ForfeitActionType.forfeit,
               isHome,
               db,
             );

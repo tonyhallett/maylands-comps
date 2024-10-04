@@ -51,7 +51,6 @@ import {
   setupDatabase,
 } from "../__tests__/setupDatabase";
 import { getTeamForfeitButtonsContainerAriaLabel } from "../src/teamMatches/league/play/league-match-selection/getForfeitButtons";
-import { ForfeitUpdate } from "../src/firebase/rtb/match/db-helpers/updateForfeited";
 import {
   ConcedeOrForfeit,
   TeamConcedeOrForfeitKey,
@@ -85,8 +84,8 @@ jest.mock<UpdateForfeitedModule>(
   "../src/firebase/rtb/match/db-helpers/updateForfeited",
   () => {
     return {
-      updateForfeited(updates, isHome, db) {
-        mockUpdateForfeited(updates, isHome, db);
+      updateForfeited(keys, forfeited, isHome, db) {
+        mockUpdateForfeited(keys, forfeited, isHome, db);
         return Promise.resolve();
       },
     };
@@ -1409,23 +1408,18 @@ describe("<LeagueMatchView/>", () => {
         setupMatch?: SetupMatch;
         isHome: boolean;
         forfeitButtonAriaLabel: string;
-        expectedForfeitUpdates: ForfeitUpdate[];
+        expectedForfeitKeys: string[];
+        expectedForfeited: boolean;
       }
-      const getPlayerExpectedForfeitUpdates = (
+      const getPlayerExpectedForfeitKeys = (
         isHome: boolean,
         playerIndex: number,
-        forfeited: boolean,
       ) => {
         const playersMatchIndicesAndDisplay = isHome
           ? homePlayersMatchIndicesAndDisplay
           : awayPlayersMatchIndicesAndDisplay;
         return playersMatchIndicesAndDisplay[playerIndex].matchIndices.map(
-          (i) => {
-            return {
-              key: i.toString(),
-              forfeited,
-            };
-          },
+          (i) => i.toString(),
         );
       };
       const forfeitClickTests: ForfeitClickTest[] = [
@@ -1436,11 +1430,8 @@ describe("<LeagueMatchView/>", () => {
           description: "forfeit player A",
           isHome: true,
           forfeitButtonAriaLabel: "forfeit player A",
-          expectedForfeitUpdates: getPlayerExpectedForfeitUpdates(
-            true,
-            0,
-            true,
-          ),
+          expectedForfeited: true,
+          expectedForfeitKeys: getPlayerExpectedForfeitKeys(true, 0),
         },
         {
           homeSelectedPlayers: [true, false, true],
@@ -1448,20 +1439,8 @@ describe("<LeagueMatchView/>", () => {
           description: "forfeit player B",
           isHome: true,
           forfeitButtonAriaLabel: "forfeit player B",
-          expectedForfeitUpdates: [
-            {
-              key: "1",
-              forfeited: true,
-            },
-            {
-              key: "3",
-              forfeited: true,
-            },
-            {
-              key: "6",
-              forfeited: true,
-            },
-          ],
+          expectedForfeited: true,
+          expectedForfeitKeys: ["1", "3", "6"],
         },
         {
           homeSelectedPlayers: [true, true, false],
@@ -1469,20 +1448,8 @@ describe("<LeagueMatchView/>", () => {
           description: "forfeit player C",
           isHome: true,
           forfeitButtonAriaLabel: "forfeit player C",
-          expectedForfeitUpdates: [
-            {
-              key: "2",
-              forfeited: true,
-            },
-            {
-              key: "5",
-              forfeited: true,
-            },
-            {
-              key: "7",
-              forfeited: true,
-            },
-          ],
+          expectedForfeited: true,
+          expectedForfeitKeys: ["2", "5", "7"],
         },
         //doubles
         {
@@ -1491,12 +1458,8 @@ describe("<LeagueMatchView/>", () => {
           description: "forfeit home doubles",
           isHome: true,
           forfeitButtonAriaLabel: "forfeit doubles",
-          expectedForfeitUpdates: [
-            {
-              key: "9",
-              forfeited: true,
-            },
-          ],
+          expectedForfeited: true,
+          expectedForfeitKeys: ["9"],
         },
         //away
         {
@@ -1505,20 +1468,8 @@ describe("<LeagueMatchView/>", () => {
           description: "forfeit player X",
           isHome: false,
           forfeitButtonAriaLabel: "forfeit player X",
-          expectedForfeitUpdates: [
-            {
-              key: "0",
-              forfeited: true,
-            },
-            {
-              key: "3",
-              forfeited: true,
-            },
-            {
-              key: "7",
-              forfeited: true,
-            },
-          ],
+          expectedForfeited: true,
+          expectedForfeitKeys: ["0", "3", "7"],
         },
         {
           homeSelectedPlayers: allPlayersSelected,
@@ -1526,20 +1477,8 @@ describe("<LeagueMatchView/>", () => {
           description: "forfeit player Y",
           isHome: false,
           forfeitButtonAriaLabel: "forfeit player Y",
-          expectedForfeitUpdates: [
-            {
-              key: "1",
-              forfeited: true,
-            },
-            {
-              key: "5",
-              forfeited: true,
-            },
-            {
-              key: "8",
-              forfeited: true,
-            },
-          ],
+          expectedForfeited: true,
+          expectedForfeitKeys: ["1", "5", "8"],
         },
         {
           homeSelectedPlayers: allPlayersSelected,
@@ -1547,20 +1486,8 @@ describe("<LeagueMatchView/>", () => {
           description: "forfeit player Z",
           isHome: false,
           forfeitButtonAriaLabel: "forfeit player Z",
-          expectedForfeitUpdates: [
-            {
-              key: "2",
-              forfeited: true,
-            },
-            {
-              key: "4",
-              forfeited: true,
-            },
-            {
-              key: "6",
-              forfeited: true,
-            },
-          ],
+          expectedForfeited: true,
+          expectedForfeitKeys: ["2", "4", "6"],
         },
         //doubles
         {
@@ -1569,12 +1496,8 @@ describe("<LeagueMatchView/>", () => {
           description: "forfeit away doubles",
           isHome: false,
           forfeitButtonAriaLabel: "forfeit doubles",
-          expectedForfeitUpdates: [
-            {
-              key: "9",
-              forfeited: true,
-            },
-          ],
+          expectedForfeited: true,
+          expectedForfeitKeys: ["9"],
         },
         // undo forfeit
         {
@@ -1592,20 +1515,8 @@ describe("<LeagueMatchView/>", () => {
           description: "undo forfeit player Z",
           isHome: false,
           forfeitButtonAriaLabel: "undo forfeit player Z",
-          expectedForfeitUpdates: [
-            {
-              key: "2",
-              forfeited: false,
-            },
-            {
-              key: "4",
-              forfeited: false,
-            },
-            {
-              key: "6",
-              forfeited: false,
-            },
-          ],
+          expectedForfeited: false,
+          expectedForfeitKeys: ["2", "4", "6"],
         },
         {
           homeSelectedPlayers: allPlayersSelected,
@@ -1618,12 +1529,8 @@ describe("<LeagueMatchView/>", () => {
           description: "undo forfeit away doubles",
           isHome: false,
           forfeitButtonAriaLabel: "undo forfeit doubles",
-          expectedForfeitUpdates: [
-            {
-              key: "9",
-              forfeited: false,
-            },
-          ],
+          expectedForfeited: false,
+          expectedForfeitKeys: ["9"],
         },
         {
           homeSelectedPlayers: [false, true, true],
@@ -1640,20 +1547,8 @@ describe("<LeagueMatchView/>", () => {
           description: "undo forfeit player A",
           isHome: true,
           forfeitButtonAriaLabel: "undo forfeit player A",
-          expectedForfeitUpdates: [
-            {
-              key: "0",
-              forfeited: false,
-            },
-            {
-              key: "4",
-              forfeited: false,
-            },
-            {
-              key: "8",
-              forfeited: false,
-            },
-          ],
+          expectedForfeited: false,
+          expectedForfeitKeys: ["0", "4", "8"],
         },
         {
           homeSelectedPlayers: allPlayersSelected,
@@ -1666,12 +1561,8 @@ describe("<LeagueMatchView/>", () => {
           description: "undo forfeit home doubles",
           isHome: true,
           forfeitButtonAriaLabel: "undo forfeit doubles",
-          expectedForfeitUpdates: [
-            {
-              key: "9",
-              forfeited: false,
-            },
-          ],
+          expectedForfeited: false,
+          expectedForfeitKeys: ["9"],
         },
       ];
       it.each(forfeitClickTests)(
@@ -1683,7 +1574,8 @@ describe("<LeagueMatchView/>", () => {
           setupMatch,
           forfeitButtonAriaLabel,
           isHome,
-          expectedForfeitUpdates,
+          expectedForfeited,
+          expectedForfeitKeys: expectedForfeitkeys,
         }) => {
           const leagueMatchKey = await setupDatabase(
             database,
@@ -1707,9 +1599,10 @@ describe("<LeagueMatchView/>", () => {
           fireEvent.click(forfeitButton);
 
           const updateForfeitedCall = mockUpdateForfeited.mock.calls[0];
-          expect(updateForfeitedCall[0]).toEqual(expectedForfeitUpdates);
-          expect(updateForfeitedCall[1]).toBe(isHome);
-          expect(updateForfeitedCall[2]).toBe(database);
+          expect(updateForfeitedCall[0]).toEqual(expectedForfeitkeys);
+          expect(updateForfeitedCall[1]).toBe(expectedForfeited);
+          expect(updateForfeitedCall[2]).toBe(isHome);
+          expect(updateForfeitedCall[3]).toBe(database);
         },
       );
     });
