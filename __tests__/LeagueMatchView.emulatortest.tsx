@@ -4,6 +4,7 @@
 import {
   LeagueMatchSelection,
   LeagueMatchSelectionProps,
+  openForfeitDialogButtonAriaLabel,
 } from "../src/teamMatches/league/play/league-match-selection/LeagueMatchSelection";
 import {
   screen,
@@ -34,6 +35,8 @@ import { MatchAndKey } from "../src/teamMatches/league/db-hooks/useLeagueMatchAn
 import createEmulatorTests from "../__tests__/createEmulatorTests";
 import {
   SelectedPlayers,
+  SetupDoubles,
+  SetupMatch,
   TeamPlayerIds,
   allPlayersSelected,
   defaultAwayPlayerNames,
@@ -47,6 +50,12 @@ import {
   setUpDatabaseWithDefaultPlayersThatAreSelected,
   setupDatabase,
 } from "../__tests__/setupDatabase";
+import { getTeamForfeitButtonsContainerAriaLabel } from "../src/teamMatches/league/play/league-match-selection/getForfeitButtons";
+import { ForfeitUpdate } from "../src/firebase/rtb/match/db-helpers/updateForfeited";
+import {
+  ConcedeOrForfeit,
+  TeamConcedeOrForfeitKey,
+} from "../src/firebase/rtb/match/dbMatch";
 
 // mocking due to import.meta.url
 jest.mock(
@@ -65,6 +74,24 @@ jest.mock("../src/teamMatches/league/play/LeagueMatchScoreboard", () => {
     ),
   };
 });
+
+const mockUpdateForfeited: jest.Mock<
+  unknown,
+  Parameters<UpdateForfeitedModule["updateForfeited"]>
+> = jest.fn();
+type UpdateForfeitedModule =
+  typeof import("../src/firebase/rtb/match/db-helpers/updateForfeited");
+jest.mock<UpdateForfeitedModule>(
+  "../src/firebase/rtb/match/db-helpers/updateForfeited",
+  () => {
+    return {
+      updateForfeited(updates, isHome, db) {
+        mockUpdateForfeited(updates, isHome, db);
+        return Promise.resolve();
+      },
+    };
+  },
+);
 
 const { createMaylandsComps, database } = createEmulatorTests();
 
@@ -97,6 +124,194 @@ describe("<LeagueMatchView/>", () => {
           await getPlayerComboInputs();
         expect(homePlayerInputs).toHaveLength(3);
         expect(awayPlayerInputs).toHaveLength(3);
+      });
+
+      describe("enablement", () => {
+        enum TestConcedeOrForfeit {
+          Concede,
+          Forfeit,
+        }
+        interface EnablementTest {
+          description: string;
+          isHome: boolean;
+
+          playerConcedeOrForfeit?: TestConcedeOrForfeit;
+          playerIndex: 0 | 1 | 2;
+
+          doublesConcedeOrForfeit?: TestConcedeOrForfeit;
+        }
+        const enablementTests: EnablementTest[] = [
+          {
+            description: "A disabled when concede",
+            isHome: true,
+            playerIndex: 0,
+            playerConcedeOrForfeit: TestConcedeOrForfeit.Concede,
+          },
+          {
+            description: "A disabled when forfeit",
+            isHome: true,
+            playerIndex: 0,
+            playerConcedeOrForfeit: TestConcedeOrForfeit.Forfeit,
+          },
+          {
+            description: "B disabled when concede",
+            isHome: true,
+            playerIndex: 1,
+            playerConcedeOrForfeit: TestConcedeOrForfeit.Concede,
+          },
+          {
+            description: "B disabled when forfeit",
+            isHome: true,
+            playerIndex: 1,
+            playerConcedeOrForfeit: TestConcedeOrForfeit.Forfeit,
+          },
+          {
+            description: "C disabled when concede",
+            isHome: true,
+            playerIndex: 2,
+            playerConcedeOrForfeit: TestConcedeOrForfeit.Concede,
+          },
+          {
+            description: "C disabled when forfeit",
+            isHome: true,
+            playerIndex: 2,
+            playerConcedeOrForfeit: TestConcedeOrForfeit.Forfeit,
+          },
+          {
+            description: "C enabled when not conceded or forfeit",
+            isHome: true,
+            playerIndex: 2,
+          },
+          //doubles
+          {
+            description: "Home doubles disabled when concede",
+            isHome: true,
+            doublesConcedeOrForfeit: TestConcedeOrForfeit.Concede,
+            playerIndex: 0,
+          },
+          {
+            description: "Home doubles disabled when forfeit",
+            isHome: true,
+            doublesConcedeOrForfeit: TestConcedeOrForfeit.Forfeit,
+            playerIndex: 0,
+          },
+          //away
+          {
+            description: "X disabled when concede",
+            isHome: false,
+            playerIndex: 0,
+            playerConcedeOrForfeit: TestConcedeOrForfeit.Concede,
+          },
+          {
+            description: "X disabled when forfeit",
+            isHome: false,
+            playerIndex: 0,
+            playerConcedeOrForfeit: TestConcedeOrForfeit.Forfeit,
+          },
+          {
+            description: "Y disabled when concede",
+            isHome: false,
+            playerIndex: 1,
+            playerConcedeOrForfeit: TestConcedeOrForfeit.Concede,
+          },
+          {
+            description: "Y disabled when forfeit",
+            isHome: false,
+            playerIndex: 1,
+            playerConcedeOrForfeit: TestConcedeOrForfeit.Forfeit,
+          },
+          {
+            description: "Z disabled when concede",
+            isHome: false,
+            playerIndex: 2,
+            playerConcedeOrForfeit: TestConcedeOrForfeit.Concede,
+          },
+          {
+            description: "Z disabled when forfeit",
+            isHome: false,
+            playerIndex: 2,
+            playerConcedeOrForfeit: TestConcedeOrForfeit.Forfeit,
+          },
+          //doubles
+          {
+            description: "Away doubles disabled when concede",
+            isHome: false,
+            doublesConcedeOrForfeit: TestConcedeOrForfeit.Concede,
+            playerIndex: 0,
+          },
+          {
+            description: "Away doubles disabled when forfeit",
+            isHome: false,
+            doublesConcedeOrForfeit: TestConcedeOrForfeit.Forfeit,
+            playerIndex: 0,
+          },
+          {
+            description: "Away doubles enabled when not conceded or forfeit",
+            isHome: false,
+            playerIndex: 0,
+          },
+        ];
+        it.each(enablementTests)(
+          "$description",
+          async ({
+            isHome,
+            playerIndex,
+            playerConcedeOrForfeit,
+            doublesConcedeOrForfeit,
+          }) => {
+            // could be precise and not select player if forfeited...
+            const homeSelectedPlayers: SelectedPlayers = [true, true, true];
+            const awaySelectedPlayers: SelectedPlayers = [true, true, true];
+
+            const playersMatchIndicesAndDisplay = isHome
+              ? homePlayersMatchIndicesAndDisplay
+              : awayPlayersMatchIndicesAndDisplay;
+            const matchIndices =
+              playersMatchIndicesAndDisplay[playerIndex].matchIndices;
+
+            const key: TeamConcedeOrForfeitKey = isHome
+              ? "team1ConcedeOrForfeit"
+              : "team2ConcedeOrForfeit";
+            const concedeOrForfeit: ConcedeOrForfeit = {
+              isConcede:
+                doublesConcedeOrForfeit === TestConcedeOrForfeit.Concede,
+            };
+            const leagueMatchKey = await setupDatabase(
+              database,
+              getMatchSetupThatSetsDefaultPlayersThatAreSelected(
+                homeSelectedPlayers,
+                awaySelectedPlayers,
+                (doublesMatch) => {
+                  if (doublesConcedeOrForfeit !== undefined) {
+                    doublesMatch[key] = concedeOrForfeit;
+                  }
+                },
+                (match, index) => {
+                  if (playerConcedeOrForfeit !== undefined) {
+                    if (matchIndices.includes(index)) {
+                      match[key] = concedeOrForfeit;
+                    }
+                  }
+                },
+              ),
+            );
+            render(createApp(leagueMatchKey));
+
+            const playerCombo = await findPlayerCombo(isHome, playerIndex);
+            if (playerConcedeOrForfeit !== undefined) {
+              expect(playerCombo).toBeDisabled();
+            } else {
+              expect(playerCombo).toBeEnabled();
+            }
+
+            const doublesCombo = await findDoublesCombo(isHome);
+            if (doublesConcedeOrForfeit !== undefined) {
+              expect(doublesCombo).toBeDisabled();
+            } else {
+              expect(doublesCombo).toBeEnabled();
+            }
+          },
+        );
       });
 
       it("should have no selected players if no players have been selected for matches", async () => {
@@ -928,6 +1143,575 @@ describe("<LeagueMatchView/>", () => {
 
       const scoresheet = await findScoresheetSection();
       within(scoresheet).getByTestId("testscoreboard");
+    });
+  });
+
+  describe("forfeiting", () => {
+    const findOpenForfeitDialogButton = () =>
+      screen.findByLabelText(openForfeitDialogButtonAriaLabel);
+    const getForfeitDialog = () =>
+      screen.getByRole("dialog", { name: "Forfeit" });
+
+    const openForfeitDialog = async () => {
+      const openForfeitDialogButton = await findOpenForfeitDialogButton();
+      fireEvent.click(openForfeitDialogButton);
+
+      return getForfeitDialog();
+    };
+    const getTeamForfeitButtonsContainer = (
+      forfeitDialog: HTMLElement,
+      isHome: boolean,
+    ) =>
+      within(forfeitDialog).getByLabelText(
+        getTeamForfeitButtonsContainerAriaLabel(isHome),
+      );
+    describe("button enablement", () => {
+      // ready ?
+
+      it("should be disabled if all players and doubles pairs have been selected", async () => {
+        const leagueMatchKey =
+          await setUpDatabaseWithDefaultPlayersThatAreSelected(
+            database,
+            allPlayersSelected,
+            allPlayersSelected,
+            (doublesMatch) => {
+              doublesMatch.team1Player1Id = defaultHomePlayerNames[0];
+              doublesMatch.team1Player2Id = defaultHomePlayerNames[1];
+              doublesMatch.team2Player1Id = defaultAwayPlayerNames[0];
+              doublesMatch.team2Player2Id = defaultAwayPlayerNames[1];
+            },
+          );
+        render(createApp(leagueMatchKey));
+
+        const openForfeitDialogButton = await findOpenForfeitDialogButton();
+        expect(openForfeitDialogButton).toBeDisabled();
+      });
+      it("should be enabled if there are selections to be made", async () => {
+        const leagueMatchKey =
+          await setUpDatabaseWithDefaultPlayersThatAreSelected(
+            database,
+            [true, false, false],
+            allPlayersSelected,
+          );
+        render(createApp(leagueMatchKey));
+
+        const openForfeitDialogButton = await findOpenForfeitDialogButton();
+        expect(openForfeitDialogButton).toBeEnabled();
+      });
+    });
+    describe("dialog forfeit / undo forfeit buttons presence", () => {
+      interface ExpectedButton {
+        ariaLabel: string;
+        textContent: string;
+      }
+      const expectedForfeitDoubles: ExpectedButton = {
+        ariaLabel: `forfeit doubles`,
+        textContent: "D",
+      };
+      interface ForfeitButtonsTest {
+        description: string;
+        homeSelectedPlayers: SelectedPlayers;
+        awaySelectedPlayers: SelectedPlayers;
+        expectedHomeButtons?: ExpectedButton[];
+        expectedAwayButtons?: ExpectedButton[];
+        setupDoubles?: SetupDoubles;
+        setupMatch?: SetupMatch;
+      }
+      const ForfeitButtonsTests: ForfeitButtonsTest[] = [
+        // away
+        {
+          description: "doubles not selected, X not selected",
+          homeSelectedPlayers: allPlayersSelected,
+          awaySelectedPlayers: [false, true, true],
+          expectedHomeButtons: [expectedForfeitDoubles],
+          expectedAwayButtons: [
+            {
+              ariaLabel: `forfeit player X`,
+              textContent: "X",
+            },
+            expectedForfeitDoubles,
+          ],
+        },
+        {
+          description: "doubles not selected, Y not selected",
+          homeSelectedPlayers: allPlayersSelected,
+          awaySelectedPlayers: [true, false, true],
+          expectedHomeButtons: [expectedForfeitDoubles],
+          expectedAwayButtons: [
+            {
+              ariaLabel: `forfeit player Y`,
+              textContent: "Y",
+            },
+            expectedForfeitDoubles,
+          ],
+        },
+        {
+          description: "doubles not selected, Z not selected",
+          homeSelectedPlayers: allPlayersSelected,
+          awaySelectedPlayers: [true, true, false],
+          expectedHomeButtons: [expectedForfeitDoubles],
+          expectedAwayButtons: [
+            {
+              ariaLabel: `forfeit player Z`,
+              textContent: "Z",
+            },
+            expectedForfeitDoubles,
+          ],
+        },
+        // home
+        {
+          description: "doubles not selected, A not selected",
+          homeSelectedPlayers: [false, true, true],
+          awaySelectedPlayers: allPlayersSelected,
+          expectedHomeButtons: [
+            expectedForfeitDoubles,
+            {
+              ariaLabel: `forfeit player A`,
+              textContent: "A",
+            },
+          ],
+          expectedAwayButtons: [expectedForfeitDoubles],
+        },
+        {
+          description: "doubles not selected, B not selected",
+          homeSelectedPlayers: [true, false, true],
+          awaySelectedPlayers: allPlayersSelected,
+          expectedHomeButtons: [
+            expectedForfeitDoubles,
+            {
+              ariaLabel: `forfeit player B`,
+              textContent: "B",
+            },
+          ],
+          expectedAwayButtons: [expectedForfeitDoubles],
+        },
+        {
+          description: "doubles not selected, C not selected",
+          homeSelectedPlayers: [true, true, false],
+          awaySelectedPlayers: allPlayersSelected,
+          expectedHomeButtons: [
+            expectedForfeitDoubles,
+            {
+              ariaLabel: `forfeit player C`,
+              textContent: "C",
+            },
+          ],
+          expectedAwayButtons: [expectedForfeitDoubles],
+        },
+        {
+          description: "doubles home selected",
+          homeSelectedPlayers: allPlayersSelected,
+          awaySelectedPlayers: allPlayersSelected,
+          expectedAwayButtons: [expectedForfeitDoubles],
+          setupDoubles: (doublesMatch) => {
+            doublesMatch.team1Player1Id = defaultHomePlayerNames[0];
+            doublesMatch.team1Player2Id = defaultHomePlayerNames[1];
+          },
+        },
+        {
+          description: "doubles away selected",
+          homeSelectedPlayers: allPlayersSelected,
+          awaySelectedPlayers: allPlayersSelected,
+          expectedHomeButtons: [expectedForfeitDoubles],
+          setupDoubles: (doublesMatch) => {
+            doublesMatch.team2Player1Id = defaultAwayPlayerNames[0];
+            doublesMatch.team2Player2Id = defaultAwayPlayerNames[1];
+          },
+        },
+        // undo forfeit
+        {
+          description: "undo forfeited A",
+          homeSelectedPlayers: [false, true, true],
+          awaySelectedPlayers: allPlayersSelected,
+          setupMatch: (match, index) => {
+            if (index === 0) {
+              match.team1ConcedeOrForfeit = {
+                isConcede: false,
+              };
+            }
+          },
+          expectedHomeButtons: [
+            expectedForfeitDoubles,
+            {
+              ariaLabel: `undo forfeit player A`,
+              textContent: "A",
+            },
+          ],
+          expectedAwayButtons: [expectedForfeitDoubles],
+        },
+      ];
+      it.each(ForfeitButtonsTests)(
+        "$description",
+        async ({
+          homeSelectedPlayers,
+          awaySelectedPlayers,
+          setupDoubles,
+          setupMatch,
+          expectedHomeButtons,
+          expectedAwayButtons,
+        }) => {
+          const leagueMatchKey = await setupDatabase(
+            database,
+            getMatchSetupThatSetsDefaultPlayersThatAreSelected(
+              homeSelectedPlayers,
+              awaySelectedPlayers,
+              setupDoubles,
+              setupMatch,
+            ),
+          );
+          render(createApp(leagueMatchKey));
+
+          const forfeitDialog = await openForfeitDialog();
+          const expectExpectedButtons = (
+            isHome: boolean,
+            expectedButtons: ExpectedButton[] | undefined,
+          ) => {
+            if (expectedButtons === undefined) {
+              const forfeitButtonsContainer = within(
+                forfeitDialog,
+              ).queryByLabelText(
+                getTeamForfeitButtonsContainerAriaLabel(isHome),
+              );
+              expect(forfeitButtonsContainer).toBeNull();
+            } else {
+              const forfeitButtonsContainer = getTeamForfeitButtonsContainer(
+                forfeitDialog,
+                isHome,
+              );
+              expectedButtons.forEach(({ ariaLabel, textContent }) => {
+                const forfeitButton = within(
+                  forfeitButtonsContainer,
+                ).getByLabelText(ariaLabel);
+                expect(forfeitButton).toHaveTextContent(textContent);
+              });
+              const numForfeitButtons = within(
+                forfeitButtonsContainer,
+              ).getAllByRole("button").length;
+              expect(numForfeitButtons).toBe(expectedButtons.length);
+            }
+          };
+
+          expectExpectedButtons(true, expectedHomeButtons);
+          expectExpectedButtons(false, expectedAwayButtons);
+        },
+      );
+    });
+    describe("clicking forfeit / undo forfeit buttons", () => {
+      beforeEach(() => {
+        jest.clearAllMocks();
+      });
+
+      interface ForfeitClickTest {
+        description: string;
+        homeSelectedPlayers: SelectedPlayers;
+        awaySelectedPlayers: SelectedPlayers;
+        setupDoubles?: SetupDoubles;
+        setupMatch?: SetupMatch;
+        isHome: boolean;
+        forfeitButtonAriaLabel: string;
+        expectedForfeitUpdates: ForfeitUpdate[];
+      }
+      const getPlayerExpectedForfeitUpdates = (
+        isHome: boolean,
+        playerIndex: number,
+        forfeited: boolean,
+      ) => {
+        const playersMatchIndicesAndDisplay = isHome
+          ? homePlayersMatchIndicesAndDisplay
+          : awayPlayersMatchIndicesAndDisplay;
+        return playersMatchIndicesAndDisplay[playerIndex].matchIndices.map(
+          (i) => {
+            return {
+              key: i.toString(),
+              forfeited,
+            };
+          },
+        );
+      };
+      const forfeitClickTests: ForfeitClickTest[] = [
+        // home
+        {
+          homeSelectedPlayers: [false, true, true],
+          awaySelectedPlayers: allPlayersSelected,
+          description: "forfeit player A",
+          isHome: true,
+          forfeitButtonAriaLabel: "forfeit player A",
+          expectedForfeitUpdates: getPlayerExpectedForfeitUpdates(
+            true,
+            0,
+            true,
+          ),
+        },
+        {
+          homeSelectedPlayers: [true, false, true],
+          awaySelectedPlayers: allPlayersSelected,
+          description: "forfeit player B",
+          isHome: true,
+          forfeitButtonAriaLabel: "forfeit player B",
+          expectedForfeitUpdates: [
+            {
+              key: "1",
+              forfeited: true,
+            },
+            {
+              key: "3",
+              forfeited: true,
+            },
+            {
+              key: "6",
+              forfeited: true,
+            },
+          ],
+        },
+        {
+          homeSelectedPlayers: [true, true, false],
+          awaySelectedPlayers: allPlayersSelected,
+          description: "forfeit player C",
+          isHome: true,
+          forfeitButtonAriaLabel: "forfeit player C",
+          expectedForfeitUpdates: [
+            {
+              key: "2",
+              forfeited: true,
+            },
+            {
+              key: "5",
+              forfeited: true,
+            },
+            {
+              key: "7",
+              forfeited: true,
+            },
+          ],
+        },
+        //doubles
+        {
+          homeSelectedPlayers: allPlayersSelected,
+          awaySelectedPlayers: allPlayersSelected,
+          description: "forfeit home doubles",
+          isHome: true,
+          forfeitButtonAriaLabel: "forfeit doubles",
+          expectedForfeitUpdates: [
+            {
+              key: "9",
+              forfeited: true,
+            },
+          ],
+        },
+        //away
+        {
+          homeSelectedPlayers: allPlayersSelected,
+          awaySelectedPlayers: [false, true, true],
+          description: "forfeit player X",
+          isHome: false,
+          forfeitButtonAriaLabel: "forfeit player X",
+          expectedForfeitUpdates: [
+            {
+              key: "0",
+              forfeited: true,
+            },
+            {
+              key: "3",
+              forfeited: true,
+            },
+            {
+              key: "7",
+              forfeited: true,
+            },
+          ],
+        },
+        {
+          homeSelectedPlayers: allPlayersSelected,
+          awaySelectedPlayers: [true, false, true],
+          description: "forfeit player Y",
+          isHome: false,
+          forfeitButtonAriaLabel: "forfeit player Y",
+          expectedForfeitUpdates: [
+            {
+              key: "1",
+              forfeited: true,
+            },
+            {
+              key: "5",
+              forfeited: true,
+            },
+            {
+              key: "8",
+              forfeited: true,
+            },
+          ],
+        },
+        {
+          homeSelectedPlayers: allPlayersSelected,
+          awaySelectedPlayers: [true, true, false],
+          description: "forfeit player Z",
+          isHome: false,
+          forfeitButtonAriaLabel: "forfeit player Z",
+          expectedForfeitUpdates: [
+            {
+              key: "2",
+              forfeited: true,
+            },
+            {
+              key: "4",
+              forfeited: true,
+            },
+            {
+              key: "6",
+              forfeited: true,
+            },
+          ],
+        },
+        //doubles
+        {
+          homeSelectedPlayers: allPlayersSelected,
+          awaySelectedPlayers: allPlayersSelected,
+          description: "forfeit away doubles",
+          isHome: false,
+          forfeitButtonAriaLabel: "forfeit doubles",
+          expectedForfeitUpdates: [
+            {
+              key: "9",
+              forfeited: true,
+            },
+          ],
+        },
+        // undo forfeit
+        {
+          homeSelectedPlayers: allPlayersSelected,
+          awaySelectedPlayers: [true, true, false],
+          setupMatch: (match, index) => {
+            const matchIndixesZ =
+              awayPlayersMatchIndicesAndDisplay[2].matchIndices;
+            if (matchIndixesZ.includes(index)) {
+              match.team2ConcedeOrForfeit = {
+                isConcede: false,
+              };
+            }
+          },
+          description: "undo forfeit player Z",
+          isHome: false,
+          forfeitButtonAriaLabel: "undo forfeit player Z",
+          expectedForfeitUpdates: [
+            {
+              key: "2",
+              forfeited: false,
+            },
+            {
+              key: "4",
+              forfeited: false,
+            },
+            {
+              key: "6",
+              forfeited: false,
+            },
+          ],
+        },
+        {
+          homeSelectedPlayers: allPlayersSelected,
+          awaySelectedPlayers: allPlayersSelected,
+          setupDoubles: (doublesMatch) => {
+            doublesMatch.team2ConcedeOrForfeit = {
+              isConcede: false,
+            };
+          },
+          description: "undo forfeit away doubles",
+          isHome: false,
+          forfeitButtonAriaLabel: "undo forfeit doubles",
+          expectedForfeitUpdates: [
+            {
+              key: "9",
+              forfeited: false,
+            },
+          ],
+        },
+        {
+          homeSelectedPlayers: [false, true, true],
+          awaySelectedPlayers: allPlayersSelected,
+          setupMatch: (match, index) => {
+            const matchIndicesA =
+              homePlayersMatchIndicesAndDisplay[0].matchIndices;
+            if (matchIndicesA.includes(index)) {
+              match.team1ConcedeOrForfeit = {
+                isConcede: false,
+              };
+            }
+          },
+          description: "undo forfeit player A",
+          isHome: true,
+          forfeitButtonAriaLabel: "undo forfeit player A",
+          expectedForfeitUpdates: [
+            {
+              key: "0",
+              forfeited: false,
+            },
+            {
+              key: "4",
+              forfeited: false,
+            },
+            {
+              key: "8",
+              forfeited: false,
+            },
+          ],
+        },
+        {
+          homeSelectedPlayers: allPlayersSelected,
+          awaySelectedPlayers: allPlayersSelected,
+          setupDoubles: (doublesMatch) => {
+            doublesMatch.team1ConcedeOrForfeit = {
+              isConcede: false,
+            };
+          },
+          description: "undo forfeit home doubles",
+          isHome: true,
+          forfeitButtonAriaLabel: "undo forfeit doubles",
+          expectedForfeitUpdates: [
+            {
+              key: "9",
+              forfeited: false,
+            },
+          ],
+        },
+      ];
+      it.each(forfeitClickTests)(
+        "$description",
+        async ({
+          homeSelectedPlayers,
+          awaySelectedPlayers,
+          setupDoubles,
+          setupMatch,
+          forfeitButtonAriaLabel,
+          isHome,
+          expectedForfeitUpdates,
+        }) => {
+          const leagueMatchKey = await setupDatabase(
+            database,
+            getMatchSetupThatSetsDefaultPlayersThatAreSelected(
+              homeSelectedPlayers,
+              awaySelectedPlayers,
+              setupDoubles,
+              setupMatch,
+            ),
+          );
+          render(createApp(leagueMatchKey));
+
+          const forfeitDialog = await openForfeitDialog();
+          const teamForfeitButtonsContainer = getTeamForfeitButtonsContainer(
+            forfeitDialog,
+            isHome,
+          );
+          const forfeitButton = within(
+            teamForfeitButtonsContainer,
+          ).getByLabelText(forfeitButtonAriaLabel);
+          fireEvent.click(forfeitButton);
+
+          const updateForfeitedCall = mockUpdateForfeited.mock.calls[0];
+          expect(updateForfeitedCall[0]).toEqual(expectedForfeitUpdates);
+          expect(updateForfeitedCall[1]).toBe(isHome);
+          expect(updateForfeitedCall[2]).toBe(database);
+        },
+      );
     });
   });
 });

@@ -11,9 +11,9 @@ import {
 } from "@mui/material";
 import {
   UmpireUpdate,
-  updateConcededOrForfeited,
   updateUmpired,
-} from "../../../../firebase/rtb/match/db-helpers";
+} from "../../../../firebase/rtb/match/db-helpers/updateUmpired";
+import { updateConceded } from "../../../../firebase/rtb/match/db-helpers/updateConceded";
 import { getGameScoresModel } from "./scoresheet/model/getGameScoresModel";
 import { getResultsCell } from "./scoresheet/ui/getResultsCell";
 import { getTeamsMatchWinState } from "./helpers/getTeamsMatchWinState";
@@ -176,18 +176,11 @@ export function LeagueMatchView({ leagueMatchId }: { leagueMatchId: string }) {
               umpireGame={umpireGame}
               updateConceded={(conceded, isHome, key) => {
                 // todo - error handling
-                updateConcededOrForfeited(
-                  conceded,
-                  true,
-                  isHome,
-                  key,
-                  db,
-                  (updatedMatch) => {
-                    if (umpireMatchIndex === gameMenuState!.index) {
-                      updatedMatch.umpired = null;
-                    }
-                  },
-                );
+                updateConceded(conceded, isHome, key, db, (updatedMatch) => {
+                  if (umpireMatchIndex === gameMenuState!.index) {
+                    updatedMatch.umpired = null;
+                  }
+                });
                 setUmpireMatchIndex(undefined);
               }}
             />

@@ -21,7 +21,7 @@ import {
   useTeamsRef,
 } from "../../../firebase/rtb/root";
 import { clubSetups, maylandsFixtures } from "./data/romfordLeagueData";
-import { createRootUpdater } from "../../../firebase/rtb/match/db-helpers";
+import { createRootUpdater } from "../../../firebase/rtb/match/db-helpers/createRootUpdater";
 import { getDbMatchSaveStateFromUmpire } from "../helpers";
 
 export type PromiseCallback = (promise: Promise<void>) => void;

@@ -7,7 +7,7 @@ import {
 } from "../format/singlesLeagueMatchPlayers";
 import { MatchAndKey } from "../../db-hooks/useLeagueMatchAndMatches";
 import { Dialog } from "@mui/material";
-import { updateConcededOrForfeited } from "../../../../firebase/rtb/match/db-helpers";
+import { updateForfeited } from "../../../../firebase/rtb/match/db-helpers/updateForfeited";
 import { DbMatch } from "../../../../firebase/rtb/match/dbMatch";
 
 export enum ForfeitActionType {
@@ -108,15 +108,16 @@ export function useForfeit(
               allMatches = [matchIndex];
             }
 
-            allMatches.forEach((matchIndex) => {
-              updateConcededOrForfeited(
-                forfeitActionType === ForfeitActionType.forfeit,
-                false,
-                isHome,
-                matchAndKeys[matchIndex].key,
-                db,
-              );
-            });
+            updateForfeited(
+              allMatches.map((matchIndex) => {
+                return {
+                  key: matchAndKeys[matchIndex].key,
+                  forfeited: forfeitActionType === ForfeitActionType.forfeit,
+                };
+              }),
+              isHome,
+              db,
+            );
 
             setShowForfeitDialog(false);
           },

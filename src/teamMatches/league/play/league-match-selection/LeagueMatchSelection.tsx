@@ -29,7 +29,7 @@ import {
 } from "./renderScoresheet-type";
 import { TeamsSelectPlayersAndDoubles } from "../player-selection/TeamsSelectPlayersAndDoubles";
 import { Button, DialogContent, DialogTitle, IconButton } from "@mui/material";
-import { createRootUpdater } from "../../../../firebase/rtb/match/db-helpers";
+import { createRootUpdater } from "../../../../firebase/rtb/match/db-helpers/createRootUpdater";
 import { useWakeLock } from "../../../../hooks/useWakeLock";
 import {
   homeTeamSelectLabels,
@@ -49,6 +49,7 @@ export interface LeagueMatchSelectionProps {
 }
 
 export const scoresheetSectionAriaLabel = "Scoresheet";
+export const openForfeitDialogButtonAriaLabel = "Open forfeit dialog button";
 
 export function LeagueMatchSelection({
   leagueMatchId,
@@ -371,6 +372,7 @@ export function LeagueMatchSelection({
         <Button onClick={() => setShowScoreboard(true)}>Scoreboard</Button>
         {getForfeitDialog()}
         <IconButton
+          aria-label={openForfeitDialogButtonAriaLabel}
           onClick={openForfeitDialog}
           disabled={showForfeitDialogDisabled}
         >

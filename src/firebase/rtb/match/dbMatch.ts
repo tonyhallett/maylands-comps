@@ -17,5 +17,8 @@ export interface DbMatch extends DBMatchSaveState {
   containerId?: string;
   umpired?: boolean;
 }
-
+export type TeamConcedeOrForfeitKey = keyof Pick<
+  DbMatch,
+  "team1ConcedeOrForfeit" | "team2ConcedeOrForfeit"
+>;
 export const matchesKey = nameof<Root>("matches");

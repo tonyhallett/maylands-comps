@@ -5,6 +5,8 @@ import PersonIcon from "@mui/icons-material/Person";
 const ForfeitIcon = PersonOffIcon;
 const UndoForfeitIcon = PersonIcon;
 
+export const getTeamForfeitButtonsContainerAriaLabel = (isHome: boolean) =>
+  `${isHome ? "home" : "away"} forfeit or undo forfeit buttons`;
 const getIcon = (forfeitActionType: ForfeitActionType) => {
   return forfeitActionType === ForfeitActionType.forfeit ? (
     <ForfeitIcon />
@@ -24,8 +26,15 @@ export function getForfeitButtons(
     });
   }
   const buttons = identifierGameForfeitModels.map((gameForfeitModel) => {
+    const forfeitOrUndoAriaLabelPrefix = `${gameForfeitModel.forfeitActionType === ForfeitActionType.forfeit ? "" : "undo "}forfeit`;
+    const identifier =
+      gameForfeitModel.identifier === "D"
+        ? "doubles"
+        : `player ${gameForfeitModel.identifier}`;
+    const ariaLabel = `${forfeitOrUndoAriaLabelPrefix} ${identifier}`;
     return (
       <Button
+        aria-label={ariaLabel}
         endIcon={getIcon(gameForfeitModel.forfeitActionType)}
         key={`${isHome ? "H" : "A"}${gameForfeitModel.identifier}`}
         onClick={gameForfeitModel.act}
@@ -37,5 +46,9 @@ export function getForfeitButtons(
   if (buttons.length === 0) {
     return null;
   }
-  return <div>{buttons}</div>;
+  return (
+    <div aria-label={getTeamForfeitButtonsContainerAriaLabel(isHome)}>
+      {buttons}
+    </div>
+  );
 }

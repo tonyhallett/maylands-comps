@@ -4,8 +4,7 @@ import {
   saveStateToDbMatchSaveState,
 } from "../src/firebase/rtb/match/conversion";
 import { DbMatch } from "../src/firebase/rtb/match/dbMatch";
-import { Root, refTyped } from "../src/firebase/rtb/root";
-import { getNewKey } from "../src/firebase/rtb/typeHelpers";
+import { Root } from "../src/firebase/rtb/root";
 import { getDbToday } from "../src/helpers/getDbDate";
 import { ClubSetup } from "../src/teamMatches/league/db-population/data/romfordLeagueData";
 import { Umpire } from "../src/umpire";
@@ -118,14 +117,13 @@ export async function setupDatabase(
   };
 
   const addMatch = (dbMatchSaveState: DBMatchSaveState, index: number) => {
-    const matchKey = getNewKey(refTyped(database, "matches"));
     const newMatch: DbMatch = {
       scoreboardWithUmpire: true,
       ...dbMatchSaveState,
       containerId: leagueMatchKey,
     };
     setUpMatch(newMatch, index);
-    root.matches[matchKey] = newMatch;
+    root.matches[index.toString()] = newMatch;
   };
 
   for (let i = 0; i < 9; i++) {
