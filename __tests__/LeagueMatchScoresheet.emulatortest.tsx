@@ -6,7 +6,7 @@ import {
   openMenuClickMenuItem,
   openMenuExpectMenuItemDisabled,
 } from "../test-helpers/mui/menu";
-import createEmulatorTests from "../__tests__/createEmulatorTests";
+import createEmulatorTests from "./createEmulatorTests";
 import {
   LeagueMatchView,
   gameMenuButtonAriaLabel,
@@ -22,7 +22,7 @@ import {
   noPlayersSelected,
   setUpDatabaseWithDefaultPlayersThatAreSelected,
   setupDatabase,
-} from "../__tests__/setupDatabase";
+} from "./setupDatabase";
 import { unselectedPlayerCellColor } from "../src/teamMatches/league/play/league-match-view/scoresheet/ui/getPlayerCell";
 import {
   leagueMatchPlayersPositionDisplays,
@@ -33,8 +33,11 @@ import {
   expectNotSingleTextDecorationLine,
   expectSingleTextDecorationLine,
 } from "../test-helpers/testing-library/expectations";
-import { DbMatch } from "../src/firebase/rtb/match/dbMatch";
-import { GameScore, Player } from "../src/umpire";
+import {
+  DbMatch,
+  getTeamConcedeOrForfeitKey,
+} from "../src/firebase/rtb/match/dbMatch";
+import { GameScore, Player, SaveState, Umpire } from "../src/umpire";
 
 import { getLast } from "../src/helpers/getLast";
 import { ServerReceiver } from "../src/umpire/commonTypes";
@@ -44,9 +47,8 @@ import {
   scoreGames,
   scoreGamesWon,
   scorePoints,
-  updateMatchViaUmpire,
   winGame,
-} from "../__tests__/umpireHelpers";
+} from "../src/umpire/umpireHelpers";
 import {
   GameScoreTeamCells,
   findAllGameRows,
@@ -62,7 +64,7 @@ import {
   getTeamGameWon,
   getTeamMatchScore,
   getTeamPlayerSpans,
-} from "../__tests__/LeagueMatchScoresheetSelectors";
+} from "./LeagueMatchScoresheetSelectors";
 import {
   concededOrForfeitedColor,
   gamePointColor,
@@ -74,7 +76,10 @@ import {
   winColor,
   winningMatchColor,
 } from "../src/teamMatches/league/play/league-match-view/scoresheet/ui/colors";
-import { ExtractKey } from "../src/firebase/rtb/typeHelpers";
+import {
+  dbMatchSaveStateToSaveState,
+  saveStateToDbMatchSaveState,
+} from "../src/firebase/rtb/match/conversion";
 
 // mocking due to import.meta.url
 jest.mock(
@@ -95,6 +100,23 @@ jest.mock("../src/teamMatches/league/play/LeagueMatchScoreboard", () => {
 });
 
 const { createMaylandsComps, database } = createEmulatorTests();
+
+const updateDbMatchWithSaveState = (match: DbMatch, saveState: SaveState) => {
+  const dbMatchSaveState = saveStateToDbMatchSaveState(saveState);
+  for (const key in dbMatchSaveState) {
+    match[key] = dbMatchSaveState[key];
+  }
+};
+
+const updateMatchViaUmpire = (
+  match: DbMatch,
+  umpireUpdate: (umpire: Umpire) => void,
+) => {
+  const umpire = new Umpire(dbMatchSaveStateToSaveState(match));
+  umpireUpdate(umpire);
+  const saveState = umpire.getSaveState();
+  updateDbMatchWithSaveState(match, saveState);
+};
 
 describe("render scoresheet", () => {
   function createApp(leagueMatchId: string) {
@@ -1329,10 +1351,6 @@ describe("render scoresheet", () => {
   });
 
   describe("menu", () => {
-    type ConcededOrForfeitKeys = ExtractKey<
-      DbMatch,
-      "team1ConcedeOrForfeit" | "team2ConcedeOrForfeit"
-    >;
     describe("enablement", () => {
       interface MenuItemEnablementTest {
         description: string;
@@ -1376,9 +1394,7 @@ describe("render scoresheet", () => {
             disabled: true,
             menuItemName: "Umpire",
             setupMatch(dbMatch) {
-              const key: ConcededOrForfeitKeys = homeTeam
-                ? "team1ConcedeOrForfeit"
-                : "team2ConcedeOrForfeit";
+              const key = getTeamConcedeOrForfeitKey(homeTeam);
               dbMatch[key] = {
                 isConcede: conceded,
               };
@@ -1436,9 +1452,7 @@ describe("render scoresheet", () => {
               disabled: true,
               menuItemName: `${homeConcededMenuItem ? "Home" : "Away"} Concede`,
               setupMatch(dbMatch) {
-                const key: ConcededOrForfeitKeys = homeForfeited
-                  ? "team1ConcedeOrForfeit"
-                  : "team2ConcedeOrForfeit";
+                const key = getTeamConcedeOrForfeitKey(homeForfeited);
                 dbMatch[key] = {
                   isConcede: false,
                 };
@@ -1475,9 +1489,7 @@ describe("render scoresheet", () => {
             disabled: false,
             menuItemName: `Undo ${homeConceded ? "Home" : "Away"} Concede`,
             setupMatch(dbMatch) {
-              const key: ConcededOrForfeitKeys = homeConceded
-                ? "team1ConcedeOrForfeit"
-                : "team2ConcedeOrForfeit";
+              const key = getTeamConcedeOrForfeitKey(homeConceded);
               dbMatch[key] = {
                 isConcede: true,
               };
@@ -1561,9 +1573,7 @@ describe("render scoresheet", () => {
               undefined,
               (dbMatch, index) => {
                 if (index === 0 && initiallyConceded) {
-                  const key: ConcededOrForfeitKeys = homeTeam
-                    ? "team1ConcedeOrForfeit"
-                    : "team2ConcedeOrForfeit";
+                  const key = getTeamConcedeOrForfeitKey(homeTeam);
                   dbMatch[key] = {
                     isConcede: true,
                   };

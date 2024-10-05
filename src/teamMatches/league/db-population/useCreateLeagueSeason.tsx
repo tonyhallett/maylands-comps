@@ -10,7 +10,6 @@ import {
   DbRegisteredPlayer,
   DbLeagueMatch,
 } from "../../../firebase/rtb/team";
-import { Umpire } from "../../../umpire";
 import { getDbDate } from "../../../helpers/getDbDate";
 import { getNewKey } from "../../../firebase/rtb/typeHelpers";
 import {
@@ -22,7 +21,7 @@ import {
 } from "../../../firebase/rtb/root";
 import { clubSetups, maylandsFixtures } from "./data/romfordLeagueData";
 import { createRootUpdater } from "../../../firebase/rtb/match/db-helpers/createRootUpdater";
-import { getDbMatchSaveStateFromUmpire } from "../helpers";
+import { getDbMatchSaveState } from "./getDbMatchSaveState";
 
 export type PromiseCallback = (promise: Promise<void>) => void;
 export function useCreateLeagueSeason(
@@ -112,20 +111,6 @@ export function useCreateLeagueSeason(
         awayTeamId: getTeamKey(fixture.awayTeam),
         description: `${fixture.homeTeam} vs ${fixture.awayTeam}`,
       });
-      const getDbMatchSaveState = (isDoubles: boolean) => {
-        const umpire = new Umpire(
-          {
-            bestOf: 5,
-            clearBy2: true,
-            numServes: 2,
-            team1StartGameScore: 0,
-            team2StartGameScore: 0,
-            upTo: 11,
-          },
-          isDoubles,
-        );
-        return getDbMatchSaveStateFromUmpire(umpire);
-      };
       const singlesMatchSaveState = getDbMatchSaveState(false);
       const addMatch = (dbMatchSaveState: DBMatchSaveState) => {
         const matchKey = getNewKey(matchesRef);

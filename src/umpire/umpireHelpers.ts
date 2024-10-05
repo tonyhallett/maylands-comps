@@ -1,9 +1,4 @@
-import {
-  dbMatchSaveStateToSaveState,
-  saveStateToDbMatchSaveState,
-} from "../src/firebase/rtb/match/conversion";
-import { DbMatch } from "../src/firebase/rtb/match/dbMatch";
-import { GameScore, SaveState, Umpire } from "../src/umpire";
+import { GameScore, Umpire } from ".";
 
 export const scorePoints = (umpire: Umpire, team1: boolean, n: number) => {
   [...Array(n)].forEach(() => umpire.pointScored(team1));
@@ -57,24 +52,4 @@ export const scoreGameScores = (umpire: Umpire, gameScores: GameScore[]) => {
     scorePointsIfNotZero(firstTeam1, scoresFirst);
     scorePointsIfNotZero(!firstTeam1, scoresSecond);
   });
-};
-
-export const updateDbMatchWithSaveState = (
-  match: DbMatch,
-  saveState: SaveState,
-) => {
-  const dbMatchSaveState = saveStateToDbMatchSaveState(saveState);
-  for (const key in dbMatchSaveState) {
-    match[key] = dbMatchSaveState[key];
-  }
-};
-
-export const updateMatchViaUmpire = (
-  match: DbMatch,
-  umpireUpdate: (umpire: Umpire) => void,
-) => {
-  const umpire = new Umpire(dbMatchSaveStateToSaveState(match));
-  umpireUpdate(umpire);
-  const saveState = umpire.getSaveState();
-  updateDbMatchWithSaveState(match, saveState);
 };

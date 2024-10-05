@@ -53,7 +53,7 @@ import {
 import { getTeamForfeitButtonsContainerAriaLabel } from "../src/teamMatches/league/play/league-match-selection/getForfeitButtons";
 import {
   ConcedeOrForfeit,
-  TeamConcedeOrForfeitKey,
+  getTeamConcedeOrForfeitKey,
 } from "../src/firebase/rtb/match/dbMatch";
 
 // mocking due to import.meta.url
@@ -268,9 +268,7 @@ describe("<LeagueMatchView/>", () => {
             const matchIndices =
               playersMatchIndicesAndDisplay[playerIndex].matchIndices;
 
-            const key: TeamConcedeOrForfeitKey = isHome
-              ? "team1ConcedeOrForfeit"
-              : "team2ConcedeOrForfeit";
+            const key = getTeamConcedeOrForfeitKey(isHome);
             const concedeOrForfeit: ConcedeOrForfeit = {
               isConcede:
                 doublesConcedeOrForfeit === TestConcedeOrForfeit.Concede,

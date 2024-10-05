@@ -1,6 +1,11 @@
 import { useState } from "react";
 import {
   Box,
+  Button,
+  Dialog,
+  DialogContent,
+  DialogTitle,
+  Divider,
   Paper,
   Table,
   TableBody,
@@ -30,6 +35,18 @@ import { getMatchResultDisplay } from "./scoresheet/ui/getMatchResultDisplay";
 import { getUmpireViewInfo } from "./getUmpireViewInfo";
 import { DbUmpireView } from "./DbUmpireView";
 import { ScoresheetGameMenu } from "./ScoresheetGameMenu";
+import { UmpireMatchAndKey } from "../league-match-selection/renderScoresheet-type";
+import {
+  GameScoreInput,
+  ManualScoresInput,
+} from "../../../../ManualScoresInput";
+import { scoreGameScores } from "../../../../umpire/umpireHelpers";
+import { refTyped } from "../../../../firebase/rtb/root";
+import { setTyped } from "../../../../firebase/rtb/typeHelpers";
+import { getUpdatedMatchFromUmpire } from "./getUpdatedMatchFromUmpire";
+import { createLeagueMatchUmpire } from "../../db-population/createLeagueMatchUmpire";
+import { getIsManualInput } from "./getIsManualInput";
+import { Umpire } from "../../../../umpire";
 
 // #region aria labels
 export const scoresheetTableAriaLabel = "Scoresheet Table";
@@ -47,6 +64,9 @@ export const gameMenuButtonAriaLabel = "Game Menu Button";
 
 export function LeagueMatchView({ leagueMatchId }: { leagueMatchId: string }) {
   const [umpireMatchIndex, setUmpireMatchIndex] = useState<number | undefined>(
+    undefined,
+  );
+  const [manualInput, setManualInput] = useState<UmpireMatchAndKey | undefined>(
     undefined,
   );
   const [gameMenuState, setGameMenuState] = useState<{
@@ -163,9 +183,64 @@ export function LeagueMatchView({ leagueMatchId }: { leagueMatchId: string }) {
           setUmpireMatchIndex(selectedMatchIndex);
         };
 
+        const resetManualInput = (
+          umpireCallback: (umpire: Umpire) => void = () => {},
+        ) => {
+          const resetUmpire = createLeagueMatchUmpire(
+            manualInput!.match.isDoubles,
+          );
+          umpireCallback(resetUmpire);
+          const matchDatabaseRef = refTyped(db, `matches/${manualInput!.key}`);
+          const updatedMatch = getUpdatedMatchFromUmpire(
+            manualInput!.match,
+            resetUmpire,
+          );
+          updatedMatch.pointHistory = {
+            "0": "empty",
+          };
+          setTyped(matchDatabaseRef, updatedMatch);
+
+          setManualInput(undefined);
+        };
+
         return (
           <>
+            {manualInput && (
+              <Dialog open onClose={() => setManualInput(undefined)}>
+                <DialogTitle>Manual Input</DialogTitle>
+                <DialogContent>
+                  {getIsManualInput(manualInput!.match) && (
+                    <>
+                      <Button onClick={() => resetManualInput()}>Remove</Button>
+                      <Divider />
+                      <br />
+                    </>
+                  )}
+                  <ManualScoresInput
+                    bestOf={manualInput.match.bestOf}
+                    upTo={manualInput.match.upTo}
+                    clearBy2={manualInput.match.clearBy2}
+                    submit={function (gameScoreInputs: GameScoreInput[]): void {
+                      resetManualInput((resetUmpire) => {
+                        scoreGameScores(
+                          resetUmpire,
+                          gameScoreInputs.map((gsi) => {
+                            return {
+                              team1Points: gsi.homePoints,
+                              team2Points: gsi.awayPoints,
+                            };
+                          }),
+                        );
+                      });
+                    }}
+                  />
+                </DialogContent>
+              </Dialog>
+            )}
             <ScoresheetGameMenu
+              inputScores={(umpireMatchAndKey) => {
+                setManualInput(umpireMatchAndKey);
+              }}
               closeMenu={() => setGameMenuState(null)}
               anchorElement={gameMenuState?.anchorElement}
               umpireMatchAndKey={

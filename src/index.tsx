@@ -28,9 +28,6 @@ const router = createBrowserRouter([
           Free scoring
         </Link>
          */}
-        {/*         <Link style={{ display: "block" }} href={createLeagueSeasonPath}>
-          Create League Season
-        </Link> */}
         <Link style={{ display: "block" }} href={leagueMatchesPath}>
           League matches
         </Link>

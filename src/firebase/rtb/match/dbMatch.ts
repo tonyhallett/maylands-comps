@@ -1,6 +1,6 @@
 import { DBMatchSaveState } from "./conversion";
 import { Root } from "../root";
-import { nameof } from "../typeHelpers";
+import { ExtractKey, nameof } from "../typeHelpers";
 
 export interface ConcedeOrForfeit {
   isConcede: boolean;
@@ -17,8 +17,12 @@ export interface DbMatch extends DBMatchSaveState {
   containerId?: string;
   umpired?: boolean;
 }
-export type TeamConcedeOrForfeitKey = keyof Pick<
+
+type TeamConcedeOrForfeitKeys = ExtractKey<
   DbMatch,
   "team1ConcedeOrForfeit" | "team2ConcedeOrForfeit"
 >;
+export const getTeamConcedeOrForfeitKey = (isHome): TeamConcedeOrForfeitKeys =>
+  isHome ? "team1ConcedeOrForfeit" : "team2ConcedeOrForfeit";
+
 export const matchesKey = nameof<Root>("matches");
