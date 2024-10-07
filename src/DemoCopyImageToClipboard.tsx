@@ -74,9 +74,7 @@ export default function useWindowDimensions() {
 }
 document.addEventListener("fullscreenchange", () => {
   const isFullScreen = !!document.fullscreenElement;
-  if (isFullScreen) {
-    alert("fullscreenchange");
-  }
+  console.log(`fullscreenchange ${isFullScreen}`);
 });
 document.addEventListener("fullscreenerror", () => {
   alert("fullscreenerror");
@@ -154,10 +152,7 @@ export function TeamSignature({
         <IconButton
           onClick={() => {
             if (requiresFullscreen) {
-              document.body
-                .requestFullscreen()
-                .catch(() => alert("caught"))
-                .finally(() => alert("finally"));
+              document.body.requestFullscreen();
             }
             setState((prevState) => ({
               ...prevState,
