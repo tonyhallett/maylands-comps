@@ -87,12 +87,14 @@
     "@mui/x-data-grid": "^7.7.1",
     "@types/react": "^18.3.3",
     "@types/react-dom": "^18.3.0",
+    "@types/react-signature-canvas": "^1.0.6",
     "firebase": "^10.12.2",
     "lazy-get-decorator": "^2.2.1",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "react-draggable": "^4.4.6",
     "react-router-dom": "^6.23.1",
+    "react-signature-canvas": "^1.0.6",
     "store2": "^2.14.3"
   },
   "lint-staged": {

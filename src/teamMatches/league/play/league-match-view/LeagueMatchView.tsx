@@ -47,7 +47,7 @@ import { getUpdatedMatchFromUmpire } from "./getUpdatedMatchFromUmpire";
 import { createLeagueMatchUmpire } from "../../db-population/createLeagueMatchUmpire";
 import { getIsManualInput } from "./getIsManualInput";
 import { Umpire } from "../../../../umpire";
-
+import { screenshotToClipboard } from "./screenshot";
 // #region aria labels
 export const scoresheetTableAriaLabel = "Scoresheet Table";
 export const getScoresheetGameRowAriaLabel = (index: number) => `Game ${index}`;
@@ -311,6 +311,7 @@ export function LeagueMatchView({ leagueMatchId }: { leagueMatchId: string }) {
                 </TableContainer>
               </Paper>
             </Box>
+            <Button onClick={screenshotToClipboard}>Screenshot</Button>
           </>
         );
       }}

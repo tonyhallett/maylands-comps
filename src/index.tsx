@@ -13,6 +13,7 @@ import { CreateLeagueSeason } from "./teamMatches/league/db-population/CreateLea
 import { LeagueMatchLinks } from "./teamMatches/league/LeagueMatchLinks";
 import { LeagueMatchViewRoute } from "./teamMatches/league/play/LeagueMatchViewRoute";
 import { CreateLeagueSeasonForEmulator } from "./teamMatches/league/db-population/CreateLeagueSeasonForEmulator";
+import { DemoCopyImageToClipboard } from "./DemoCopyImageToClipboard";
 
 const leagueMatchesPath = "leagueMatches";
 const createLeagueSeasonPath = "createLeagueSeason";
@@ -31,7 +32,36 @@ const router = createBrowserRouter([
         <Link style={{ display: "block" }} href={leagueMatchesPath}>
           League matches
         </Link>
+        <Link style={{ display: "block" }} href="democopyimagetoclipboard">
+          Demo copy to clipboard
+        </Link>
       </Box>
+    ),
+  },
+  {
+    path: "democopyimagetoclipboard",
+    element: (
+      <DemoCopyImageToClipboard
+        canvasSize={{ width: 800, height: 200 }}
+        useTrimmedSize
+        getDisplaySize={(canvasSize) => {
+          const maxHeight = 40;
+          const ratio = canvasSize.width / canvasSize.height;
+          return { width: ratio * maxHeight, height: maxHeight };
+        }}
+        signatureCanvasProps={{
+          penColor: "#99a7ff",
+          canvasProps: {
+            style: {
+              display: "block",
+              borderColor: "#99a7ff",
+              borderWidth: 2,
+              borderStyle: "solid",
+              borderRadius: 2,
+            },
+          },
+        }}
+      />
     ),
   },
   {
