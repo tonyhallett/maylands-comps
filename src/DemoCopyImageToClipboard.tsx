@@ -105,13 +105,13 @@ export const calculateFullscreenLandscapeDialogCanvasSize = (
   if (document.fullscreenEnabled) {
     if (isPortrait) {
       landscapeSize = {
-        width: screen.height,
-        height: screen.width,
+        width: screen.availHeight,
+        height: screen.availWidth,
       };
     } else {
       landscapeSize = {
-        width: screen.width,
-        height: screen.height,
+        width: screen.availWidth,
+        height: screen.availHeight,
       };
     }
   } else {
