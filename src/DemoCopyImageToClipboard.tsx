@@ -105,13 +105,17 @@ export const calculateFullscreenLandscapeDialogCanvasSize = (
   if (document.fullscreenEnabled) {
     if (isPortrait) {
       landscapeSize = {
-        width: screen.availHeight,
-        height: screen.availWidth,
+        width: windowDimensions.outerHeight,
+        height: windowDimensions.outerWidth,
+        /* width: screen.availHeight,
+        height: screen.availWidth, */
       };
     } else {
       landscapeSize = {
-        width: screen.availWidth,
-        height: screen.availHeight,
+        width: windowDimensions.outerWidth,
+        height: windowDimensions.outerHeight,
+        /* width: screen.availWidth,
+        height: screen.availHeight, */
       };
     }
   } else {
@@ -320,6 +324,7 @@ export function TeamSignature({
             </Button>
           )}
           <Button onClick={close}>Close</Button>
+          <Button>!!!!</Button>
         </DialogActions>
       </Dialog>
     </>
