@@ -4,100 +4,51 @@ import {
   DialogActions,
   DialogContent,
   DialogTitle,
-  Divider,
   IconButton,
 } from "@mui/material";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import ReactSignatureCanvas, {
   ReactSignatureCanvasProps,
 } from "react-signature-canvas";
 import SignatureCanvas from "react-signature-canvas";
 import DrawIcon from "@mui/icons-material/Draw";
-import { useOrientation } from "./hooks/useOrientation";
+import { useIsPortrait } from "../../hooks/useIsPortrait";
+import useWindowDimensions, {
+  WindowDimensions,
+} from "../../useWindowDimensions";
 
-interface Size {
+export interface Size {
   width: number;
   height: number;
 }
-interface SignatureState {
+export interface TeamSignatureState {
   createSignature: boolean;
   dataUrl: string | undefined;
-  name: string;
   trimmedCanvasSize?: Size;
 }
-
-interface SignatureProps {
+type TeamSignatureCanvasProps = Omit<
+  ReactSignatureCanvasProps,
+  "canvasProps"
+> & {
+  canvasProps?: Omit<
+    React.CanvasHTMLAttributes<HTMLCanvasElement>,
+    "width" | "height"
+  >;
+};
+type TeamSignatureCanvasPropsOrCalcFunction =
+  | TeamSignatureCanvasProps
+  | ((canvasSize: Size) => TeamSignatureCanvasProps);
+export interface TeamSignatureProps {
   isHome: boolean;
   useTrimmedSize?: boolean;
   getDisplaySize: (canvasSize: Size) => Size;
-  signatureCanvasProps?: ReactSignatureCanvasProps; // todo omit the canvas size
+  // if minWith and maxWidth are undefined they will be calculated from the canvas size
+  signatureCanvasProps?: TeamSignatureCanvasPropsOrCalcFunction;
+  setHasSigned?: (hasSigned: boolean) => void;
+  showSigned?: boolean;
 }
-type BothSignatureProps = Omit<SignatureProps, "isHome">;
-export function DemoCopyImageToClipboard(props: BothSignatureProps) {
-  return (
-    <>
-      <div style={{ margin: 10 }}>
-        <TeamSignature {...props} isHome={true} />
-      </div>
-      <Divider />
-      <div style={{ margin: 10 }}>
-        <TeamSignature {...props} isHome={false} />
-      </div>
-    </>
-  );
-}
-interface WindowDimensions {
-  innerWidth: number;
-  innerHeight: number;
-  outerWidth: number;
-  outerHeight: number;
-}
-export default function useWindowDimensions(): WindowDimensions {
-  const getWindowDimensions = useCallback(() => {
-    return {
-      innerWidth: window.innerWidth,
-      innerHeight: window.innerHeight,
-      outerWidth: window.outerWidth,
-      outerHeight: window.outerHeight,
-    };
-  }, []);
 
-  const [windowDimensions, setWindowDimensions] = useState(
-    getWindowDimensions(),
-  );
-
-  useEffect(() => {
-    function handleResize() {
-      setWindowDimensions(getWindowDimensions());
-    }
-
-    window.addEventListener("resize", handleResize);
-    return () => window.removeEventListener("resize", handleResize);
-  }, [getWindowDimensions]);
-
-  return windowDimensions;
-}
-document.addEventListener("fullscreenchange", () => {
-  const isFullScreen = !!document.fullscreenElement;
-  console.log(`fullscreenchange ${isFullScreen}`);
-});
-document.addEventListener("fullscreenerror", () => {
-  alert("fullscreenerror");
-});
-
-//const deviceCanRotate = "DeviceOrientationEvent" in window;
-
-/*
-  really simplify - mainly needs to be workable on mobile
-  always fullscreen dialog
-  if portrait then require landscape
-  take into account padding and margin
-
-*/
-
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
 export const calculateFullscreenLandscapeDialogCanvasSize = (
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   windowDimensions: WindowDimensions,
   isPortrait: boolean,
 ): Size => {
@@ -107,15 +58,11 @@ export const calculateFullscreenLandscapeDialogCanvasSize = (
       landscapeSize = {
         width: windowDimensions.outerHeight,
         height: windowDimensions.outerWidth,
-        /* width: screen.availHeight,
-        height: screen.availWidth, */
       };
     } else {
       landscapeSize = {
         width: windowDimensions.outerWidth,
         height: windowDimensions.outerHeight,
-        /* width: screen.availWidth,
-        height: screen.availHeight, */
       };
     }
   } else {
@@ -161,60 +108,102 @@ export const calculateFullscreenLandscapeDialogCanvasSize = (
       wiggleRoomHeight,
   };
 };
+
+export const getSignatureCanvasProps = (
+  signatureCanvasProps: TeamSignatureCanvasPropsOrCalcFunction,
+  canvasSize: Size,
+) => {
+  let teamSignatureCanvasProps: TeamSignatureCanvasProps;
+  if (signatureCanvasProps instanceof Function) {
+    teamSignatureCanvasProps = signatureCanvasProps(canvasSize);
+  } else {
+    teamSignatureCanvasProps = signatureCanvasProps;
+  }
+
+  const reactSignatureCanvasProps: ReactSignatureCanvasProps = {
+    ...teamSignatureCanvasProps,
+    canvasProps: {
+      ...teamSignatureCanvasProps.canvasProps,
+      width: canvasSize.width,
+      height: canvasSize.height,
+    },
+  };
+  if (
+    reactSignatureCanvasProps.minWidth === undefined &&
+    reactSignatureCanvasProps.maxWidth === undefined
+  ) {
+    const minWidth = canvasSize.height / 100;
+    const maxWidth = minWidth * 1.5;
+    reactSignatureCanvasProps.minWidth = minWidth;
+    reactSignatureCanvasProps.maxWidth = maxWidth;
+  }
+  return reactSignatureCanvasProps;
+};
+
 export function TeamSignature({
   isHome,
   getDisplaySize,
   useTrimmedSize = true,
   signatureCanvasProps = {},
-}: SignatureProps) {
+  setHasSigned = () => {},
+  showSigned = true,
+}: TeamSignatureProps) {
+  const scrollPositionRef = useRef<number | undefined>(undefined);
   const windowDimensions = useWindowDimensions();
-  const isPortrait = useOrientation();
-  const [state, setState] = useState<SignatureState>({
+  const isPortrait = useIsPortrait();
+  const [state, setState] = useState<TeamSignatureState>({
     createSignature: false,
     dataUrl: undefined,
-    name: "",
   });
   const sigCanvas = useRef<ReactSignatureCanvas | null>(null);
+  useEffect(() => {
+    if (!showSigned) {
+      setState((prevState) => ({
+        ...prevState,
+        dataUrl: undefined,
+      }));
+    }
+  }, [showSigned]);
+  const scrollback = () => {
+    if (scrollPositionRef.current) {
+      window.setTimeout(() => {
+        window.scrollTo(0, scrollPositionRef.current!);
+        scrollPositionRef.current = undefined;
+      }, 100);
+    }
+  };
   const canvasSize = calculateFullscreenLandscapeDialogCanvasSize(
     windowDimensions,
     isPortrait,
   );
 
   const displaySize = getDisplaySize(state.trimmedCanvasSize || canvasSize);
-  // these should be returned by getDisplaySize ?
-  const minWidth = canvasSize.height / 100;
-  const maxWidth = minWidth * 1.5;
-  const actualSignatureCanvasProps: ReactSignatureCanvasProps = {
-    ...signatureCanvasProps,
-    minWidth,
-    maxWidth,
-    canvasProps: {
-      ...signatureCanvasProps.canvasProps,
-      width: canvasSize.width,
-      height: canvasSize.height,
-    },
-  };
+
+  const actualSignatureCanvasProps = getSignatureCanvasProps(
+    signatureCanvasProps,
+    canvasSize,
+  );
   const title = `${isHome ? "Home" : "Away"} Signature`;
   const close = () => {
     if (document.fullscreenElement) {
       document.exitFullscreen();
+      scrollback();
     }
-    setState((prevState) => {
-      const newState: SignatureState = {
-        createSignature: false,
-        dataUrl: undefined,
-        name: prevState.name,
-      };
-      return newState;
+    setState({
+      createSignature: false,
+      dataUrl: undefined,
     });
+    setHasSigned(false);
   };
 
   return (
     <>
       <>
         <IconButton
+          disabled={!showSigned}
           onClick={() => {
             if (document.fullscreenEnabled) {
+              scrollPositionRef.current = window.scrollY;
               document.body.requestFullscreen();
             }
             setState((prevState) => ({
@@ -226,28 +215,26 @@ export function TeamSignature({
         >
           <DrawIcon />
         </IconButton>
-        <span
-          style={{ marginRight: 5 }}
-        >{`${isHome ? "Home" : "Away"} :`}</span>
-        {state.dataUrl ? (
-          <img
-            src={state.dataUrl}
-            width={displaySize.width}
-            height={displaySize.height}
-          />
-        ) : (
+        <span className="teamLabelAndSignature">
           <span
-            style={{
-              width: displaySize.width,
-              height: displaySize.height,
-              display: "inline-block",
-            }}
-          ></span>
-        )}
-
-        <div style={{ marginLeft: 5, whiteSpace: "preserve" }}>
-          {state.name.length > 0 ? state.name : "    "}
-        </div>
+            style={{ marginRight: 5 }}
+          >{`${isHome ? "Home" : "Away"} :`}</span>
+          {state.dataUrl && showSigned ? (
+            <img
+              src={state.dataUrl}
+              width={displaySize.width}
+              height={displaySize.height}
+            />
+          ) : (
+            <span
+              style={{
+                width: displaySize.width,
+                height: displaySize.height,
+                display: "inline-block",
+              }}
+            ></span>
+          )}
+        </span>
       </>
 
       <Dialog onClose={close} fullScreen={true} open={state.createSignature}>
@@ -263,17 +250,6 @@ export function TeamSignature({
                 }}
                 {...actualSignatureCanvasProps}
               />
-              {/* <TextField
-                sx={{ marginTop: 1 }}
-                label="Name"
-                value={state.name}
-                onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
-                  setState((prevState) => ({
-                    ...prevState,
-                    name: event.target.value,
-                  }));
-                }}
-              /> */}
             </>
           )}
         </DialogContent>
@@ -292,6 +268,7 @@ export function TeamSignature({
             <Button
               onClick={() => {
                 if (document.fullscreenElement) {
+                  scrollback();
                   document.exitFullscreen();
                 }
                 let dataUrl: string;
@@ -306,9 +283,9 @@ export function TeamSignature({
                 } else {
                   dataUrl = sigCanvas.current!.toDataURL();
                 }
-
+                setHasSigned(true);
                 setState((prevState) => {
-                  const newState: SignatureState = {
+                  const newState: TeamSignatureState = {
                     ...prevState,
                     createSignature: false,
                     dataUrl,
@@ -324,7 +301,6 @@ export function TeamSignature({
             </Button>
           )}
           <Button onClick={close}>Close</Button>
-          <Button>!!!!</Button>
         </DialogActions>
       </Dialog>
     </>

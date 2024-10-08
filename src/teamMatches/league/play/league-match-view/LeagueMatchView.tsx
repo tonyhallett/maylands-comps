@@ -1,5 +1,8 @@
 import { useState } from "react";
 import {
+  Accordion,
+  AccordionDetails,
+  AccordionSummary,
   Box,
   Button,
   Dialog,
@@ -13,6 +16,7 @@ import {
   TableContainer,
   TableHead,
   TableRow,
+  Typography,
 } from "@mui/material";
 import {
   UmpireUpdate,
@@ -30,7 +34,10 @@ import { getGameScoreCell } from "./scoresheet/ui/getGameScoreCell";
 import MoreVertIcon from "@mui/icons-material/MoreVert";
 import { getTeamsConcededOrForfeited } from "../../../../firebase/rtb/match/helpers/getTeamsConcededOrForfeited";
 import { getFullGameScores } from "../../helpers";
-import { getLeagueMatchResultModel } from "./scoresheet/model/getLeagueMatchResultModel";
+import {
+  LeagueMatchResultState,
+  getLeagueMatchResultModel,
+} from "./scoresheet/model/getLeagueMatchResultModel";
 import { getMatchResultDisplay } from "./scoresheet/ui/getMatchResultDisplay";
 import { getUmpireViewInfo } from "./getUmpireViewInfo";
 import { DbUmpireView } from "./DbUmpireView";
@@ -47,7 +54,8 @@ import { getUpdatedMatchFromUmpire } from "./getUpdatedMatchFromUmpire";
 import { createLeagueMatchUmpire } from "../../db-population/createLeagueMatchUmpire";
 import { getIsManualInput } from "./getIsManualInput";
 import { Umpire } from "../../../../umpire";
-import { screenshotToClipboard } from "./screenshot";
+import ArrowDropDownIcon from "@mui/icons-material/ArrowDropDown";
+import { TeamsSignature } from "../../../TeamsSignature";
 // #region aria labels
 export const scoresheetTableAriaLabel = "Scoresheet Table";
 export const getScoresheetGameRowAriaLabel = (index: number) => `Game ${index}`;
@@ -170,6 +178,7 @@ export function LeagueMatchView({ leagueMatchId }: { leagueMatchId: string }) {
             });
           }
         };
+
         const umpireGame = (key: string) => {
           const selectedMatchIndex = gameMenuState!.index;
           const umpireUpdates: UmpireUpdate[] = [
@@ -203,6 +212,8 @@ export function LeagueMatchView({ leagueMatchId }: { leagueMatchId: string }) {
           setManualInput(undefined);
         };
 
+        const leagueMatchResultModel =
+          getLeagueMatchResultModel(umpireMatchAndKeys);
         return (
           <>
             {manualInput && (
@@ -270,7 +281,7 @@ export function LeagueMatchView({ leagueMatchId }: { leagueMatchId: string }) {
             )}
             <Box sx={{ width: "100%" }}>
               <Paper sx={{ width: "100%", mb: 2 }}>
-                <TableContainer>
+                <TableContainer id="scoresheetTable">
                   <Table size="small" aria-label={scoresheetTableAriaLabel}>
                     <TableHead>
                       <TableRow>
@@ -301,9 +312,7 @@ export function LeagueMatchView({ leagueMatchId }: { leagueMatchId: string }) {
                         <TableCell
                           aria-label={scoresheetLeagueMatchResultCellAriaLabel}
                         >
-                          {getMatchResultDisplay(
-                            getLeagueMatchResultModel(umpireMatchAndKeys),
-                          )}
+                          {getMatchResultDisplay(leagueMatchResultModel)}
                         </TableCell>
                       </TableRow>
                     </TableBody>
@@ -311,7 +320,44 @@ export function LeagueMatchView({ leagueMatchId }: { leagueMatchId: string }) {
                 </TableContainer>
               </Paper>
             </Box>
-            <Button onClick={screenshotToClipboard}>Screenshot</Button>
+            <Accordion>
+              <AccordionSummary
+                expandIcon={<ArrowDropDownIcon />}
+                aria-controls="panel1-content"
+                id="panel1-header"
+              >
+                <Typography>Signatures</Typography>
+              </AccordionSummary>
+              <AccordionDetails>
+                <TeamsSignature
+                  /*setHasSigned use this function to disabled sending a scorecard */
+                  showSigned={
+                    leagueMatchResultModel.state ===
+                    LeagueMatchResultState.Completed
+                  }
+                  useTrimmedSize
+                  getDisplaySize={(canvasSize) => {
+                    const maxHeight = 40;
+                    const ratio = canvasSize.width / canvasSize.height;
+                    return { width: ratio * maxHeight, height: maxHeight };
+                  }}
+                  signatureCanvasProps={{
+                    penColor: "#99a7ff",
+                    canvasProps: {
+                      style: {
+                        boxSizing: "border-box",
+                        display: "block",
+                        borderColor: "#99a7ff",
+                        borderWidth: 2,
+                        borderStyle: "solid",
+                        borderRadius: 2,
+                      },
+                    },
+                  }}
+                />
+                {/* <Button onClick={testHTML2Canvas}>Screenshot</Button> */}
+              </AccordionDetails>
+            </Accordion>
           </>
         );
       }}

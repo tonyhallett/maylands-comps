@@ -1,5 +1,5 @@
 import { PropsWithChildren, ReactNode } from "react";
-import { useOrientation } from "../hooks/useOrientation";
+import { useIsPortrait } from "../hooks/useIsPortrait";
 
 export type OnlyInOrientationProps = PropsWithChildren<{
   landscape?: boolean;
@@ -11,7 +11,7 @@ export function OnlyInOrientation({
   children,
   wrongOrientation,
 }: OnlyInOrientationProps) {
-  const portrait = useOrientation();
+  const portrait = useIsPortrait();
   if (landscape !== portrait) {
     return children;
   }

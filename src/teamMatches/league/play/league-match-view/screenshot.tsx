@@ -1,4 +1,4 @@
-const canvasToBlobAsync = (canvas: HTMLCanvasElement): Promise<Blob> => {
+export const canvasToBlobAsync = (canvas: HTMLCanvasElement): Promise<Blob> => {
   return new Promise((resolve) => {
     canvas.toBlob((blob) => {
       resolve(blob!);

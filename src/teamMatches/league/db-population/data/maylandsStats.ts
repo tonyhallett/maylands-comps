@@ -1,4 +1,5 @@
-import { maylandsFixtures } from "./romfordLeagueData";
+import { getInitials } from "../../../../umpireView/helpers";
+import { clubSetups, maylandsFixtures } from "./romfordLeagueData";
 
 function maylandsFixturesPerDate() {
   const dateMap = new Map<string, number>();
@@ -27,4 +28,42 @@ function averageFixtureOnASingleDate(dateMap: Map<string, number>) {
 
 function maxFixturesOnASingleDate(dateMap: Map<string, number>) {
   return Math.max(...dateMap.values());
+}
+
+export function memberNamesStats() {
+  const playerNames = clubSetups.flatMap((clubSetup) =>
+    clubSetup.teamSetups.flatMap((teamSetup) => teamSetup.playerNames),
+  );
+  // todo players with same initials in the same team / opponents
+  const stats = {
+    initialsCounts: {},
+    averageLength: 0,
+    totalLength: 0,
+    numPlayers: 0,
+    longestName: "",
+    longestNameLength: 0,
+    longestSurname: "",
+    longestSurnameLength: 0,
+  };
+  playerNames.forEach((name) => {
+    const numInitials = getInitials(name).length;
+    const length = name.length;
+    if (stats.longestName.length < length) {
+      stats.longestName = name;
+    }
+    const parts = name.split(" ");
+    const surname = parts[parts.length - 1];
+    if (stats.longestSurname.length < surname.length) {
+      stats.longestSurname = surname;
+    }
+
+    stats.totalLength += length;
+    stats.initialsCounts[numInitials] =
+      (stats.initialsCounts[numInitials] || 0) + 1;
+    stats.numPlayers++;
+  });
+  stats.averageLength = stats.totalLength / stats.numPlayers;
+  stats.longestNameLength = stats.longestName.length;
+  stats.longestSurnameLength = stats.longestSurname.length;
+  console.log(JSON.stringify(stats, null, 2));
 }

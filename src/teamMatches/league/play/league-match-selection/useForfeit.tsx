@@ -36,7 +36,6 @@ export interface ForfeitModel {
 
 export function useForfeit(
   matchAndKeys: MatchAndKey[],
-
   getDialogContents: (forfeitModel: ForfeitModel) => React.ReactNode,
   db: Database,
 ) {
