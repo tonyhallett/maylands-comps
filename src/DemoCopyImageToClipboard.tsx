@@ -274,48 +274,52 @@ export function TeamSignature({
           )}
         </DialogContent>
         <DialogActions>
-          <Button
-            onClick={() => {
-              sigCanvas.current!.clear();
-            }}
-          >
-            Clear
-          </Button>
-          <Button onClick={close}>Close</Button>
-          <Button
-            disabled={isPortrait}
-            onClick={() => {
-              if (document.fullscreenElement) {
-                document.exitFullscreen();
-              }
-              let dataUrl: string;
-              let trimmedCanvasSize: Size | undefined;
-              if (useTrimmedSize) {
-                const trimmedCanvas = sigCanvas.current!.getTrimmedCanvas();
-                dataUrl = trimmedCanvas.toDataURL();
-                trimmedCanvasSize = {
-                  width: trimmedCanvas.width,
-                  height: trimmedCanvas.height,
-                };
-              } else {
-                dataUrl = sigCanvas.current!.toDataURL();
-              }
+          {!isPortrait && (
+            <Button
+              onClick={() => {
+                sigCanvas.current!.clear();
+              }}
+            >
+              Clear
+            </Button>
+          )}
 
-              setState((prevState) => {
-                const newState: SignatureState = {
-                  ...prevState,
-                  createSignature: false,
-                  dataUrl,
-                };
-                if (trimmedCanvasSize) {
-                  newState.trimmedCanvasSize = trimmedCanvasSize;
+          {!isPortrait && (
+            <Button
+              onClick={() => {
+                if (document.fullscreenElement) {
+                  document.exitFullscreen();
                 }
-                return newState;
-              });
-            }}
-          >
-            OK
-          </Button>
+                let dataUrl: string;
+                let trimmedCanvasSize: Size | undefined;
+                if (useTrimmedSize) {
+                  const trimmedCanvas = sigCanvas.current!.getTrimmedCanvas();
+                  dataUrl = trimmedCanvas.toDataURL();
+                  trimmedCanvasSize = {
+                    width: trimmedCanvas.width,
+                    height: trimmedCanvas.height,
+                  };
+                } else {
+                  dataUrl = sigCanvas.current!.toDataURL();
+                }
+
+                setState((prevState) => {
+                  const newState: SignatureState = {
+                    ...prevState,
+                    createSignature: false,
+                    dataUrl,
+                  };
+                  if (trimmedCanvasSize) {
+                    newState.trimmedCanvasSize = trimmedCanvasSize;
+                  }
+                  return newState;
+                });
+              }}
+            >
+              OK
+            </Button>
+          )}
+          <Button onClick={close}>Close</Button>
         </DialogActions>
       </Dialog>
     </>
