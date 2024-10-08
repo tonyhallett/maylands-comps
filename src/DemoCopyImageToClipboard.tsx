@@ -6,7 +6,6 @@ import {
   DialogTitle,
   Divider,
   IconButton,
-  TextField,
 } from "@mui/material";
 import { useCallback, useEffect, useRef, useState } from "react";
 import ReactSignatureCanvas, {
@@ -14,6 +13,7 @@ import ReactSignatureCanvas, {
 } from "react-signature-canvas";
 import SignatureCanvas from "react-signature-canvas";
 import DrawIcon from "@mui/icons-material/Draw";
+import { useOrientation } from "./hooks/useOrientation";
 
 interface Size {
   width: number;
@@ -30,8 +30,7 @@ interface SignatureProps {
   isHome: boolean;
   useTrimmedSize?: boolean;
   getDisplaySize: (canvasSize: Size) => Size;
-  signatureCanvasProps?: ReactSignatureCanvasProps;
-  canvasSize: Size;
+  signatureCanvasProps?: ReactSignatureCanvasProps; // todo omit the canvas size
 }
 type BothSignatureProps = Omit<SignatureProps, "isHome">;
 export function DemoCopyImageToClipboard(props: BothSignatureProps) {
@@ -47,7 +46,13 @@ export function DemoCopyImageToClipboard(props: BothSignatureProps) {
     </>
   );
 }
-export default function useWindowDimensions() {
+interface WindowDimensions {
+  innerWidth: number;
+  innerHeight: number;
+  outerWidth: number;
+  outerHeight: number;
+}
+export default function useWindowDimensions(): WindowDimensions {
   const getWindowDimensions = useCallback(() => {
     return {
       innerWidth: window.innerWidth,
@@ -79,52 +84,106 @@ document.addEventListener("fullscreenchange", () => {
 document.addEventListener("fullscreenerror", () => {
   alert("fullscreenerror");
 });
+
+//const deviceCanRotate = "DeviceOrientationEvent" in window;
+
+/*
+  really simplify - mainly needs to be workable on mobile
+  always fullscreen dialog
+  if portrait then require landscape
+  take into account padding and margin
+
+*/
+
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+export const calculateFullscreenLandscapeDialogCanvasSize = (
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  windowDimensions: WindowDimensions,
+  isPortrait: boolean,
+): Size => {
+  let landscapeSize: Size;
+  if (document.fullscreenEnabled) {
+    if (isPortrait) {
+      landscapeSize = {
+        width: screen.height,
+        height: screen.width,
+      };
+    } else {
+      landscapeSize = {
+        width: screen.width,
+        height: screen.height,
+      };
+    }
+  } else {
+    if (isPortrait) {
+      landscapeSize = {
+        width: windowDimensions.innerHeight,
+        height: windowDimensions.innerWidth,
+      };
+    } else {
+      landscapeSize = {
+        width: windowDimensions.innerWidth,
+        height: windowDimensions.innerHeight,
+      };
+    }
+  }
+
+  //const dialogTitleTopBottomPadding = 16;
+  //const typographyH6VariantHeight = ? is 1.25rem
+  // calculated as 64px
+  //const dialogTitleHeight =     dialogTitleTopBottomPadding * 2 + typographyH6VariantHeight;
+  const dialogTitleCalculatedHeight = 64;
+
+  //const dialogActionPaddingTopBottom = 8; // padding: '6px 8px', variant text
+  //const buttonHeight = 36; //calculated as 36.5px
+  //const dialogActionHeight = dialogActionPadding * 2 + buttonHeight;
+  const dialogActionCalculatedHeight = 53; // calculated as 52.5 px
+
+  const dialogContentLeftRightPadding = 24;
+  const dialogContentTopBottomPadding = 16; // where did I get 20 from
+
+  const wiggleRoomWidth = 4;
+  const wiggleRoomHeight = 6; // remember that dev tools adds a pixel !
+
+  return {
+    width:
+      landscapeSize.width - dialogContentLeftRightPadding * 2 - wiggleRoomWidth,
+
+    height:
+      landscapeSize.height -
+      dialogContentTopBottomPadding * 2 -
+      dialogTitleCalculatedHeight -
+      dialogActionCalculatedHeight -
+      wiggleRoomHeight,
+  };
+};
 export function TeamSignature({
   isHome,
   getDisplaySize,
   useTrimmedSize = true,
   signatureCanvasProps = {},
-  canvasSize,
 }: SignatureProps) {
-  // padding on the dialog content - believe is 24px left and right
-  // margin 32px when not full screen
-  const { innerWidth, innerHeight, outerWidth, outerHeight } =
-    useWindowDimensions();
-  let requiresLandscape = false;
-  let requiresFullscreen = false;
-  // need to also calculate additional dialog settings
-  if (canvasSize.width > innerWidth) {
-    if (canvasSize.width < outerWidth) {
-      requiresFullscreen = true;
-    } else {
-      requiresLandscape = true;
-      if (canvasSize.width > innerHeight) {
-        if (canvasSize.width < outerHeight) {
-          requiresFullscreen = true;
-        } else {
-          requiresFullscreen = true;
-          canvasSize = { ...canvasSize, width: outerHeight };
-        }
-      }
-      // then need to check if requiresFullscreen
-      // check if need to resize the canvas width to fit....
-    }
-  }
-  /* const orientationTypeAndAngle = useOrientationTypeAndAngle();
-  const changedOrientation =
-    orientationTypeAndAngle.angle === 90 ||
-    orientationTypeAndAngle.angle === 270; */
-
+  const windowDimensions = useWindowDimensions();
+  const isPortrait = useOrientation();
   const [state, setState] = useState<SignatureState>({
     createSignature: false,
     dataUrl: undefined,
     name: "",
   });
   const sigCanvas = useRef<ReactSignatureCanvas | null>(null);
+  const canvasSize = calculateFullscreenLandscapeDialogCanvasSize(
+    windowDimensions,
+    isPortrait,
+  );
 
   const displaySize = getDisplaySize(state.trimmedCanvasSize || canvasSize);
-  const actualSignatureCanvasProps = {
+  // these should be returned by getDisplaySize ?
+  const minWidth = canvasSize.height / 100;
+  const maxWidth = minWidth * 1.5;
+  const actualSignatureCanvasProps: ReactSignatureCanvasProps = {
     ...signatureCanvasProps,
+    minWidth,
+    maxWidth,
     canvasProps: {
       ...signatureCanvasProps.canvasProps,
       width: canvasSize.width,
@@ -145,13 +204,13 @@ export function TeamSignature({
       return newState;
     });
   };
-  requiresFullscreen = true;
+
   return (
     <>
       <>
         <IconButton
           onClick={() => {
-            if (requiresFullscreen) {
+            if (document.fullscreenEnabled) {
               document.body.requestFullscreen();
             }
             setState((prevState) => ({
@@ -190,7 +249,7 @@ export function TeamSignature({
       <Dialog onClose={close} fullScreen={true} open={state.createSignature}>
         <DialogTitle>{title}</DialogTitle>
         <DialogContent dividers>
-          {requiresLandscape ? (
+          {isPortrait ? (
             <div>Landscape please</div>
           ) : (
             <>
@@ -200,7 +259,7 @@ export function TeamSignature({
                 }}
                 {...actualSignatureCanvasProps}
               />
-              <TextField
+              {/* <TextField
                 sx={{ marginTop: 1 }}
                 label="Name"
                 value={state.name}
@@ -210,14 +269,21 @@ export function TeamSignature({
                     name: event.target.value,
                   }));
                 }}
-              />
+              /> */}
             </>
           )}
         </DialogContent>
         <DialogActions>
+          <Button
+            onClick={() => {
+              sigCanvas.current!.clear();
+            }}
+          >
+            Clear
+          </Button>
           <Button onClick={close}>Close</Button>
           <Button
-            disabled={requiresLandscape}
+            disabled={isPortrait}
             onClick={() => {
               if (document.fullscreenElement) {
                 document.exitFullscreen();

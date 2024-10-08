@@ -42,7 +42,6 @@ const router = createBrowserRouter([
     path: "democopyimagetoclipboard",
     element: (
       <DemoCopyImageToClipboard
-        canvasSize={{ width: 800, height: 200 }}
         useTrimmedSize
         getDisplaySize={(canvasSize) => {
           const maxHeight = 40;
@@ -53,6 +52,7 @@ const router = createBrowserRouter([
           penColor: "#99a7ff",
           canvasProps: {
             style: {
+              boxSizing: "border-box",
               display: "block",
               borderColor: "#99a7ff",
               borderWidth: 2,
