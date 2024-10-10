@@ -22,7 +22,8 @@ const getMatchScoreStateColor = (state: TeamGamesWonState) => {
       return matchPointColor;
     case TeamGamesWonState.Normal:
       return normalColor;
-    case TeamGamesWonState.ConceededOrForefeited:
+    case TeamGamesWonState.Conceded:
+    case TeamGamesWonState.Forfeited:
       return concededOrForfeitedColor;
   }
 };

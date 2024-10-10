@@ -9,13 +9,16 @@ export interface TeamSelectionModel {
   player2?: string;
   selected: boolean;
 }
-
+export interface TeamsSelectionModel {
+  home: TeamSelectionModel;
+  away: TeamSelectionModel;
+}
 export const getMatchTeamsSelectionModel = (
   index: number,
   isSingles: boolean,
   keyedSinglesMatchNamePositionDisplays: KeyedSinglesMatchNamePositionDisplay[],
   keyedDoublesMatchNamesPositionDisplay: KeyedDoublesMatchNamesPositionDisplay,
-): { home: TeamSelectionModel; away: TeamSelectionModel } => {
+): TeamsSelectionModel => {
   if (isSingles) {
     const keyedSinglesMatchNamePositionDisplay =
       keyedSinglesMatchNamePositionDisplays[index];

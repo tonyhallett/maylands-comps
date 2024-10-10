@@ -34,7 +34,18 @@ export function memberNamesStats() {
   const playerNames = clubSetups.flatMap((clubSetup) =>
     clubSetup.teamSetups.flatMap((teamSetup) => teamSetup.playerNames),
   );
-  // todo players with same initials in the same team / opponents
+  const sameInitialsAndSurnameMap = new Map<string, number>();
+  playerNames.forEach((name) => {
+    const initials = getInitials(name);
+    const surname = name.split(" ").pop()!;
+    const key = `${initials} ${surname}`;
+    const count = sameInitialsAndSurnameMap.get(key) || 0;
+    sameInitialsAndSurnameMap.set(key, count + 1);
+  });
+  const sameSurnameAndInitials = Array.from(
+    sameInitialsAndSurnameMap.entries(),
+  ).filter(([, count]) => count > 1);
+
   const stats = {
     initialsCounts: {},
     averageLength: 0,
@@ -44,6 +55,7 @@ export function memberNamesStats() {
     longestNameLength: 0,
     longestSurname: "",
     longestSurnameLength: 0,
+    sameSurnameAndInitials,
   };
   playerNames.forEach((name) => {
     const numInitials = getInitials(name).length;

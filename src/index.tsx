@@ -13,10 +13,10 @@ import { CreateLeagueSeason } from "./teamMatches/league/db-population/CreateLea
 import { LeagueMatchLinks } from "./teamMatches/league/LeagueMatchLinks";
 import { LeagueMatchViewRoute } from "./teamMatches/league/play/LeagueMatchViewRoute";
 import { CreateLeagueSeasonForEmulator } from "./teamMatches/league/db-population/CreateLeagueSeasonForEmulator";
+import { DemoScorecardToClipboard } from "./scoreboardToClipboard/DemoScorecardToClipboard";
 
 const leagueMatchesPath = "leagueMatches";
 const createLeagueSeasonPath = "createLeagueSeason";
-
 const router = createBrowserRouter([
   {
     path: "/",
@@ -31,8 +31,15 @@ const router = createBrowserRouter([
         <Link style={{ display: "block" }} href={leagueMatchesPath}>
           League matches
         </Link>
+        <Link style={{ display: "block" }} href="demoscorecardtoclipboard">
+          Demo scorecard to clipboard
+        </Link>
       </Box>
     ),
+  },
+  {
+    path: "demoscorecardtoclipboard",
+    element: <DemoScorecardToClipboard />,
   },
   {
     path: createLeagueSeasonPath,

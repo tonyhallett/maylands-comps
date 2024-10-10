@@ -13,7 +13,8 @@ export enum TeamGamesWonState {
   GamePoint,
   MatchPoint,
   MatchWon,
-  ConceededOrForefeited,
+  Conceded,
+  Forfeited,
 }
 export interface TeamGamesWonModel {
   games: number;
@@ -71,27 +72,31 @@ export const getResultsModel = (
     return {
       home: {
         games: 0,
-        state: TeamGamesWonState.ConceededOrForefeited,
+        state: homeForfeited
+          ? TeamGamesWonState.Forfeited
+          : TeamGamesWonState.Conceded,
       },
       away: {
         games: 0,
-        state: TeamGamesWonState.ConceededOrForefeited,
+        state: homeForfeited
+          ? TeamGamesWonState.Forfeited
+          : TeamGamesWonState.Conceded,
       },
     };
   }
   if (homeConceded || awayConceded) {
-    const conceededKey = homeConceded ? "home" : "away";
-    const notConceededKey = homeConceded ? "away" : "home";
+    const concededKey = homeConceded ? "home" : "away";
+    const notConcededKey = homeConceded ? "away" : "home";
     const concededGamesWon = homeConceded
       ? matchState.team1Score.games
       : matchState.team2Score.games;
 
     return {
-      [conceededKey]: {
+      [concededKey]: {
         games: concededGamesWon,
-        state: TeamGamesWonState.ConceededOrForefeited,
+        state: TeamGamesWonState.Conceded,
       },
-      [notConceededKey]: {
+      [notConcededKey]: {
         games: 3,
         state: TeamGamesWonState.MatchWon,
       },
@@ -108,7 +113,7 @@ export const getResultsModel = (
       return {
         [forfeitedKey]: {
           games: 0,
-          state: TeamGamesWonState.ConceededOrForefeited,
+          state: TeamGamesWonState.Forfeited,
         },
         [notForfeitedKey]: {
           games: 3,

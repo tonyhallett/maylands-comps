@@ -224,7 +224,7 @@ describe("render scoresheet", () => {
 
         describe("common styling", () => {
           describe("forfeited", () => {
-            const setUpGetHomeForefeitedGameCells = async () => {
+            const setUpGetHomeForfeitedGameCells = async () => {
               const leagueMatchKey = await setupDatabase(
                 database,
                 getMatchSetupThatSetsDefaultPlayersThatAreSelected(
@@ -245,7 +245,7 @@ describe("render scoresheet", () => {
             };
             it("should style position identifiers in red if not forfeited", async () => {
               const { homePlayerCell, awayPlayerCell } =
-                await setUpGetHomeForefeitedGameCells();
+                await setUpGetHomeForfeitedGameCells();
               expect(homePlayerCell).not.toHaveStyle({
                 color: unselectedPlayerCellColor,
               });
@@ -255,7 +255,7 @@ describe("render scoresheet", () => {
             });
             it("should strikethrough if forfeited", async () => {
               const { homePlayerCell, awayPlayerCell } =
-                await setUpGetHomeForefeitedGameCells();
+                await setUpGetHomeForfeitedGameCells();
               expectHomeStrikethrough(homePlayerCell, awayPlayerCell);
             });
           });
@@ -1165,7 +1165,7 @@ describe("render scoresheet", () => {
           expectScoreTextContent(leagueMatchResultCell, 0, 1);
         },
       },
-      // to be precise forefeited should not have all players selected
+      // to be precise forfeited should not have all players selected
       {
         description: "should have score 1 - 0 when away team forfeit a game",
         afterSetupMatch(dbMatch, index) {
@@ -1559,10 +1559,10 @@ describe("render scoresheet", () => {
         async ({ homeTeam, initiallyConceded }) => {
           const getExpectedScore = (conceded) => {
             const concededTeam = homeTeam ? "home" : "away";
-            const unconceededTeam = homeTeam ? "away" : "home";
+            const unconcededTeam = homeTeam ? "away" : "home";
             return {
               [concededTeam]: 0,
-              [unconceededTeam]: conceded ? 1 : 0,
+              [unconcededTeam]: conceded ? 1 : 0,
             };
           };
           const leagueMatchKey = await setupDatabase(

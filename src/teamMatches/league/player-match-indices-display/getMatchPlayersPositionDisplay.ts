@@ -1,6 +1,10 @@
 import { fillArrayWithIndices } from "../../../helpers/fillArray";
 import { PlayerMatchIndicesAndPositionDisplay } from ".";
 
+export interface PositionDisplay {
+  position: number;
+  display: string;
+}
 export const getMatchPlayersPositionDisplay = (
   homePlayersMatchIndicesDisplay: PlayerMatchIndicesAndPositionDisplay[],
   awayPlayersMatchIndicesDisplay: PlayerMatchIndicesAndPositionDisplay[],
@@ -10,7 +14,7 @@ export const getMatchPlayersPositionDisplay = (
     homePlayersMatchIndicesDisplay[0].matchIndices.length;
 
   return fillArrayWithIndices(numMatches).map((i) => {
-    const getPlayerPositionDisplay = (isHome: boolean) => {
+    const getPlayerPositionDisplay = (isHome: boolean): PositionDisplay => {
       const playersMatchDetails = isHome
         ? homePlayersMatchIndicesDisplay
         : awayPlayersMatchIndicesDisplay;

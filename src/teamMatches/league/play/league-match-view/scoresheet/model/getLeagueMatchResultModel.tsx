@@ -39,13 +39,13 @@ export const getLeagueMatchResultModel = (
   let numGamesConcluded = 0;
   umpireMatchAndKeys.forEach((umpireMatchKey) => {
     const match = umpireMatchKey.match;
-    const teamsConcededOrForefeited = getTeamsConcededOrForfeited(match);
+    const teamsConcededOrForfeited = getTeamsConcededOrForfeited(match);
     const homeConcededOrDefaulted =
-      teamsConcededOrForefeited.team1.conceded ||
-      teamsConcededOrForefeited.team1.forfeited;
+      teamsConcededOrForfeited.team1.conceded ||
+      teamsConcededOrForfeited.team1.forfeited;
     const awayConcededOrDefaulted =
-      teamsConcededOrForefeited.team2.conceded ||
-      teamsConcededOrForefeited.team2.forfeited;
+      teamsConcededOrForfeited.team2.conceded ||
+      teamsConcededOrForfeited.team2.forfeited;
     if (homeConcededOrDefaulted && awayConcededOrDefaulted) {
       numGamesConcluded++;
     } else if (homeConcededOrDefaulted) {

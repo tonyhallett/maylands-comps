@@ -22,7 +22,7 @@ export const getSimpleTeamDisplay = (
 };
 export const doublesPlayerAriaLabel = "Doubles Player";
 export const unselectedPlayerCellColor = "#FC5B5B";
-const getConcededOrForefeitedTextDecorationLine = (
+const getConcededOrForfeitedTextDecorationLine = (
   concededOrDefaulted: boolean,
 ): React.CSSProperties["textDecorationLine"] => {
   return concededOrDefaulted ? "line-through" : "none";
@@ -43,7 +43,7 @@ export const getPlayerCell = (
       <TableCell
         sx={{
           color,
-          textDecorationLine: getConcededOrForefeitedTextDecorationLine(
+          textDecorationLine: getConcededOrForfeitedTextDecorationLine(
             concededOrForfeited.forfeited,
           ),
         }}
@@ -93,7 +93,7 @@ export const getPlayerCell = (
     <TableCell
       sx={{
         color: "inherit",
-        textDecorationLine: getConcededOrForefeitedTextDecorationLine(conceded),
+        textDecorationLine: getConcededOrForfeitedTextDecorationLine(conceded),
       }}
       aria-label={ariaLabel}
     >

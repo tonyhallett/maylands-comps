@@ -15,6 +15,7 @@ import {
   DoublesEndPoints as DoublesEndPointsScored,
   getServerReceiver,
 } from "./getServerReceiver";
+import { getGameWonState } from "./getGameWonState";
 
 export interface TeamScores {
   team1Score: TeamScore;
@@ -65,7 +66,7 @@ export interface MatchOptions extends CompetitionRules {
   bestOf: number;
 }
 
-enum GameWonState {
+export enum GameWonState {
   NotWon,
   Team1Won,
   Team2Won,
@@ -725,22 +726,11 @@ export class Umpire {
   }
 
   private getGameWonState(): GameWonState {
-    const team1IsUpTo = this._team1Score.points >= this._upTo;
-    const team2IsUpTo = this._team2Score.points >= this._upTo;
-    const isUpTo = team1IsUpTo || team2IsUpTo;
-    if (!isUpTo) {
-      return GameWonState.NotWon;
-    }
-    const pointsDifference = Math.abs(
-      this._team1Score.points - this._team2Score.points,
+    return getGameWonState(
+      this._team1Score.points,
+      this._team2Score.points,
+      this._upTo,
     );
-    const clearBy = this._clearBy2 ? 2 : 1;
-    if (pointsDifference < clearBy) {
-      return GameWonState.NotWon;
-    }
-    return this._team1Score.points > this._team2Score.points
-      ? GameWonState.Team1Won
-      : GameWonState.Team2Won;
   }
 
   private updateGameScores(team1Won: boolean): boolean {

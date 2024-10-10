@@ -383,6 +383,8 @@ export function LeagueMatchSelection({
             db,
             keyedSinglesMatchNamePositionDisplays,
             keyedDoublesMatchNamesPositionDisplay,
+            homeTeam!.name,
+            awayTeam!.name,
           )}
         </section>
       </div>

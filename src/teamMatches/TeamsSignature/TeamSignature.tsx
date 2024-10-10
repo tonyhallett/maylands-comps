@@ -221,6 +221,7 @@ export function TeamSignature({
           >{`${isHome ? "Home" : "Away"} :`}</span>
           {state.dataUrl && showSigned ? (
             <img
+              id={`${isHome ? "home" : "away"}Signature`}
               src={state.dataUrl}
               width={displaySize.width}
               height={displaySize.height}

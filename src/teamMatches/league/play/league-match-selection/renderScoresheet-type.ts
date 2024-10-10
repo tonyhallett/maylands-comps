@@ -35,4 +35,6 @@ export type RenderScoresheet = (
   db: Database,
   keyedSinglesMatchNamePositionDisplays: KeyedSinglesMatchNamePositionDisplay[],
   keyedDoublesMatchNamesPositionDisplay: KeyedDoublesMatchNamesPositionDisplay,
+  homeTeamName: string,
+  awayTeamName: string,
 ) => React.ReactNode;

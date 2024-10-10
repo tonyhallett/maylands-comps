@@ -26,10 +26,16 @@ import { updateConceded } from "../../../../firebase/rtb/match/db-helpers/update
 import { getGameScoresModel } from "./scoresheet/model/getGameScoresModel";
 import { getResultsCell } from "./scoresheet/ui/getResultsCell";
 import { getTeamsMatchWinState } from "./helpers/getTeamsMatchWinState";
-import { getResultsModel } from "./scoresheet/model/getResultsModel";
+import {
+  ResultsModel,
+  getResultsModel,
+} from "./scoresheet/model/getResultsModel";
 import { getPlayerCell } from "./scoresheet/ui/getPlayerCell";
 import { LeagueMatchSelection } from "../league-match-selection/LeagueMatchSelection";
-import { getMatchTeamsSelectionModel } from "./scoresheet/model/getMatchTeamsSelectionModel";
+import {
+  TeamsSelectionModel,
+  getMatchTeamsSelectionModel,
+} from "./scoresheet/model/getMatchTeamsSelectionModel";
 import { getGameScoreCell } from "./scoresheet/ui/getGameScoreCell";
 import MoreVertIcon from "@mui/icons-material/MoreVert";
 import { getTeamsConcededOrForfeited } from "../../../../firebase/rtb/match/helpers/getTeamsConcededOrForfeited";
@@ -53,9 +59,15 @@ import { setTyped } from "../../../../firebase/rtb/typeHelpers";
 import { getUpdatedMatchFromUmpire } from "./getUpdatedMatchFromUmpire";
 import { createLeagueMatchUmpire } from "../../db-population/createLeagueMatchUmpire";
 import { getIsManualInput } from "./getIsManualInput";
-import { Umpire } from "../../../../umpire";
+import { GameScore, Umpire } from "../../../../umpire";
 import ArrowDropDownIcon from "@mui/icons-material/ArrowDropDown";
 import { TeamsSignature } from "../../../TeamsSignature";
+import { copyToClipboardScorecard } from "../../../../scoreboardToClipboard/copyToClipboardScorecard";
+import { getPlayerNames } from "./getPlayerNames";
+import {
+  DoublesGamePositionIdentifiers,
+  getScorecardGames,
+} from "./getScorecardGames";
 // #region aria labels
 export const scoresheetTableAriaLabel = "Scoresheet Table";
 export const getScoresheetGameRowAriaLabel = (index: number) => `Game ${index}`;
@@ -68,7 +80,6 @@ export const getLeagueMatchResultTeamElementAriaLabel = (isHome: boolean) =>
 export const getMatchOrderCellAriaLabel = (index: number) =>
   `Match order cell ${index}`;
 export const gameMenuButtonAriaLabel = "Game Menu Button";
-//#endregion
 
 export function LeagueMatchView({ leagueMatchId }: { leagueMatchId: string }) {
   const [umpireMatchIndex, setUmpireMatchIndex] = useState<number | undefined>(
@@ -89,6 +100,8 @@ export function LeagueMatchView({ leagueMatchId }: { leagueMatchId: string }) {
         db,
         keyedSinglesMatchNamePositionDisplays,
         keyedDoublesMatchNamesPositionDisplay,
+        homeTeamName,
+        awayTeamName,
       ) => {
         const umpireViewInfo = getUmpireViewInfo(
           umpireMatchIndex,
@@ -96,22 +109,30 @@ export function LeagueMatchView({ leagueMatchId }: { leagueMatchId: string }) {
           keyedSinglesMatchNamePositionDisplays,
           keyedDoublesMatchNamesPositionDisplay,
         );
-
+        const allGameScores: GameScore[][] = [];
+        const resultsModels: (ResultsModel | undefined)[] = [];
+        let doublesTeamSelectionModel: TeamsSelectionModel | undefined =
+          undefined;
         const rows = umpireMatchAndKeys.map((umpireMatchAndKey, index) => {
           const match = umpireMatchAndKey.match;
           const teamsConcededOrDefaulted = getTeamsConcededOrForfeited(match);
-          const { home, away } = getMatchTeamsSelectionModel(
+          const teamsSelectionModel = getMatchTeamsSelectionModel(
             index,
             !match.isDoubles,
             keyedSinglesMatchNamePositionDisplays,
             keyedDoublesMatchNamesPositionDisplay,
           );
+          const { home, away } = teamsSelectionModel;
+          if (umpireMatchAndKey.match.isDoubles) {
+            doublesTeamSelectionModel = teamsSelectionModel;
+          }
           const matchState = umpireMatchAndKey.matchState;
           const teamsMatchWinState = getTeamsMatchWinState(
             matchState.matchWinState,
           );
 
           const gameScores = getFullGameScores(matchState);
+          allGameScores.push(gameScores);
           const resultsModel = getResultsModel(
             home,
             away,
@@ -121,6 +142,7 @@ export function LeagueMatchView({ leagueMatchId }: { leagueMatchId: string }) {
             index === 9,
             teamsConcededOrDefaulted,
           );
+          resultsModels.push(resultsModel);
 
           return (
             <TableRow
@@ -355,7 +377,60 @@ export function LeagueMatchView({ leagueMatchId }: { leagueMatchId: string }) {
                     },
                   }}
                 />
-                {/* <Button onClick={testHTML2Canvas}>Screenshot</Button> */}
+                <Button
+                  onClick={() => {
+                    const { home, away } = getPlayerNames(
+                      keyedSinglesMatchNamePositionDisplays,
+                    );
+                    let doublesGamePositionIdentifiers:
+                      | DoublesGamePositionIdentifiers
+                      | undefined = undefined;
+                    const {
+                      home: homeTeamSelectionModel,
+                      away: awayTeamSelectionModel,
+                    } = doublesTeamSelectionModel!;
+                    if (
+                      homeTeamSelectionModel.player1 !== undefined &&
+                      awayTeamSelectionModel.player1 !== undefined
+                    ) {
+                      doublesGamePositionIdentifiers = {
+                        home: [
+                          homeTeamSelectionModel.player1!,
+                          homeTeamSelectionModel.player2!,
+                        ],
+                        away: [
+                          awayTeamSelectionModel.player1!,
+                          awayTeamSelectionModel.player2!,
+                        ],
+                      };
+                    }
+                    const { singles, doubles } = getScorecardGames(
+                      home,
+                      away,
+                      allGameScores,
+                      resultsModels as ResultsModel[],
+                      homeTeamName,
+                      awayTeamName,
+                      doublesGamePositionIdentifiers,
+                    );
+                    copyToClipboardScorecard(
+                      {
+                        name: homeTeamName,
+                        players: home,
+                      },
+                      {
+                        name: awayTeamName,
+                        players: away,
+                      },
+                      leagueMatchResultModel.home.score,
+                      leagueMatchResultModel.away.score,
+                      singles,
+                      doubles,
+                    );
+                  }}
+                >
+                  Screenshot
+                </Button>
               </AccordionDetails>
             </Accordion>
           </>

@@ -1,6 +1,7 @@
+import { ExtractKey } from "../../typeHelpers";
 import { DbMatch } from "../dbMatch";
 
-type PlayerKey = keyof Pick<
+type PlayerKey = ExtractKey<
   DbMatch,
   "team1Player1Id" | "team1Player2Id" | "team2Player1Id" | "team2Player2Id"
 >;
