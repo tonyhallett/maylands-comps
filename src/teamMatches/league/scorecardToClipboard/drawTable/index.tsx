@@ -1,5 +1,6 @@
 import { FontFormat, PenColors } from "../generateScorecard";
-import { drawGameRow } from "./drawGameRow";
+import { measureTexts } from "../helpers/measureTexts";
+import { drawGameRow, gameScoreSeparator } from "./drawGameRow";
 import { drawHeader } from "./drawHeader";
 
 export interface TableConfig {
@@ -45,6 +46,14 @@ export function drawTable(
     config.gridLineSize,
     fontFamily,
   );
+
+  // don't want to keep doing this everytime
+  const gameSeparatorWidth = measureTexts(
+    ctx,
+    config.game.row,
+    fontFamily,
+    gameScoreSeparator,
+  ).metrics[0].width;
   for (let i = 0; i < games.length; i++) {
     drawGameRow(
       games[i],
@@ -57,6 +66,7 @@ export function drawTable(
       config.gridLineSize,
       fontFamily,
       i === 9,
+      gameSeparatorWidth,
     );
   }
 }

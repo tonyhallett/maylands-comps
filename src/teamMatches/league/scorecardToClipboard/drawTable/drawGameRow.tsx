@@ -1,34 +1,22 @@
 import { drawCentered } from "../helpers/drawCentered";
-import { FontFormat, PenColors } from "../generateScorecard";
 import { getScorecardCanvasFont } from "../helpers/getCanvasFont";
 import { measureTexts } from "../helpers/measureTexts";
 import { drawCell } from "./drawCell";
-import { getInstructions } from "./getInstructions";
+import { CellInstruction, getInstructions } from "./getInstructions";
 import { Cell, Game } from ".";
+import { FontFormat, PenColors } from "../generateScorecard";
 
 export type RowCell = Omit<Cell, "header">;
 export const gameScoreSeparator = "/";
 
-export function drawGameRow(
+function getGameScoreInstructions(
   game: Game,
   ctx: CanvasRenderingContext2D,
-  padding: number,
   penColors: PenColors,
-  orderOfPlay: RowCell,
   gameCell: RowCell,
-  winnersSurname: RowCell,
-  gridLineSize: number,
   fontFamily: string,
-  isDoubles: boolean,
+  gameSeparatorWidth: number,
 ) {
-  ctx.save();
-  // don't want to keep doing this everytime
-  const gameSeparatorWidth = measureTexts(
-    ctx,
-    gameCell.row,
-    fontFamily,
-    gameScoreSeparator,
-  ).metrics[0].width;
   const gamePointsPadding = 5;
   const gameScoreInstructions = game.scores.map((score) => {
     const homeWidth = measureTexts(
@@ -77,44 +65,131 @@ export function drawGameRow(
       );
     }
   }
+  return gameScoreInstructions;
+}
+
+function getOrderOfPlayInstruction(
+  game: Game,
+  ctx: CanvasRenderingContext2D,
+  penColors: PenColors,
+  orderOfPlay: RowCell,
+  fontFamily: string,
+  isDoubles: boolean,
+): CellInstruction {
+  const drawDoublesOrderOfPlayEntry = (
+    ctx: CanvasRenderingContext2D,
+    cellWidth: number,
+    y: number,
+  ) => {
+    const entryText = game.orderOfPlay.replace("V", "  ");
+    const entryFormat: FontFormat = {
+      ...orderOfPlay.row,
+      isBold: false,
+    };
+    ctx.font = getScorecardCanvasFont(entryFormat, fontFamily);
+    drawCentered(ctx, entryText, penColors.entry, cellWidth, y);
+  };
+
+  const drawDoublesV = (
+    ctx: CanvasRenderingContext2D,
+    cellWidth: number,
+    y: number,
+  ) => {
+    drawCentered(ctx, "V", penColors.title, cellWidth, y);
+  };
+
+  return isDoubles
+    ? getInstructions(
+        ctx,
+        game.orderOfPlay,
+        orderOfPlay.row,
+        fontFamily,
+        orderOfPlay.width,
+        (ctx, text, cellWidth, y) => {
+          drawDoublesV(ctx, cellWidth, y);
+          drawDoublesOrderOfPlayEntry(ctx, cellWidth, y);
+        },
+      )
+    : getInstructions(
+        ctx,
+        game.orderOfPlay,
+        orderOfPlay.row,
+        fontFamily,
+        orderOfPlay.width,
+        false,
+      );
+}
+
+function getWinnersSurnameInstruction(
+  game: Game,
+  ctx: CanvasRenderingContext2D,
+  winnersSurname: RowCell,
+  fontFamily: string,
+): CellInstruction {
+  // could end up having different heights based on the surname *********************************
+  return getInstructions(
+    ctx,
+    game.winnersSurname,
+    winnersSurname.row,
+    fontFamily,
+    winnersSurname.width,
+    true,
+  );
+}
+
+export function drawGameRow(
+  game: Game,
+  ctx: CanvasRenderingContext2D,
+  padding: number,
+  penColors: PenColors,
+  orderOfPlay: RowCell,
+  gameCell: RowCell,
+  winnersSurname: RowCell,
+  gridLineSize: number,
+  fontFamily: string,
+  isDoubles: boolean,
+  gameSeparatorWidth: number,
+) {
+  ctx.save();
+
   const rowInstructions = [
-    isDoubles
-      ? getInstructions(
-          ctx,
-          game.orderOfPlay,
-          orderOfPlay.row,
-          fontFamily,
-          orderOfPlay.width,
-          (ctx, text, cellWidth, y) => {
-            drawCentered(ctx, "V", penColors.title, cellWidth, y);
-            const entryText = game.orderOfPlay.replace("V", "  ");
-            const entryFormat: FontFormat = {
-              ...orderOfPlay.row,
-              isBold: false,
-            };
-            ctx.font = getScorecardCanvasFont(entryFormat, fontFamily);
-            drawCentered(ctx, entryText, penColors.entry, cellWidth, y);
-          },
-        )
-      : getInstructions(
-          ctx,
-          game.orderOfPlay,
-          orderOfPlay.row,
-          fontFamily,
-          orderOfPlay.width,
-          false,
-        ),
-    ...gameScoreInstructions,
-    // could end up having different heights based on the surname *********************************
-    getInstructions(
+    getOrderOfPlayInstruction(
+      game,
       ctx,
-      game.winnersSurname,
-      winnersSurname.row,
+      penColors,
+      orderOfPlay,
       fontFamily,
-      winnersSurname.width,
-      true,
+      isDoubles,
     ),
+    ...getGameScoreInstructions(
+      game,
+      ctx,
+      penColors,
+      gameCell,
+      fontFamily,
+      gameSeparatorWidth,
+    ),
+    getWinnersSurnameInstruction(game, ctx, winnersSurname, fontFamily),
   ];
+  const shift = drawGameRowCells(
+    rowInstructions,
+    padding,
+    penColors,
+    gridLineSize,
+    ctx,
+  );
+
+  ctx.restore();
+  ctx.translate(0, shift);
+}
+
+function drawGameRowCells(
+  rowInstructions: CellInstruction[],
+  padding: number,
+  penColors: PenColors,
+  gridLineSize: number,
+  ctx: CanvasRenderingContext2D,
+) {
   const maxHeight = Math.max(...rowInstructions.map((m) => m.height));
   const cellHeight = maxHeight + padding * 2;
   let shift = 0;
@@ -153,6 +228,5 @@ export function drawGameRow(
       );
     }
   });
-  ctx.restore();
-  ctx.translate(0, shift);
+  return shift;
 }
