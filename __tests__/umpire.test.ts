@@ -714,25 +714,25 @@ describe("umpiring", () => {
 
     it("should keep scores from previous games", () => {
       const umpire = getNormalSinglesBestOf5Umpire();
-      expect(umpire.getMatchState().gameScores).toHaveLength(0);
+      expect(umpire.getMatchState().completedGameScores).toHaveLength(0);
 
       let matchState = scorePoints(umpire, true, 7);
-      expect(matchState.gameScores).toHaveLength(0);
+      expect(matchState.completedGameScores).toHaveLength(0);
       matchState = scoreGames(umpire, false, 1);
-      expect(matchState.gameScores).toEqual<Array<GameScore>>([
+      expect(matchState.completedGameScores).toEqual<Array<GameScore>>([
         { team1Points: 7, team2Points: 11 },
       ]);
 
       scorePoints(umpire, false, 6);
       matchState = scoreGames(umpire, true, 1);
 
-      expect(matchState.gameScores).toEqual<Array<GameScore>>([
+      expect(matchState.completedGameScores).toEqual<Array<GameScore>>([
         { team1Points: 7, team2Points: 11 },
         { team1Points: 11, team2Points: 6 },
       ]);
 
       matchState = scoreGames(umpire, true, 2);
-      expect(matchState.gameScores).toEqual<Array<GameScore>>([
+      expect(matchState.completedGameScores).toEqual<Array<GameScore>>([
         { team1Points: 7, team2Points: 11 },
         { team1Points: 11, team2Points: 6 },
         { team1Points: 11, team2Points: 0 },
@@ -2690,7 +2690,7 @@ describe("umpiring", () => {
         scorePoints(umpire, true, 10);
         scorePoints(umpire, false, 1);
         let matchState = scorePoints(umpire, true, 1);
-        expect(matchState.gameScores).toHaveLength(1);
+        expect(matchState.completedGameScores).toHaveLength(1);
         expect(matchState.pointHistory).toHaveLength(2);
 
         matchState = umpire.undoPoint();
@@ -2703,7 +2703,7 @@ describe("umpiring", () => {
           games: 0,
           points: 1,
         });
-        expect(matchState.gameScores).toHaveLength(0);
+        expect(matchState.completedGameScores).toHaveLength(0);
         expect(matchState.pointHistory).toHaveLength(1);
       });
 
@@ -2723,7 +2723,7 @@ describe("umpiring", () => {
           games: 0,
           points: 1,
         });
-        expect(matchState.gameScores).toHaveLength(0);
+        expect(matchState.completedGameScores).toHaveLength(0);
       });
     });
 

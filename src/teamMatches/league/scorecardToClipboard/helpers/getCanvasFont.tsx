@@ -1,4 +1,4 @@
-import { getFontFamily } from "../../../../fontDemos/getCanvasFont";
+import { getFontFamily } from "../../../../helpers/getFontFamily";
 import { FontFormat } from "../generateScorecard";
 
 export function getItalicOrBold(isItalic: boolean, present: boolean): string {

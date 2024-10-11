@@ -10,7 +10,7 @@ export const getDoublesMatch = (withMatches: WithMatch[]) =>
   withMatches[withMatches.length - 1].match;
 
 export function getFullGameScores(matchState: MatchState) {
-  const gameScores = [...matchState.gameScores];
+  const gameScores = [...matchState.completedGameScores];
 
   const matchWon = isMatchWon(matchState.matchWinState);
   if (!matchWon) {

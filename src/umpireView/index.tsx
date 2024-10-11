@@ -194,7 +194,7 @@ export function UmpireView({
         <ServerReceiverChooser
           showTosser={
             serverReceiverChoice.servers.length > 0 &&
-            matchState.gameScores.length === 0
+            matchState.completedGameScores.length === 0
           }
           availableReceivers={serverReceiverChoice.firstGameDoublesReceivers}
           availableServers={serverReceiverChoice.servers}

@@ -1,8 +1,9 @@
 import { Score } from "../../../scorecardToClipboard/drawTable";
+import { ScoreKey } from "./ScoreKey";
 
 export function getTeamForfeitedScores(isHome: boolean): Score[] {
-  const forfeitKey = isHome ? "home" : "away";
-  const notForfeitKey = isHome ? "away" : "home";
+  const forfeitKey: ScoreKey = isHome ? "home" : "away";
+  const notForfeitKey: ScoreKey = isHome ? "away" : "home";
   return [1, 2, 3].map(() => {
     return {
       [forfeitKey]: 0,

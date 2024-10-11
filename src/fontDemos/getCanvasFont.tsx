@@ -1,9 +1,4 @@
-export function getFontFamily(font: string): string {
-  if (font.includes(" ")) {
-    return `'${font}'`;
-  }
-  return font;
-}
+import { getFontFamily } from "../helpers/getFontFamily";
 
 export function getCanvasFont(
   fontWeight: number,

@@ -30,7 +30,7 @@ export interface MatchState extends TeamScores {
   remainingServes: number;
   matchWinState: MatchWinState;
   gameOrMatchPoints?: number;
-  gameScores: ReadonlyArray<GameScore>;
+  completedGameScores: ReadonlyArray<GameScore>;
   canUndoPoint: boolean;
   serverReceiverChoice: ServerReceiverChoice;
   pointHistory: ReadonlyArray<ReadonlyArray<PointHistory>>;
@@ -460,7 +460,7 @@ export class Umpire {
 
     const matchState: MatchState = {
       canUndoPoint: this.canUndoPoint,
-      gameScores: this._gameScores,
+      completedGameScores: this._gameScores,
       matchWinState,
       remainingServes,
       team1Left: this._team1Left,

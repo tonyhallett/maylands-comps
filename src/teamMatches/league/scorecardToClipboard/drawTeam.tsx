@@ -3,9 +3,10 @@ import { getSuffixedTitle } from "./helpers/getSuffixedTitle";
 import { measureForLine } from "./helpers/measureForLine";
 import { drawTitleAndEntry } from "./helpers/drawTitleAndEntry";
 
+export type PlayerNameOrUndefineds = (string | undefined)[];
 export interface Team {
   name: string;
-  players: (string | undefined)[];
+  players: PlayerNameOrUndefineds;
 }
 
 export const homeIdentifers = ["A", "B", "C"];

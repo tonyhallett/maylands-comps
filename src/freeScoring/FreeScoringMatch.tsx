@@ -98,7 +98,7 @@ export function FreeScoringMatch() {
               team2Points: matchState.team2Score.points,
             }}
             team1Left={matchState.team1Left}
-            gameScores={matchState.gameScores}
+            gameScores={matchState.completedGameScores}
             pointHistory={matchState.pointHistory}
             {...getTeamLabels(playerNames)}
           />

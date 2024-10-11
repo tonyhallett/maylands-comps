@@ -4,26 +4,13 @@ import {
 } from "../scoresheet/model/getResultsModel";
 import { GameScore } from "../../../../../umpire";
 import { leagueMatchPlayersPositionDisplays } from "../../format/singlesLeagueMatchPlayers";
-import { isNotUndefined } from "../../../../../helpers/isNotTypeGuards";
 import { getTeamForfeitedScores } from "./getTeamForfeitedScores";
 import { getConcededScores } from "./getConcededScores";
 import { GameWithoutOrderOfPlay } from "../../../scorecardToClipboard/copyToClipboardScorecard";
 import { Game } from "../../../scorecardToClipboard/drawTable";
+import { getAllSurnames, getSurname, getWinnerSurname } from "./winnerSurname";
+import { PlayerNameOrUndefineds } from "../../../scorecardToClipboard/drawTeam";
 
-function getSurname(name: string) {
-  const parts = name.split(" ");
-  return parts[parts.length - 1];
-}
-function getWinnerSurname(
-  allSurnames: string[],
-  winnerSurname: string,
-  positionIdentifier: string,
-): string {
-  if (allSurnames.filter((surname) => surname === winnerSurname).length === 1) {
-    return winnerSurname;
-  }
-  return `${winnerSurname} ( ${positionIdentifier} )`;
-}
 const getScorecardGame = (
   resultsModel: ResultsModel,
   homeTeamName: string,
@@ -31,7 +18,7 @@ const getScorecardGame = (
   gameScores: GameScore[],
   getHomeWinnerSurname: () => string,
   getAwayWinnerSurname: () => string,
-) => {
+): GameWithoutOrderOfPlay => {
   const homeState = resultsModel.home.state;
   const awayState = resultsModel.away.state;
 
@@ -75,7 +62,7 @@ const getScorecardGame = (
       winnersSurname,
     };
   }
-  const gameWithoutOrderOfPlay: GameWithoutOrderOfPlay = {
+  return {
     scores: gameScores.map((gameScore) => {
       return {
         home: gameScore.team1Points,
@@ -84,31 +71,21 @@ const getScorecardGame = (
     }),
     winnersSurname,
   };
-  return gameWithoutOrderOfPlay;
 };
+
 type PositionIdentifiers = [string, string];
 export type DoublesGamePositionIdentifiers = {
   home: PositionIdentifiers;
   away: PositionIdentifiers;
 };
-export function getScorecardGames(
-  homePlayerNames: (string | undefined)[],
-  awayPlayerNames: (string | undefined)[],
-  allGameScores: GameScore[][],
-  resultsModels: ResultsModel[],
+
+function getDoublesGame(
+  doublesGamePositionIdentifiers: DoublesGamePositionIdentifiers | undefined,
+  doublesResultsModel: ResultsModel,
   homeTeamName: string,
   awayTeamName: string,
-  doublesGamePositionIdentifiers: DoublesGamePositionIdentifiers | undefined,
+  doublesGameScores: GameScore[],
 ) {
-  const allNames = homePlayerNames
-    .filter(isNotUndefined)
-    .concat(awayPlayerNames.filter(isNotUndefined));
-  const allSurnames = allNames.map((name) => {
-    return getSurname(name);
-  });
-  const doublesGameScores = allGameScores[9];
-  const doublesResultsModel = resultsModels[9];
-
   let doublesOrderOfPlay = " V ";
   if (doublesGamePositionIdentifiers !== undefined) {
     doublesOrderOfPlay = `${doublesGamePositionIdentifiers.home[0]}${doublesGamePositionIdentifiers.home[1]} V ${doublesGamePositionIdentifiers.away[0]}${doublesGamePositionIdentifiers.away[1]}`;
@@ -124,10 +101,20 @@ export function getScorecardGames(
       () => awayTeamName,
     ),
   };
+  return doublesGame;
+}
 
-  const singles: GameWithoutOrderOfPlay[] = allGameScores
-    .slice(0, 9)
-    .map((gameScores, index) => {
+export function getSinglesGames(
+  homePlayerNames: PlayerNameOrUndefineds,
+  awayPlayerNames: PlayerNameOrUndefineds,
+  gameScores: GameScore[][],
+  resultsModels: ResultsModel[],
+  homeTeamName: string,
+  awayTeamName: string,
+) {
+  const allSurnames = getAllSurnames(homePlayerNames, awayPlayerNames);
+  const singles: GameWithoutOrderOfPlay[] = gameScores.map(
+    (gameScores, index) => {
       const playerPositionDisplays = leagueMatchPlayersPositionDisplays[index];
       const resultsModel = resultsModels[index];
       return getScorecardGame(
@@ -158,12 +145,43 @@ export function getScorecardGames(
           );
         },
       );
-    });
+    },
+  );
+  return singles;
+}
 
-  const games: {
-    singles: GameWithoutOrderOfPlay[];
-    doubles: Game;
-  } = {
+interface ScorecardGames {
+  singles: GameWithoutOrderOfPlay[];
+  doubles: Game;
+}
+
+export function getScorecardGames(
+  homePlayerNames: PlayerNameOrUndefineds,
+  awayPlayerNames: PlayerNameOrUndefineds,
+  allGameScores: GameScore[][],
+  resultsModels: ResultsModel[],
+  homeTeamName: string,
+  awayTeamName: string,
+  doublesGamePositionIdentifiers: DoublesGamePositionIdentifiers | undefined,
+): ScorecardGames {
+  const doublesGame = getDoublesGame(
+    doublesGamePositionIdentifiers,
+    resultsModels[9],
+    homeTeamName,
+    awayTeamName,
+    allGameScores[9],
+  );
+
+  const singles = getSinglesGames(
+    homePlayerNames,
+    awayPlayerNames,
+    allGameScores.slice(0, 9),
+    resultsModels,
+    homeTeamName,
+    awayTeamName,
+  );
+
+  const games: ScorecardGames = {
     singles,
     doubles: doublesGame,
   };

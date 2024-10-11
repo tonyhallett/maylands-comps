@@ -1,6 +1,5 @@
 import { KeyedSinglesMatchNamePositionDisplay } from "../../league-match-selection/renderScoresheet-type";
 
-//#endregion
 export function getPlayerNames(
   KeyedSinglesMatchNamePositionDisplays: KeyedSinglesMatchNamePositionDisplay[],
 ) {

@@ -32,24 +32,24 @@ export const scoreGamesWon = (
 };
 
 export const scoreGameScores = (umpire: Umpire, gameScores: GameScore[]) => {
-  const scorePointsIfNotZero = (homeTeam: boolean, scores: number) => {
-    if (scores > 0) {
-      scorePoints(umpire, homeTeam, scores);
-    }
-  };
-
   gameScores.forEach((gameScore) => {
     let firstTeam1 = true;
     let scoresFirst = gameScore.team1Points;
     let scoresSecond = gameScore.team2Points;
+    const max = Math.max(scoresFirst, scoresSecond);
     if (scoresFirst > scoresSecond) {
       const temp = scoresFirst;
       scoresFirst = scoresSecond;
       scoresSecond = temp;
       firstTeam1 = false;
     }
-
-    scorePointsIfNotZero(firstTeam1, scoresFirst);
-    scorePointsIfNotZero(!firstTeam1, scoresSecond);
+    for (let i = 0; i < max; i++) {
+      if (i < scoresFirst) {
+        umpire.pointScored(firstTeam1);
+      }
+      if (i < scoresSecond) {
+        umpire.pointScored(!firstTeam1);
+      }
+    }
   });
 };

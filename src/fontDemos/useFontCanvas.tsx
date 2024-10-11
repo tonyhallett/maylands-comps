@@ -6,7 +6,7 @@ import {
 import { fontFaces } from "./fontInfo";
 import { fontFaces as manualFontFaces } from "./manualFontInfo";
 import { useSelect } from "./useFontSelection";
-import { getFontFamily } from "./getCanvasFont";
+import { getFontFamily } from "../helpers/getFontFamily";
 
 export type FontInfo = (typeof fontFaces)[0];
 type FontInfoNoWeight = Omit<FontInfo, "weight">;
