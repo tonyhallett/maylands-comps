@@ -62,12 +62,12 @@ import { getIsManualInput } from "./getIsManualInput";
 import { GameScore, Umpire } from "../../../../umpire";
 import ArrowDropDownIcon from "@mui/icons-material/ArrowDropDown";
 import { TeamsSignature } from "../../../TeamsSignature";
-import { copyToClipboardScorecard } from "../../../../scoreboardToClipboard/copyToClipboardScorecard";
-import { getPlayerNames } from "./getPlayerNames";
+import { getPlayerNames } from "./scorecardToClipboard/getPlayerNames";
 import {
   DoublesGamePositionIdentifiers,
   getScorecardGames,
-} from "./getScorecardGames";
+} from "./scorecardToClipboard/getScorecardGames";
+import { copyToClipboardScorecard } from "../../scorecardToClipboard/copyToClipboardScorecard";
 // #region aria labels
 export const scoresheetTableAriaLabel = "Scoresheet Table";
 export const getScoresheetGameRowAriaLabel = (index: number) => `Game ${index}`;

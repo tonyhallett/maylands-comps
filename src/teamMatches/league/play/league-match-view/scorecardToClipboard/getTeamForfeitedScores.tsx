@@ -1,4 +1,4 @@
-import { Score } from "../../../../scoreboardToClipboard/drawTable";
+import { Score } from "../../../scorecardToClipboard/drawTable";
 
 export function getTeamForfeitedScores(isHome: boolean): Score[] {
   const forfeitKey = isHome ? "home" : "away";

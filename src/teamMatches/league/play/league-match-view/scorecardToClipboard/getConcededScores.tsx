@@ -1,7 +1,7 @@
-import { GameScore, GameWonState } from "../../../../umpire";
-import { Score } from "../../../../scoreboardToClipboard/drawTable";
-import { getGameWonState } from "../../../../umpire/getGameWonState";
-import { ExtractKey } from "../../../../firebase/rtb/typeHelpers";
+import { GameScore, GameWonState } from "../../../../../umpire";
+import { getGameWonState } from "../../../../../umpire/getGameWonState";
+import { ExtractKey } from "../../../../../firebase/rtb/typeHelpers";
+import { Score } from "../../../scorecardToClipboard/drawTable";
 
 export type ScoreKey = ExtractKey<Score, "home" | "away">;
 export function getConcededScores(

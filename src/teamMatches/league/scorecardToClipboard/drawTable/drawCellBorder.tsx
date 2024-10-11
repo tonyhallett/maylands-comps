@@ -1,4 +1,4 @@
-import { Size } from "../../commonTypes";
+import { Size } from "../../../../commonTypes";
 
 export interface GridInstruction {
   gridLineSize: number;

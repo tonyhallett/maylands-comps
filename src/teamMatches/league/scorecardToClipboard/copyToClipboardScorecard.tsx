@@ -1,4 +1,4 @@
-import { canvasToBlobAsync } from "../teamMatches/league/play/league-match-view/screenshot";
+import { canvasToBlobAsync } from "../../../helpers/screenshot";
 import { Game } from "./drawTable";
 import { Team } from "./drawTeam";
 import { generateScorecard } from "./generateScorecard";

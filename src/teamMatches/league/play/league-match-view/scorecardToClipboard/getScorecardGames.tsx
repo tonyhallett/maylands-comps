@@ -1,14 +1,14 @@
 import {
   ResultsModel,
   TeamGamesWonState,
-} from "./scoresheet/model/getResultsModel";
-import { GameScore } from "../../../../umpire";
-import { GameWithoutOrderOfPlay } from "../../../../scoreboardToClipboard/copyToClipboardScorecard";
-import { Game } from "../../../../scoreboardToClipboard/drawTable";
-import { leagueMatchPlayersPositionDisplays } from "../format/singlesLeagueMatchPlayers";
-import { isNotUndefined } from "../../../../helpers/isNotTypeGuards";
+} from "../scoresheet/model/getResultsModel";
+import { GameScore } from "../../../../../umpire";
+import { leagueMatchPlayersPositionDisplays } from "../../format/singlesLeagueMatchPlayers";
+import { isNotUndefined } from "../../../../../helpers/isNotTypeGuards";
 import { getTeamForfeitedScores } from "./getTeamForfeitedScores";
 import { getConcededScores } from "./getConcededScores";
+import { GameWithoutOrderOfPlay } from "../../../scorecardToClipboard/copyToClipboardScorecard";
+import { Game } from "../../../scorecardToClipboard/drawTable";
 
 function getSurname(name: string) {
   const parts = name.split(" ");
