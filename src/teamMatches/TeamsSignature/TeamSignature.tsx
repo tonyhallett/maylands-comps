@@ -16,11 +16,8 @@ import { useIsPortrait } from "../../hooks/useIsPortrait";
 import useWindowDimensions, {
   WindowDimensions,
 } from "../../useWindowDimensions";
+import { Size } from "../../commonTypes";
 
-export interface Size {
-  width: number;
-  height: number;
-}
 export interface TeamSignatureState {
   createSignature: boolean;
   dataUrl: string | undefined;

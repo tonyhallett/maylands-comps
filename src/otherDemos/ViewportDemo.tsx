@@ -1,13 +1,10 @@
 import { useEffect, useState } from "react";
+import { Size } from "../commonTypes";
 
-interface WidthHeight {
-  width: number;
-  height: number;
-}
 interface Meaurements {
-  client: WidthHeight;
-  windowInner: WidthHeight;
-  windowOuter: WidthHeight;
+  client: Size;
+  windowInner: Size;
+  windowOuter: Size;
 }
 // also look at https://developer.mozilla.org/en-US/docs/Web/API/Visual_Viewport_API
 

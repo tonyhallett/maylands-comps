@@ -19,7 +19,7 @@ function getWinnerSurname(
   winnerSurname: string,
   positionIdentifier: string,
 ): string {
-  if (!allSurnames.includes(winnerSurname)) {
+  if (allSurnames.filter((surname) => surname === winnerSurname).length === 1) {
     return winnerSurname;
   }
   return `${winnerSurname} ( ${positionIdentifier} )`;
@@ -138,18 +138,22 @@ export function getScorecardGames(
         () => {
           return getWinnerSurname(
             allSurnames,
-            homePlayerNames[
-              playerPositionDisplays.homePositionDisplay.position
-            ]!,
+            getSurname(
+              homePlayerNames[
+                playerPositionDisplays.homePositionDisplay.position
+              ]!,
+            ),
             playerPositionDisplays.homePositionDisplay.display,
           );
         },
         () => {
           return getWinnerSurname(
             allSurnames,
-            awayPlayerNames[
-              playerPositionDisplays.awayPositionDisplay.position
-            ]!,
+            getSurname(
+              awayPlayerNames[
+                playerPositionDisplays.awayPositionDisplay.position
+              ]!,
+            ),
             playerPositionDisplays.awayPositionDisplay.display,
           );
         },

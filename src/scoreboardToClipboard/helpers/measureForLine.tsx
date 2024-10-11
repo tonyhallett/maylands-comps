@@ -1,5 +1,5 @@
-import { getScorecardCanvasFont } from "./getCanvasFont";
 import { FontFormat } from "../generateScorecard";
+import { measureText } from "./measureTexts";
 
 export interface TextForMeasurement {
   fontFormat: FontFormat;
@@ -12,9 +12,12 @@ export function measureForLine(
   ...textForMeasurements: TextForMeasurement[]
 ) {
   const results = textForMeasurements.map(({ fontFormat, text }) => {
-    const canvasFont = getScorecardCanvasFont(fontFormat, fontFamily);
-    ctx.font = canvasFont;
-    const metrics = ctx.measureText(text);
+    const { canvasFont, metrics } = measureText(
+      ctx,
+      fontFormat,
+      fontFamily,
+      text,
+    );
     return {
       metrics,
       canvasFont,

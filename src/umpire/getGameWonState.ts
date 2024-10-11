@@ -4,6 +4,7 @@ export function getGameWonState(
   team1Points: number,
   team2Points: number,
   upTo: number,
+  clearBy2: boolean,
 ): GameWonState {
   const team1IsUpTo = team1Points >= upTo;
   const team2IsUpTo = team2Points >= upTo;
@@ -12,7 +13,7 @@ export function getGameWonState(
     return GameWonState.NotWon;
   }
   const pointsDifference = Math.abs(team1Points - team2Points);
-  const clearBy = this._clearBy2 ? 2 : 1;
+  const clearBy = clearBy2 ? 2 : 1;
   if (pointsDifference < clearBy) {
     return GameWonState.NotWon;
   }

@@ -19,7 +19,7 @@ export interface ObjectGameScores {
 }
 
 export interface DbInitialServersDoublesReceiver {
-  gameInitialServers?: Record<Player, true>;
+  gameInitialServers?: Player[];
   firstDoublesReceiver?: Player;
 }
 export type DBMatchSaveState = Omit<
@@ -67,13 +67,10 @@ export function dbMatchSaveStateToSaveState(
       gameInitialServers:
         initialServersDoublesReceiver.gameInitialServers === undefined
           ? []
-          : (Object.keys(
-              initialServersDoublesReceiver.gameInitialServers,
-            ) as Player[]),
+          : initialServersDoublesReceiver.gameInitialServers,
       firstDoublesReceiver: initialServersDoublesReceiver.firstDoublesReceiver,
     };
   }
-
   return {
     ...rest,
     doublesEndsPointsScored,
@@ -93,16 +90,12 @@ export function saveStateToDbMatchSaveState(
     doublesEndsPointsScored,
     ...rest
   } = saveState;
+  const dbInitialServersDoublesReceiver: DbInitialServersDoublesReceiver = {};
+  if (initialServersDoublesReceiver.gameInitialServers.length > 0) {
+    dbInitialServersDoublesReceiver.gameInitialServers =
+      initialServersDoublesReceiver.gameInitialServers;
+  }
 
-  const dbInitialServersDoublesReceiver: DbInitialServersDoublesReceiver = {
-    gameInitialServers: initialServersDoublesReceiver.gameInitialServers.reduce(
-      (acc, player) => {
-        acc[player] = true;
-        return acc;
-      },
-      {} as Record<Player, true>,
-    ),
-  };
   if (initialServersDoublesReceiver.firstDoublesReceiver !== undefined) {
     dbInitialServersDoublesReceiver.firstDoublesReceiver =
       initialServersDoublesReceiver.firstDoublesReceiver;

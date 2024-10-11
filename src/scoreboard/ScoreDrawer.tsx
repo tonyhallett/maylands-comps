@@ -1,8 +1,4 @@
-import {
-  WidthHeight,
-  CanvasFontMaxImpl,
-  GetCanvasFontString,
-} from "./CanvasFontMax";
+import { CanvasFontMaxImpl, GetCanvasFontString } from "./CanvasFontMax";
 import { Score } from "./Scoreboard";
 import { getDigit } from "../fontDemos/DemoPlayerView/getDigit";
 import {
@@ -10,6 +6,7 @@ import {
   getDigitsMax,
 } from "../fontDemos/DemoPlayerView/getDigitsMax";
 import { inRange } from "../fontDemos/DemoPlayerView/inRange";
+import { Size } from "../commonTypes";
 
 interface Position {
   x: number;
@@ -37,7 +34,7 @@ interface PointsWonCardInstruction
 
 interface PointsWonCardMeasurement {
   instructions: PointsWonCardInstruction;
-  size: WidthHeight;
+  size: Size;
 }
 
 type GamesWonCardInstructions = BaseMeasurementCardInstructions;
@@ -50,7 +47,7 @@ interface GamesWonCardMeasurement {
 interface UncalculatedInstructions {
   pointsWonCard: PointsWonCardInstruction;
   gamesWonCard: GamesWonCardInstructions;
-  canvasSize: WidthHeight;
+  canvasSize: Size;
   cardGap: number;
   fullWidth: number;
   fullHeight: number;
@@ -73,7 +70,7 @@ interface DigitInstructions {
 
 interface BaseCalculatedCardInstructions extends BaseCardInstructions {
   digitInstructions: {
-    max: WidthHeight;
+    max: Size;
     digitInstructions: DigitInstructions;
   };
 }
@@ -99,22 +96,22 @@ export class ScoreDrawer implements CanvasFontMaxImpl<CalculatedInstructions> {
   public digitColor = "limegreen";
   private uncalculatedInstructions: UncalculatedInstructions | undefined;
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  private static getCardGap(maxDigit: WidthHeight) {
+  private static getCardGap(maxDigit: Size) {
     return 20;
   }
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  private static getPadding(maxDigit: WidthHeight): number {
+  private static getPadding(maxDigit: Size): number {
     return 20;
   }
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  private static getDoubleDigitSpacing(maxDigit: WidthHeight): number {
+  private static getDoubleDigitSpacing(maxDigit: Size): number {
     return 20;
   }
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  private static getStrokeWidth(maxDigit: WidthHeight): number {
+  private static getStrokeWidth(maxDigit: Size): number {
     return 10;
   }
 
@@ -122,7 +119,7 @@ export class ScoreDrawer implements CanvasFontMaxImpl<CalculatedInstructions> {
     fontSize: number,
     context: CanvasRenderingContext2D,
     getCanvasFontString: GetCanvasFontString,
-    canvasSize: WidthHeight,
+    canvasSize: Size,
   ): PointsWonCardMeasurement | undefined {
     const digitsMax = getDigitsMax(fontSize, context, getCanvasFontString);
     const max = digitsMax.max;
@@ -189,7 +186,7 @@ export class ScoreDrawer implements CanvasFontMaxImpl<CalculatedInstructions> {
 
   measurer(
     fontSize: number,
-    canvasSize: WidthHeight,
+    canvasSize: Size,
     context: CanvasRenderingContext2D,
     getCanvasFontString: GetCanvasFontString,
   ): boolean {

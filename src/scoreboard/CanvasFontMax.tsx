@@ -5,16 +5,13 @@ import {
   getCanvasFontString,
   WeightFontInfo,
 } from "../fontDemos/useFontCanvas";
+import { Size } from "../commonTypes";
 
-export interface WidthHeight {
-  width: number;
-  height: number;
-}
 export type GetCanvasFontString = (fontSize: number) => string;
 export interface CanvasFontMaxImpl<TInstructions> {
   measurer: (
     fontSize: number,
-    canvasSize: WidthHeight,
+    canvasSize: Size,
     context: CanvasRenderingContext2D,
     getCanvasFontString: GetCanvasFontString,
   ) => boolean;

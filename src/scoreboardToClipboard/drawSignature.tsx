@@ -1,7 +1,7 @@
 import { FontFormat, Signature } from "./generateScorecard";
 import { fillTextWithColor } from "./helpers/fillTextWithColor";
-import { getScorecardCanvasFont } from "./helpers/getCanvasFont";
 import { getSuffixedTitle } from "./helpers/getSuffixedTitle";
+import { measureText } from "./helpers/measureTexts";
 
 export function drawSignature(
   ctx: CanvasRenderingContext2D,
@@ -12,20 +12,20 @@ export function drawSignature(
   homeSignature: Signature,
   awaySignature?: Signature,
 ) {
-  const canvasFont = getScorecardCanvasFont(fontFormat, fontFamily);
-  ctx.font = canvasFont;
-  ctx.fillStyle = titleColor;
-  const signatureTitle = getSuffixedTitle("Signed");
-  const signatureTitleMetrics = ctx.measureText(signatureTitle);
-
+  const { canvasFont, metrics, text } = measureText(
+    ctx,
+    fontFormat,
+    fontFamily,
+    getSuffixedTitle("Signed"),
+  );
   ctx.translate(0, homeSignature.height);
 
   const drawTitleAndSignature = (signature: Signature | undefined) => {
-    fillTextWithColor(ctx, signatureTitle, 0, 0, titleColor, canvasFont);
+    fillTextWithColor(ctx, text, 0, 0, titleColor, canvasFont);
 
     if (signature) {
       ctx.save();
-      ctx.translate(signatureTitleMetrics.width + 5, 0);
+      ctx.translate(metrics.width + 5, 0);
       ctx.drawImage(
         signature,
         0,

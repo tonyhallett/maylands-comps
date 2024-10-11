@@ -1,8 +1,5 @@
-import { WidthHeight } from "../../scoreboard/CanvasFontMax";
+import { Size } from "../../commonTypes";
 
-export function inRange(widthHeight: WidthHeight, constriant: WidthHeight) {
-  return (
-    widthHeight.width <= constriant.width &&
-    widthHeight.height <= constriant.height
-  );
+export function inRange(size: Size, constriant: Size) {
+  return size.width <= constriant.width && size.height <= constriant.height;
 }

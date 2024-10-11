@@ -730,6 +730,7 @@ export class Umpire {
       this._team1Score.points,
       this._team2Score.points,
       this._upTo,
+      this._clearBy2,
     );
   }
 

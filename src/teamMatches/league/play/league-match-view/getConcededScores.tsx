@@ -24,6 +24,7 @@ export function getConcededScores(
       gameScore.team1Points,
       gameScore.team2Points,
       11,
+      true,
     );
     if (gameWonState === GameWonState.NotWon) {
       if (homeConcede) {
