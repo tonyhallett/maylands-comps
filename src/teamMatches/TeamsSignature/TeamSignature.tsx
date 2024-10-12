@@ -6,7 +6,7 @@ import {
   DialogTitle,
   IconButton,
 } from "@mui/material";
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import ReactSignatureCanvas, {
   ReactSignatureCanvasProps,
 } from "react-signature-canvas";
@@ -17,10 +17,10 @@ import useWindowDimensions, {
   WindowDimensions,
 } from "../../useWindowDimensions";
 import { Size } from "../../commonTypes";
+import SignaturePad from "signature_pad";
 
 export interface TeamSignatureState {
   createSignature: boolean;
-  dataUrl: string | undefined;
   trimmedCanvasSize?: Size;
 }
 type TeamSignatureCanvasProps = Omit<
@@ -41,8 +41,16 @@ export interface TeamSignatureProps {
   getDisplaySize: (canvasSize: Size) => Size;
   // if minWith and maxWidth are undefined they will be calculated from the canvas size
   signatureCanvasProps?: TeamSignatureCanvasPropsOrCalcFunction;
-  setHasSigned?: (hasSigned: boolean) => void;
-  showSigned?: boolean;
+  dataUrl: string | undefined;
+  addedSignature: (
+    dataUrl: string,
+    points: SignaturePad.Point[][],
+    canvasSize: Size,
+    minWidth: number,
+    maxWidth: number,
+    isHome: boolean,
+  ) => void;
+  addSignatureEnabled: boolean;
 }
 
 export const calculateFullscreenLandscapeDialogCanvasSize = (
@@ -142,25 +150,18 @@ export function TeamSignature({
   getDisplaySize,
   useTrimmedSize = true,
   signatureCanvasProps = {},
-  setHasSigned = () => {},
-  showSigned = true,
+  addSignatureEnabled: showSigned,
+  dataUrl,
+  addedSignature,
 }: TeamSignatureProps) {
   const scrollPositionRef = useRef<number | undefined>(undefined);
   const windowDimensions = useWindowDimensions();
   const isPortrait = useIsPortrait();
   const [state, setState] = useState<TeamSignatureState>({
     createSignature: false,
-    dataUrl: undefined,
   });
   const sigCanvas = useRef<ReactSignatureCanvas | null>(null);
-  useEffect(() => {
-    if (!showSigned) {
-      setState((prevState) => ({
-        ...prevState,
-        dataUrl: undefined,
-      }));
-    }
-  }, [showSigned]);
+
   const scrollback = () => {
     if (scrollPositionRef.current) {
       window.setTimeout(() => {
@@ -188,9 +189,7 @@ export function TeamSignature({
     }
     setState({
       createSignature: false,
-      dataUrl: undefined,
     });
-    setHasSigned(false);
   };
 
   return (
@@ -216,10 +215,10 @@ export function TeamSignature({
           <span
             style={{ marginRight: 5 }}
           >{`${isHome ? "Home" : "Away"} :`}</span>
-          {state.dataUrl && showSigned ? (
+          {dataUrl ? (
             <img
               id={`${isHome ? "home" : "away"}Signature`}
-              src={state.dataUrl}
+              src={dataUrl}
               width={displaySize.width}
               height={displaySize.height}
             />
@@ -271,6 +270,7 @@ export function TeamSignature({
                 }
                 let dataUrl: string;
                 let trimmedCanvasSize: Size | undefined;
+                const data = sigCanvas.current!.toData();
                 if (useTrimmedSize) {
                   const trimmedCanvas = sigCanvas.current!.getTrimmedCanvas();
                   dataUrl = trimmedCanvas.toDataURL();
@@ -281,12 +281,19 @@ export function TeamSignature({
                 } else {
                   dataUrl = sigCanvas.current!.toDataURL();
                 }
-                setHasSigned(true);
+
+                addedSignature(
+                  dataUrl,
+                  data,
+                  canvasSize,
+                  actualSignatureCanvasProps.minWidth!,
+                  actualSignatureCanvasProps.maxWidth!,
+                  isHome,
+                );
                 setState((prevState) => {
                   const newState: TeamSignatureState = {
                     ...prevState,
                     createSignature: false,
-                    dataUrl,
                   };
                   if (trimmedCanvasSize) {
                     newState.trimmedCanvasSize = trimmedCanvasSize;

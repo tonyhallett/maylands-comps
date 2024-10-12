@@ -68,6 +68,8 @@ import {
   getScorecardGames,
 } from "./scorecardToClipboard/getScorecardGames";
 import { copyToClipboardScorecard } from "../../scorecardToClipboard/copyScorecardToClipboard";
+import SignaturePad from "signature_pad";
+import { Size } from "../../../../commonTypes";
 // #region aria labels
 export const scoresheetTableAriaLabel = "Scoresheet Table";
 export const getScoresheetGameRowAriaLabel = (index: number) => `Game ${index}`;
@@ -81,6 +83,18 @@ export const getMatchOrderCellAriaLabel = (index: number) =>
   `Match order cell ${index}`;
 export const gameMenuButtonAriaLabel = "Game Menu Button";
 
+interface TeamSignatureState {
+  dataUrl: string;
+  points: SignaturePad.Point[][];
+  canvasSize: Size;
+  minWidth: number;
+  maxWidth: number;
+}
+interface SignatureState {
+  home: TeamSignatureState | undefined;
+  away: TeamSignatureState | undefined;
+}
+
 export function LeagueMatchView({ leagueMatchId }: { leagueMatchId: string }) {
   const [umpireMatchIndex, setUmpireMatchIndex] = useState<number | undefined>(
     undefined,
@@ -92,6 +106,11 @@ export function LeagueMatchView({ leagueMatchId }: { leagueMatchId: string }) {
     anchorElement: HTMLElement;
     index: number;
   } | null>(null);
+
+  const [signatureState, setSignatureState] = useState<SignatureState>({
+    home: undefined,
+    away: undefined,
+  });
   return (
     <LeagueMatchSelection
       leagueMatchId={leagueMatchId}
@@ -236,6 +255,15 @@ export function LeagueMatchView({ leagueMatchId }: { leagueMatchId: string }) {
 
         const leagueMatchResultModel =
           getLeagueMatchResultModel(umpireMatchAndKeys);
+        const addSignatureEnabled =
+          leagueMatchResultModel.state === LeagueMatchResultState.Completed;
+
+        let homeDataUrl = signatureState.home?.dataUrl;
+        let awayDataUrl = signatureState.away?.dataUrl;
+        if (!addSignatureEnabled) {
+          homeDataUrl = undefined;
+          awayDataUrl = undefined;
+        }
         return (
           <>
             {manualInput && (
@@ -352,11 +380,31 @@ export function LeagueMatchView({ leagueMatchId }: { leagueMatchId: string }) {
               </AccordionSummary>
               <AccordionDetails>
                 <TeamsSignature
-                  /*setHasSigned use this function to disabled sending a scorecard */
-                  showSigned={
-                    leagueMatchResultModel.state ===
-                    LeagueMatchResultState.Completed
-                  }
+                  addedSignature={(
+                    dataUrl,
+                    points,
+                    canvasSize,
+                    minWidth,
+                    maxWidth,
+                    isHome,
+                  ) => {
+                    setSignatureState((prevState) => {
+                      const teamSignatureState: TeamSignatureState = {
+                        dataUrl,
+                        points,
+                        canvasSize,
+                        minWidth,
+                        maxWidth,
+                      };
+                      return {
+                        ...prevState,
+                        [isHome ? "home" : "away"]: teamSignatureState,
+                      };
+                    });
+                  }}
+                  addSignatureEnabled={addSignatureEnabled}
+                  homeDataUrl={homeDataUrl}
+                  awayDataUrl={awayDataUrl}
                   useTrimmedSize
                   getDisplaySize={(canvasSize) => {
                     const maxHeight = 40;
@@ -413,6 +461,7 @@ export function LeagueMatchView({ leagueMatchId }: { leagueMatchId: string }) {
                       awayTeamName,
                       doublesGamePositionIdentifiers,
                     );
+
                     copyToClipboardScorecard(
                       {
                         name: homeTeamName,
