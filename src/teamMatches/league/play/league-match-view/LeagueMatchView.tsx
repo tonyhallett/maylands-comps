@@ -67,7 +67,7 @@ import {
   DoublesGamePositionIdentifiers,
   getScorecardGames,
 } from "./scorecardToClipboard/getScorecardGames";
-import { copyToClipboardScorecard } from "../../scorecardToClipboard/copyToClipboardScorecard";
+import { copyToClipboardScorecard } from "../../scorecardToClipboard/copyScorecardToClipboard";
 // #region aria labels
 export const scoresheetTableAriaLabel = "Scoresheet Table";
 export const getScoresheetGameRowAriaLabel = (index: number) => `Game ${index}`;

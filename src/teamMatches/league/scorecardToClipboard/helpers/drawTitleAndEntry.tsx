@@ -8,7 +8,7 @@ export function drawTitleAndEntry(
     titleX: number;
     titleWidth: number;
     y: number;
-    padding: number;
+    titleMarginRight: number;
   },
   title: {
     text: string;
@@ -31,7 +31,7 @@ export function drawTitleAndEntry(
   fillTextWithColor(
     ctx,
     entry.text,
-    positioning.titleX + positioning.titleWidth + positioning.padding,
+    positioning.titleX + positioning.titleWidth + positioning.titleMarginRight,
     positioning.y,
     penColors.entry,
     entry.canvasFont,

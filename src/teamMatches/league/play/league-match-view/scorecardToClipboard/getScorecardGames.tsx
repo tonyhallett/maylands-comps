@@ -6,7 +6,7 @@ import { GameScore } from "../../../../../umpire";
 import { leagueMatchPlayersPositionDisplays } from "../../format/singlesLeagueMatchPlayers";
 import { getTeamForfeitedScores } from "./getTeamForfeitedScores";
 import { getConcededScores } from "./getConcededScores";
-import { GameWithoutOrderOfPlay } from "../../../scorecardToClipboard/copyToClipboardScorecard";
+import { GameWithoutOrderOfPlay } from "../../../scorecardToClipboard/copyScorecardToClipboard";
 import { Game } from "../../../scorecardToClipboard/drawTable";
 import { getAllSurnames, getSurname, getWinnerSurname } from "./winnerSurname";
 import { PlayerNameOrUndefineds } from "../../../scorecardToClipboard/drawTeam";

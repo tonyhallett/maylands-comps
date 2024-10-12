@@ -12,10 +12,8 @@ export function drawHeader(
   orderOfPlay: HeaderCell,
   game: HeaderCell,
   winnersSurname: HeaderCell,
-  gridLineSize: number,
   fontFamily: string,
 ) {
-  ctx.save();
   const headerInstructions = [
     getInstructions(
       ctx,
@@ -43,11 +41,7 @@ export function drawHeader(
   headerInstructions.forEach((cellInstruction) => {
     shift = drawCell(
       ctx,
-      {
-        gridLineSize,
-        gridLineColor: penColors.title,
-      },
-
+      penColors.title,
       cellInstruction,
       {
         height: cellHeight,
@@ -56,6 +50,5 @@ export function drawHeader(
       penColors.title,
     );
   });
-  ctx.restore();
-  ctx.translate(0, shift);
+  return shift;
 }

@@ -1,14 +1,19 @@
 import { FontFormat, PenColors } from "../generateScorecard";
 import { measureTexts } from "../helpers/measureTexts";
+import { saveRestore } from "../helpers/saveRestore";
 import { drawGameRow, gameScoreSeparator } from "./drawGameRow";
 import { drawHeader } from "./drawHeader";
+
+export interface GameConfig extends Cell {
+  gamePointsPadding: number;
+}
 
 export interface TableConfig {
   paddingTopBottom: number;
   orderOfPlay: Cell;
-  game: Cell;
+  game: GameConfig;
   winnersSurname: Cell;
-  gridLineSize: number;
+  marginBottom: number;
 }
 
 export interface Cell {
@@ -35,38 +40,41 @@ export function drawTable(
   games: Game[],
   fontFamily: string,
 ) {
-  ctx.translate(config.gridLineSize / 2, config.gridLineSize);
-  drawHeader(
-    ctx,
-    config.paddingTopBottom,
-    penColors,
-    config.orderOfPlay,
-    config.game,
-    config.winnersSurname,
-    config.gridLineSize,
-    fontFamily,
-  );
-
-  // don't want to keep doing this everytime
-  const gameSeparatorWidth = measureTexts(
-    ctx,
-    config.game.row,
-    fontFamily,
-    gameScoreSeparator,
-  ).metrics[0].width;
-  for (let i = 0; i < games.length; i++) {
-    drawGameRow(
-      games[i],
+  const shift = saveRestore(ctx, () => {
+    return drawHeader(
       ctx,
       config.paddingTopBottom,
       penColors,
       config.orderOfPlay,
       config.game,
       config.winnersSurname,
-      config.gridLineSize,
       fontFamily,
-      i === 9,
-      gameSeparatorWidth,
     );
+  });
+  ctx.translate(0, shift);
+
+  const gameSeparatorWidth = measureTexts(
+    ctx,
+    config.game.row,
+    fontFamily,
+    gameScoreSeparator,
+  ).metrics[0].width;
+
+  for (let i = 0; i < games.length; i++) {
+    const shift = saveRestore(ctx, () => {
+      return drawGameRow(
+        games[i],
+        ctx,
+        config.paddingTopBottom,
+        penColors,
+        config.orderOfPlay,
+        config.game,
+        config.winnersSurname,
+        fontFamily,
+        i === 9,
+        gameSeparatorWidth,
+      );
+    });
+    ctx.translate(0, shift);
   }
 }

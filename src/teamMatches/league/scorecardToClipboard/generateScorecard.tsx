@@ -2,9 +2,10 @@ import { drawBackgroundColor } from "./helpers/drawBackgroundColor";
 import { drawResultWon } from "./drawResultWon";
 import { Game, TableConfig, drawTable } from "./drawTable";
 import { Team, drawTeam } from "./drawTeam";
-import { drawTitleAndDate } from "./drawTitleAndDate";
+import { drawLeagueAndDate } from "./drawLeagueAndDate";
 import { fixCanvasHighRes } from "./helpers/fixCanvasHighRes";
-import { drawSignature } from "./drawSignature";
+import { drawSignature, getMaxHeight } from "./drawSignature";
+import { saveRestore } from "./helpers/saveRestore";
 
 export interface FontFormat {
   size: number;
@@ -14,6 +15,7 @@ export interface FontFormat {
 export interface TitleEntryFontFormat {
   title: FontFormat;
   entry: FontFormat;
+  titleMarginRight: number;
 }
 
 export interface PenColors {
@@ -26,28 +28,59 @@ interface XPositioned {
 }
 
 export interface LeagueAndDate {
-  paddingTopBottom: number;
+  marginBottom: number;
   league: FontFormat & XPositioned;
   date: TitleEntryFontFormat & XPositioned;
 }
 
-export type Signature = HTMLImageElement; // Parameters<CanvasRenderingContext2D["drawImage"]>[0];
+export type Signature = HTMLImageElement | null;
+export interface TeamConfig extends TitleEntryFontFormat {
+  titleEntryMarginBottom: number;
+  marginBottom: number;
+}
+
+interface RestrictedTitleEntryFormat extends TitleEntryFontFormat {
+  entryMarginRight: number;
+}
+
+export interface ResultWonConfig {
+  result: RestrictedTitleEntryFormat;
+  won: TitleEntryFontFormat;
+  marginBottom: number;
+}
+
+export interface SignatureConfig {
+  title: FontFormat;
+  titleMarginRight: number;
+}
+
+export type PlayerConfig = RestrictedTitleEntryFormat;
 
 export interface ScorecardConfig {
   fontFamily: string; // todo - loading, also one for entry and one for title - perhaps handwriting
   penColors: PenColors;
   backgroundColor: string;
+  paddingTop: number;
+  paddingLeftRight: number;
+  // todo should be calculated
+  heightWithoutSignatures: number;
   leagueAndDate: LeagueAndDate;
-  //font
-  fontFomat: {
-    homeTeam: TitleEntryFontFormat;
-    awayTeam: TitleEntryFontFormat;
-    players: TitleEntryFontFormat;
+  teams: {
+    homeTeam: TeamConfig;
+    awayTeam: TeamConfig;
+    players: PlayerConfig;
   };
   table: TableConfig;
-  result: TitleEntryFontFormat;
-  won: TitleEntryFontFormat;
-  signatureTitle: FontFormat;
+  resultWon: ResultWonConfig;
+  signature: SignatureConfig;
+}
+
+function getTableWidth(tableConfig: TableConfig) {
+  return (
+    tableConfig.orderOfPlay.width +
+    tableConfig.winnersSurname.width +
+    tableConfig.game.width * 5
+  );
 }
 
 export function generateScorecard(
@@ -58,81 +91,80 @@ export function generateScorecard(
   games: Game[],
   result: string,
   won: string,
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   homeSignature: Signature,
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  awaySignature?: Signature,
+  awaySignature: Signature,
 ) {
   const tableConfig = config.table;
-  // currently 696
-  const canvasWidth =
-    tableConfig.orderOfPlay.width +
-    tableConfig.game.width * 5 +
-    tableConfig.winnersSurname.width;
 
-  // canvas height tbd
   const canvas = document.createElement("canvas");
-  // the canvas dimensions need to be determined in advance
-  // can you make large then scale down or trim the canvas?
-  canvas.width = canvasWidth + 50; ///////////////////////////////////////////// TODO !
-  canvas.height = 600;
+  const tableWidth = getTableWidth(tableConfig);
+  canvas.width = tableWidth + 2 * config.paddingLeftRight;
+  // should be calculated in advance
+  canvas.height =
+    config.heightWithoutSignatures + getMaxHeight(homeSignature, awaySignature);
 
   const ctx = canvas.getContext("2d")!;
 
   fixCanvasHighRes(canvas, ctx);
+
   drawBackgroundColor(canvas, ctx, config.backgroundColor);
 
-  ctx.translate(10, 0); //todo expose
-
-  drawTitleAndDate(
+  ctx.translate(config.paddingLeftRight, config.paddingTop); //todo expose
+  let shift = drawLeagueAndDate(
     ctx,
     config.penColors,
     date,
     config.leagueAndDate,
     config.fontFamily,
   );
+  ctx.translate(0, shift + config.leagueAndDate.marginBottom);
 
-  drawTeam(
+  shift = drawTeam(
     ctx,
     homeTeam,
     true,
     config.penColors,
-    config.fontFomat.homeTeam,
-    config.fontFomat.players,
+    config.teams.homeTeam,
+    config.teams.players,
     config.fontFamily,
-    canvasWidth,
+    tableWidth,
   );
+  ctx.translate(0, shift + config.teams.homeTeam.marginBottom);
 
-  drawTeam(
+  shift = drawTeam(
     ctx,
     awayTeam,
     false,
     config.penColors,
-    config.fontFomat.awayTeam,
-    config.fontFomat.players,
+    config.teams.awayTeam,
+    config.teams.players,
     config.fontFamily,
-    canvasWidth,
+    tableWidth,
   );
+  ctx.translate(0, shift + config.teams.awayTeam.marginBottom);
 
   drawTable(ctx, config.penColors, tableConfig, games, config.fontFamily);
+  ctx.translate(0, tableConfig.marginBottom);
 
-  drawResultWon(
-    ctx,
-    result,
-    won,
-    config.penColors,
-    config.result,
-    config.won,
-    config.fontFamily,
-    canvasWidth,
-  );
+  shift = saveRestore(ctx, () => {
+    return drawResultWon(
+      ctx,
+      result,
+      won,
+      config.penColors,
+      config.resultWon,
+      config.fontFamily,
+      tableWidth,
+    );
+  });
+  ctx.translate(0, shift);
 
   drawSignature(
     ctx,
-    config.signatureTitle,
+    config.signature,
     config.fontFamily,
     config.penColors.title,
-    canvasWidth,
+    tableWidth,
     homeSignature,
     awaySignature,
   );

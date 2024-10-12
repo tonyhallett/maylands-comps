@@ -1,5 +1,5 @@
 import { measureForLine } from "./helpers/measureForLine";
-import { PenColors, TitleEntryFontFormat } from "./generateScorecard";
+import { PenColors, ResultWonConfig } from "./generateScorecard";
 import { drawTitleAndEntry } from "./helpers/drawTitleAndEntry";
 import { getSuffixedTitle } from "./helpers/getSuffixedTitle";
 
@@ -8,25 +8,23 @@ export function drawResultWon(
   result: string,
   won: string,
   penColors: PenColors,
-  resultFormat: TitleEntryFontFormat,
-  wonFormat: TitleEntryFontFormat,
+  resultWon: ResultWonConfig,
   fontFamily: string,
   availableWidth: number,
 ) {
-  // need some margin from the table
-  ctx.translate(0, 20);
-  ctx.save();
-  const titlePadding = 5;
-
   const { results, maxAscent, maxDescent } = measureForLine(
     ctx,
     fontFamily,
-    { fontFormat: resultFormat.title, text: getSuffixedTitle("Result") },
-    { fontFormat: resultFormat.entry, text: result },
-    { fontFormat: wonFormat.title, text: getSuffixedTitle("Won") },
-    { fontFormat: wonFormat.entry, text: won },
+    { fontFormat: resultWon.result.title, text: getSuffixedTitle("Result") },
+    { fontFormat: resultWon.result.entry, text: result },
+    { fontFormat: resultWon.won.title, text: getSuffixedTitle("Won") },
+    { fontFormat: resultWon.won.entry, text: won },
   );
 
+  const resultEntryMaxWidth =
+    availableWidth / 2 -
+    resultWon.result.titleMarginRight -
+    resultWon.result.entryMarginRight;
   drawTitleAndEntry(
     ctx,
     penColors,
@@ -34,10 +32,10 @@ export function drawResultWon(
       titleX: 0,
       titleWidth: results[0].metrics.width,
       y: maxAscent,
-      padding: titlePadding,
+      titleMarginRight: resultWon.result.titleMarginRight,
     },
     results[0],
-    results[1],
+    { ...results[1], maxWidth: resultEntryMaxWidth },
   );
 
   ctx.translate(availableWidth / 2, 0);
@@ -49,11 +47,10 @@ export function drawResultWon(
       titleX: 0,
       titleWidth: results[2].metrics.width,
       y: maxAscent,
-      padding: titlePadding,
+      titleMarginRight: resultWon.won.titleMarginRight,
     },
     results[2],
     results[3],
   );
-  ctx.restore();
-  ctx.translate(0, maxAscent + maxDescent + 20);
+  return maxAscent + maxDescent + resultWon.marginBottom;
 }

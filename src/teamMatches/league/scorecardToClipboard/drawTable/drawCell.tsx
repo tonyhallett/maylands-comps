@@ -1,6 +1,6 @@
 import { Size } from "../../../../commonTypes";
 import { drawCentered } from "../helpers/drawCentered";
-import { GridInstruction, drawCellBorder } from "./drawCellBorder";
+import { drawCellBorder } from "./drawCellBorder";
 
 export interface FontInstruction {
   canvasFont: string;
@@ -18,39 +18,39 @@ export type CustomDraw = (
 
 export function drawCell(
   ctx: CanvasRenderingContext2D,
-  gridInstruction: GridInstruction,
-  cellInstructions: FontInstruction,
+  gridLineColor: string,
+  fontInstruction: FontInstruction,
   cellSize: Size,
   penColor: string,
 ): number;
 export function drawCell(
   ctx: CanvasRenderingContext2D,
-  gridInstruction: GridInstruction,
-  cellInstructions: FontInstruction,
+  gridLineColor: string,
+  fontInstruction: FontInstruction,
   cellSize: Size,
   customDraw: CustomDraw,
 ): number;
 export function drawCell(
   ctx: CanvasRenderingContext2D,
-  gridInstruction: GridInstruction,
-  cellInstructions: FontInstruction,
+  gridLineColor: string,
+  fontInstruction: FontInstruction,
   cellSize: Size,
   penColorOrCustomDraw: string | CustomDraw,
 ): number {
-  drawCellBorder(ctx, gridInstruction, cellSize);
+  drawCellBorder(ctx, gridLineColor, cellSize);
 
-  ctx.font = cellInstructions.canvasFont;
-  const diffFromMaxHeight = cellSize.height - cellInstructions.height;
+  ctx.font = fontInstruction.canvasFont;
+  const diffFromMaxHeight = cellSize.height - fontInstruction.height;
   const y =
-    cellInstructions.height +
+    fontInstruction.height +
     diffFromMaxHeight / 2 -
-    cellInstructions.textMetrics.actualBoundingBoxDescent;
+    fontInstruction.textMetrics.actualBoundingBoxDescent;
   if (penColorOrCustomDraw instanceof Function) {
-    penColorOrCustomDraw(ctx, cellInstructions.text, cellSize.width, y);
+    penColorOrCustomDraw(ctx, fontInstruction.text, cellSize.width, y);
   } else {
     drawCentered(
       ctx,
-      cellInstructions.text,
+      fontInstruction.text,
       penColorOrCustomDraw,
       cellSize.width,
       y,
@@ -58,5 +58,5 @@ export function drawCell(
   }
 
   ctx.translate(cellSize.width, 0);
-  return cellSize.height + gridInstruction.gridLineSize;
+  return cellSize.height;
 }
