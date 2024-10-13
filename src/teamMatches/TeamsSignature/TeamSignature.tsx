@@ -17,7 +17,6 @@ import useWindowDimensions, {
   WindowDimensions,
 } from "../../useWindowDimensions";
 import { Size } from "../../commonTypes";
-import SignaturePad from "signature_pad";
 
 export interface TeamSignatureState {
   createSignature: boolean;
@@ -42,14 +41,7 @@ export interface TeamSignatureProps {
   // if minWith and maxWidth are undefined they will be calculated from the canvas size
   signatureCanvasProps?: TeamSignatureCanvasPropsOrCalcFunction;
   dataUrl: string | undefined;
-  addedSignature: (
-    dataUrl: string,
-    points: SignaturePad.Point[][],
-    canvasSize: Size,
-    minWidth: number,
-    maxWidth: number,
-    isHome: boolean,
-  ) => void;
+  addedSignature: (dataUrl: string, isHome: boolean) => void;
   addSignatureEnabled: boolean;
 }
 
@@ -270,7 +262,6 @@ export function TeamSignature({
                 }
                 let dataUrl: string;
                 let trimmedCanvasSize: Size | undefined;
-                const data = sigCanvas.current!.toData();
                 if (useTrimmedSize) {
                   const trimmedCanvas = sigCanvas.current!.getTrimmedCanvas();
                   dataUrl = trimmedCanvas.toDataURL();
@@ -282,14 +273,7 @@ export function TeamSignature({
                   dataUrl = sigCanvas.current!.toDataURL();
                 }
 
-                addedSignature(
-                  dataUrl,
-                  data,
-                  canvasSize,
-                  actualSignatureCanvasProps.minWidth!,
-                  actualSignatureCanvasProps.maxWidth!,
-                  isHome,
-                );
+                addedSignature(dataUrl, isHome);
                 setState((prevState) => {
                   const newState: TeamSignatureState = {
                     ...prevState,

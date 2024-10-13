@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import {
   Accordion,
   AccordionDetails,
@@ -68,8 +68,6 @@ import {
   getScorecardGames,
 } from "./scorecardToClipboard/getScorecardGames";
 import { copyToClipboardScorecard } from "../../scorecardToClipboard/copyScorecardToClipboard";
-import SignaturePad from "signature_pad";
-import { Size } from "../../../../commonTypes";
 // #region aria labels
 export const scoresheetTableAriaLabel = "Scoresheet Table";
 export const getScoresheetGameRowAriaLabel = (index: number) => `Game ${index}`;
@@ -83,17 +81,30 @@ export const getMatchOrderCellAriaLabel = (index: number) =>
   `Match order cell ${index}`;
 export const gameMenuButtonAriaLabel = "Game Menu Button";
 
-interface TeamSignatureState {
-  dataUrl: string;
-  points: SignaturePad.Point[][];
-  canvasSize: Size;
-  minWidth: number;
-  maxWidth: number;
+interface SignatureDataUrls {
+  home: string | undefined;
+  away: string | undefined;
 }
-interface SignatureState {
-  home: TeamSignatureState | undefined;
-  away: TeamSignatureState | undefined;
+interface SignatureRequirement {
+  lastCompleted: boolean | undefined;
+  requiresNewSignature: boolean;
 }
+
+/* function useSignatureRequirement() {
+  const [signatureDataUrls, setSignatureDataUrls] = useState<SignatureDataUrls>(
+    {
+      home: undefined,
+      away: undefined,
+    },
+  );
+  const signatureRequirementRef = useRef<SignatureRequirement>({
+    lastCompleted: undefined,
+    requiresNewSignature: false,
+  });
+  const signatureRequirement = signatureRequirementRef.current;
+  const setIt = (dataUrl: string, ishome: boolean) => {};
+  return [signatureDataUrls, setIt];
+} */
 
 export function LeagueMatchView({ leagueMatchId }: { leagueMatchId: string }) {
   const [umpireMatchIndex, setUmpireMatchIndex] = useState<number | undefined>(
@@ -107,10 +118,19 @@ export function LeagueMatchView({ leagueMatchId }: { leagueMatchId: string }) {
     index: number;
   } | null>(null);
 
-  const [signatureState, setSignatureState] = useState<SignatureState>({
-    home: undefined,
-    away: undefined,
+  const signatureRequirementRef = useRef<SignatureRequirement>({
+    lastCompleted: undefined,
+    requiresNewSignature: false,
   });
+  const signatureRequirement = signatureRequirementRef.current;
+
+  const [signatureDataUrls, setSignatureDataUrls] = useState<SignatureDataUrls>(
+    {
+      home: undefined,
+      away: undefined,
+    },
+  );
+
   return (
     <LeagueMatchSelection
       leagueMatchId={leagueMatchId}
@@ -255,15 +275,21 @@ export function LeagueMatchView({ leagueMatchId }: { leagueMatchId: string }) {
 
         const leagueMatchResultModel =
           getLeagueMatchResultModel(umpireMatchAndKeys);
-        const addSignatureEnabled =
+        const leagueMatchCompleted =
           leagueMatchResultModel.state === LeagueMatchResultState.Completed;
 
-        let homeDataUrl = signatureState.home?.dataUrl;
-        let awayDataUrl = signatureState.away?.dataUrl;
-        if (!addSignatureEnabled) {
+        if (signatureRequirement.lastCompleted && !leagueMatchCompleted) {
+          signatureRequirement.requiresNewSignature = true;
+        }
+        signatureRequirement.lastCompleted = leagueMatchCompleted;
+
+        let homeDataUrl = signatureDataUrls.home;
+        let awayDataUrl = signatureDataUrls.away;
+        if (signatureRequirement.requiresNewSignature) {
           homeDataUrl = undefined;
           awayDataUrl = undefined;
         }
+
         return (
           <>
             {manualInput && (
@@ -380,29 +406,16 @@ export function LeagueMatchView({ leagueMatchId }: { leagueMatchId: string }) {
               </AccordionSummary>
               <AccordionDetails>
                 <TeamsSignature
-                  addedSignature={(
-                    dataUrl,
-                    points,
-                    canvasSize,
-                    minWidth,
-                    maxWidth,
-                    isHome,
-                  ) => {
-                    setSignatureState((prevState) => {
-                      const teamSignatureState: TeamSignatureState = {
-                        dataUrl,
-                        points,
-                        canvasSize,
-                        minWidth,
-                        maxWidth,
-                      };
+                  addedSignature={(dataUrl, isHome) => {
+                    signatureRequirement.requiresNewSignature = false;
+                    setSignatureDataUrls((prevState) => {
                       return {
                         ...prevState,
-                        [isHome ? "home" : "away"]: teamSignatureState,
+                        [isHome ? "home" : "away"]: dataUrl,
                       };
                     });
                   }}
-                  addSignatureEnabled={addSignatureEnabled}
+                  addSignatureEnabled={leagueMatchCompleted}
                   homeDataUrl={homeDataUrl}
                   awayDataUrl={awayDataUrl}
                   useTrimmedSize
