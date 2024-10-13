@@ -12,13 +12,19 @@ import { getAllSurnames, getSurname, getWinnerSurname } from "./winnerSurname";
 import { PlayerNameOrUndefineds } from "../../../scorecardToClipboard/drawTeam";
 
 const getScorecardGame = (
-  resultsModel: ResultsModel,
+  resultsModel: ResultsModel | undefined,
   homeTeamName: string,
   awayTeamName: string,
   gameScores: GameScore[],
   getHomeWinnerSurname: () => string,
   getAwayWinnerSurname: () => string,
 ): GameWithoutOrderOfPlay => {
+  if (resultsModel === undefined) {
+    return {
+      scores: [],
+      winnersSurname: "",
+    };
+  }
   const homeState = resultsModel.home.state;
   const awayState = resultsModel.away.state;
 
@@ -81,7 +87,7 @@ export type DoublesGamePositionIdentifiers = {
 
 function getDoublesGame(
   doublesGamePositionIdentifiers: DoublesGamePositionIdentifiers | undefined,
-  doublesResultsModel: ResultsModel,
+  doublesResultsModel: ResultsModel | undefined,
   homeTeamName: string,
   awayTeamName: string,
   doublesGameScores: GameScore[],
@@ -108,7 +114,7 @@ export function getSinglesGames(
   homePlayerNames: PlayerNameOrUndefineds,
   awayPlayerNames: PlayerNameOrUndefineds,
   gameScores: GameScore[][],
-  resultsModels: ResultsModel[],
+  resultsModels: (ResultsModel | undefined)[],
   homeTeamName: string,
   awayTeamName: string,
 ) {
@@ -159,7 +165,7 @@ export function getScorecardGames(
   homePlayerNames: PlayerNameOrUndefineds,
   awayPlayerNames: PlayerNameOrUndefineds,
   allGameScores: GameScore[][],
-  resultsModels: ResultsModel[],
+  resultsModels: (ResultsModel | undefined)[],
   homeTeamName: string,
   awayTeamName: string,
   doublesGamePositionIdentifiers: DoublesGamePositionIdentifiers | undefined,

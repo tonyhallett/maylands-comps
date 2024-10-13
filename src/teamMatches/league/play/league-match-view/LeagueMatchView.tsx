@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useState } from "react";
 import {
   Accordion,
   AccordionDetails,
@@ -9,6 +9,7 @@ import {
   DialogContent,
   DialogTitle,
   Divider,
+  IconButton,
   Paper,
   Table,
   TableBody,
@@ -68,6 +69,8 @@ import {
   getScorecardGames,
 } from "./scorecardToClipboard/getScorecardGames";
 import { copyToClipboardScorecard } from "../../scorecardToClipboard/copyScorecardToClipboard";
+import { useSignatureRequirement } from "./useSignatureRequirement";
+import ContentPasteIcon from "@mui/icons-material/ContentPaste";
 // #region aria labels
 export const scoresheetTableAriaLabel = "Scoresheet Table";
 export const getScoresheetGameRowAriaLabel = (index: number) => `Game ${index}`;
@@ -81,31 +84,6 @@ export const getMatchOrderCellAriaLabel = (index: number) =>
   `Match order cell ${index}`;
 export const gameMenuButtonAriaLabel = "Game Menu Button";
 
-interface SignatureDataUrls {
-  home: string | undefined;
-  away: string | undefined;
-}
-interface SignatureRequirement {
-  lastCompleted: boolean | undefined;
-  requiresNewSignature: boolean;
-}
-
-/* function useSignatureRequirement() {
-  const [signatureDataUrls, setSignatureDataUrls] = useState<SignatureDataUrls>(
-    {
-      home: undefined,
-      away: undefined,
-    },
-  );
-  const signatureRequirementRef = useRef<SignatureRequirement>({
-    lastCompleted: undefined,
-    requiresNewSignature: false,
-  });
-  const signatureRequirement = signatureRequirementRef.current;
-  const setIt = (dataUrl: string, ishome: boolean) => {};
-  return [signatureDataUrls, setIt];
-} */
-
 export function LeagueMatchView({ leagueMatchId }: { leagueMatchId: string }) {
   const [umpireMatchIndex, setUmpireMatchIndex] = useState<number | undefined>(
     undefined,
@@ -117,19 +95,7 @@ export function LeagueMatchView({ leagueMatchId }: { leagueMatchId: string }) {
     anchorElement: HTMLElement;
     index: number;
   } | null>(null);
-
-  const signatureRequirementRef = useRef<SignatureRequirement>({
-    lastCompleted: undefined,
-    requiresNewSignature: false,
-  });
-  const signatureRequirement = signatureRequirementRef.current;
-
-  const [signatureDataUrls, setSignatureDataUrls] = useState<SignatureDataUrls>(
-    {
-      home: undefined,
-      away: undefined,
-    },
-  );
+  const { setCompleted, addedSignature } = useSignatureRequirement();
 
   return (
     <LeagueMatchSelection
@@ -277,18 +243,7 @@ export function LeagueMatchView({ leagueMatchId }: { leagueMatchId: string }) {
           getLeagueMatchResultModel(umpireMatchAndKeys);
         const leagueMatchCompleted =
           leagueMatchResultModel.state === LeagueMatchResultState.Completed;
-
-        if (signatureRequirement.lastCompleted && !leagueMatchCompleted) {
-          signatureRequirement.requiresNewSignature = true;
-        }
-        signatureRequirement.lastCompleted = leagueMatchCompleted;
-
-        let homeDataUrl = signatureDataUrls.home;
-        let awayDataUrl = signatureDataUrls.away;
-        if (signatureRequirement.requiresNewSignature) {
-          homeDataUrl = undefined;
-          awayDataUrl = undefined;
-        }
+        const { homeDataUrl, awayDataUrl } = setCompleted(leagueMatchCompleted);
 
         return (
           <>
@@ -402,19 +357,11 @@ export function LeagueMatchView({ leagueMatchId }: { leagueMatchId: string }) {
                 aria-controls="panel1-content"
                 id="panel1-header"
               >
-                <Typography>Signatures</Typography>
+                <Typography>Scorecard</Typography>
               </AccordionSummary>
               <AccordionDetails>
                 <TeamsSignature
-                  addedSignature={(dataUrl, isHome) => {
-                    signatureRequirement.requiresNewSignature = false;
-                    setSignatureDataUrls((prevState) => {
-                      return {
-                        ...prevState,
-                        [isHome ? "home" : "away"]: dataUrl,
-                      };
-                    });
-                  }}
+                  addedSignature={addedSignature}
                   addSignatureEnabled={leagueMatchCompleted}
                   homeDataUrl={homeDataUrl}
                   awayDataUrl={awayDataUrl}
@@ -438,7 +385,8 @@ export function LeagueMatchView({ leagueMatchId }: { leagueMatchId: string }) {
                     },
                   }}
                 />
-                <Button
+                <IconButton
+                  sx={{ padding: 2 }}
                   onClick={() => {
                     const { home, away } = getPlayerNames(
                       keyedSinglesMatchNamePositionDisplays,
@@ -469,7 +417,7 @@ export function LeagueMatchView({ leagueMatchId }: { leagueMatchId: string }) {
                       home,
                       away,
                       allGameScores,
-                      resultsModels as ResultsModel[],
+                      resultsModels,
                       homeTeamName,
                       awayTeamName,
                       doublesGamePositionIdentifiers,
@@ -491,8 +439,8 @@ export function LeagueMatchView({ leagueMatchId }: { leagueMatchId: string }) {
                     );
                   }}
                 >
-                  Screenshot
-                </Button>
+                  <ContentPasteIcon />
+                </IconButton>
               </AccordionDetails>
             </Accordion>
           </>
