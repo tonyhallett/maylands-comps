@@ -13,6 +13,7 @@ import { CreateLeagueSeason } from "./teamMatches/league/db-population/CreateLea
 import { LeagueMatchLinks } from "./teamMatches/league/LeagueMatchLinks";
 import { LeagueMatchViewRoute } from "./teamMatches/league/play/LeagueMatchViewRoute";
 import { CreateLeagueSeasonForEmulator } from "./teamMatches/league/db-population/CreateLeagueSeasonForEmulator";
+import { DemoLiveStreamDialog } from "./teamMatches/league/play/league-match-view/liveSteamExtractor";
 
 const leagueMatchesPath = "leagueMatches";
 const createLeagueSeasonPath = "createLeagueSeason";
@@ -29,6 +30,9 @@ const router = createBrowserRouter([
 
         <Link style={{ display: "block" }} href={leagueMatchesPath}>
           League matches
+        </Link>
+        <Link style={{ display: "block" }} href="demolivestreamdialog">
+          Demo live stream dialog
         </Link>
       </Box>
     ),
@@ -48,6 +52,10 @@ const router = createBrowserRouter([
   {
     path: `${leagueMatchesPath}/:leagueMatchId`,
     element: <LeagueMatchViewRoute />,
+  },
+  {
+    path: "demolivestreamdialog",
+    element: <DemoLiveStreamDialog />,
   },
   freeScoringRoute,
 ]);

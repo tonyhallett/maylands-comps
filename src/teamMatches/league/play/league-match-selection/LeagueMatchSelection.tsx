@@ -43,6 +43,8 @@ import { useForfeit } from "./useForfeit";
 import { getForfeitButtons } from "./getForfeitButtons";
 import { getTeamConcedeOrForfeitKey } from "../../../../firebase/rtb/match/dbMatch";
 const ForfeitIcon = PersonOffIcon;
+import LiveTvIcon from "@mui/icons-material/LiveTv";
+import { LiveStreamingDialog } from "../league-match-view/liveSteamExtractor";
 
 export interface LeagueMatchSelectionProps {
   renderScoresheet: RenderScoresheet;
@@ -60,6 +62,7 @@ export function LeagueMatchSelection({
   const [showScoreboard, setShowScoreboard] = useState(false);
   const [leagueMatch, matchAndKeys] = useLeagueMatchAndMatches(leagueMatchId!);
   const [homeTeam, awayTeam] = useLeagueTeamsOnValue(leagueMatch);
+  const [showLivestreamDialog, setShowLivestreamDialog] = useState(false);
   const { showForfeitDialogDisabled, getForfeitDialog, openForfeitDialog } =
     useForfeit(
       matchAndKeys,
@@ -367,8 +370,20 @@ export function LeagueMatchSelection({
             isHome: false,
           }}
         />
-
         <Button onClick={() => setShowScoreboard(true)}>Scoreboard</Button>
+        <IconButton onClick={() => setShowLivestreamDialog(true)}>
+          <LiveTvIcon />
+        </IconButton>
+        <LiveStreamingDialog
+          showLivestreamDialog={showLivestreamDialog}
+          setShowLivestreamDialog={setShowLivestreamDialog}
+          changed={() => {}}
+          liveStreamAvailability={{
+            allTables: [],
+            games: [],
+            tables: [],
+          }}
+        />
         {getForfeitDialog()}
         <IconButton
           aria-label={openForfeitDialogButtonAriaLabel}
