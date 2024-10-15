@@ -38,25 +38,25 @@ export function useCreateLeagueSeason(
   useEffect(() => {
     const updater = createRootUpdater();
     const updateClub = (leagueClub: DbLeagueClub) => {
-      const newClubKey = getNewKey(clubsRef);
+      const newClubKey = getNewKey(db);
       updater.updateListItem("clubs", newClubKey, leagueClub);
       return newClubKey!;
     };
 
     const updateTeam = (leagueTeam: DbLeagueTeam) => {
-      const newTeamKey = getNewKey(teamsRef);
-      updater.updateListItem("teams", newTeamKey!, leagueTeam);
+      const newTeamKey = getNewKey(db);
+      updater.updateListItem("teams", newTeamKey, leagueTeam);
       return newTeamKey!;
     };
 
     const updatePlayer = (player: DbPlayer) => {
-      const newPlayerKey = getNewKey(playersRef);
+      const newPlayerKey = getNewKey(db);
       updater.updateListItem("players", newPlayerKey!, player);
       return newPlayerKey!;
     };
 
     const updateRegisteredPlayer = (registeredPlayer: DbRegisteredPlayer) => {
-      const newRegisteredPlayerKey = getNewKey(registeredPlayersRef);
+      const newRegisteredPlayerKey = getNewKey(db);
       updater.updateListItem(
         "registeredPlayers",
         newRegisteredPlayerKey,
@@ -66,7 +66,7 @@ export function useCreateLeagueSeason(
     };
 
     const updateLeagueMatch = (leagueMatch: DbLeagueMatch) => {
-      const newLeagueMatchKey = getNewKey(leagueMatchesRef);
+      const newLeagueMatchKey = getNewKey(db);
       updater.updateListItem("leagueMatches", newLeagueMatchKey, leagueMatch);
       return newLeagueMatchKey;
     };
@@ -113,7 +113,7 @@ export function useCreateLeagueSeason(
       });
       const singlesMatchSaveState = getDbMatchSaveState(false);
       const addMatch = (dbMatchSaveState: DBMatchSaveState) => {
-        const matchKey = getNewKey(matchesRef);
+        const matchKey = getNewKey(db);
         const newMatch: DbMatch = {
           scoreboardWithUmpire: true,
           ...dbMatchSaveState,

@@ -7,13 +7,6 @@ export interface ConcedeOrForfeit {
   reason?: string;
 }
 
-type LiveStreams = Record<string, string>;
-export interface DbLiveStream {
-  allTables?: LiveStreams;
-  tables?: Record<string, LiveStreams>;
-  games?: Record<string, LiveStreams>;
-}
-
 export interface DbMatch extends DBMatchSaveState {
   team1Player1Id?: string;
   team1Player2Id?: string;
@@ -25,7 +18,6 @@ export interface DbMatch extends DBMatchSaveState {
   containerId?: string;
   umpired?: boolean;
   tableId?: string;
-  liveStreams?: LiveStreams;
 }
 
 type TeamConcedeOrForfeitKeys = ExtractKey<

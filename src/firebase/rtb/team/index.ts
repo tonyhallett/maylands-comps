@@ -25,12 +25,19 @@ export interface DbLeagueClub {
   name: string;
 }
 
+export interface Livestream {
+  identifer?: string | number;
+  url: string;
+}
+export type Livestreams = Record<string, Livestream>;
+
 export interface DbLeagueMatch {
   date: string;
   description: string;
   isFriendly: boolean;
   homeTeamId: string;
   awayTeamId: string;
+  liveStreams?: Livestreams;
 
   // matches will have id back to this
   // match creation order will be the order of the matches

@@ -31,19 +31,24 @@ export const twitchRegex = /^https:\/\/www\.twitch\.tv\/.+$/;
 
 // todo check the regexes above ! see liveStreamRegexes.test.ts
 
-interface KeyedLivestream {
+export interface KeyedLivestream {
   key: string;
   livestream: string;
 }
-interface DisplayKeyedLiveStreams {
-  display: string;
+export interface TableKeyedLiveStreams {
+  table: string;
   streams: KeyedLivestream[];
 }
 
-interface LiveStreamAvailability {
-  allTables: KeyedLivestream[];
-  tables: DisplayKeyedLiveStreams[];
-  games: DisplayKeyedLiveStreams[];
+export interface GameKeyedLiveStreams {
+  game: number;
+  streams: KeyedLivestream[];
+}
+
+export interface LiveStreamAvailability {
+  free: KeyedLivestream[];
+  tables: TableKeyedLiveStreams[];
+  games: GameKeyedLiveStreams[];
 }
 
 interface AdditionsDeletions {
@@ -51,10 +56,18 @@ interface AdditionsDeletions {
   deletions: KeyedLivestream[];
 }
 
+interface TableAdditionsDeletions extends AdditionsDeletions {
+  table: string;
+}
+
+interface GameAdditionsDeletions extends AdditionsDeletions {
+  game: number;
+}
+
 interface LivestreamChanges {
-  allTables: AdditionsDeletions;
-  tables: AdditionsDeletions[];
-  games: AdditionsDeletions[];
+  free: AdditionsDeletions;
+  tables: TableAdditionsDeletions[];
+  games: GameAdditionsDeletions[];
 }
 
 export type LiveStreamDialogProps = {
@@ -65,7 +78,7 @@ export type LiveStreamDialogProps = {
 };
 
 interface KeyedLiveStreamsState {
-  allTables: KeyedLivestream[];
+  free: KeyedLivestream[];
   tables: KeyedLivestream[][];
   games: KeyedLivestream[][];
 }
@@ -86,37 +99,45 @@ export function LiveStreamingDialog({
   liveStreamAvailability,
   changed,
 }: LiveStreamDialogProps) {
-  const { allTables, games, tables } = liveStreamAvailability;
+  const { free, games, tables } = liveStreamAvailability;
   // check will this ref remain if immediately open again
   const changesRef = useRef<LivestreamChanges>({
-    allTables: { additions: [], deletions: [] },
-    tables: tables.map(() => ({ additions: [], deletions: [] })),
-    games: games.map(() => ({ additions: [], deletions: [] })),
+    free: { additions: [], deletions: [] },
+    tables: tables.map((table) => ({
+      additions: [],
+      deletions: [],
+      table: table.table,
+    })),
+    games: games.map((game) => ({
+      additions: [],
+      deletions: [],
+      game: game.game,
+    })),
   });
   const changes = changesRef.current;
   const anyChanged =
-    hasChanges(changes.allTables) ||
+    hasChanges(changes.free) ||
     anyChanges(changes.games) ||
     anyChanges(changes.tables);
 
   const [keyedLiveStreamStates, setKeyedLiveStreamStates] =
     useState<KeyedLiveStreamsState>({
-      allTables: [...allTables],
+      free: [...free],
       tables: [...tables.map((t) => t.streams)],
       games: [...games.map((g) => g.streams)],
     });
-  const [selectedValue, setSelectedValue] = useState("allTables");
+  const [selectedValue, setSelectedValue] = useState("free");
 
   const { additionsDeletions, keyedLiveStreamsState } = useMemo(() => {
     const getStateOrChanges = (
       value: string,
-      y: KeyedLiveStreamsState | LivestreamChanges,
+      from: KeyedLiveStreamsState | LivestreamChanges,
     ) => {
-      if (value === "allTables") {
-        return y.allTables;
+      if (value === "free") {
+        return from.free;
       } else {
         const isTables = value.startsWith("Table");
-        const gamesOrTables = isTables ? y.tables : y.games;
+        const gamesOrTables = isTables ? from.tables : from.games;
         const index = Number(value[value.length - 1]);
         return gamesOrTables[index];
       }
@@ -156,17 +177,17 @@ export function LiveStreamingDialog({
                 setSelectedValue(e.target.value);
               }}
             >
-              <MenuItem key="allTables" value="allTables">
+              <MenuItem key="free" value="free">
                 All tables
               </MenuItem>
-              {tables.map((table, i) => (
-                <MenuItem key={table.display} value={`Table${i}`}>
-                  {`Table ${table.display}`}
+              {tables.map((table) => (
+                <MenuItem key={table.table} value={`Table ${table.table}`}>
+                  {`Table ${table.table}`}
                 </MenuItem>
               ))}
-              {games.map((game, i) => (
-                <MenuItem key={game.display} value={`Game${i}`}>
-                  {game.display}
+              {games.map((game) => (
+                <MenuItem key={game.game} value={`Game ${game.game}`}>
+                  {game.game + 1}
                 </MenuItem>
               ))}
             </Select>
@@ -238,15 +259,15 @@ export function DemoLiveStreamDialog() {
       showLivestreamDialog={true}
       setShowLivestreamDialog={() => {}}
       liveStreamAvailability={{
-        allTables: [
+        free: [
           {
             key: "789",
-            livestream: "alltables",
+            livestream: "free",
           },
         ],
         games: [
           {
-            display: "A V X",
+            game: 0,
             streams: [
               {
                 key: "123",
@@ -254,10 +275,19 @@ export function DemoLiveStreamDialog() {
               },
             ],
           },
+          {
+            game: 5,
+            streams: [
+              {
+                key: "8910",
+                livestream: "Another",
+              },
+            ],
+          },
         ],
         tables: [
           {
-            display: "Main",
+            table: "Main",
             streams: [
               {
                 key: "456",

@@ -26,6 +26,7 @@ import {
   KeyedSinglesMatchNamePositionDisplay,
   RenderScoresheet,
   SelectedOrNotSinglePlayerNamePositionDisplay,
+  UmpireMatchAndKey,
 } from "./renderScoresheet-type";
 import { TeamsSelectPlayersAndDoubles } from "../player-selection/TeamsSelectPlayersAndDoubles";
 import { Button, DialogContent, DialogTitle, IconButton } from "@mui/material";
@@ -41,10 +42,24 @@ import { addUmpireToMatchAndKeys } from "./addUmpireToMatchAndKeys";
 import PersonOffIcon from "@mui/icons-material/PersonOff";
 import { useForfeit } from "./useForfeit";
 import { getForfeitButtons } from "./getForfeitButtons";
-import { getTeamConcedeOrForfeitKey } from "../../../../firebase/rtb/match/dbMatch";
+import {
+  ConcedeOrForfeit,
+  getTeamConcedeOrForfeitKey,
+} from "../../../../firebase/rtb/match/dbMatch";
 const ForfeitIcon = PersonOffIcon;
 import LiveTvIcon from "@mui/icons-material/LiveTv";
-import { LiveStreamingDialog } from "../league-match-view/liveSteamExtractor";
+import {
+  TableKeyedLiveStreams,
+  KeyedLivestream,
+  LiveStreamAvailability,
+  LiveStreamingDialog,
+  GameKeyedLiveStreams,
+} from "../league-match-view/LiveStreamingDialog";
+import { MatchWinState, isMatchWon } from "../../../../umpire/matchWinState";
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+import { Livestream, Livestreams } from "../../../../firebase/rtb/team";
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+import { getNewKey } from "../../../../firebase/rtb/typeHelpers";
 
 export interface LeagueMatchSelectionProps {
   renderScoresheet: RenderScoresheet;
@@ -309,6 +324,11 @@ export function LeagueMatchSelection({
     };
   };
   const autoCompletesEnabled = getEnabled();
+  const umpireMatchAndKeys = addUmpireToMatchAndKeys(matchAndKeys);
+  const liveStreamAvailability = getLiveStreamAvailability(
+    leagueMatch?.liveStreams,
+    umpireMatchAndKeys,
+  );
   return (
     <>
       <div style={{ margin: 10 }}>
@@ -377,12 +397,38 @@ export function LeagueMatchSelection({
         <LiveStreamingDialog
           showLivestreamDialog={showLivestreamDialog}
           setShowLivestreamDialog={setShowLivestreamDialog}
-          changed={() => {}}
-          liveStreamAvailability={{
-            allTables: [],
-            games: [],
-            tables: [],
+          // eslint-disable-next-line @typescript-eslint/no-unused-vars
+          changed={({ free, games, tables }) => {
+            // DO NOT WANT TO REPLACE THE WHOLE LIVE STREAMS OBJECT
+            /* free.deletions.forEach((keyedLiveStream) => {});
+            free.additions.forEach((livestreamUrl) => {
+              const liveStream: Livestream = {
+                url: livestreamUrl,
+              };
+              const newKey = getNewKey(db);
+            });
+
+            games.forEach((game) => {
+              game.deletions.forEach((keyedLiveStream) => {});
+              game.additions.forEach((livestreamUrl) => {
+                const liveStream: Livestream = {
+                  url: livestreamUrl,
+                  identifer: game.game,
+                };
+                getNewKey(db);
+              });
+            });
+            tables.forEach((table) => {
+              table.deletions.forEach((keyedLiveStream) => {});
+              table.additions.forEach((livestreamUrl) => {
+                const liveStream: Livestream = {
+                  url: livestreamUrl,
+                  identifer: table.table,
+                };
+              });
+            }); */
           }}
+          liveStreamAvailability={liveStreamAvailability}
         />
         {getForfeitDialog()}
         <IconButton
@@ -394,7 +440,7 @@ export function LeagueMatchSelection({
         </IconButton>
         <section aria-label={scoresheetSectionAriaLabel}>
           {renderScoresheet(
-            addUmpireToMatchAndKeys(matchAndKeys),
+            umpireMatchAndKeys,
             db,
             keyedSinglesMatchNamePositionDisplays,
             keyedDoublesMatchNamesPositionDisplay,
@@ -404,5 +450,114 @@ export function LeagueMatchSelection({
         </section>
       </div>
     </>
+  );
+}
+
+interface TablesAndGamesNotCompleted {
+  tables: string[];
+  games: number[];
+}
+
+interface CombinedLivestreams {
+  free: KeyedLivestream[];
+  tables: Record<string, KeyedLivestream[]>;
+  games: Record<number, KeyedLivestream[]>;
+}
+
+function combineLiveStreams(
+  livestreams: Livestreams | undefined,
+): CombinedLivestreams {
+  const combinedLivestreams: CombinedLivestreams = {
+    free: [],
+    tables: {},
+    games: {},
+  };
+  if (livestreams) {
+    Object.entries(livestreams).forEach(([key, livestream]) => {
+      const keyedLivestream: KeyedLivestream = {
+        key,
+        livestream: livestream.url,
+      };
+      if (livestream.identifer) {
+        const tablesOrGames =
+          typeof livestream.identifer === "string" ? "tables" : "games";
+        combinedLivestreams[tablesOrGames][livestream.identifer] =
+          combinedLivestreams[tablesOrGames][livestream.identifer] ?? [];
+        combinedLivestreams[tablesOrGames][livestream.identifer].push();
+      } else {
+        combinedLivestreams.free.push(keyedLivestream);
+      }
+    });
+  }
+
+  return combinedLivestreams;
+}
+
+function getLiveStreamAvailability(
+  livestreams: Livestreams | undefined,
+  umpireMatchAndKeys: UmpireMatchAndKey[],
+): LiveStreamAvailability {
+  const { tables, games } = getTablesAndGamesNotCompleted(umpireMatchAndKeys);
+  const liveStreamAvailability: LiveStreamAvailability = {
+    free: [],
+    tables: [],
+    games: [],
+  };
+  const combinedLivestreams = combineLiveStreams(livestreams);
+  liveStreamAvailability.free = combinedLivestreams.free;
+  tables.forEach((tableId) => {
+    const tableDisplayKeyedLiveStreams: TableKeyedLiveStreams = {
+      table: tableId,
+      streams: combinedLivestreams.tables[tableId] ?? [],
+    };
+    liveStreamAvailability.tables.push(tableDisplayKeyedLiveStreams);
+  });
+  games.forEach((gameIndex) => {
+    const gameDisplayKeyedLiveStreams: GameKeyedLiveStreams = {
+      game: gameIndex,
+      streams: combinedLivestreams.games[gameIndex] ?? [],
+    };
+    liveStreamAvailability.games.push(gameDisplayKeyedLiveStreams);
+  });
+
+  return liveStreamAvailability;
+}
+
+function getTablesAndGamesNotCompleted(
+  umpireMatchAndKeys: UmpireMatchAndKey[],
+): TablesAndGamesNotCompleted {
+  return umpireMatchAndKeys.reduce<TablesAndGamesNotCompleted>(
+    (acc, umpireMatchAndKey, i) => {
+      const { matchState, match } = umpireMatchAndKey;
+      if (
+        getNotCompleted(
+          matchState.matchWinState,
+          match.team1ConcedeOrForfeit,
+          match.team2ConcedeOrForfeit,
+        )
+      ) {
+        acc.games.push(i);
+      }
+      if (match.tableId !== undefined && !acc.tables.includes(match.tableId)) {
+        acc.tables.push(match.tableId);
+      }
+      return acc;
+    },
+    {
+      tables: [],
+      games: [],
+    },
+  );
+}
+
+function getNotCompleted(
+  matchWinState: MatchWinState,
+  team1ConcedeOrForfeit: ConcedeOrForfeit | undefined,
+  team2ConcedeOrForfeit: ConcedeOrForfeit | undefined,
+) {
+  return (
+    !isMatchWon(matchWinState) &&
+    team1ConcedeOrForfeit === undefined &&
+    team2ConcedeOrForfeit === undefined
   );
 }

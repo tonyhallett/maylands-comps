@@ -13,7 +13,7 @@ import { CreateLeagueSeason } from "./teamMatches/league/db-population/CreateLea
 import { LeagueMatchLinks } from "./teamMatches/league/LeagueMatchLinks";
 import { LeagueMatchViewRoute } from "./teamMatches/league/play/LeagueMatchViewRoute";
 import { CreateLeagueSeasonForEmulator } from "./teamMatches/league/db-population/CreateLeagueSeasonForEmulator";
-import { DemoLiveStreamDialog } from "./teamMatches/league/play/league-match-view/liveSteamExtractor";
+import { DemoLiveStreamDialog } from "./teamMatches/league/play/league-match-view/LiveStreamingDialog";
 
 const leagueMatchesPath = "leagueMatches";
 const createLeagueSeasonPath = "createLeagueSeason";

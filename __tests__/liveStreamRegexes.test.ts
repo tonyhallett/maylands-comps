@@ -1,4 +1,4 @@
-import { twitchRegex } from "../src/teamMatches/league/play/league-match-view/liveSteamExtractor";
+import { twitchRegex } from "../src/teamMatches/league/play/league-match-view/LiveStreamingDialog";
 
 describe("live stream regexes", () => {
   describe("twitch regex", () => {
