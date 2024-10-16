@@ -2,7 +2,7 @@ import { useEffect } from "react";
 import { DBMatchSaveState } from "../../../firebase/rtb/match/conversion";
 import { DbMatch } from "../../../firebase/rtb/match/dbMatch";
 import { DbPlayer } from "../../../firebase/rtb/players";
-import { useRTB } from "../../../firebase/rtb/rtbProvider";
+import { useRTBGetNewKey } from "../../../firebase/rtb/rtbProvider";
 import {
   DbLeagueClub,
   DbLeagueTeam,
@@ -10,7 +10,6 @@ import {
   DbLeagueMatch,
 } from "../../../firebase/rtb/team";
 import { getDbDate } from "../../../helpers/getDbDate";
-import { getNewKey } from "../../../firebase/rtb/typeHelpers";
 import {
   useClubsRef,
   useLeagueMatchesRef,
@@ -19,7 +18,6 @@ import {
   useTeamsRef,
 } from "../../../firebase/rtb/root";
 import { clubSetups, maylandsFixtures } from "./data/romfordLeagueData";
-import { createRootUpdater } from "../../../firebase/rtb/match/db-helpers/createRootUpdater";
 import { getDbMatchSaveState } from "./getDbMatchSaveState";
 
 export type PromiseCallback = (promise: Promise<void>) => void;
@@ -27,7 +25,7 @@ export function useCreateLeagueSeason(
   fixtures: typeof maylandsFixtures,
   promiseCallback: PromiseCallback,
 ) {
-  const db = useRTB();
+  const { getNewKey, createRootUpdater } = useRTBGetNewKey();
   const leagueMatchesRef = useLeagueMatchesRef();
   const registeredPlayersRef = useRegisteredPlayersRef();
   const matchesRef = useTeamsRef();
@@ -35,27 +33,27 @@ export function useCreateLeagueSeason(
   const teamsRef = useTeamsRef();
   const playersRef = usePlayersRef();
   useEffect(() => {
-    const { updateListItem, update } = createRootUpdater(db);
+    const { updateListItem, update } = createRootUpdater();
     const updateClub = (leagueClub: DbLeagueClub) => {
-      const newClubKey = getNewKey(db);
+      const newClubKey = getNewKey();
       updateListItem("clubs", newClubKey, leagueClub);
       return newClubKey!;
     };
 
     const updateTeam = (leagueTeam: DbLeagueTeam) => {
-      const newTeamKey = getNewKey(db);
+      const newTeamKey = getNewKey();
       updateListItem("teams", newTeamKey, leagueTeam);
       return newTeamKey!;
     };
 
     const updatePlayer = (player: DbPlayer) => {
-      const newPlayerKey = getNewKey(db);
+      const newPlayerKey = getNewKey();
       updateListItem("players", newPlayerKey!, player);
       return newPlayerKey!;
     };
 
     const updateRegisteredPlayer = (registeredPlayer: DbRegisteredPlayer) => {
-      const newRegisteredPlayerKey = getNewKey(db);
+      const newRegisteredPlayerKey = getNewKey();
       updateListItem(
         "registeredPlayers",
         newRegisteredPlayerKey,
@@ -65,7 +63,7 @@ export function useCreateLeagueSeason(
     };
 
     const updateLeagueMatch = (leagueMatch: DbLeagueMatch) => {
-      const newLeagueMatchKey = getNewKey(db);
+      const newLeagueMatchKey = getNewKey();
       updateListItem("leagueMatches", newLeagueMatchKey, leagueMatch);
       return newLeagueMatchKey;
     };
@@ -112,7 +110,7 @@ export function useCreateLeagueSeason(
       });
       const singlesMatchSaveState = getDbMatchSaveState(false);
       const addMatch = (dbMatchSaveState: DBMatchSaveState) => {
-        const matchKey = getNewKey(db);
+        const matchKey = getNewKey();
         const newMatch: DbMatch = {
           scoreboardWithUmpire: true,
           ...dbMatchSaveState,
@@ -129,7 +127,8 @@ export function useCreateLeagueSeason(
 
     promiseCallback(update());
   }, [
-    db,
+    getNewKey,
+    createRootUpdater,
     leagueMatchesRef,
     registeredPlayersRef,
     matchesRef,

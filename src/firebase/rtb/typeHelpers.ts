@@ -33,6 +33,8 @@ type IsRecord<T> =
       : false
     : false;
 
+// although this does provide the correct type, it does not prevent incorrect paths due to ${string}
+// capturing everything
 type Paths<T> = T extends object
   ? {
       [K in keyof T]: K extends string
@@ -229,10 +231,6 @@ export const onChildChangedTyped = <T>(
 
 export const nameof = <T>(name: Extract<keyof T, string>): string => name;
 export type ExtractKey<T, U extends keyof T> = Extract<keyof T, U>;
-
-/* export const getNewKey = (databaseReference: DatabaseReference) => {
-  return push(databaseReference).key!;
-}; */
 
 export const getNewKey = (database: Database) => {
   return push(ref(database, "___")).key!;

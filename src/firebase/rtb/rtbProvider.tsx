@@ -7,6 +7,8 @@ import {
   getDatabase,
 } from "firebase/database";
 import { isDevelopmentEnvironment } from "../../helpers/environment";
+import { getNewKey } from "./typeHelpers";
+import { createRootUpdater } from "./match/db-helpers/createRootUpdater";
 
 export function getMaylandsCompRTB() {
   const app = initializeApp(firebaseConfig);
@@ -24,6 +26,14 @@ export function getMaylandsCompRTB() {
 const DatabaseContext = createContext<Database | null>(null);
 export function useRTB() {
   return useContext(DatabaseContext) as Database;
+}
+export function useRTBGetNewKey() {
+  const db = useRTB();
+  return {
+    db,
+    getNewKey: () => getNewKey(db),
+    createRootUpdater: () => createRootUpdater(db),
+  };
 }
 const DatabaseProviderX = DatabaseContext.Provider;
 export function DatabaseProvider({
