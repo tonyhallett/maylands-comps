@@ -7,14 +7,14 @@ import {
   DatabaseProvider,
   getMaylandsCompRTB,
 } from "../src/firebase/rtb/rtbProvider";
-import { ref, set } from "firebase/database";
 import { ReactNode } from "react";
+import { setRoot } from "./setRoot";
 
 export default function createEmulatorTests() {
   const database = getMaylandsCompRTB();
 
   beforeEach(async () => {
-    await set(ref(database), null);
+    await setRoot(database, null);
   });
 
   //afterAll(async () => {}); // database coverage

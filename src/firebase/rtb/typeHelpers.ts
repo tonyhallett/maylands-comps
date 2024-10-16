@@ -14,15 +14,39 @@ import {
   ref,
   set,
 } from "firebase/database";
-import { Root } from "./root";
 
-export type Paths<T> = {
+// note that the literal ${string} includes the empty string !
+// empty string can be used as a key !
+
+/* export type Paths<T> = {
   [K in keyof T]: K extends string
     ? T[K] extends object
       ? `${K}` | `${K}/${Paths<T[K]>}`
       : `${K}`
     : never;
-}[keyof T];
+}[keyof T]; */
+
+type IsRecord<T> =
+  T extends Record<string, unknown>
+    ? string extends keyof T
+      ? true
+      : false
+    : false;
+
+type Paths<T> = T extends object
+  ? {
+      [K in keyof T]: K extends string
+        ? IsRecord<T[K]> extends true
+          ?
+              | `${K}`
+              | `${K}/${string}`
+              | `${K}/${string}/${Paths<T[K][string & keyof T[K]]>}`
+          : T[K] extends object
+            ? `${K}` | `${K}/${Paths<T[K]>}`
+            : `${K}`
+        : never;
+    }[keyof T]
+  : never;
 
 type PathValue<
   T,
@@ -85,14 +109,14 @@ export type PartialWithNullsWithoutUndefined<T> = Partial<
 export const createTypedValuesUpdater = <TRoot>() => {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const values = {} as any;
-  const updateFn = <TPath extends Paths<Root>>(
+  const updateFn = <TPath extends Paths<TRoot>>(
     path: TPath,
     value: PathValue<TRoot, TPath>,
   ) => {
     values[path] = value;
     return updateFn;
   };
-  const updateListItem = <TPath extends Paths<Root>>(
+  const updateListItem = <TPath extends Paths<TRoot>>(
     path: TPath,
     itemId: string,
     value: PartialWithNullsWithoutUndefined<

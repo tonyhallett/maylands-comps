@@ -1,4 +1,4 @@
-import { Database, ref, set } from "firebase/database";
+import { Database } from "firebase/database";
 import {
   DBMatchSaveState,
   saveStateToDbMatchSaveState,
@@ -9,6 +9,7 @@ import { getDbToday } from "../src/helpers/getDbDate";
 import { ClubSetup } from "../src/teamMatches/league/db-population/data/romfordLeagueData";
 import { Umpire } from "../src/umpire";
 import { leagueMatchPlayersPositionDisplays } from "../src/teamMatches/league/play/format/singlesLeagueMatchPlayers";
+import { setRoot } from "./setRoot";
 
 export const defaultHomeTeamName = "Maylands A";
 export const defaultAwayTeamName = "Lower ranked away";
@@ -132,7 +133,7 @@ export async function setupDatabase(
   const doublesMatchSaveState = getDbMatchSaveState(true);
   addMatch(doublesMatchSaveState, 9);
 
-  await set(ref(database), root);
+  await setRoot(database, root);
   return leagueMatchKey;
 }
 
