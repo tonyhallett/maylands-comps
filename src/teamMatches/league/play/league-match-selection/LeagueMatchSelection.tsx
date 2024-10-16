@@ -7,7 +7,7 @@ import {
   leagueMatchNumberOfSingles,
   leagueMatchPlayersPositionDisplays,
 } from "../format/singlesLeagueMatchPlayers";
-import { useRTB } from "../../../../firebase/rtb/rtbProvider";
+import { useRTBGetNewKey } from "../../../../firebase/rtb/rtbProvider";
 import { AvailableDoubles } from "../player-selection/DoublesSelect";
 import {
   MatchAndKey,
@@ -28,8 +28,14 @@ import {
   UmpireMatchAndKey,
 } from "./renderScoresheet-type";
 import { TeamsSelectPlayersAndDoubles } from "../player-selection/TeamsSelectPlayersAndDoubles";
-import { Button, DialogContent, DialogTitle, IconButton } from "@mui/material";
-import { createRootUpdater } from "../../../../firebase/rtb/match/db-helpers/createRootUpdater";
+import {
+  Box,
+  Button,
+  DialogContent,
+  DialogTitle,
+  IconButton,
+  Typography,
+} from "@mui/material";
 import { useWakeLock } from "../../../../hooks/useWakeLock";
 import {
   homeTeamSelectLabels,
@@ -55,10 +61,11 @@ import {
   GameKeyedLiveStreams,
 } from "../league-match-view/LiveStreamingDialog";
 import { MatchWinState, isMatchWon } from "../../../../umpire/matchWinState";
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { Livestream, Livestreams } from "../../../../firebase/rtb/team";
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-import { getNewKey } from "../../../../firebase/rtb/typeHelpers";
+import { ref, update } from "firebase/database";
+import YouTubeIcon from "@mui/icons-material/YouTube";
+import FacebookIcon from "@mui/icons-material/Facebook";
+import InstagramIcon from "@mui/icons-material/Instagram";
 
 export interface LeagueMatchSelectionProps {
   renderScoresheet: RenderScoresheet;
@@ -72,7 +79,7 @@ export function LeagueMatchSelection({
   leagueMatchId,
   renderScoresheet,
 }: LeagueMatchSelectionProps) {
-  const db = useRTB();
+  const { db, createRootUpdater, getNewKey } = useRTBGetNewKey();
   const [showScoreboard, setShowScoreboard] = useState(false);
   const [leagueMatch, matchAndKeys] = useLeagueMatchAndMatches(leagueMatchId!);
   const [homeTeam, awayTeam] = useLeagueTeamsOnValue(leagueMatch);
@@ -132,7 +139,7 @@ export function LeagueMatchSelection({
         (index) => matchAndKeys[index],
       );
     };
-    const { updateListItem, update } = createRootUpdater(db);
+    const { updateListItem, update } = createRootUpdater();
     const updatePlayerSinglesMatches = () => {
       getPlayerSinglesMatches(isHome, position).forEach((matchAndKey) => {
         const playerId = player?.playerId ?? null;
@@ -186,7 +193,7 @@ export function LeagueMatchSelection({
     availableDoubles: AvailableDoubles | null,
   ) => {
     const doublesMatchKey = matchAndKeys[matchAndKeys.length - 1].key;
-    const { updateListItem, update } = createRootUpdater(db);
+    const { updateListItem, update } = createRootUpdater();
     const player1Id = availableDoubles ? availableDoubles.player1Id : null;
     const player2Id = availableDoubles ? availableDoubles.player2Id : null;
     const playersKeys = getTeamDoublesPlayerKeys(isHome);
@@ -325,9 +332,10 @@ export function LeagueMatchSelection({
   const autoCompletesEnabled = getEnabled();
   const umpireMatchAndKeys = addUmpireToMatchAndKeys(matchAndKeys);
   const liveStreamAvailability = getLiveStreamAvailability(
-    leagueMatch?.liveStreams,
+    leagueMatch?.livestreams,
     umpireMatchAndKeys,
   );
+  const closeLiveStreamDialog = () => setShowLivestreamDialog(false);
   return (
     <>
       <div style={{ margin: 10 }}>
@@ -393,42 +401,74 @@ export function LeagueMatchSelection({
         <IconButton onClick={() => setShowLivestreamDialog(true)}>
           <LiveTvIcon />
         </IconButton>
-        <LiveStreamingDialog
-          showLivestreamDialog={showLivestreamDialog}
-          setShowLivestreamDialog={setShowLivestreamDialog}
-          // eslint-disable-next-line @typescript-eslint/no-unused-vars
-          changed={({ free, games, tables }) => {
-            // DO NOT WANT TO REPLACE THE WHOLE LIVE STREAMS OBJECT
-            /* free.deletions.forEach((keyedLiveStream) => {});
-            free.additions.forEach((livestreamUrl) => {
-              const liveStream: Livestream = {
-                url: livestreamUrl,
-              };
-              const newKey = getNewKey(db);
-            });
+        {showLivestreamDialog && (
+          <LiveStreamingDialog
+            helpNode={
+              <Box padding={1} width={200}>
+                <Typography>
+                  Select the table or game to livestream. Free is for when
+                  multiple tables and the stream covers all tables. You can
+                  change the table for a match from `Table Main` with the three
+                  dots menu alongside a game.
+                </Typography>
+              </Box>
+            }
+            onClose={closeLiveStreamDialog}
+            changed={({ free, games, tables }) => {
+              const updates = {};
+              const deleteLivestream = (keyedLiveStream: KeyedLivestream) =>
+                (updates[keyedLiveStream.key] = null);
+              const addLiveStream = (livestream: Livestream) =>
+                (updates[getNewKey()] = livestream);
+              free.deletions.forEach(deleteLivestream);
+              free.additions.forEach((addition) => {
+                addLiveStream(addition);
+              });
 
-            games.forEach((game) => {
-              game.deletions.forEach((keyedLiveStream) => {});
-              game.additions.forEach((livestreamUrl) => {
-                const liveStream: Livestream = {
-                  url: livestreamUrl,
-                  identifer: game.game,
-                };
-                getNewKey(db);
+              games.forEach((game) => {
+                game.deletions.forEach(deleteLivestream);
+                game.additions.forEach((addition) => {
+                  addLiveStream({
+                    ...addition,
+                    identifer: game.game,
+                  });
+                });
               });
-            });
-            tables.forEach((table) => {
-              table.deletions.forEach((keyedLiveStream) => {});
-              table.additions.forEach((livestreamUrl) => {
-                const liveStream: Livestream = {
-                  url: livestreamUrl,
-                  identifer: table.table,
-                };
+              tables.forEach((table) => {
+                table.deletions.forEach(deleteLivestream);
+                table.additions.forEach((addition) => {
+                  addLiveStream({
+                    ...addition,
+                    identifer: table.table,
+                  });
+                });
               });
-            }); */
-          }}
-          liveStreamAvailability={liveStreamAvailability}
-        />
+
+              update(
+                ref(db, `leagueMatches/${leagueMatchId}/livestreams`),
+                updates,
+              );
+              closeLiveStreamDialog();
+            }}
+            liveStreamAvailability={liveStreamAvailability}
+            permittedLivestreams={{
+              icons: [
+                <YouTubeIcon key="yt" />,
+                <FacebookIcon key="fb" />,
+                <InstagramIcon key="ig" />,
+              ],
+              // eslint-disable-next-line @typescript-eslint/no-unused-vars
+              isPermitted: (url) => {
+                //todo
+                return {
+                  providerIndex: 0,
+                  isPermitted: true,
+                  suggestedTag: "todo",
+                };
+              },
+            }}
+          />
+        )}
         {getForfeitDialog()}
         <IconButton
           aria-label={openForfeitDialogButtonAriaLabel}
@@ -475,14 +515,17 @@ function combineLiveStreams(
     Object.entries(livestreams).forEach(([key, livestream]) => {
       const keyedLivestream: KeyedLivestream = {
         key,
-        livestream: livestream.url,
+        url: livestream.url,
+        tag: livestream.tag,
       };
       if (livestream.identifer) {
         const tablesOrGames =
           typeof livestream.identifer === "string" ? "tables" : "games";
         combinedLivestreams[tablesOrGames][livestream.identifer] =
           combinedLivestreams[tablesOrGames][livestream.identifer] ?? [];
-        combinedLivestreams[tablesOrGames][livestream.identifer].push();
+        combinedLivestreams[tablesOrGames][livestream.identifer].push(
+          keyedLivestream,
+        );
       } else {
         combinedLivestreams.free.push(keyedLivestream);
       }
@@ -543,7 +586,7 @@ function getTablesAndGamesNotCompleted(
       return acc;
     },
     {
-      tables: [],
+      tables: ["Main"],
       games: [],
     },
   );

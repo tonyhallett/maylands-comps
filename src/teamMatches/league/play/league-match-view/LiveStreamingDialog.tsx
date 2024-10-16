@@ -5,13 +5,26 @@ import {
   DialogActions,
   DialogContent,
   DialogTitle,
+  Divider,
   FormControl,
+  IconButton,
   InputLabel,
+  List,
+  ListItemButton,
+  ListItemIcon,
+  ListItemText,
+  ListSubheader,
   MenuItem,
   OutlinedInput,
   Select,
+  Stack,
+  TextField,
 } from "@mui/material";
-import { useMemo, useRef, useState } from "react";
+import DeleteIcon from "@mui/icons-material/Delete";
+import AddIcon from "@mui/icons-material/Add";
+import { ReactNode, useRef, useState } from "react";
+import HelpIcon from "@mui/icons-material/Help";
+import { useClickPopover } from "./useClickPopover";
 
 //  https://youtube.com/live/U_BtCIwvHqg?feature=share
 export const youtubeRegex = /^https:\/\/youtube\.com\/live\/([a-zA-Z0-9_-]+)$/;
@@ -33,7 +46,8 @@ export const twitchRegex = /^https:\/\/www\.twitch\.tv\/.+$/;
 
 export interface KeyedLivestream {
   key: string;
-  livestream: string;
+  url: string;
+  tag: string;
 }
 export interface TableKeyedLiveStreams {
   table: string;
@@ -51,8 +65,12 @@ export interface LiveStreamAvailability {
   games: GameKeyedLiveStreams[];
 }
 
+interface Addition {
+  tag: string;
+  url: string;
+}
 interface AdditionsDeletions {
-  additions: string[];
+  additions: Addition[];
   deletions: KeyedLivestream[];
 }
 
@@ -70,18 +88,23 @@ interface LivestreamChanges {
   games: GameAdditionsDeletions[];
 }
 
+interface PermittedLivestreamInputResult {
+  providerIndex: number;
+  suggestedTag: string;
+}
+
+interface PermittedLivestreams {
+  icons: ReactNode[];
+  isPermitted: (url: string) => PermittedLivestreamInputResult | undefined;
+}
+
 export type LiveStreamDialogProps = {
-  showLivestreamDialog: boolean;
-  setShowLivestreamDialog: (show: boolean) => void;
+  onClose: () => void;
   liveStreamAvailability: LiveStreamAvailability;
   changed: (liveStreamChanges: LivestreamChanges) => void;
+  permittedLivestreams: PermittedLivestreams;
+  helpNode: ReactNode;
 };
-
-interface KeyedLiveStreamsState {
-  free: KeyedLivestream[];
-  tables: KeyedLivestream[][];
-  games: KeyedLivestream[][];
-}
 
 function hasChanges(additionsDeletions: AdditionsDeletions) {
   return (
@@ -92,145 +115,189 @@ function hasChanges(additionsDeletions: AdditionsDeletions) {
 function anyChanges(additionsDeletions: AdditionsDeletions[]) {
   return additionsDeletions.some((ad) => hasChanges(ad));
 }
+interface LiveStreamsAndChanges {
+  livestreams: KeyedLivestream[];
+  changes: AdditionsDeletions;
+  title: string;
+}
+function getNoChanges(
+  livestreams: KeyedLivestream[],
+  title: string,
+): LiveStreamsAndChanges {
+  return {
+    livestreams,
+    changes: {
+      additions: [],
+      deletions: [],
+    },
+    title,
+  };
+}
+interface LiveStreamDialogState {
+  livestreams: KeyedLivestream[];
+  selectedValue: number;
+}
 
 export function LiveStreamingDialog({
-  setShowLivestreamDialog,
-  showLivestreamDialog,
+  onClose,
   liveStreamAvailability,
   changed,
+  permittedLivestreams,
+  helpNode,
 }: LiveStreamDialogProps) {
   const { free, games, tables } = liveStreamAvailability;
   // check will this ref remain if immediately open again
-  const changesRef = useRef<LivestreamChanges>({
-    free: { additions: [], deletions: [] },
-    tables: tables.map((table) => ({
-      additions: [],
-      deletions: [],
-      table: table.table,
-    })),
-    games: games.map((game) => ({
-      additions: [],
-      deletions: [],
-      game: game.game,
-    })),
+  const liveStreamsAndChangesRef = useRef<LiveStreamsAndChanges[]>([
+    getNoChanges(free, "Free"),
+
+    ...tables.map((table) =>
+      getNoChanges(table.streams, `Table ${table.table}`),
+    ),
+    ...games.map((game) => getNoChanges(game.streams, `Game ${game.game + 1}`)),
+  ]);
+
+  const [state, setState] = useState<LiveStreamDialogState>({
+    livestreams: [],
+    selectedValue: -1,
   });
-  const changes = changesRef.current;
-  const anyChanged =
-    hasChanges(changes.free) ||
-    anyChanges(changes.games) ||
-    anyChanges(changes.tables);
+  const helpButton = useClickPopover(
+    <IconButton>
+      <HelpIcon />
+    </IconButton>,
+    helpNode,
+  );
+  const liveStreamsAndChanges = liveStreamsAndChangesRef.current;
+  const anyChanged = anyChanges(
+    liveStreamsAndChanges.map((lsc) => lsc.changes),
+  );
 
-  const [keyedLiveStreamStates, setKeyedLiveStreamStates] =
-    useState<KeyedLiveStreamsState>({
-      free: [...free],
-      tables: [...tables.map((t) => t.streams)],
-      games: [...games.map((g) => g.streams)],
-    });
-  const [selectedValue, setSelectedValue] = useState("free");
-
-  const { additionsDeletions, keyedLiveStreamsState } = useMemo(() => {
-    const getStateOrChanges = (
-      value: string,
-      from: KeyedLiveStreamsState | LivestreamChanges,
-    ) => {
-      if (value === "free") {
-        return from.free;
-      } else {
-        const isTables = value.startsWith("Table");
-        const gamesOrTables = isTables ? from.tables : from.games;
-        const index = Number(value[value.length - 1]);
-        return gamesOrTables[index];
-      }
-    };
-
-    const additionsDeletions = getStateOrChanges(
-      selectedValue,
-      changes,
-    ) as unknown as AdditionsDeletions;
-
-    const keyedLiveStreamsState = getStateOrChanges(
-      selectedValue,
-      keyedLiveStreamStates,
-    ) as unknown as KeyedLivestream[];
-    return {
-      additionsDeletions,
-      keyedLiveStreamsState,
-    };
-  }, [selectedValue, changes, keyedLiveStreamStates]);
   const selectedLabelId = "Select livestream applicable to";
+
   return (
-    <Dialog
-      disableEscapeKeyDown
-      open={showLivestreamDialog}
-      onClose={() => setShowLivestreamDialog(false)}
-    >
-      <DialogTitle> Live stream urls</DialogTitle>
-      <DialogContent>
+    <Dialog disableEscapeKeyDown open onClose={onClose}>
+      <DialogTitle>
+        <Box sx={{ display: "flex", justifyContent: "space-between" }}>
+          <span>Live stream urls</span>
+          <Stack direction="row" sx={{ alignItems: "center" }}>
+            {permittedLivestreams.icons}
+            {helpButton}
+          </Stack>
+        </Box>
+      </DialogTitle>
+      <DialogContent dividers>
         <Box component="form" sx={{ display: "flex", flexWrap: "wrap" }}>
           <FormControl sx={{ m: 1, minWidth: 200 }}>
             <InputLabel id={selectedLabelId}>Livestream for :</InputLabel>
             <Select
               labelId={selectedLabelId}
-              value={selectedValue}
+              value={state.selectedValue === -1 ? "" : state.selectedValue}
               input={<OutlinedInput label="Livestream for :" />}
               onChange={(e) => {
-                setSelectedValue(e.target.value);
+                const selectedValue = e.target.value as number;
+                setState({
+                  selectedValue,
+                  livestreams: liveStreamsAndChanges[selectedValue].livestreams,
+                });
               }}
             >
-              <MenuItem key="free" value="free">
-                All tables
-              </MenuItem>
-              {tables.map((table) => (
-                <MenuItem key={table.table} value={`Table ${table.table}`}>
-                  {`Table ${table.table}`}
-                </MenuItem>
-              ))}
-              {games.map((game) => (
-                <MenuItem key={game.game} value={`Game ${game.game}`}>
-                  {game.game + 1}
-                </MenuItem>
-              ))}
+              {liveStreamsAndChanges.flatMap(({ title }, i) => {
+                let listSubheader: ReactNode | undefined = undefined;
+                if (i === 1) {
+                  listSubheader = (
+                    <ListSubheader key="tablesHeader">Tables</ListSubheader>
+                  );
+                } else if (i === 1 + tables.length) {
+                  listSubheader = (
+                    <ListSubheader key="gamesHeader">Games</ListSubheader>
+                  );
+                }
+                const components = listSubheader ? [listSubheader] : [];
+                components.push(
+                  <MenuItem key={title} value={i}>
+                    {title}
+                  </MenuItem>,
+                );
+                return components;
+              })}
             </Select>
           </FormControl>
         </Box>
       </DialogContent>
-      <DialogContent>
+      <DialogContent dividers>
         <AddDelete
-          keyedLivestreams={keyedLiveStreamsState}
+          enabled={state.selectedValue !== -1}
+          keyedLivestreams={state.livestreams}
           deleted={(keyedLiveStream) => {
+            const additionsDeletions =
+              liveStreamsAndChanges[state.selectedValue].changes;
             if (keyedLiveStream.key === "!") {
               additionsDeletions.additions =
                 additionsDeletions.additions.filter(
-                  (a) => a !== keyedLiveStream.livestream,
+                  (a) => a.url !== keyedLiveStream.url,
                 );
             } else {
               additionsDeletions.deletions.push(keyedLiveStream);
             }
-            // todo common code to below
-            // eslint-disable-next-line @typescript-eslint/no-unused-vars
-            setKeyedLiveStreamStates((prevState) => {
-              throw new Error("Not implemented");
+            const selectedLivestreamAndChanges =
+              liveStreamsAndChanges[state.selectedValue];
+            selectedLivestreamAndChanges.livestreams =
+              selectedLivestreamAndChanges.livestreams.filter(
+                (livestream) => livestream.key !== keyedLiveStream.key,
+              );
+            setState((prev) => {
+              return {
+                ...prev,
+                livestreams: selectedLivestreamAndChanges.livestreams,
+              };
             });
           }}
-          added={(livestreamUrl) => {
-            additionsDeletions.additions.push(livestreamUrl);
-            // eslint-disable-next-line @typescript-eslint/no-unused-vars
+          added={(addition) => {
+            const selectedLivestreamAndChanges =
+              liveStreamsAndChanges[state.selectedValue];
+            const additionsDeletions = selectedLivestreamAndChanges.changes;
+            additionsDeletions.additions.push(addition);
+
             const addedKeyedLiveStream: KeyedLivestream = {
               key: "!",
-              livestream: livestreamUrl,
+              ...addition,
             };
-            // eslint-disable-next-line @typescript-eslint/no-unused-vars
-            setKeyedLiveStreamStates((prevState) => {
-              throw new Error("Not implemented");
+            selectedLivestreamAndChanges.livestreams = [
+              ...selectedLivestreamAndChanges.livestreams,
+              addedKeyedLiveStream,
+            ];
+            setState((prev) => {
+              return {
+                ...prev,
+                livestreams: selectedLivestreamAndChanges.livestreams,
+              };
             });
-            // need to
           }}
         />
       </DialogContent>
       <DialogActions>
         <Button
           disabled={!anyChanged}
-          onClick={() => changed(changesRef.current)}
+          onClick={() => {
+            const freeChanges = liveStreamsAndChanges[0].changes;
+
+            const tablesChanges: TableAdditionsDeletions[] =
+              liveStreamsAndChanges
+                .slice(1, 1 + tables.length)
+                .map((lsc, i) => ({ ...lsc.changes, table: tables[i].table }))
+                .filter((tad) => hasChanges(tad));
+
+            const gamesChanges: GameAdditionsDeletions[] = liveStreamsAndChanges
+              .slice(1 + tables.length)
+              .map((lsc, i) => ({ ...lsc.changes, game: games[i].game }))
+              .filter((gad) => hasChanges(gad));
+            const liveStreamChanges: LivestreamChanges = {
+              free: freeChanges,
+              tables: tablesChanges,
+              games: gamesChanges,
+            };
+
+            changed(liveStreamChanges);
+          }}
         >
           Commit
         </Button>
@@ -241,62 +308,85 @@ export function LiveStreamingDialog({
 
 interface AddDeleteProps {
   keyedLivestreams: KeyedLivestream[];
-  added: (livestreamUrl: string) => void;
+  added: (addition: Addition) => void;
   deleted: (keyedLiveStream: KeyedLivestream) => void;
-}
-// going to want to be able to provide a short description on a live stream
-// perhaps also icons and parts of the url
-function AddDelete({ keyedLivestreams }: AddDeleteProps) {
-  return keyedLivestreams.map((keyedLivestream) => {
-    return <div key={keyedLivestream.key}>{keyedLivestream.livestream}</div>;
-  });
+  enabled: boolean;
 }
 
-export function DemoLiveStreamDialog() {
+function AddDelete({
+  keyedLivestreams,
+  enabled,
+  added,
+  deleted,
+}: AddDeleteProps) {
+  const [newLivestream, setNewLivestream] = useState("");
+  const [tag, setTag] = useState("");
+
+  const existing = keyedLivestreams.map((keyedLivestream) => {
+    return (
+      <ListItemButton
+        key={keyedLivestream.url}
+        onClick={() => deleted(keyedLivestream)}
+      >
+        <ListItemIcon>
+          <DeleteIcon />
+        </ListItemIcon>
+        <ListItemText primary={keyedLivestream.tag} />
+      </ListItemButton>
+    );
+  });
   return (
-    <LiveStreamingDialog
-      changed={() => {}}
-      showLivestreamDialog={true}
-      setShowLivestreamDialog={() => {}}
-      liveStreamAvailability={{
-        free: [
-          {
-            key: "789",
-            livestream: "free",
-          },
-        ],
-        games: [
-          {
-            game: 0,
-            streams: [
-              {
-                key: "123",
-                livestream: "A V X",
-              },
-            ],
-          },
-          {
-            game: 5,
-            streams: [
-              {
-                key: "8910",
-                livestream: "Another",
-              },
-            ],
-          },
-        ],
-        tables: [
-          {
-            table: "Main",
-            streams: [
-              {
-                key: "456",
-                livestream: "Main",
-              },
-            ],
-          },
-        ],
-      }}
-    />
+    <>
+      <Box border={1} borderRadius={1} marginBottom={1}>
+        <List
+          component="div"
+          sx={{ minHeight: 200 }}
+          subheader={<Box padding={2}>Remove</Box>}
+        >
+          {existing}
+        </List>
+      </Box>
+      <Divider />
+      <Box
+        sx={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+        }}
+        marginTop={1}
+        marginBottom={1}
+      >
+        <TextField
+          sx={{ marginRight: 1 }}
+          disabled={!enabled}
+          label="Livestream"
+          value={newLivestream}
+          onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
+            setNewLivestream(event.target.value);
+          }}
+        />
+        <TextField
+          sx={{ marginRight: 1 }}
+          disabled={!enabled}
+          label="Tag"
+          value={tag}
+          onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
+            setTag(event.target.value);
+          }}
+        />
+        <IconButton
+          disabled={
+            newLivestream.trim().length === 0 || tag.trim().length === 0
+          }
+          onClick={() => {
+            added({ tag, url: newLivestream });
+            setNewLivestream("");
+            setTag("");
+          }}
+        >
+          <AddIcon />
+        </IconButton>
+      </Box>
+    </>
   );
 }

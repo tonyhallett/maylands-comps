@@ -28,6 +28,7 @@ export interface DbLeagueClub {
 export interface Livestream {
   identifer?: string | number;
   url: string;
+  tag: string;
 }
 export type Livestreams = Record<string, Livestream>;
 
@@ -37,7 +38,7 @@ export interface DbLeagueMatch {
   isFriendly: boolean;
   homeTeamId: string;
   awayTeamId: string;
-  liveStreams?: Livestreams;
+  livestreams?: Livestreams;
 
   // matches will have id back to this
   // match creation order will be the order of the matches

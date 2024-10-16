@@ -13,6 +13,7 @@ import {
   QueryConstraint,
   ref,
   set,
+  update as updateDb,
 } from "firebase/database";
 
 // note that the literal ${string} includes the empty string !
@@ -148,7 +149,7 @@ export const createTypedValuesUpdater = <TRoot>(
     return updateFn;
   };
   const update = () => {
-    return set(ref(db), values);
+    return updateDb(ref(db), values);
   };
   return {
     updateFn,
