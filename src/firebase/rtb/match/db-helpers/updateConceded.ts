@@ -1,4 +1,4 @@
-import { Database, ref, update } from "firebase/database";
+import { Database } from "firebase/database";
 import { PartialWithNullsWithoutUndefined } from "../../typeHelpers";
 import { DbMatch } from "../dbMatch";
 import { getConcedeOrForfeitUpdate } from "./getConcedeOrForfeitUpdate";
@@ -14,9 +14,9 @@ export const updateConceded = (
   ) => void = () => {},
 ) => {
   const updatedMatch = getConcedeOrForfeitUpdate(concede, true, isHome);
-  const updater = createRootUpdater();
+  const { updateListItem, update } = createRootUpdater(db);
   addAdditionalUpdates(updatedMatch);
-  updater.updateListItem("matches", key, updatedMatch);
+  updateListItem("matches", key, updatedMatch);
 
-  return update(ref(db), updater.values);
+  return update();
 };

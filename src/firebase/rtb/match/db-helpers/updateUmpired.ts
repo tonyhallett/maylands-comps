@@ -1,4 +1,4 @@
-import { Database, ref, update } from "firebase/database";
+import { Database } from "firebase/database";
 import { createRootUpdater } from "./createRootUpdater";
 
 export interface UmpireUpdate {
@@ -6,19 +6,12 @@ export interface UmpireUpdate {
   umpired?: true;
 }
 
-export const updateUmpireValues = (
-  updater: ReturnType<typeof createRootUpdater>,
-  umpireUpdates: UmpireUpdate[],
-) => {
+export const updateUmpired = (umpireUpdates: UmpireUpdate[], db: Database) => {
+  const { updateListItem, update } = createRootUpdater(db);
   umpireUpdates.forEach(({ key, umpired }) => {
-    updater.updateListItem("matches", key, {
+    updateListItem("matches", key, {
       umpired: umpired === undefined ? null : umpired,
     });
   });
-};
-
-export const updateUmpired = (umpireUpdates: UmpireUpdate[], db: Database) => {
-  const updater = createRootUpdater();
-  updateUmpireValues(updater, umpireUpdates);
-  update(ref(db), updater.values);
+  update();
 };

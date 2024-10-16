@@ -1,4 +1,3 @@
-import { ref, update } from "firebase/database";
 import { useState } from "react";
 import { getTeamDoublesPlayerKeys } from "../../../../firebase/rtb/match/helpers/getTeamDoublesPlayerKeys";
 import {
@@ -133,11 +132,11 @@ export function LeagueMatchSelection({
         (index) => matchAndKeys[index],
       );
     };
-    const updater = createRootUpdater();
+    const { updateListItem, update } = createRootUpdater(db);
     const updatePlayerSinglesMatches = () => {
       getPlayerSinglesMatches(isHome, position).forEach((matchAndKey) => {
         const playerId = player?.playerId ?? null;
-        updater.updateListItem(
+        updateListItem(
           "matches",
           matchAndKey.key,
           isHome ? { team1Player1Id: playerId } : { team2Player1Id: playerId },
@@ -159,7 +158,7 @@ export function LeagueMatchSelection({
         doublesMatch[playersKeys.player1] === previouslySelectedPlayerId ||
         doublesMatch[playersKeys.player2] === previouslySelectedPlayerId
       ) {
-        updater.updateListItem("matches", doublesMatchAndKey.key, {
+        updateListItem("matches", doublesMatchAndKey.key, {
           [playersKeys.player1]: null,
           [playersKeys.player2]: null,
         });
@@ -171,7 +170,7 @@ export function LeagueMatchSelection({
     if (!player) {
       removePlayerDoublesTeam();
     }
-    update(ref(db), updater.values);
+    update();
   };
 
   const playerSelected = (
@@ -187,15 +186,15 @@ export function LeagueMatchSelection({
     availableDoubles: AvailableDoubles | null,
   ) => {
     const doublesMatchKey = matchAndKeys[matchAndKeys.length - 1].key;
-    const updater = createRootUpdater();
+    const { updateListItem, update } = createRootUpdater(db);
     const player1Id = availableDoubles ? availableDoubles.player1Id : null;
     const player2Id = availableDoubles ? availableDoubles.player2Id : null;
     const playersKeys = getTeamDoublesPlayerKeys(isHome);
-    updater.updateListItem("matches", doublesMatchKey, {
+    updateListItem("matches", doublesMatchKey, {
       [playersKeys.player1]: player1Id,
       [playersKeys.player2]: player2Id,
     });
-    update(ref(db), updater.values);
+    update();
   };
 
   if (showScoreboard) {

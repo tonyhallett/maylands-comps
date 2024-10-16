@@ -106,7 +106,23 @@ type WithNullsWithoutUndefined<T> = WithNulls<WithoutUndefined<T>>;
 export type PartialWithNullsWithoutUndefined<T> = Partial<
   WithNullsWithoutUndefined<T>
 >;
-export const createTypedValuesUpdater = <TRoot>() => {
+interface RootUpdater<TRoot> {
+  updateFn: <TPath extends Paths<TRoot>>(
+    path: TPath,
+    value: PathValue<TRoot, TPath>,
+  ) => RootUpdater<TRoot>["updateFn"];
+  updateListItem: <TPath extends Paths<TRoot>>(
+    path: TPath,
+    itemId: string,
+    value: PartialWithNullsWithoutUndefined<
+      RecordType<PathValue<TRoot, TPath>>
+    >,
+  ) => void;
+  update(): Promise<void>;
+}
+export const createTypedValuesUpdater = <TRoot>(
+  db: Database,
+): RootUpdater<TRoot> => {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const values = {} as any;
   const updateFn = <TPath extends Paths<TRoot>>(
@@ -129,12 +145,13 @@ export const createTypedValuesUpdater = <TRoot>() => {
 
     return updateFn;
   };
-
-  updateFn.values = values;
+  const update = () => {
+    return set(ref(db), values);
+  };
   return {
     updateFn,
     updateListItem,
-    values,
+    update,
   };
 };
 

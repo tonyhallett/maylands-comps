@@ -1,4 +1,3 @@
-import { ref, update } from "firebase/database";
 import { useEffect } from "react";
 import { DBMatchSaveState } from "../../../firebase/rtb/match/conversion";
 import { DbMatch } from "../../../firebase/rtb/match/dbMatch";
@@ -36,28 +35,28 @@ export function useCreateLeagueSeason(
   const teamsRef = useTeamsRef();
   const playersRef = usePlayersRef();
   useEffect(() => {
-    const updater = createRootUpdater();
+    const { updateListItem, update } = createRootUpdater(db);
     const updateClub = (leagueClub: DbLeagueClub) => {
       const newClubKey = getNewKey(db);
-      updater.updateListItem("clubs", newClubKey, leagueClub);
+      updateListItem("clubs", newClubKey, leagueClub);
       return newClubKey!;
     };
 
     const updateTeam = (leagueTeam: DbLeagueTeam) => {
       const newTeamKey = getNewKey(db);
-      updater.updateListItem("teams", newTeamKey, leagueTeam);
+      updateListItem("teams", newTeamKey, leagueTeam);
       return newTeamKey!;
     };
 
     const updatePlayer = (player: DbPlayer) => {
       const newPlayerKey = getNewKey(db);
-      updater.updateListItem("players", newPlayerKey!, player);
+      updateListItem("players", newPlayerKey!, player);
       return newPlayerKey!;
     };
 
     const updateRegisteredPlayer = (registeredPlayer: DbRegisteredPlayer) => {
       const newRegisteredPlayerKey = getNewKey(db);
-      updater.updateListItem(
+      updateListItem(
         "registeredPlayers",
         newRegisteredPlayerKey,
         registeredPlayer,
@@ -67,11 +66,11 @@ export function useCreateLeagueSeason(
 
     const updateLeagueMatch = (leagueMatch: DbLeagueMatch) => {
       const newLeagueMatchKey = getNewKey(db);
-      updater.updateListItem("leagueMatches", newLeagueMatchKey, leagueMatch);
+      updateListItem("leagueMatches", newLeagueMatchKey, leagueMatch);
       return newLeagueMatchKey;
     };
 
-    const teamNameKeys = clubSetups.flatMap((clubSetup) => {
+    const teamNameAndKeys = clubSetups.flatMap((clubSetup) => {
       const clubKey = updateClub({ name: clubSetup.clubName });
       return clubSetup.teamSetups.map((teamSetup) => {
         const teamKey = updateTeam({
@@ -95,7 +94,7 @@ export function useCreateLeagueSeason(
       });
     });
     const getTeamKey = (teamName: string) => {
-      const teamNameKey = teamNameKeys.find(
+      const teamNameKey = teamNameAndKeys.find(
         (teamNameKey) => teamNameKey.name === teamName,
       );
       if (!teamNameKey) {
@@ -119,7 +118,7 @@ export function useCreateLeagueSeason(
           ...dbMatchSaveState,
           containerId: leagueMatchKey,
         };
-        updater.updateListItem("matches", matchKey, newMatch);
+        updateListItem("matches", matchKey, newMatch);
       };
       for (let i = 0; i < 9; i++) {
         addMatch(singlesMatchSaveState);
@@ -128,7 +127,7 @@ export function useCreateLeagueSeason(
       addMatch(doublesMatchSaveState);
     });
 
-    promiseCallback(update(ref(db), updater.values));
+    promiseCallback(update());
   }, [
     db,
     leagueMatchesRef,
