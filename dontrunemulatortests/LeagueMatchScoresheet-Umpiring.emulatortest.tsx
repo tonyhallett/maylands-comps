@@ -16,7 +16,7 @@ import { DbUmpireViewProps } from "../src/teamMatches/league/play/league-match-v
 import { MatchAndKey } from "../src/teamMatches/league/db-hooks/useLeagueMatchAndMatches";
 import { UmpireMatchAndKey } from "../src/teamMatches/league/play/league-match-selection/renderScoresheet-type";
 import { MatchState, Umpire } from "../src/umpire";
-import { findGameMenuButton } from "../__tests__/LeagueMatchScoresheetSelectors";
+import { findGameMenuButton } from "./LeagueMatchScoresheetSelectors";
 import { openMenuClickMenuItem } from "../test-helpers/mui/menu";
 import { DbMatch } from "../src/firebase/rtb/match/dbMatch";
 

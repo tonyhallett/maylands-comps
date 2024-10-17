@@ -10,6 +10,7 @@ import { ClubSetup } from "../src/teamMatches/league/db-population/data/romfordL
 import { Umpire } from "../src/umpire";
 import { leagueMatchPlayersPositionDisplays } from "../src/teamMatches/league/play/format/singlesLeagueMatchPlayers";
 import { setRoot } from "./setRoot";
+import { Livestreams } from "../src/firebase/rtb/team";
 
 export const defaultHomeTeamName = "Maylands A";
 export const defaultAwayTeamName = "Lower ranked away";
@@ -60,6 +61,7 @@ export async function setupDatabase(
   homeTeamName = defaultHomeTeamName,
   awayTeamName = defaultAwayTeamName,
   isFriendly = false,
+  livestreams: Livestreams | undefined = undefined,
 ) {
   const root: Root = {
     clubs: {},
@@ -100,6 +102,9 @@ export async function setupDatabase(
     awayTeamId: awayTeamName,
     description: "Test match",
   };
+  if (livestreams) {
+    root.leagueMatches[leagueMatchKey].livestreams = livestreams;
+  }
 
   const getDbMatchSaveState = (isDoubles: boolean) => {
     const umpire = new Umpire(

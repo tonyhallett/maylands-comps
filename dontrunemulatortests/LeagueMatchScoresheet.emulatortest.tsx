@@ -6,7 +6,7 @@ import {
   openMenuClickMenuItem,
   openMenuExpectMenuItemDisabled,
 } from "../test-helpers/mui/menu";
-import createEmulatorTests from "./createEmulatorTests";
+import createEmulatorTests from "../__tests__/createEmulatorTests";
 import {
   LeagueMatchView,
   gameMenuButtonAriaLabel,
@@ -22,7 +22,7 @@ import {
   noPlayersSelected,
   setUpDatabaseWithDefaultPlayersThatAreSelected,
   setupDatabase,
-} from "./setupDatabase";
+} from "../__tests__/setupDatabase";
 import { unselectedPlayerCellColor } from "../src/teamMatches/league/play/league-match-view/scoresheet/ui/getPlayerCell";
 import {
   leagueMatchPlayersPositionDisplays,

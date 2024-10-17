@@ -5,7 +5,6 @@ import {
   DialogActions,
   DialogContent,
   DialogTitle,
-  Divider,
   FormControl,
   IconButton,
   InputLabel,
@@ -19,6 +18,8 @@ import {
   Select,
   Stack,
   TextField,
+  Typography,
+  useTheme,
 } from "@mui/material";
 import DeleteIcon from "@mui/icons-material/Delete";
 import AddIcon from "@mui/icons-material/Add";
@@ -59,7 +60,7 @@ export interface GameKeyedLiveStreams {
   streams: KeyedLivestream[];
 }
 
-export interface LiveStreamAvailability {
+export interface LivestreamAvailability {
   free: KeyedLivestream[];
   tables: TableKeyedLiveStreams[];
   games: GameKeyedLiveStreams[];
@@ -100,10 +101,12 @@ interface PermittedLivestreams {
 
 export type LiveStreamDialogProps = {
   onClose: () => void;
-  liveStreamAvailability: LiveStreamAvailability;
+  liveStreamAvailability: LivestreamAvailability;
   changed: (liveStreamChanges: LivestreamChanges) => void;
   permittedLivestreams: PermittedLivestreams;
   helpNode: ReactNode;
+  getGameMenuTitle: (game: number) => string;
+  getTableMenuTitle: (table: string) => string;
 };
 
 function hasChanges(additionsDeletions: AdditionsDeletions) {
@@ -144,16 +147,19 @@ export function LiveStreamingDialog({
   changed,
   permittedLivestreams,
   helpNode,
+  getGameMenuTitle,
+  getTableMenuTitle,
 }: LiveStreamDialogProps) {
   const { free, games, tables } = liveStreamAvailability;
-  // check will this ref remain if immediately open again
   const liveStreamsAndChangesRef = useRef<LiveStreamsAndChanges[]>([
     getNoChanges(free, "Free"),
 
     ...tables.map((table) =>
-      getNoChanges(table.streams, `Table ${table.table}`),
+      getNoChanges(table.streams, getTableMenuTitle(table.table)),
     ),
-    ...games.map((game) => getNoChanges(game.streams, `Game ${game.game + 1}`)),
+    ...games.map((game) =>
+      getNoChanges(game.streams, getGameMenuTitle(game.game)),
+    ),
   ]);
 
   const [state, setState] = useState<LiveStreamDialogState>({
@@ -174,10 +180,17 @@ export function LiveStreamingDialog({
   const selectedLabelId = "Select livestream applicable to";
 
   return (
-    <Dialog disableEscapeKeyDown open onClose={onClose}>
-      <DialogTitle>
+    <Dialog
+      aria-labelledby="livestreamsDialogTitle"
+      disableEscapeKeyDown
+      open
+      onClose={onClose}
+    >
+      <DialogTitle id="livestreamsDialogHeader">
         <Box sx={{ display: "flex", justifyContent: "space-between" }}>
-          <span>Live stream urls</span>
+          <span style={{ alignContent: "center" }} id="livestreamsDialogTitle">
+            Live stream urls
+          </span>
           <Stack direction="row" sx={{ alignItems: "center" }}>
             {permittedLivestreams.icons}
             {helpButton}
@@ -186,7 +199,7 @@ export function LiveStreamingDialog({
       </DialogTitle>
       <DialogContent dividers>
         <Box component="form" sx={{ display: "flex", flexWrap: "wrap" }}>
-          <FormControl sx={{ m: 1, minWidth: 200 }}>
+          <FormControl sx={{ m: 0, minWidth: 200 }}>
             <InputLabel id={selectedLabelId}>Livestream for :</InputLabel>
             <Select
               labelId={selectedLabelId}
@@ -225,6 +238,7 @@ export function LiveStreamingDialog({
       </DialogContent>
       <DialogContent dividers>
         <AddDelete
+          permittedLivestreams={permittedLivestreams}
           enabled={state.selectedValue !== -1}
           keyedLivestreams={state.livestreams}
           deleted={(keyedLiveStream) => {
@@ -311,6 +325,7 @@ interface AddDeleteProps {
   added: (addition: Addition) => void;
   deleted: (keyedLiveStream: KeyedLivestream) => void;
   enabled: boolean;
+  permittedLivestreams: PermittedLivestreams;
 }
 
 function AddDelete({
@@ -318,10 +333,14 @@ function AddDelete({
   enabled,
   added,
   deleted,
+  permittedLivestreams,
 }: AddDeleteProps) {
-  const [newLivestream, setNewLivestream] = useState("");
-  const [tag, setTag] = useState("");
-
+  const [state, setState] = useState({
+    livestream: "",
+    permitted: true,
+    tag: "",
+  });
+  const theme = useTheme();
   const existing = keyedLivestreams.map((keyedLivestream) => {
     return (
       <ListItemButton
@@ -337,16 +356,19 @@ function AddDelete({
   });
   return (
     <>
-      <Box border={1} borderRadius={1} marginBottom={1}>
-        <List
-          component="div"
-          sx={{ minHeight: 200 }}
-          subheader={<Box padding={2}>Remove</Box>}
-        >
+      <Typography variant="body1">Delete</Typography>
+      <Box
+        border={1}
+        borderRadius={1}
+        borderColor={theme.palette.divider}
+        marginBottom={1}
+        marginTop={1}
+      >
+        <List component="div" sx={{ minHeight: 200 }}>
           {existing}
         </List>
       </Box>
-      <Divider />
+      <Typography variant="body1">Add</Typography>
       <Box
         sx={{
           display: "flex",
@@ -360,28 +382,47 @@ function AddDelete({
           sx={{ marginRight: 1 }}
           disabled={!enabled}
           label="Livestream"
-          value={newLivestream}
+          value={state.livestream}
           onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
-            setNewLivestream(event.target.value);
+            const text = event.target.value;
+            const permissionResult = permittedLivestreams.isPermitted(text);
+
+            setState((prevState) => {
+              const newState: typeof state = {
+                ...prevState,
+                livestream: text,
+                permitted: permissionResult !== undefined,
+              };
+              if (permissionResult) {
+                newState.tag = permissionResult.suggestedTag;
+              }
+              return newState;
+            });
           }}
         />
         <TextField
           sx={{ marginRight: 1 }}
           disabled={!enabled}
           label="Tag"
-          value={tag}
+          value={state.tag}
           onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
-            setTag(event.target.value);
+            setState((prevState) => {
+              return {
+                ...prevState,
+                tag: event.target.value,
+              };
+            });
           }}
         />
         <IconButton
           disabled={
-            newLivestream.trim().length === 0 || tag.trim().length === 0
+            !state.permitted ||
+            state.livestream.trim().length === 0 ||
+            state.tag.trim().length === 0
           }
           onClick={() => {
-            added({ tag, url: newLivestream });
-            setNewLivestream("");
-            setTag("");
+            added({ tag: state.tag, url: state.livestream });
+            setState({ livestream: "", permitted: true, tag: "" });
           }}
         >
           <AddIcon />

@@ -56,7 +56,7 @@ import LiveTvIcon from "@mui/icons-material/LiveTv";
 import {
   TableKeyedLiveStreams,
   KeyedLivestream,
-  LiveStreamAvailability,
+  LivestreamAvailability,
   LiveStreamingDialog,
   GameKeyedLiveStreams,
 } from "../league-match-view/LiveStreamingDialog";
@@ -66,6 +66,7 @@ import { ref, update } from "firebase/database";
 import YouTubeIcon from "@mui/icons-material/YouTube";
 import FacebookIcon from "@mui/icons-material/Facebook";
 import InstagramIcon from "@mui/icons-material/Instagram";
+import { TwitchIcon } from "./TwitchIcon";
 
 export interface LeagueMatchSelectionProps {
   renderScoresheet: RenderScoresheet;
@@ -74,6 +75,7 @@ export interface LeagueMatchSelectionProps {
 
 export const scoresheetSectionAriaLabel = "Scoresheet";
 export const openForfeitDialogButtonAriaLabel = "Open forfeit dialog button";
+export const livestreamDialogButtonAriaLabel = "Open livestream dialog button";
 
 export function LeagueMatchSelection({
   leagueMatchId,
@@ -398,7 +400,10 @@ export function LeagueMatchSelection({
           }}
         />
         <Button onClick={() => setShowScoreboard(true)}>Scoreboard</Button>
-        <IconButton onClick={() => setShowLivestreamDialog(true)}>
+        <IconButton
+          aria-label={livestreamDialogButtonAriaLabel}
+          onClick={() => setShowLivestreamDialog(true)}
+        >
           <LiveTvIcon />
         </IconButton>
         {showLivestreamDialog && (
@@ -456,6 +461,7 @@ export function LeagueMatchSelection({
                 <YouTubeIcon key="yt" />,
                 <FacebookIcon key="fb" />,
                 <InstagramIcon key="ig" />,
+                <TwitchIcon key="tw" />,
               ],
               // eslint-disable-next-line @typescript-eslint/no-unused-vars
               isPermitted: (url) => {
@@ -466,6 +472,10 @@ export function LeagueMatchSelection({
                   suggestedTag: "todo",
                 };
               },
+            }}
+            getGameMenuTitle={(game) => `Game ${game + 1}`}
+            getTableMenuTitle={(table) => {
+              return table === "Main" ? "Main table" : `Table ${table}`;
             }}
           />
         )}
@@ -538,9 +548,9 @@ function combineLiveStreams(
 function getLiveStreamAvailability(
   livestreams: Livestreams | undefined,
   umpireMatchAndKeys: UmpireMatchAndKey[],
-): LiveStreamAvailability {
+): LivestreamAvailability {
   const { tables, games } = getTablesAndGamesNotCompleted(umpireMatchAndKeys);
-  const liveStreamAvailability: LiveStreamAvailability = {
+  const liveStreamAvailability: LivestreamAvailability = {
     free: [],
     tables: [],
     games: [],

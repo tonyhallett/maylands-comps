@@ -4,6 +4,7 @@
 import {
   LeagueMatchSelection,
   LeagueMatchSelectionProps,
+  livestreamDialogButtonAriaLabel,
   openForfeitDialogButtonAriaLabel,
 } from "../src/teamMatches/league/play/league-match-selection/LeagueMatchSelection";
 import {
@@ -26,13 +27,13 @@ import {
 import {
   findPlayerCombo,
   findScoresheetSection,
-} from "../__tests__/leagueMatchViewSelectors";
+} from "./leagueMatchViewSelectors";
 import { fillArrayWithIndices } from "../src/helpers/fillArray";
-import { getPlayerComboInputs } from "../__tests__/leagueMatchViewSelectors";
-import { findDoublesCombo } from "../__tests__/leagueMatchViewSelectors";
-import { openPlayerAutocompleteAndGetOptions } from "../__tests__/leagueMatchViewSelectors";
+import { getPlayerComboInputs } from "./leagueMatchViewSelectors";
+import { findDoublesCombo } from "./leagueMatchViewSelectors";
+import { openPlayerAutocompleteAndGetOptions } from "./leagueMatchViewSelectors";
 import { MatchAndKey } from "../src/teamMatches/league/db-hooks/useLeagueMatchAndMatches";
-import createEmulatorTests from "../__tests__/createEmulatorTests";
+import createEmulatorTests from "./createEmulatorTests";
 import {
   SelectedPlayers,
   SetupDoubles,
@@ -49,12 +50,13 @@ import {
   noPlayersSelected,
   setUpDatabaseWithDefaultPlayersThatAreSelected,
   setupDatabase,
-} from "../__tests__/setupDatabase";
+} from "./setupDatabase";
 import { getTeamForfeitButtonsContainerAriaLabel } from "../src/teamMatches/league/play/league-match-selection/getForfeitButtons";
 import {
   ConcedeOrForfeit,
   getTeamConcedeOrForfeitKey,
 } from "../src/firebase/rtb/match/dbMatch";
+import { Livestreams } from "../src/firebase/rtb/team";
 
 // mocking due to import.meta.url
 jest.mock(
@@ -1601,6 +1603,137 @@ describe("<LeagueMatchView/>", () => {
           expect(updateForfeitedCall[1]).toBe(expectedForfeited);
           expect(updateForfeitedCall[2]).toBe(isHome);
           expect(updateForfeitedCall[3]).toBe(database);
+        },
+      );
+    });
+  });
+
+  describe.only("livestreams", () => {
+    const findOpenLivestreamDialogButton = () => {
+      return screen.findByLabelText(livestreamDialogButtonAriaLabel);
+    };
+    const getLivestreamDialog = () => {
+      return screen.getByRole("dialog", { name: "Live stream urls" });
+    };
+    const openLivestreamDialog = async () => {
+      const openForfeitDialogButton = await findOpenLivestreamDialogButton();
+      fireEvent.click(openForfeitDialogButton);
+      return getLivestreamDialog();
+    };
+    it("should not show the livestream dialog when the button has not been  clicked", async () => {
+      const leagueMatchKey = await setupDatabase(database);
+      render(createApp(leagueMatchKey));
+
+      expect(getLivestreamDialog).toThrow();
+    });
+
+    it("should show the livestream dialog when click the button", async () => {
+      const leagueMatchKey = await setupDatabase(database);
+      render(createApp(leagueMatchKey));
+      await openLivestreamDialog();
+    });
+
+    async function renderExpectOptions(
+      leagueMatchKey: string,
+      expectedOptions: string[],
+    ) {
+      render(createApp(leagueMatchKey));
+      const livestreamDialog = await openLivestreamDialog();
+      const comboBox = within(livestreamDialog).getByRole("combobox");
+      fireEvent.keyDown(comboBox, { key: "ArrowDown" });
+      const options = screen.getAllByRole("option");
+      const realOptions = options.filter(
+        (option) => option.getAttribute("tabindex") !== null,
+      );
+      expect(realOptions.map((option) => option.textContent)).toEqual(
+        expectedOptions,
+      );
+    }
+
+    async function setupDatabaseForLiveStreams(
+      setUpMatch?: SetupMatch,
+      liveStreams?: Livestreams,
+    ) {
+      const matchSetup = getMatchSetupThatSetsDefaultPlayersThatAreSelected(
+        allPlayersSelected,
+        allPlayersSelected,
+        (doublesMatch) => {
+          doublesMatch.team1Player1Id = defaultHomePlayerNames[0];
+          doublesMatch.team1Player2Id = defaultHomePlayerNames[1];
+          doublesMatch.team2Player1Id = defaultAwayPlayerNames[0];
+          doublesMatch.team2Player2Id = defaultAwayPlayerNames[1];
+        },
+        setUpMatch,
+      );
+      const leagueMatchKey = await setupDatabase(
+        database,
+        matchSetup,
+        undefined,
+        undefined,
+        undefined,
+        false,
+        liveStreams,
+      );
+      return leagueMatchKey;
+    }
+    async function optionsTest(
+      expectedOptions: string[],
+      setUpMatch?: SetupMatch,
+      liveStreams?: Livestreams,
+    ) {
+      const leagueMatchKey = await setupDatabaseForLiveStreams(
+        setUpMatch,
+        liveStreams,
+      );
+      renderExpectOptions(leagueMatchKey, expectedOptions);
+    }
+    it("should show options for free, Main Table and all games by default,", async () => {
+      await optionsTest([
+        "Free",
+        "Main table",
+        "Game 1",
+        "Game 2",
+        "Game 3",
+        "Game 4",
+        "Game 5",
+        "Game 6",
+        "Game 7",
+        "Game 8",
+        "Game 9",
+        "Game 10",
+      ]);
+    });
+    xit("should show an option for all table ids", async () => {});
+    it("should only show games options for game that have not been won or Conceded/Forfeited", async () => {
+      await optionsTest(
+        [
+          "Free",
+          "Main table",
+          "Game 1",
+          "Game 3",
+          "Game 5",
+          "Game 6",
+          "Game 7",
+          "Game 8",
+          "Game 9",
+          "Game 10",
+        ],
+        (match, index) => {
+          // todo
+          switch (index) {
+            case 1:
+              match.team1ConcedeOrForfeit = {
+                isConcede: true,
+              };
+              break;
+            case 3:
+              match.team1ConcedeOrForfeit = {
+                isConcede: false,
+              };
+              break;
+            case 6:
+              throw new Error("Not implemented");
+          }
         },
       );
     });
