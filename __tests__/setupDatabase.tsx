@@ -1,16 +1,13 @@
 import { Database } from "firebase/database";
-import {
-  DBMatchSaveState,
-  saveStateToDbMatchSaveState,
-} from "../src/firebase/rtb/match/conversion";
+import { DBMatchSaveState } from "../src/firebase/rtb/match/conversion";
 import { DbMatch } from "../src/firebase/rtb/match/dbMatch";
 import { Root } from "../src/firebase/rtb/root";
 import { getDbToday } from "../src/helpers/getDbDate";
 import { ClubSetup } from "../src/teamMatches/league/db-population/data/romfordLeagueData";
-import { Umpire } from "../src/umpire";
 import { leagueMatchPlayersPositionDisplays } from "../src/teamMatches/league/play/format/singlesLeagueMatchPlayers";
 import { setRoot } from "./setRoot";
 import { Livestreams } from "../src/firebase/rtb/team";
+import { getInitialDbMatchSaveState } from "../src/teamMatches/league/db-population/getInitialDbMatchSaveState";
 
 export const defaultHomeTeamName = "Maylands A";
 export const defaultAwayTeamName = "Lower ranked away";
@@ -106,22 +103,6 @@ export async function setupDatabase(
     root.leagueMatches[leagueMatchKey].livestreams = livestreams;
   }
 
-  const getDbMatchSaveState = (isDoubles: boolean) => {
-    const umpire = new Umpire(
-      {
-        bestOf: 5,
-        clearBy2: true,
-        numServes: 2,
-        team1StartGameScore: 0,
-        team2StartGameScore: 0,
-        upTo: 11,
-      },
-      isDoubles,
-    );
-    const umpireSaveState = umpire.getSaveState();
-    return saveStateToDbMatchSaveState(umpireSaveState);
-  };
-
   const addMatch = (dbMatchSaveState: DBMatchSaveState, index: number) => {
     const newMatch: DbMatch = {
       scoreboardWithUmpire: true,
@@ -133,9 +114,9 @@ export async function setupDatabase(
   };
 
   for (let i = 0; i < 9; i++) {
-    addMatch(getDbMatchSaveState(false), i);
+    addMatch(getInitialDbMatchSaveState(false), i);
   }
-  const doublesMatchSaveState = getDbMatchSaveState(true);
+  const doublesMatchSaveState = getInitialDbMatchSaveState(true);
   addMatch(doublesMatchSaveState, 9);
 
   await setRoot(database, root);

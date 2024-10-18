@@ -24,11 +24,19 @@ export interface DbLeagueTeam {
 export interface DbLeagueClub {
   name: string;
 }
+export enum LivestreamService {
+  youtube,
+  twitch,
+  facebook,
+  instagram,
+}
 
 export interface Livestream {
   identifer?: string | number;
   url: string;
   tag: string;
+  service: LivestreamService;
+  playerUrl?: string;
 }
 export type Livestreams = Record<string, Livestream>;
 

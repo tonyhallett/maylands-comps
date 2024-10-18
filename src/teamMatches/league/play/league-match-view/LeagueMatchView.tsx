@@ -40,7 +40,7 @@ import {
 import { getGameScoreCell } from "./scoresheet/ui/getGameScoreCell";
 import MoreVertIcon from "@mui/icons-material/MoreVert";
 import { getTeamsConcededOrForfeited } from "../../../../firebase/rtb/match/helpers/getTeamsConcededOrForfeited";
-import { getFullGameScores } from "../../helpers";
+import { createUmpire, getFullGameScores } from "../../helpers";
 import {
   LeagueMatchResultState,
   getLeagueMatchResultModel,
@@ -58,7 +58,6 @@ import { scoreGameScores } from "../../../../umpire/umpireHelpers";
 import { refTyped } from "../../../../firebase/rtb/root";
 import { setTyped } from "../../../../firebase/rtb/typeHelpers";
 import { getUpdatedMatchFromUmpire } from "./getUpdatedMatchFromUmpire";
-import { createLeagueMatchUmpire } from "../../db-population/createLeagueMatchUmpire";
 import { getIsManualInput } from "./getIsManualInput";
 import { GameScore, Umpire } from "../../../../umpire";
 import ArrowDropDownIcon from "@mui/icons-material/ArrowDropDown";
@@ -222,9 +221,7 @@ export function LeagueMatchView({ leagueMatchId }: { leagueMatchId: string }) {
         const resetManualInput = (
           umpireCallback: (umpire: Umpire) => void = () => {},
         ) => {
-          const resetUmpire = createLeagueMatchUmpire(
-            manualInput!.match.isDoubles,
-          );
+          const resetUmpire = createUmpire(manualInput!.match.isDoubles);
           umpireCallback(resetUmpire);
           const matchDatabaseRef = refTyped(db, `matches/${manualInput!.key}`);
           const updatedMatch = getUpdatedMatchFromUmpire(

@@ -226,72 +226,74 @@ export function TeamSignature({
         </span>
       </>
 
-      <Dialog onClose={close} fullScreen={true} open={state.createSignature}>
-        <DialogTitle>{title}</DialogTitle>
-        <DialogContent dividers>
-          {isPortrait ? (
-            <div>Landscape please</div>
-          ) : (
-            <>
-              <SignatureCanvas
-                ref={(ref) => {
-                  sigCanvas.current = ref;
+      {state.createSignature && (
+        <Dialog onClose={close} fullScreen={true} open>
+          <DialogTitle>{title}</DialogTitle>
+          <DialogContent dividers>
+            {isPortrait ? (
+              <div>Landscape please</div>
+            ) : (
+              <>
+                <SignatureCanvas
+                  ref={(ref) => {
+                    sigCanvas.current = ref;
+                  }}
+                  {...actualSignatureCanvasProps}
+                />
+              </>
+            )}
+          </DialogContent>
+          <DialogActions>
+            {!isPortrait && (
+              <Button
+                onClick={() => {
+                  sigCanvas.current!.clear();
                 }}
-                {...actualSignatureCanvasProps}
-              />
-            </>
-          )}
-        </DialogContent>
-        <DialogActions>
-          {!isPortrait && (
-            <Button
-              onClick={() => {
-                sigCanvas.current!.clear();
-              }}
-            >
-              Clear
-            </Button>
-          )}
+              >
+                Clear
+              </Button>
+            )}
 
-          {!isPortrait && (
-            <Button
-              onClick={() => {
-                if (document.fullscreenElement) {
-                  scrollback();
-                  document.exitFullscreen();
-                }
-                let dataUrl: string;
-                let trimmedCanvasSize: Size | undefined;
-                if (useTrimmedSize) {
-                  const trimmedCanvas = sigCanvas.current!.getTrimmedCanvas();
-                  dataUrl = trimmedCanvas.toDataURL();
-                  trimmedCanvasSize = {
-                    width: trimmedCanvas.width,
-                    height: trimmedCanvas.height,
-                  };
-                } else {
-                  dataUrl = sigCanvas.current!.toDataURL();
-                }
-
-                addedSignature(dataUrl, isHome);
-                setState((prevState) => {
-                  const newState: TeamSignatureState = {
-                    ...prevState,
-                    createSignature: false,
-                  };
-                  if (trimmedCanvasSize) {
-                    newState.trimmedCanvasSize = trimmedCanvasSize;
+            {!isPortrait && (
+              <Button
+                onClick={() => {
+                  if (document.fullscreenElement) {
+                    scrollback();
+                    document.exitFullscreen();
                   }
-                  return newState;
-                });
-              }}
-            >
-              OK
-            </Button>
-          )}
-          <Button onClick={close}>Close</Button>
-        </DialogActions>
-      </Dialog>
+                  let dataUrl: string;
+                  let trimmedCanvasSize: Size | undefined;
+                  if (useTrimmedSize) {
+                    const trimmedCanvas = sigCanvas.current!.getTrimmedCanvas();
+                    dataUrl = trimmedCanvas.toDataURL();
+                    trimmedCanvasSize = {
+                      width: trimmedCanvas.width,
+                      height: trimmedCanvas.height,
+                    };
+                  } else {
+                    dataUrl = sigCanvas.current!.toDataURL();
+                  }
+
+                  addedSignature(dataUrl, isHome);
+                  setState((prevState) => {
+                    const newState: TeamSignatureState = {
+                      ...prevState,
+                      createSignature: false,
+                    };
+                    if (trimmedCanvasSize) {
+                      newState.trimmedCanvasSize = trimmedCanvasSize;
+                    }
+                    return newState;
+                  });
+                }}
+              >
+                OK
+              </Button>
+            )}
+            <Button onClick={close}>Close</Button>
+          </DialogActions>
+        </Dialog>
+      )}
     </>
   );
 }

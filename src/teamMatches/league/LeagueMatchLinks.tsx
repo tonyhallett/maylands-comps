@@ -8,11 +8,17 @@ import {
   query,
   ref,
 } from "firebase/database";
-import { DbLeagueMatch, leagueMatchesKey } from "../../firebase/rtb/team";
+import {
+  DbLeagueMatch,
+  LivestreamService,
+  leagueMatchesKey,
+} from "../../firebase/rtb/team";
 import { getDbToday } from "../../helpers/getDbDate";
 import CenteredCircularProgress from "../../helper-components/CenteredCircularProgress";
 import Link from "@mui/material/Link/Link";
-import ReactPlayer from "react-player/youtube";
+import YoutubePlayer from "react-player/youtube";
+import FacebookPlayer from "react-player/facebook";
+import TwitchPlayer from "react-player/twitch";
 
 export interface LeagueMatchAndKey {
   leagueMatch: DbLeagueMatch;
@@ -21,7 +27,7 @@ export interface LeagueMatchAndKey {
 function getStreamsLeagueMatch(leagueMatch: DbLeagueMatch) {
   if (leagueMatch.livestreams) {
     return Object.values(leagueMatch.livestreams).map(
-      (livestream) => livestream.url,
+      (livestream) => livestream,
     );
   }
   return [];
@@ -66,25 +72,51 @@ export function LeagueMatchLinks() {
     return <CenteredCircularProgress />;
   }
 
-  const links = leagueMatches.map((leagueMatch) => (
-    <Link
-      key={leagueMatch.key}
-      style={{ display: "block" }}
-      href={`${leagueMatch.key}`}
-    >
-      {leagueMatch.leagueMatch.description}
-    </Link>
-  ));
+  const links = leagueMatches.map((leagueMatch) => {
+    return (
+      <Link
+        key={`leaguematch-${leagueMatch.key}`}
+        style={{ display: "block" }}
+        href={`${leagueMatch.key}`}
+      >
+        {leagueMatch.leagueMatch.description}
+      </Link>
+    );
+  });
   const allLivestreams = leagueMatches.flatMap((leagueMatch) =>
     getStreamsLeagueMatch(leagueMatch.leagueMatch),
   );
   return (
     <div>
       {links}
-      {allLivestreams.map((url) => {
-        // if instagram show a link
-        /// for now demoing youtube
-        return <ReactPlayer key={url} url={url} />;
+      {allLivestreams.map((livestream) => {
+        switch (livestream.service) {
+          case LivestreamService.youtube:
+            return (
+              <YoutubePlayer
+                key={livestream.playerUrl}
+                url={livestream.playerUrl!}
+              />
+            );
+          case LivestreamService.facebook:
+            // todo need to set up an app
+            return (
+              <FacebookPlayer
+                key={livestream.playerUrl}
+                url={livestream.playerUrl!}
+              />
+            );
+          case LivestreamService.twitch:
+            return (
+              <TwitchPlayer
+                key={livestream.playerUrl}
+                url={livestream.playerUrl!}
+              />
+            );
+          case LivestreamService.instagram:
+            alert("Instagram live stream");
+            return <a href={livestream.url}>Instagram live stream</a>;
+        }
       })}
     </div>
   );

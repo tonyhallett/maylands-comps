@@ -1,4 +1,7 @@
-import { getFullGameScores } from "../src/teamMatches/league/helpers";
+import {
+  createUmpire,
+  getFullGameScores,
+} from "../src/teamMatches/league/helpers";
 import { getConcededScores } from "../src/teamMatches/league/play/league-match-view/scorecardToClipboard/getConcededScores";
 import { getTeamForfeitedScores } from "../src/teamMatches/league/play/league-match-view/scorecardToClipboard/getTeamForfeitedScores";
 import { Score } from "../src/teamMatches/league/scorecardToClipboard/drawTable";
@@ -8,17 +11,7 @@ import { scoreGameScores, scorePoints } from "../src/umpire/umpireHelpers";
 describe("getConcededScores", () => {
   let umpire: Umpire;
   beforeEach(() => {
-    umpire = new Umpire(
-      {
-        bestOf: 5,
-        clearBy2: true,
-        numServes: 2,
-        team1StartGameScore: 0,
-        team2StartGameScore: 0,
-        upTo: 11,
-      },
-      false,
-    );
+    umpire = createUmpire(false);
   });
 
   function expectScores(expectedScores: Score[], homeConcede: boolean) {

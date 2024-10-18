@@ -1,20 +1,11 @@
+import { createUmpire } from "../src/teamMatches/league/helpers";
 import { GameScore, TeamScore, Umpire } from "../src/umpire";
 import { scoreGameScores } from "../src/umpire/umpireHelpers";
 
 describe("scoreGameScores helper", () => {
   let umpire: Umpire;
   beforeEach(() => {
-    umpire = new Umpire(
-      {
-        bestOf: 5,
-        clearBy2: true,
-        numServes: 2,
-        team1StartGameScore: 0,
-        team2StartGameScore: 0,
-        upTo: 11,
-      },
-      false,
-    );
+    umpire = createUmpire(false);
   });
   it("should work when scores less than 10", () => {
     scoreGameScores(umpire, [

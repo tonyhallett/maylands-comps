@@ -18,7 +18,7 @@ import {
   useTeamsRef,
 } from "../../../firebase/rtb/root";
 import { clubSetups, maylandsFixtures } from "./data/romfordLeagueData";
-import { getDbMatchSaveState } from "./getDbMatchSaveState";
+import { getInitialDbMatchSaveState } from "./getInitialDbMatchSaveState";
 
 export type PromiseCallback = (promise: Promise<void>) => void;
 export function useCreateLeagueSeason(
@@ -108,7 +108,7 @@ export function useCreateLeagueSeason(
         awayTeamId: getTeamKey(fixture.awayTeam),
         description: `${fixture.homeTeam} vs ${fixture.awayTeam}`,
       });
-      const singlesMatchSaveState = getDbMatchSaveState(false);
+      const singlesMatchSaveState = getInitialDbMatchSaveState(false);
       const addMatch = (dbMatchSaveState: DBMatchSaveState) => {
         const matchKey = getNewKey();
         const newMatch: DbMatch = {
@@ -121,7 +121,7 @@ export function useCreateLeagueSeason(
       for (let i = 0; i < 9; i++) {
         addMatch(singlesMatchSaveState);
       }
-      const doublesMatchSaveState = getDbMatchSaveState(true);
+      const doublesMatchSaveState = getInitialDbMatchSaveState(true);
       addMatch(doublesMatchSaveState);
     });
 

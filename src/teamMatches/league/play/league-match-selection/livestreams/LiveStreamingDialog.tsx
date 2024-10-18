@@ -23,32 +23,16 @@ import {
 } from "@mui/material";
 import DeleteIcon from "@mui/icons-material/Delete";
 import AddIcon from "@mui/icons-material/Add";
-import { ReactNode, useRef, useState } from "react";
+import { Fragment, ReactNode, useRef, useState } from "react";
 import HelpIcon from "@mui/icons-material/Help";
-import { useClickPopover } from "./useClickPopover";
+import { useClickPopover } from "../../league-match-view/useClickPopover";
+import {
+  Livestream,
+  LivestreamService,
+} from "../../../../../firebase/rtb/team";
 
-//  https://youtube.com/live/U_BtCIwvHqg?feature=share
-export const youtubeRegex = /^https:\/\/youtube\.com\/live\/([a-zA-Z0-9_-]+)$/;
-
-// https://www.instagram.com/hallett1694/live/17927797259956173?igsh=MXgyN29vY3N5YzV5dQ%3D%3D
-export const instagramRegex =
-  /^https:\/\/www\.instagram\.com\/([a-zA-Z0-9_]+)\/live\/([0-9]+)\?igsh=([a-zA-Z0-9%]+)$/;
-
-// https://www.twitch.tv/thallett74?sr=a
-// provided by chat gpt
-// export const twitchRegex = /^https:\/\/www\.twitch\.tv\/([a-zA-Z0-9_]+)$/;
-export const twitchRegex = /^https:\/\/www\.twitch\.tv\/.+$/;
-
-// https://www.facebook.com/tony.hallett.777/videos/1554747258504979/
-
-//export const facebookRegex =  /^https:\/\/www\.facebook\.com\/([a-zA-Z0-9\.]+)\/videos\/([0-9]+)\/$/;
-
-// todo check the regexes above ! see liveStreamRegexes.test.ts
-
-export interface KeyedLivestream {
+export interface KeyedLivestream extends Livestream {
   key: string;
-  url: string;
-  tag: string;
 }
 export interface TableKeyedLiveStreams {
   table: string;
@@ -66,13 +50,9 @@ export interface LivestreamAvailability {
   games: GameKeyedLiveStreams[];
 }
 
-interface Addition {
-  tag: string;
-  url: string;
-}
 interface AdditionsDeletions {
-  additions: Addition[];
-  deletions: KeyedLivestream[];
+  additions: Livestream[];
+  deletions: string[];
 }
 
 interface TableAdditionsDeletions extends AdditionsDeletions {
@@ -89,14 +69,16 @@ interface LivestreamChanges {
   games: GameAdditionsDeletions[];
 }
 
-interface PermittedLivestreamInputResult {
-  providerIndex: number;
+export interface PermittedLivestreamInputResult {
   suggestedTag: string;
+  service: LivestreamService;
+  playerUrl?: string;
 }
 
-interface PermittedLivestreams {
+export interface PermittedLivestreams {
   icons: ReactNode[];
   isPermitted: (url: string) => PermittedLivestreamInputResult | undefined;
+  getIconIndex: (service: LivestreamService) => number;
 }
 
 export type LiveStreamDialogProps = {
@@ -199,7 +181,7 @@ export function LiveStreamingDialog({
       </DialogTitle>
       <DialogContent dividers>
         <Box component="form" sx={{ display: "flex", flexWrap: "wrap" }}>
-          <FormControl sx={{ m: 0, minWidth: 200 }}>
+          <FormControl sx={{ m: 0, width: 500 }}>
             <InputLabel id={selectedLabelId}>Livestream for :</InputLabel>
             <Select
               labelId={selectedLabelId}
@@ -250,7 +232,7 @@ export function LiveStreamingDialog({
                   (a) => a.url !== keyedLiveStream.url,
                 );
             } else {
-              additionsDeletions.deletions.push(keyedLiveStream);
+              additionsDeletions.deletions.push(keyedLiveStream.key);
             }
             const selectedLivestreamAndChanges =
               liveStreamsAndChanges[state.selectedValue];
@@ -322,10 +304,18 @@ export function LiveStreamingDialog({
 
 interface AddDeleteProps {
   keyedLivestreams: KeyedLivestream[];
-  added: (addition: Addition) => void;
-  deleted: (keyedLiveStream: KeyedLivestream) => void;
+  added: (addition: Livestream) => void;
+  deleted: (key: KeyedLivestream) => void;
   enabled: boolean;
   permittedLivestreams: PermittedLivestreams;
+}
+
+interface AddState {
+  livestream: string;
+  permitted: boolean;
+  tag: string;
+  service: LivestreamService;
+  playerUrl: string | undefined;
 }
 
 function AddDelete({
@@ -335,23 +325,34 @@ function AddDelete({
   deleted,
   permittedLivestreams,
 }: AddDeleteProps) {
-  const [state, setState] = useState({
+  const [addState, setAddState] = useState<AddState>({
     livestream: "",
     permitted: true,
     tag: "",
+    service: LivestreamService.youtube,
+    playerUrl: undefined,
   });
   const theme = useTheme();
   const existing = keyedLivestreams.map((keyedLivestream) => {
     return (
-      <ListItemButton
-        key={keyedLivestream.url}
-        onClick={() => deleted(keyedLivestream)}
-      >
-        <ListItemIcon>
-          <DeleteIcon />
-        </ListItemIcon>
-        <ListItemText primary={keyedLivestream.tag} />
-      </ListItemButton>
+      <Fragment key={keyedLivestream.url}>
+        <ListItemButton onClick={() => deleted(keyedLivestream)}>
+          <ListItemIcon>
+            <DeleteIcon />
+          </ListItemIcon>
+          <ListItemIcon sx={{ minWidth: 24, marginRight: 1 }}>
+            {
+              permittedLivestreams.icons[
+                permittedLivestreams.getIconIndex(keyedLivestream.service)
+              ]
+            }
+          </ListItemIcon>
+          <ListItemText
+            sx={{ overflow: "clip", maxWidth: 370 }}
+            primary={keyedLivestream.tag}
+          />
+        </ListItemButton>
+      </Fragment>
     );
   });
   return (
@@ -364,7 +365,7 @@ function AddDelete({
         marginBottom={1}
         marginTop={1}
       >
-        <List component="div" sx={{ minHeight: 200 }}>
+        <List component="div" sx={{ minHeight: 112 }}>
           {existing}
         </List>
       </Box>
@@ -379,22 +380,24 @@ function AddDelete({
         marginBottom={1}
       >
         <TextField
+          error={!addState.permitted}
           sx={{ marginRight: 1 }}
           disabled={!enabled}
           label="Livestream"
-          value={state.livestream}
+          value={addState.livestream}
           onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
             const text = event.target.value;
             const permissionResult = permittedLivestreams.isPermitted(text);
 
-            setState((prevState) => {
-              const newState: typeof state = {
+            setAddState((prevState) => {
+              const newState: typeof addState = {
                 ...prevState,
                 livestream: text,
                 permitted: permissionResult !== undefined,
               };
               if (permissionResult) {
                 newState.tag = permissionResult.suggestedTag;
+                newState.playerUrl = permissionResult.playerUrl;
               }
               return newState;
             });
@@ -404,9 +407,9 @@ function AddDelete({
           sx={{ marginRight: 1 }}
           disabled={!enabled}
           label="Tag"
-          value={state.tag}
+          value={addState.tag}
           onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
-            setState((prevState) => {
+            setAddState((prevState) => {
               return {
                 ...prevState,
                 tag: event.target.value,
@@ -416,13 +419,27 @@ function AddDelete({
         />
         <IconButton
           disabled={
-            !state.permitted ||
-            state.livestream.trim().length === 0 ||
-            state.tag.trim().length === 0
+            !addState.permitted ||
+            addState.livestream.trim().length === 0 ||
+            addState.tag.trim().length === 0
           }
           onClick={() => {
-            added({ tag: state.tag, url: state.livestream });
-            setState({ livestream: "", permitted: true, tag: "" });
+            const newLivestream: Livestream = {
+              tag: addState.tag,
+              url: addState.livestream,
+              service: addState.service,
+            };
+            if (addState.playerUrl) {
+              newLivestream.playerUrl = addState.playerUrl;
+            }
+            added(newLivestream);
+            setAddState({
+              livestream: "",
+              permitted: true,
+              tag: "",
+              service: LivestreamService.youtube,
+              playerUrl: undefined,
+            });
           }}
         >
           <AddIcon />

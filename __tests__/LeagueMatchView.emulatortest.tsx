@@ -2,11 +2,11 @@
  * @jest-environment jsdom
  */
 import {
-  LeagueMatchSelection,
   LeagueMatchSelectionProps,
   livestreamDialogButtonAriaLabel,
   openForfeitDialogButtonAriaLabel,
 } from "../src/teamMatches/league/play/league-match-selection/LeagueMatchSelection";
+import { LeagueMatchSelection } from "../src/teamMatches/league/play/league-match-selection/LeagueMatchSelection";
 import {
   screen,
   render,
@@ -57,6 +57,7 @@ import {
   getTeamConcedeOrForfeitKey,
 } from "../src/firebase/rtb/match/dbMatch";
 import { Livestreams } from "../src/firebase/rtb/team";
+import { matchScoreGamesWon } from "./matchScoringHelpers";
 
 // mocking due to import.meta.url
 jest.mock(
@@ -1612,14 +1613,17 @@ describe("<LeagueMatchView/>", () => {
     const findOpenLivestreamDialogButton = () => {
       return screen.findByLabelText(livestreamDialogButtonAriaLabel);
     };
+
     const getLivestreamDialog = () => {
       return screen.getByRole("dialog", { name: "Live stream urls" });
     };
+
     const openLivestreamDialog = async () => {
       const openForfeitDialogButton = await findOpenLivestreamDialogButton();
       fireEvent.click(openForfeitDialogButton);
       return getLivestreamDialog();
     };
+
     it("should not show the livestream dialog when the button has not been  clicked", async () => {
       const leagueMatchKey = await setupDatabase(database);
       render(createApp(leagueMatchKey));
@@ -1676,6 +1680,7 @@ describe("<LeagueMatchView/>", () => {
       );
       return leagueMatchKey;
     }
+
     async function optionsTest(
       expectedOptions: string[],
       setUpMatch?: SetupMatch,
@@ -1687,23 +1692,39 @@ describe("<LeagueMatchView/>", () => {
       );
       renderExpectOptions(leagueMatchKey, expectedOptions);
     }
+    const allGames = [
+      "Game 1",
+      "Game 2",
+      "Game 3",
+      "Game 4",
+      "Game 5",
+      "Game 6",
+      "Game 7",
+      "Game 8",
+      "Game 9",
+      "Game 10",
+    ];
+
     it("should show options for free, Main Table and all games by default,", async () => {
-      await optionsTest([
-        "Free",
-        "Main table",
-        "Game 1",
-        "Game 2",
-        "Game 3",
-        "Game 4",
-        "Game 5",
-        "Game 6",
-        "Game 7",
-        "Game 8",
-        "Game 9",
-        "Game 10",
-      ]);
+      await optionsTest(["Free", "Main table", ...allGames]);
     });
-    xit("should show an option for all table ids", async () => {});
+
+    it("should show an option for all table ids", async () => {
+      await optionsTest(
+        ["Free", "Main table", "Table 1", "Table 2", ...allGames],
+        (match, index) => {
+          switch (index) {
+            case 1:
+            case 2:
+              match.tableId = "1";
+              break;
+            case 3:
+              match.tableId = "2";
+          }
+        },
+      );
+    });
+
     it("should only show games options for game that have not been won or Conceded/Forfeited", async () => {
       await optionsTest(
         [
@@ -1732,7 +1753,7 @@ describe("<LeagueMatchView/>", () => {
               };
               break;
             case 6:
-              throw new Error("Not implemented");
+              matchScoreGamesWon(match, 3, 0);
           }
         },
       );

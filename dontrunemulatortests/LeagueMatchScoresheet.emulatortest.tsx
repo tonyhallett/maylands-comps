@@ -37,17 +37,15 @@ import {
   DbMatch,
   getTeamConcedeOrForfeitKey,
 } from "../src/firebase/rtb/match/dbMatch";
-import { GameScore, Player, SaveState, Umpire } from "../src/umpire";
+import { GameScore, Player } from "../src/umpire";
 
 import { getLast } from "../src/helpers/getLast";
 import { ServerReceiver } from "../src/umpire/commonTypes";
 import { getInitials } from "../src/umpireView/helpers";
 import {
-  scoreGameScores,
   scoreGames,
   scoreGamesWon,
   scorePoints,
-  winGame,
 } from "../src/umpire/umpireHelpers";
 import {
   GameScoreTeamCells,
@@ -77,9 +75,12 @@ import {
   winningMatchColor,
 } from "../src/teamMatches/league/play/league-match-view/scoresheet/ui/colors";
 import {
-  dbMatchSaveStateToSaveState,
-  saveStateToDbMatchSaveState,
-} from "../src/firebase/rtb/match/conversion";
+  updateMatchViaUmpire,
+  matchScoreGameScores,
+  matchScorePoints,
+  matchScoreGamesWon,
+  matchWinGame,
+} from "../__tests__/matchScoringHelpers";
 
 // mocking due to import.meta.url
 jest.mock(
@@ -101,24 +102,16 @@ jest.mock("../src/teamMatches/league/play/LeagueMatchScoreboard", () => {
 
 const { createMaylandsComps, database } = createEmulatorTests();
 
-const updateDbMatchWithSaveState = (match: DbMatch, saveState: SaveState) => {
-  const dbMatchSaveState = saveStateToDbMatchSaveState(saveState);
-  for (const key in dbMatchSaveState) {
-    match[key] = dbMatchSaveState[key];
-  }
-};
-
-const updateMatchViaUmpire = (
-  match: DbMatch,
-  umpireUpdate: (umpire: Umpire) => void,
-) => {
-  const umpire = new Umpire(dbMatchSaveStateToSaveState(match));
-  umpireUpdate(umpire);
-  const saveState = umpire.getSaveState();
-  updateDbMatchWithSaveState(match, saveState);
-};
-
 describe("render scoresheet", () => {
+  beforeAll(() => {
+    Object.defineProperty(window.screen, "orientation", {
+      value: {
+        type: "portrait-primary",
+        addEventListener: () => {},
+        removeEventListener: () => {},
+      },
+    });
+  });
   function createApp(leagueMatchId: string) {
     return createMaylandsComps(
       <LeagueMatchView leagueMatchId={leagueMatchId} />,
@@ -543,10 +536,7 @@ describe("render scoresheet", () => {
         async (test) => {
           const gameScoreTeamCells = await setupGetFirstMatchGameScoreCells(
             (firstMatch) => {
-              updateMatchViaUmpire(firstMatch, (umpire) => {
-                umpire.setServer("Team1Player1");
-                scoreGameScores(umpire, test.gameScores);
-              });
+              matchScoreGameScores(firstMatch, test.gameScores);
             },
           );
           test.gameScores.forEach((gameScore, i) => {
@@ -574,10 +564,7 @@ describe("render scoresheet", () => {
         it("should show - for home and away when the match has not enetered that game number", async () => {
           const gameScoreCells = await setupGetFirstMatchGameScoreCells(
             (firstMatch) => {
-              updateMatchViaUmpire(firstMatch, (umpire) => {
-                umpire.setServer("Team1Player1");
-                umpire.pointScored(true);
-              });
+              matchScorePoints(firstMatch, true);
             },
           );
           gameScoreCells
@@ -592,10 +579,9 @@ describe("render scoresheet", () => {
         it("should color game score cell of the winner and not for the loser if game won", async () => {
           const gameScoreTeamCells = await setupGetFirstMatchGameScoreCells(
             (firstMatch) => {
-              updateMatchViaUmpire(firstMatch, (umpire) => {
-                umpire.setServer("Team1Player1");
-                scoreGameScores(umpire, [{ team1Points: 11, team2Points: 6 }]);
-              });
+              matchScoreGameScores(firstMatch, [
+                { team1Points: 11, team2Points: 6 },
+              ]);
             },
           );
           const { homeTeamScoreCell, awayTeamScoreCell } =
@@ -606,10 +592,9 @@ describe("render scoresheet", () => {
         it("should color the game score cell if game point", async () => {
           const gameScoreTeamCells = await setupGetFirstMatchGameScoreCells(
             (firstMatch) => {
-              updateMatchViaUmpire(firstMatch, (umpire) => {
-                umpire.setServer("Team1Player1");
-                scoreGameScores(umpire, [{ team1Points: 10, team2Points: 6 }]);
-              });
+              matchScoreGameScores(firstMatch, [
+                { team1Points: 10, team2Points: 6 },
+              ]);
             },
           );
           const { homeTeamScoreCell, awayTeamScoreCell } =
@@ -620,14 +605,11 @@ describe("render scoresheet", () => {
         it("should color the game score cell if match point", async () => {
           const gameScoreTeamCells = await setupGetFirstMatchGameScoreCells(
             (firstMatch) => {
-              updateMatchViaUmpire(firstMatch, (umpire) => {
-                umpire.setServer("Team1Player1");
-                scoreGameScores(umpire, [
-                  { team1Points: 11, team2Points: 6 },
-                  { team1Points: 11, team2Points: 6 },
-                  { team1Points: 10, team2Points: 6 },
-                ]);
-              });
+              matchScoreGameScores(firstMatch, [
+                { team1Points: 11, team2Points: 6 },
+                { team1Points: 11, team2Points: 6 },
+                { team1Points: 10, team2Points: 6 },
+              ]);
             },
           );
           const { homeTeamScoreCell, awayTeamScoreCell } =
@@ -680,10 +662,7 @@ describe("render scoresheet", () => {
           description:
             "should show the game scores ( 0 - 0 ) when a point has been scored but no winner",
           setupMatch(dbMatch) {
-            updateMatchViaUmpire(dbMatch, (umpire) => {
-              umpire.setServer("Team1Player1");
-              umpire.pointScored(true);
-            });
+            matchScorePoints(dbMatch, true);
           },
           expectation(gameWinnerAndGamesWonCell) {
             expectScoreTextContent(gameWinnerAndGamesWonCell, 0, 0);
@@ -693,11 +672,7 @@ describe("render scoresheet", () => {
           description:
             "should show the game scores ( 2 - 1) when a point has been scored but no winner",
           setupMatch(dbMatch) {
-            updateMatchViaUmpire(dbMatch, (umpire) => {
-              umpire.setServer("Team1Player1");
-              scoreGames(umpire, true, 2);
-              scoreGames(umpire, false, 1);
-            });
+            matchScoreGamesWon(dbMatch, 2, 1);
           },
           expectation(gameWinnerAndGamesWonCell) {
             expectScoreTextContent(gameWinnerAndGamesWonCell, 2, 1);
@@ -833,10 +808,7 @@ describe("render scoresheet", () => {
           description:
             "should show show score and winner initials when home wins",
           setupMatch(dbMatch) {
-            updateMatchViaUmpire(dbMatch, (umpire) => {
-              umpire.setServer("Team1Player1");
-              scoreGamesWon(umpire, 3, 1);
-            });
+            matchScoreGamesWon(dbMatch, 3, 1);
           },
           expectation(gameWinnerAndGamesWonCell) {
             expectWinnerAndGamesWon(
@@ -851,10 +823,7 @@ describe("render scoresheet", () => {
           description:
             "should show show score and winner initials when away wins",
           setupMatch(dbMatch) {
-            updateMatchViaUmpire(dbMatch, (umpire) => {
-              umpire.setServer("Team1Player1");
-              scoreGamesWon(umpire, 2, 3);
-            });
+            matchScoreGamesWon(dbMatch, 2, 3);
           },
           expectation(gameWinnerAndGamesWonCell) {
             expectWinnerAndGamesWon(
@@ -915,10 +884,7 @@ describe("render scoresheet", () => {
         {
           description: "should color the team score if have game point",
           setupMatch(dbMatch) {
-            updateMatchViaUmpire(dbMatch, (umpire) => {
-              umpire.setServer("Team1Player1");
-              scorePoints(umpire, true, 10);
-            });
+            matchScorePoints(dbMatch, true, 10);
           },
           expectation(gameWinnerAndGamesWonCell) {
             expectGamesWonColor(
@@ -949,10 +915,7 @@ describe("render scoresheet", () => {
           description:
             "should color the team score if won match ( without conceded / forfeit )",
           setupMatch(dbMatch) {
-            updateMatchViaUmpire(dbMatch, (umpire) => {
-              umpire.setServer("Team1Player1");
-              winGame(umpire, false);
-            });
+            matchWinGame(dbMatch, false);
           },
           expectation(gameWinnerAndGamesWonCell) {
             expectGamesWonColor(gameWinnerAndGamesWonCell, false, winColor);
@@ -992,10 +955,7 @@ describe("render scoresheet", () => {
           description:
             "should not color the team score if none of the previous states",
           setupMatch(dbMatch) {
-            updateMatchViaUmpire(dbMatch, (umpire) => {
-              umpire.setServer("Team1Player1");
-              umpire.pointScored(true);
-            });
+            matchScorePoints(dbMatch, true);
           },
           expectation(gameWinnerAndGamesWonCell) {
             expectGamesWonColor(gameWinnerAndGamesWonCell, true, normalColor);
@@ -1080,10 +1040,7 @@ describe("render scoresheet", () => {
         description: "should have score 0 - 0 when game is in progress",
         afterSetupMatch(dbMatch, index) {
           if (index === 0) {
-            updateMatchViaUmpire(dbMatch, (umpire) => {
-              umpire.setServer("Team1Player1");
-              umpire.pointScored(true);
-            });
+            matchScorePoints(dbMatch, true);
           }
         },
         expectation(leagueMatchResultCell) {
@@ -1095,10 +1052,7 @@ describe("render scoresheet", () => {
           "should have score 1 - 0 when single game has been won by the home team",
         afterSetupMatch(dbMatch, index) {
           if (index === 0) {
-            updateMatchViaUmpire(dbMatch, (umpire) => {
-              umpire.setServer("Team1Player1");
-              winGame(umpire, true);
-            });
+            matchWinGame(dbMatch, true);
           }
         },
         expectation(leagueMatchResultCell) {
@@ -1110,10 +1064,7 @@ describe("render scoresheet", () => {
           "should have score 0 - 1 when single game has been won by the away team",
         afterSetupMatch(dbMatch, index) {
           if (index === 0) {
-            updateMatchViaUmpire(dbMatch, (umpire) => {
-              umpire.setServer("Team1Player1");
-              winGame(umpire, false);
-            });
+            matchWinGame(dbMatch, false);
           }
         },
         expectation(leagueMatchResultCell) {
@@ -1235,18 +1186,12 @@ describe("render scoresheet", () => {
             case 1:
             case 2:
               // home team win game
-              updateMatchViaUmpire(dbMatch, (umpire) => {
-                umpire.setServer("Team1Player1");
-                winGame(umpire, true);
-              });
+              matchWinGame(dbMatch, true);
               break;
             case 3:
             case 4:
               // away team win game
-              updateMatchViaUmpire(dbMatch, (umpire) => {
-                umpire.setServer("Team1Player1");
-                winGame(umpire, false);
-              });
+              matchWinGame(dbMatch, false);
               break;
           }
         },
@@ -1277,10 +1222,7 @@ describe("render scoresheet", () => {
         afterSetupMatch(dbMatch, index) {
           if (index !== 9) {
             // home team win game
-            updateMatchViaUmpire(dbMatch, (umpire) => {
-              umpire.setServer("Team1Player1");
-              winGame(umpire, true);
-            });
+            matchWinGame(dbMatch, true);
           }
         },
         expectation(leagueMatchResultCell) {
@@ -1294,10 +1236,7 @@ describe("render scoresheet", () => {
         afterSetupMatch(dbMatch, index) {
           if (index < 6) {
             // home team win game
-            updateMatchViaUmpire(dbMatch, (umpire) => {
-              umpire.setServer("Team1Player1");
-              winGame(umpire, true);
-            });
+            matchWinGame(dbMatch, true);
           }
         },
         expectation(leagueMatchResultCell) {
@@ -1311,10 +1250,7 @@ describe("render scoresheet", () => {
         afterSetupMatch(dbMatch, index) {
           if (index < 5) {
             // away team win game
-            updateMatchViaUmpire(dbMatch, (umpire) => {
-              umpire.setServer("Team1Player1");
-              winGame(umpire, false);
-            });
+            matchWinGame(dbMatch, false);
           }
         },
         expectation(leagueMatchResultCell) {
@@ -1434,10 +1370,7 @@ describe("render scoresheet", () => {
               disabled: true,
               menuItemName: `${homeConcededMenuItem ? "Home" : "Away"} Concede`,
               setupMatch(dbMatch) {
-                updateMatchViaUmpire(dbMatch, (umpire) => {
-                  umpire.setServer("Team1Player1");
-                  winGame(umpire, homeWins);
-                });
+                matchWinGame(dbMatch, homeWins);
               },
             };
             return test;

@@ -2,7 +2,8 @@ import {
   dbMatchSaveStateToSaveState,
   saveStateToDbMatchSaveState,
 } from "../src/firebase/rtb/match/conversion";
-import { SaveState, Umpire } from "../src/umpire";
+import { createUmpire } from "../src/teamMatches/league/helpers";
+import { SaveState } from "../src/umpire";
 import { InitialServersDoublesReceiver } from "../src/umpire/availableServerReceiverChoice";
 
 describe("conversions", () => {
@@ -12,18 +13,9 @@ describe("conversions", () => {
   }
 
   describe("InitialServersDoublesReceiver", () => {
+    const getInitialDoublesSaveState = () => createUmpire(true).getSaveState();
     it("should work with initial state", () => {
-      const initialDoublesSaveState = new Umpire(
-        {
-          bestOf: 5,
-          clearBy2: true,
-          numServes: 2,
-          team1StartGameScore: 0,
-          team2StartGameScore: 0,
-          upTo: 11,
-        },
-        true,
-      ).getSaveState();
+      const initialDoublesSaveState = getInitialDoublesSaveState();
       expect(
         initialDoublesSaveState.initialServersDoublesReceiver,
       ).toEqual<InitialServersDoublesReceiver>({
@@ -33,17 +25,7 @@ describe("conversions", () => {
       expectRoundTrip(initialDoublesSaveState);
     });
     it("should work with first game initial server", () => {
-      const doublesSaveState = new Umpire(
-        {
-          bestOf: 5,
-          clearBy2: true,
-          numServes: 2,
-          team1StartGameScore: 0,
-          team2StartGameScore: 0,
-          upTo: 11,
-        },
-        true,
-      ).getSaveState();
+      const doublesSaveState = getInitialDoublesSaveState();
       doublesSaveState.initialServersDoublesReceiver.gameInitialServers.push(
         "Team1Player1",
       );
@@ -51,17 +33,7 @@ describe("conversions", () => {
     });
 
     it("should work with first doubles receiver", () => {
-      const doublesSaveState = new Umpire(
-        {
-          bestOf: 5,
-          clearBy2: true,
-          numServes: 2,
-          team1StartGameScore: 0,
-          team2StartGameScore: 0,
-          upTo: 11,
-        },
-        true,
-      ).getSaveState();
+      const doublesSaveState = getInitialDoublesSaveState();
       doublesSaveState.initialServersDoublesReceiver.gameInitialServers.push(
         "Team1Player1",
       );
@@ -71,17 +43,7 @@ describe("conversions", () => {
     });
 
     it("should work with game initial servers of both teams", () => {
-      const doublesSaveState = new Umpire(
-        {
-          bestOf: 5,
-          clearBy2: true,
-          numServes: 2,
-          team1StartGameScore: 0,
-          team2StartGameScore: 0,
-          upTo: 11,
-        },
-        true,
-      ).getSaveState();
+      const doublesSaveState = getInitialDoublesSaveState();
       doublesSaveState.initialServersDoublesReceiver.gameInitialServers.push(
         "Team1Player1",
         "Team2Player1",
@@ -92,17 +54,7 @@ describe("conversions", () => {
     });
 
     it("should work with repeated game initial servers", () => {
-      const doublesSaveState = new Umpire(
-        {
-          bestOf: 5,
-          clearBy2: true,
-          numServes: 2,
-          team1StartGameScore: 0,
-          team2StartGameScore: 0,
-          upTo: 11,
-        },
-        true,
-      ).getSaveState();
+      const doublesSaveState = getInitialDoublesSaveState();
       doublesSaveState.initialServersDoublesReceiver.gameInitialServers.push(
         "Team1Player1",
         "Team2Player1",
