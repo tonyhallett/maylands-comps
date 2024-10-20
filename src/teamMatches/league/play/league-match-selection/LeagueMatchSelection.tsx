@@ -57,9 +57,8 @@ import { LiveStreamingDialog } from "./livestreams/LiveStreamingDialog";
 import { MatchWinState, isMatchWon } from "../../../../umpire/matchWinState";
 import { Livestream } from "../../../../firebase/rtb/team";
 import { ref, update } from "firebase/database";
-
 import { getLiveStreamAvailability } from "./getLiveStreamAvailability";
-import { permittedLivestreams } from "./livestreams/permittedLivestreams";
+import { livestreamProviders } from "./livestreams/livestreamProviders";
 
 export interface LeagueMatchSelectionProps {
   renderScoresheet: RenderScoresheet;
@@ -449,7 +448,7 @@ export function LeagueMatchSelection({
               closeLiveStreamDialog();
             }}
             liveStreamAvailability={liveStreamAvailability}
-            permittedLivestreams={permittedLivestreams}
+            livestreamProviders={livestreamProviders}
             getGameMenuTitle={(game) => `Game ${game + 1}`}
             getTableMenuTitle={(table) => {
               return table === "Main" ? "Main table" : `Table ${table}`;

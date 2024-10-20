@@ -56,8 +56,9 @@ import {
   ConcedeOrForfeit,
   getTeamConcedeOrForfeitKey,
 } from "../src/firebase/rtb/match/dbMatch";
-import { Livestreams } from "../src/firebase/rtb/team";
+import { LivestreamService, Livestreams } from "../src/firebase/rtb/team";
 import { matchScoreGamesWon } from "./matchScoringHelpers";
+import { deleteSectionAriaLabel } from "../src/teamMatches/league/play/league-match-selection/livestreams/LiveStreamingDialog";
 
 // mocking due to import.meta.url
 jest.mock(
@@ -1614,42 +1615,73 @@ describe("<LeagueMatchView/>", () => {
       return screen.findByLabelText(livestreamDialogButtonAriaLabel);
     };
 
-    const getLivestreamDialog = () => {
-      return screen.getByRole("dialog", { name: "Live stream urls" });
+    const findLivestreamDialog = () => {
+      return screen.findByRole("dialog", { name: "Live stream urls" });
     };
 
     const openLivestreamDialog = async () => {
       const openForfeitDialogButton = await findOpenLivestreamDialogButton();
       fireEvent.click(openForfeitDialogButton);
-      return getLivestreamDialog();
+      return await findLivestreamDialog();
     };
 
-    it("should not show the livestream dialog when the button has not been  clicked", async () => {
-      const leagueMatchKey = await setupDatabase(database);
+    function renderOpenDialog(leagueMatchKey: string) {
       render(createApp(leagueMatchKey));
+      return openLivestreamDialog();
+    }
 
-      expect(getLivestreamDialog).toThrow();
-    });
+    function getLivestreamRealOptions(livestreamDialog: HTMLElement) {
+      const comboBox = within(livestreamDialog).getByRole("combobox");
+      fireEvent.keyDown(comboBox, { key: "ArrowDown" });
+      const options = screen.getAllByRole("option");
+      return options.filter(
+        (option) => option.getAttribute("tabindex") !== null,
+      );
+    }
 
-    it("should show the livestream dialog when click the button", async () => {
-      const leagueMatchKey = await setupDatabase(database);
-      render(createApp(leagueMatchKey));
-      await openLivestreamDialog();
+    async function renderOpenDialogGetRealOptions(leagueMatchKey: string) {
+      const dialog = await renderOpenDialog(leagueMatchKey);
+      const options = getLivestreamRealOptions(dialog);
+      return {
+        dialog,
+        options,
+      };
+    }
+
+    async function renderOpenAndSelectOption(
+      leagueMatchKey: string,
+      optionIndex: number,
+    ) {
+      const { dialog, options } =
+        await renderOpenDialogGetRealOptions(leagueMatchKey);
+      fireEvent.click(options[optionIndex]);
+      return { dialog, options };
+    }
+
+    describe("showing the dialog", () => {
+      it("should not show the livestream dialog when the button has not been clicked", async () => {
+        const leagueMatchKey = await setupDatabase(database);
+        render(createApp(leagueMatchKey));
+
+        expect(() =>
+          screen.getByRole("dialog", { name: "Live stream urls" }),
+        ).toThrow();
+      });
+
+      it("should show the livestream dialog when click the button", async () => {
+        const leagueMatchKey = await setupDatabase(database);
+        render(createApp(leagueMatchKey));
+        await openLivestreamDialog();
+      });
     });
 
     async function renderExpectOptions(
       leagueMatchKey: string,
       expectedOptions: string[],
     ) {
-      render(createApp(leagueMatchKey));
-      const livestreamDialog = await openLivestreamDialog();
-      const comboBox = within(livestreamDialog).getByRole("combobox");
-      fireEvent.keyDown(comboBox, { key: "ArrowDown" });
-      const options = screen.getAllByRole("option");
-      const realOptions = options.filter(
-        (option) => option.getAttribute("tabindex") !== null,
-      );
-      expect(realOptions.map((option) => option.textContent)).toEqual(
+      const { options } = await renderOpenDialogGetRealOptions(leagueMatchKey);
+
+      expect(options.map((option) => option.textContent)).toEqual(
         expectedOptions,
       );
     }
@@ -1681,82 +1713,146 @@ describe("<LeagueMatchView/>", () => {
       return leagueMatchKey;
     }
 
-    async function optionsTest(
-      expectedOptions: string[],
-      setUpMatch?: SetupMatch,
-      liveStreams?: Livestreams,
-    ) {
-      const leagueMatchKey = await setupDatabaseForLiveStreams(
-        setUpMatch,
-        liveStreams,
-      );
-      renderExpectOptions(leagueMatchKey, expectedOptions);
-    }
-    const allGames = [
-      "Game 1",
-      "Game 2",
-      "Game 3",
-      "Game 4",
-      "Game 5",
-      "Game 6",
-      "Game 7",
-      "Game 8",
-      "Game 9",
-      "Game 10",
-    ];
+    describe("available options", () => {
+      async function optionsTest(
+        expectedOptions: string[],
+        setUpMatch?: SetupMatch,
+        liveStreams?: Livestreams,
+      ) {
+        const leagueMatchKey = await setupDatabaseForLiveStreams(
+          setUpMatch,
+          liveStreams,
+        );
+        await renderExpectOptions(leagueMatchKey, expectedOptions);
+      }
 
-    it("should show options for free, Main Table and all games by default,", async () => {
-      await optionsTest(["Free", "Main table", ...allGames]);
+      const allGames = [
+        "Game 1",
+        "Game 2",
+        "Game 3",
+        "Game 4",
+        "Game 5",
+        "Game 6",
+        "Game 7",
+        "Game 8",
+        "Game 9",
+        "Game 10",
+      ];
+
+      it("should show options for free, Main Table and all games by default,", async () => {
+        await optionsTest(["Free", "Main table", ...allGames]);
+      });
+
+      it("should show an option for all table ids", async () => {
+        await optionsTest(
+          ["Free", "Main table", "Table 1", "Table 2", ...allGames],
+          (match, index) => {
+            switch (index) {
+              case 1:
+              case 2:
+                match.tableId = "1";
+                break;
+              case 3:
+                match.tableId = "2";
+            }
+          },
+        );
+      });
+
+      it("should only show games options for game that have not been won or Conceded/Forfeited", async () => {
+        await optionsTest(
+          [
+            "Free",
+            "Main table",
+            "Game 1",
+            "Game 3",
+            "Game 5",
+            "Game 6",
+            "Game 8",
+            "Game 9",
+            "Game 10",
+          ],
+          (match, index) => {
+            // todo
+            switch (index) {
+              case 1:
+                match.team1ConcedeOrForfeit = {
+                  isConcede: true,
+                };
+                break;
+              case 3:
+                match.team1ConcedeOrForfeit = {
+                  isConcede: false,
+                };
+                break;
+              case 6:
+                matchScoreGamesWon(match, 3, 0);
+            }
+          },
+        );
+      });
     });
 
-    it("should show an option for all table ids", async () => {
-      await optionsTest(
-        ["Free", "Main table", "Table 1", "Table 2", ...allGames],
-        (match, index) => {
-          switch (index) {
-            case 1:
-            case 2:
-              match.tableId = "1";
-              break;
-            case 3:
-              match.tableId = "2";
-          }
-        },
-      );
-    });
+    describe("add/delete", () => {
+      it("should have disabled livestream and tag text fields when have not selected an option", async () => {
+        const leagueMatchKey = await setupDatabase(database);
+        const livestreamDialog = await renderOpenDialog(leagueMatchKey);
 
-    it("should only show games options for game that have not been won or Conceded/Forfeited", async () => {
-      await optionsTest(
-        [
-          "Free",
-          "Main table",
-          "Game 1",
-          "Game 3",
-          "Game 5",
-          "Game 6",
-          "Game 7",
-          "Game 8",
-          "Game 9",
-          "Game 10",
-        ],
-        (match, index) => {
-          // todo
-          switch (index) {
-            case 1:
-              match.team1ConcedeOrForfeit = {
-                isConcede: true,
-              };
-              break;
-            case 3:
-              match.team1ConcedeOrForfeit = {
-                isConcede: false,
-              };
-              break;
-            case 6:
-              matchScoreGamesWon(match, 3, 0);
-          }
-        },
-      );
+        const livestreamTextField =
+          within(livestreamDialog).getByLabelText("Livestream");
+        const tagTextField = within(livestreamDialog).getByLabelText("Tag");
+        expect(livestreamTextField).toBeDisabled();
+        expect(tagTextField).toBeDisabled();
+      });
+
+      it("should should have enabled livestream ( labelled from first provider ) and tag text fields when have selected an option", async () => {
+        const leagueMatchKey = await setupDatabase(database);
+        const { dialog } = await renderOpenAndSelectOption(leagueMatchKey, 0);
+
+        const livestreamTextField =
+          within(dialog).getByLabelText("Url or video id");
+        const tagTextField = within(dialog).getByLabelText("Tag");
+        expect(livestreamTextField).toBeEnabled();
+        expect(tagTextField).toBeEnabled();
+      });
+
+      it("should show livestreams for the selected option available for deletion by their tag and icon", async () => {
+        // no identifier - Free
+        // don't need the playerUrl for this test
+        const leagueMatchKey = await setupDatabaseForLiveStreams(undefined, {
+          yt: {
+            url: "url1",
+            tag: "yttag",
+            service: LivestreamService.youtube,
+          },
+          twich: {
+            url: "url2",
+            tag: "twitchtag",
+            service: LivestreamService.twitch,
+          },
+        });
+
+        const { dialog } = await renderOpenAndSelectOption(leagueMatchKey, 0);
+
+        const deleteSection = within(dialog).getByRole("region", {
+          name: deleteSectionAriaLabel,
+        });
+        const deleteButtons = within(deleteSection).getAllByRole("button");
+        expect(deleteButtons).toHaveLength(2);
+
+        const ytBtnFirst = deleteButtons[0].innerText === "yttag";
+        const deleteYoutubeButton = ytBtnFirst
+          ? deleteButtons[0]
+          : deleteButtons[1];
+        expect(deleteYoutubeButton).toHaveTextContent("yttag");
+        within(deleteYoutubeButton).getByTestId("YouTubeIcon");
+        const deleteTwitchButton = ytBtnFirst
+          ? deleteButtons[1]
+          : deleteButtons[0];
+        expect(deleteTwitchButton).toHaveTextContent("twitchtag");
+        within(deleteTwitchButton).getByTestId("TwitchIcon");
+      });
+      //todo changing provider changes the livestream label
     });
   });
 });

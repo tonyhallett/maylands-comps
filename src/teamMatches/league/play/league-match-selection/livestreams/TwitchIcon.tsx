@@ -3,6 +3,7 @@ import { SvgIcon } from "@mui/material";
 export function TwitchIcon() {
   return (
     <SvgIcon
+      data-testid="TwitchIcon"
       fill="currentColor"
       style={{
         paddingTop: 2,
