@@ -11,7 +11,7 @@ import {
 import { getRulesFromUmpire } from "../src/teamMatches/league/play/league-match-view/getUmpireViewInfo";
 import { Umpire } from "../src/umpire";
 import { ControllableUmpire, UmpireViewProps } from "../src/umpireView";
-import createEmulatorTests from "../__tests__/createEmulatorTests";
+import createEmulatorTests from "./createEmulatorTests";
 import { Database } from "@firebase/database";
 
 let mockUpdateMatch: DbMatch | undefined;

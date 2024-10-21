@@ -3,7 +3,7 @@
  */
 import { render, screen } from "@testing-library/react";
 import { CreateLeagueSeason } from "../src/teamMatches/league/db-population/CreateLeagueSeason";
-import createEmulatorTests from "../__tests__/createEmulatorTests";
+import createEmulatorTests from "./createEmulatorTests";
 import { LeagueMatchLinks } from "../src/teamMatches/league/LeagueMatchLinks";
 import { MaylandsFixture } from "../src/teamMatches/league/db-population/data/romfordLeagueData";
 import { LinkProps } from "@mui/material";

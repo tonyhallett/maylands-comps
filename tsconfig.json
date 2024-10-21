@@ -15,13 +15,13 @@
     "__hacky-mui-tests__/StatsView.test.tsx",
     "test-helpers/testing-library/selectors/roleSelectorFactory.ts",
     "test-helpers/testing-library/from.ts",
-    "dontrunemulatortests/LeagueMatchLinks.emulatortest.tsx",
+    "__tests__/LeagueMatchLinks.emulatortest.tsx",
     "__tests__/LeagueMatchView.emulatortest.tsx",
     "jest-setup.ts",
-    "dontrunemulatortests/LeagueMatchScoresheet.emulatortest.tsx",
-    "dontrunemulatortests/LeagueMatchScoresheet-Umpiring.emulatortest.tsx",
-    "dontrunemulatortests/DbUmpireView.emulatortest.tsx",
-    "dontrunemulatortests/LeagueMatchScoresheetSelectors.ts"
+    "__tests__/LeagueMatchScoresheet.emulatortest.tsx",
+    "__tests__/LeagueMatchScoresheet-Umpiring.emulatortest.tsx",
+    "__tests__/DbUmpireView.emulatortest.tsx",
+    "__tests__/LeagueMatchScoresheetSelectors.ts"
   ],
   "ts-node": {
     "compilerOptions": {

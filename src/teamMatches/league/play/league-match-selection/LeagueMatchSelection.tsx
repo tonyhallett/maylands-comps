@@ -427,7 +427,7 @@ export function LeagueMatchSelection({
                 game.additions.forEach((addition) => {
                   addLiveStream({
                     ...addition,
-                    identifer: game.game,
+                    identifier: game.game,
                   });
                 });
               });
@@ -436,7 +436,7 @@ export function LeagueMatchSelection({
                 table.additions.forEach((addition) => {
                   addLiveStream({
                     ...addition,
-                    identifer: table.table,
+                    identifier: table.table,
                   });
                 });
               });

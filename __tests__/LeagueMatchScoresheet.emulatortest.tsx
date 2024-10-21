@@ -6,7 +6,7 @@ import {
   openMenuClickMenuItem,
   openMenuExpectMenuItemDisabled,
 } from "../test-helpers/mui/menu";
-import createEmulatorTests from "../__tests__/createEmulatorTests";
+import createEmulatorTests from "./createEmulatorTests";
 import {
   LeagueMatchView,
   gameMenuButtonAriaLabel,
@@ -22,7 +22,7 @@ import {
   noPlayersSelected,
   setUpDatabaseWithDefaultPlayersThatAreSelected,
   setupDatabase,
-} from "../__tests__/setupDatabase";
+} from "./setupDatabase";
 import { unselectedPlayerCellColor } from "../src/teamMatches/league/play/league-match-view/scoresheet/ui/getPlayerCell";
 import {
   leagueMatchPlayersPositionDisplays,
@@ -80,7 +80,7 @@ import {
   matchScorePoints,
   matchScoreGamesWon,
   matchWinGame,
-} from "../__tests__/matchScoringHelpers";
+} from "./matchScoringHelpers";
 
 // mocking due to import.meta.url
 jest.mock(

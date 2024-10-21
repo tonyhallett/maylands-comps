@@ -28,12 +28,12 @@ export function combineLiveStreams(
         key,
         ...livestream,
       };
-      if (livestream.identifer) {
+      if (livestream.identifier !== undefined) {
         const tablesOrGames =
-          typeof livestream.identifer === "string" ? "tables" : "games";
-        combinedLivestreams[tablesOrGames][livestream.identifer] =
-          combinedLivestreams[tablesOrGames][livestream.identifer] ?? [];
-        combinedLivestreams[tablesOrGames][livestream.identifer].push(
+          typeof livestream.identifier === "string" ? "tables" : "games";
+        combinedLivestreams[tablesOrGames][livestream.identifier] =
+          combinedLivestreams[tablesOrGames][livestream.identifier] ?? [];
+        combinedLivestreams[tablesOrGames][livestream.identifier].push(
           keyedLivestream,
         );
       } else {

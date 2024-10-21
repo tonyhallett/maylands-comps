@@ -56,7 +56,11 @@ import {
   ConcedeOrForfeit,
   getTeamConcedeOrForfeitKey,
 } from "../src/firebase/rtb/match/dbMatch";
-import { LivestreamService, Livestreams } from "../src/firebase/rtb/team";
+import {
+  Livestream,
+  LivestreamService,
+  Livestreams,
+} from "../src/firebase/rtb/team";
 import { matchScoreGamesWon } from "./matchScoringHelpers";
 import { deleteSectionAriaLabel } from "../src/teamMatches/league/play/league-match-selection/livestreams/LiveStreamingDialog";
 
@@ -1610,7 +1614,7 @@ describe("<LeagueMatchView/>", () => {
     });
   });
 
-  describe.only("livestreams", () => {
+  describe("livestreams", () => {
     const findOpenLivestreamDialogButton = () => {
       return screen.findByLabelText(livestreamDialogButtonAriaLabel);
     };
@@ -1793,6 +1797,15 @@ describe("<LeagueMatchView/>", () => {
       });
     });
 
+    it("should have commit disabled when there has been no changes", async () => {
+      const leagueMatchKey = await setupDatabase(database);
+      const livestreamDialog = await renderOpenDialog(leagueMatchKey);
+
+      const commitButton = within(livestreamDialog).getByRole("button", {
+        name: "Commit",
+      });
+      expect(commitButton).toBeDisabled();
+    });
     describe("add/delete", () => {
       it("should have disabled livestream and tag text fields when have not selected an option", async () => {
         const leagueMatchKey = await setupDatabase(database);
@@ -1816,41 +1829,176 @@ describe("<LeagueMatchView/>", () => {
         expect(tagTextField).toBeEnabled();
       });
 
-      it("should show livestreams for the selected option available for deletion by their tag and icon", async () => {
-        // no identifier - Free
-        // don't need the playerUrl for this test
-        const leagueMatchKey = await setupDatabaseForLiveStreams(undefined, {
-          yt: {
-            url: "url1",
-            tag: "yttag",
+      describe("should show livestreams for the selected option available for deletion by their tag and icon", () => {
+        interface ExpectedDeleteButton {
+          tag: string;
+          iconTestId: string;
+        }
+        interface SelectedOptionLivestreamsTest {
+          description: string;
+          selectedOption: number;
+          setupMatch?: SetupMatch;
+          // don't need the playerUrl for this test
+          livestreams: Livestream[];
+          expectedDeleteButtons: ExpectedDeleteButton[];
+        }
+
+        const mainTableLivestream: Livestream = {
+          url: "maintable",
+          tag: "maintable",
+          service: LivestreamService.facebook,
+          identifier: "Main",
+        };
+        const freeLivestreams: Livestream[] = [
+          {
+            url: "free1",
+            tag: "free1",
             service: LivestreamService.youtube,
           },
-          twich: {
-            url: "url2",
-            tag: "twitchtag",
+          {
+            url: "free2",
+            tag: "free2",
             service: LivestreamService.twitch,
           },
-        });
+        ];
+        const game1Livestream: Livestream = {
+          url: "game1",
+          tag: "game1",
+          service: LivestreamService.instagram,
+          identifier: 0,
+        };
+        const game2Livestream: Livestream = {
+          url: "game2",
+          tag: "game2",
+          service: LivestreamService.youtube,
+          identifier: 1,
+        };
+        const selectedOptionLivestreamsTests: SelectedOptionLivestreamsTest[] =
+          [
+            {
+              description: "Free",
+              selectedOption: 0,
+              // no identifier - Free
+              livestreams: [...freeLivestreams, mainTableLivestream],
+              expectedDeleteButtons: [
+                {
+                  tag: freeLivestreams[0].tag,
+                  iconTestId: "YouTubeIcon",
+                },
+                {
+                  tag: freeLivestreams[1].tag,
+                  iconTestId: "TwitchIcon",
+                },
+              ],
+            },
+            {
+              description: "Main table",
+              selectedOption: 1,
+              livestreams: [...freeLivestreams, mainTableLivestream],
+              expectedDeleteButtons: [
+                {
+                  tag: mainTableLivestream.tag,
+                  iconTestId: "FacebookIcon",
+                },
+              ],
+            },
+            {
+              description: "Game (1)",
+              selectedOption: 2,
+              livestreams: [
+                ...freeLivestreams,
+                mainTableLivestream,
+                game1Livestream,
+              ],
+              expectedDeleteButtons: [
+                {
+                  tag: game1Livestream.tag,
+                  iconTestId: "InstagramIcon",
+                },
+              ],
+            },
+            {
+              description: "Game (2)",
+              selectedOption: 3,
+              livestreams: [game1Livestream, game2Livestream],
+              expectedDeleteButtons: [
+                {
+                  tag: game2Livestream.tag,
+                  iconTestId: "YouTubeIcon",
+                },
+              ],
+            },
+            {
+              description: "Custom table",
+              selectedOption: 2,
+              setupMatch: (match) => {
+                match.tableId = "Custom";
+              },
+              livestreams: [
+                ...freeLivestreams,
+                mainTableLivestream,
+                game1Livestream,
+                {
+                  service: LivestreamService.instagram,
+                  tag: "Custom",
+                  url: "Custom",
+                  identifier: "Custom",
+                },
+              ],
+              expectedDeleteButtons: [
+                {
+                  tag: "Custom",
+                  iconTestId: "InstagramIcon",
+                },
+              ],
+            },
+          ];
+        it.each(selectedOptionLivestreamsTests)(
+          "$description",
+          async ({
+            selectedOption,
+            setupMatch,
+            expectedDeleteButtons,
+            livestreams,
+          }) => {
+            const livestreamsObject: Livestreams = {};
+            livestreams.forEach((livestream, index) => {
+              livestreamsObject[index.toString()] = livestream;
+            });
 
-        const { dialog } = await renderOpenAndSelectOption(leagueMatchKey, 0);
+            const leagueMatchKey = await setupDatabaseForLiveStreams(
+              setupMatch,
+              livestreamsObject,
+            );
 
-        const deleteSection = within(dialog).getByRole("region", {
-          name: deleteSectionAriaLabel,
-        });
-        const deleteButtons = within(deleteSection).getAllByRole("button");
-        expect(deleteButtons).toHaveLength(2);
+            const { dialog } = await renderOpenAndSelectOption(
+              leagueMatchKey,
+              selectedOption,
+            );
 
-        const ytBtnFirst = deleteButtons[0].innerText === "yttag";
-        const deleteYoutubeButton = ytBtnFirst
-          ? deleteButtons[0]
-          : deleteButtons[1];
-        expect(deleteYoutubeButton).toHaveTextContent("yttag");
-        within(deleteYoutubeButton).getByTestId("YouTubeIcon");
-        const deleteTwitchButton = ytBtnFirst
-          ? deleteButtons[1]
-          : deleteButtons[0];
-        expect(deleteTwitchButton).toHaveTextContent("twitchtag");
-        within(deleteTwitchButton).getByTestId("TwitchIcon");
+            const deleteSection = within(dialog).getByRole("region", {
+              name: deleteSectionAriaLabel,
+            });
+            const deleteButtons = within(deleteSection).getAllByRole("button");
+            expect(deleteButtons).toHaveLength(expectedDeleteButtons.length);
+            expectedDeleteButtons.forEach(
+              ({ tag: textContent, iconTestId }) => {
+                const deleteButton = deleteButtons.find(
+                  (button) => button.textContent === textContent,
+                );
+                expect(within(deleteButton!).getByTestId(iconTestId));
+              },
+            );
+          },
+        );
+      });
+
+      describe.skip("deleting a livestream", () => {
+        it("should have commit enabled when a livestream has been deleted", async () => {});
+
+        it("should not show the deleted livestream in the list of available livestreams", async () => {});
+
+        it("should update the database with the deleted livestream", async () => {});
       });
       //todo changing provider changes the livestream label
     });

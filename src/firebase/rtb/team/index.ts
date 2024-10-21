@@ -32,7 +32,7 @@ export enum LivestreamService {
 }
 
 export interface Livestream {
-  identifer?: string | number;
+  identifier?: string | number;
   url: string;
   tag: string;
   service: LivestreamService;

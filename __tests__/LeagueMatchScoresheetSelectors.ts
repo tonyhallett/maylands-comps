@@ -1,5 +1,5 @@
 import { within } from "@testing-library/react";
-import { findScoresheetSection } from "../__tests__/leagueMatchViewSelectors";
+import { findScoresheetSection } from "./leagueMatchViewSelectors";
 import {
   gameMenuButtonAriaLabel,
   getLeagueMatchResultTeamElementAriaLabel,

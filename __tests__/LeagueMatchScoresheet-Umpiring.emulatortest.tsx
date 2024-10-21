@@ -10,8 +10,8 @@ import {
   defaultHomePlayerNames,
   getMatchSetupThatSetsDefaultPlayersThatAreSelected,
   setupDatabase,
-} from "../__tests__/setupDatabase";
-import createEmulatorTests from "../__tests__/createEmulatorTests";
+} from "./setupDatabase";
+import createEmulatorTests from "./createEmulatorTests";
 import { DbUmpireViewProps } from "../src/teamMatches/league/play/league-match-view/DbUmpireView";
 import { MatchAndKey } from "../src/teamMatches/league/db-hooks/useLeagueMatchAndMatches";
 import { UmpireMatchAndKey } from "../src/teamMatches/league/play/league-match-selection/renderScoresheet-type";
@@ -101,9 +101,21 @@ describe("LeagueMatchScoresheet-Umpiring", () => {
       <LeagueMatchView leagueMatchId={leagueMatchId} />,
     );
   }
+
+  beforeAll(() => {
+    Object.defineProperty(window.screen, "orientation", {
+      value: {
+        type: "portrait-primary",
+        addEventListener: () => {},
+        removeEventListener: () => {},
+      },
+    });
+  });
+
   beforeEach(() => {
     jest.resetAllMocks();
   });
+
   it("should not render the DbUmpireView until a game has been selected to umpire", async () => {
     const leagueMatchKey = await setupDatabase(
       database,
