@@ -25,7 +25,6 @@ import {
   KeyedSinglesMatchNamePositionDisplay,
   RenderScoresheet,
   SelectedOrNotSinglePlayerNamePositionDisplay,
-  UmpireMatchAndKey,
 } from "./renderScoresheet-type";
 import { TeamsSelectPlayersAndDoubles } from "../player-selection/TeamsSelectPlayersAndDoubles";
 import {
@@ -47,18 +46,20 @@ import { addUmpireToMatchAndKeys } from "./addUmpireToMatchAndKeys";
 import PersonOffIcon from "@mui/icons-material/PersonOff";
 import { useForfeit } from "./useForfeit";
 import { getForfeitButtons } from "./getForfeitButtons";
-import {
-  ConcedeOrForfeit,
-  getTeamConcedeOrForfeitKey,
-} from "../../../../firebase/rtb/match/dbMatch";
+import { getTeamConcedeOrForfeitKey } from "../../../../firebase/rtb/match/dbMatch";
 const ForfeitIcon = PersonOffIcon;
 import LiveTvIcon from "@mui/icons-material/LiveTv";
 import { LiveStreamingDialog } from "./livestreams/LiveStreamingDialog";
-import { MatchWinState, isMatchWon } from "../../../../umpire/matchWinState";
-import { Livestream } from "../../../../firebase/rtb/team";
-import { ref, update } from "firebase/database";
-import { getLiveStreamAvailability } from "./getLiveStreamAvailability";
+import { getLivestreamAvailability } from "./getLivestreamAvailability";
 import { livestreamProviders } from "./livestreams/livestreamProviders";
+import { updateLivestreams } from "../../../../firebase/rtb/match/db-helpers/updateLivestreams";
+import TableRestaurantIcon from "@mui/icons-material/TableRestaurant";
+import {
+  getTablesAndMatchesNotCompleted,
+  mainTable,
+} from "./getTablesAndMatchesNotCompleted";
+import { getLivestreamUpdates } from "./getLivestreamUpdates";
+import { TablesDialog } from "./TablesDialog";
 
 export interface LeagueMatchSelectionProps {
   renderScoresheet: RenderScoresheet;
@@ -68,6 +69,7 @@ export interface LeagueMatchSelectionProps {
 export const scoresheetSectionAriaLabel = "Scoresheet";
 export const openForfeitDialogButtonAriaLabel = "Open forfeit dialog button";
 export const livestreamDialogButtonAriaLabel = "Open livestream dialog button";
+export const tablesDialogButtonAriaLabel = "Open table dialog button";
 
 export function LeagueMatchSelection({
   leagueMatchId,
@@ -78,6 +80,7 @@ export function LeagueMatchSelection({
   const [leagueMatch, matchAndKeys] = useLeagueMatchAndMatches(leagueMatchId!);
   const [homeTeam, awayTeam] = useLeagueTeamsOnValue(leagueMatch);
   const [showLivestreamDialog, setShowLivestreamDialog] = useState(false);
+  const [showTablesDialog, setShowTableDialog] = useState(false);
   const { showForfeitDialogDisabled, getForfeitDialog, openForfeitDialog } =
     useForfeit(
       matchAndKeys,
@@ -325,9 +328,11 @@ export function LeagueMatchSelection({
   };
   const autoCompletesEnabled = getEnabled();
   const umpireMatchAndKeys = addUmpireToMatchAndKeys(matchAndKeys);
-  const liveStreamAvailability = getLiveStreamAvailability(
+  const tablesAndGamesNotCompleted =
+    getTablesAndMatchesNotCompleted(umpireMatchAndKeys);
+  const liveStreamAvailability = getLivestreamAvailability(
     leagueMatch?.livestreams,
-    umpireMatchAndKeys,
+    tablesAndGamesNotCompleted,
   );
   const closeLiveStreamDialog = () => setShowLivestreamDialog(false);
 
@@ -392,6 +397,7 @@ export function LeagueMatchSelection({
             isHome: false,
           }}
         />
+
         <Button onClick={() => setShowScoreboard(true)}>Scoreboard</Button>
         <IconButton
           aria-label={livestreamDialogButtonAriaLabel}
@@ -399,6 +405,33 @@ export function LeagueMatchSelection({
         >
           <LiveTvIcon />
         </IconButton>
+        <IconButton
+          aria-label={tablesDialogButtonAriaLabel}
+          onClick={() => setShowTableDialog(true)}
+        >
+          <TableRestaurantIcon />
+        </IconButton>
+        {showTablesDialog && (
+          <TablesDialog
+            onClose={() => setShowTableDialog(false)}
+            tablesAndMatchesNotCompleted={tablesAndGamesNotCompleted}
+            changed={(changes) => {
+              // if new table is main then will want to remove the tableId
+              const rootUpdater = createRootUpdater();
+              changes.forEach((change) => {
+                rootUpdater.updateListItem(
+                  "matches",
+                  change.key,
+                  change.newTableId === mainTable
+                    ? { tableId: null }
+                    : { tableId: change.newTableId },
+                );
+              });
+              rootUpdater.update();
+              setShowTableDialog(false);
+            }}
+          />
+        )}
         {showLivestreamDialog && (
           <LiveStreamingDialog
             helpNode={
@@ -412,38 +445,11 @@ export function LeagueMatchSelection({
               </Box>
             }
             onClose={closeLiveStreamDialog}
-            changed={({ free, games, tables }) => {
-              const updates = {};
-              const deleteLivestream = (key: string) => (updates[key] = null);
-              const addLiveStream = (livestream: Livestream) =>
-                (updates[getNewKey()] = livestream);
-              free.deletions.forEach(deleteLivestream);
-              free.additions.forEach((addition) => {
-                addLiveStream(addition);
-              });
-
-              games.forEach((game) => {
-                game.deletions.forEach(deleteLivestream);
-                game.additions.forEach((addition) => {
-                  addLiveStream({
-                    ...addition,
-                    identifier: game.game,
-                  });
-                });
-              });
-              tables.forEach((table) => {
-                table.deletions.forEach(deleteLivestream);
-                table.additions.forEach((addition) => {
-                  addLiveStream({
-                    ...addition,
-                    identifier: table.table,
-                  });
-                });
-              });
-
-              update(
-                ref(db, `leagueMatches/${leagueMatchId}/livestreams`),
-                updates,
+            changed={(changes) => {
+              updateLivestreams(
+                db,
+                leagueMatchId,
+                getLivestreamUpdates(changes, getNewKey),
               );
               closeLiveStreamDialog();
             }}
@@ -451,7 +457,7 @@ export function LeagueMatchSelection({
             livestreamProviders={livestreamProviders}
             getGameMenuTitle={(game) => `Game ${game + 1}`}
             getTableMenuTitle={(table) => {
-              return table === "Main" ? "Main table" : `Table ${table}`;
+              return table === mainTable ? "Main table" : `Table ${table}`;
             }}
           />
         )}
@@ -475,49 +481,5 @@ export function LeagueMatchSelection({
         </section>
       </div>
     </>
-  );
-}
-
-interface TablesAndGamesNotCompleted {
-  tables: string[];
-  games: number[];
-}
-
-export function getTablesAndGamesNotCompleted(
-  umpireMatchAndKeys: UmpireMatchAndKey[],
-): TablesAndGamesNotCompleted {
-  return umpireMatchAndKeys.reduce<TablesAndGamesNotCompleted>(
-    (acc, umpireMatchAndKey, i) => {
-      const { matchState, match } = umpireMatchAndKey;
-      if (
-        getNotCompleted(
-          matchState.matchWinState,
-          match.team1ConcedeOrForfeit,
-          match.team2ConcedeOrForfeit,
-        )
-      ) {
-        acc.games.push(i);
-      }
-      if (match.tableId !== undefined && !acc.tables.includes(match.tableId)) {
-        acc.tables.push(match.tableId);
-      }
-      return acc;
-    },
-    {
-      tables: ["Main"],
-      games: [],
-    },
-  );
-}
-
-function getNotCompleted(
-  matchWinState: MatchWinState,
-  team1ConcedeOrForfeit: ConcedeOrForfeit | undefined,
-  team2ConcedeOrForfeit: ConcedeOrForfeit | undefined,
-) {
-  return (
-    !isMatchWon(matchWinState) &&
-    team1ConcedeOrForfeit === undefined &&
-    team2ConcedeOrForfeit === undefined
   );
 }

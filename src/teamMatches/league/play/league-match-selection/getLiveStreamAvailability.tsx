@@ -1,4 +1,3 @@
-import { UmpireMatchAndKey } from "./renderScoresheet-type";
 import {
   TableKeyedLiveStreams,
   LivestreamAvailability,
@@ -6,7 +5,7 @@ import {
   KeyedLivestream,
 } from "./livestreams/LiveStreamingDialog";
 import { Livestreams } from "../../../../firebase/rtb/team";
-import { getTablesAndGamesNotCompleted } from "./LeagueMatchSelection";
+import { TablesAndMatchesNotCompleted } from "./getTablesAndMatchesNotCompleted";
 
 interface CombinedLivestreams {
   free: KeyedLivestream[];
@@ -45,11 +44,11 @@ export function combineLiveStreams(
   return combinedLivestreams;
 }
 
-export function getLiveStreamAvailability(
+export function getLivestreamAvailability(
   livestreams: Livestreams | undefined,
-  umpireMatchAndKeys: UmpireMatchAndKey[],
+  tablesAndGamesNotCompleted: TablesAndMatchesNotCompleted,
 ): LivestreamAvailability {
-  const { tables, games } = getTablesAndGamesNotCompleted(umpireMatchAndKeys);
+  const { tables, matches } = tablesAndGamesNotCompleted;
   const liveStreamAvailability: LivestreamAvailability = {
     free: [],
     tables: [],
@@ -64,10 +63,10 @@ export function getLiveStreamAvailability(
     };
     liveStreamAvailability.tables.push(tableDisplayKeyedLiveStreams);
   });
-  games.forEach((gameIndex) => {
+  matches.forEach((match) => {
     const gameDisplayKeyedLiveStreams: GameKeyedLiveStreams = {
-      game: gameIndex,
-      streams: combinedLivestreams.games[gameIndex] ?? [],
+      game: match.number,
+      streams: combinedLivestreams.games[match.number] ?? [],
     };
     liveStreamAvailability.games.push(gameDisplayKeyedLiveStreams);
   });

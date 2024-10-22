@@ -53,20 +53,20 @@ export interface LivestreamAvailability {
   games: GameKeyedLiveStreams[];
 }
 
-interface AdditionsDeletions {
+export interface AdditionsDeletions {
   additions: Livestream[];
   deletions: string[];
 }
 
-interface TableAdditionsDeletions extends AdditionsDeletions {
+export interface TableAdditionsDeletions extends AdditionsDeletions {
   table: string;
 }
 
-interface GameAdditionsDeletions extends AdditionsDeletions {
+export interface GameAdditionsDeletions extends AdditionsDeletions {
   game: number;
 }
 
-interface LivestreamChanges {
+export interface LivestreamChanges {
   free: AdditionsDeletions;
   tables: TableAdditionsDeletions[];
   games: GameAdditionsDeletions[];
@@ -85,9 +85,10 @@ export interface PermittedLivestreams {
 
 export interface LivestreamProvider {
   service: LivestreamService;
+  serviceName: string;
   icon: ReactNode;
   isPermitted: (url: string) => PermittedLivestreamInputResult | undefined;
-  inputLabel?: string;
+  inputLabel: string;
   validInputs?: string[];
 }
 type LivestreamProviders = LivestreamProvider[];
@@ -178,7 +179,7 @@ export function LiveStreamingDialog({
 
   const createKeyedLivestream = (addition: Livestream): KeyedLivestream => {
     const addedKeyedLiveStream: KeyedLivestream = {
-      key: `$fakeKeyPrefix}${fakeKeyCounter.current++}`,
+      key: `${fakeKeyPrefix}${fakeKeyCounter.current++}`,
       ...addition,
     };
     return addedKeyedLiveStream;
@@ -342,9 +343,10 @@ interface SuggestedTag {
   manualTag: boolean;
 }
 
-export const deleteSectionAriaLabel = "Delete livestreams";
-export const addSectionAriaLabel = "Add livestream";
-
+export const deleteSectionAriaLabel = "Delete livestreams section";
+export const addSectionAriaLabel = "Add livestream section";
+export const addLivestreamButtonAriaLabel = "Add livestream";
+export const toggleButtonGroupAriaLabel = "Select livestream provider";
 function AddDelete({
   keyedLivestreams,
   enabled,
@@ -404,12 +406,9 @@ function AddDelete({
       const newState: AddState = {
         livestream: "",
         permitted: true,
-        tag: "",
+        tag: clearTag ? "" : prevState.tag,
         playerUrl: undefined,
       };
-      if (!clearTag) {
-        newState.tag = prevState.tag;
-      }
       return newState;
     });
   };
@@ -423,11 +422,6 @@ function AddDelete({
       resetAddedState(!suggestedTagRef.current.manualTag);
     }
   };
-
-  let addLivestreamLabel = "Livestream";
-  if (enabled && selectedProvider.inputLabel) {
-    addLivestreamLabel = selectedProvider.inputLabel;
-  }
 
   return (
     <>
@@ -467,6 +461,7 @@ function AddDelete({
           Add
         </Typography>
         <ToggleButtonGroup
+          aria-label={toggleButtonGroupAriaLabel}
           value={selectedProvider}
           exclusive
           onChange={handleSelectedLivestreamProvider}
@@ -475,7 +470,11 @@ function AddDelete({
         >
           {livestreamProviders.map((lsp) => {
             return (
-              <ToggleButton value={lsp} key={lsp.service}>
+              <ToggleButton
+                aria-label={lsp.serviceName}
+                value={lsp}
+                key={lsp.service}
+              >
                 {lsp.icon}
               </ToggleButton>
             );
@@ -488,7 +487,7 @@ function AddDelete({
                 fullWidth
                 error={!addState.permitted}
                 disabled={!enabled}
-                label={addLivestreamLabel}
+                label={selectedProvider.inputLabel}
                 value={addState.livestream}
                 InputProps={{
                   endAdornment:
@@ -548,6 +547,7 @@ function AddDelete({
           </Box>
 
           <IconButton
+            aria-label={addLivestreamButtonAriaLabel}
             disabled={
               !addState.permitted ||
               addState.livestream.trim().length === 0 ||

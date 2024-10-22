@@ -7,7 +7,6 @@ import {
   onChildChanged,
   onValue,
   orderByChild,
-  push,
   Query,
   query,
   QueryConstraint,
@@ -232,7 +231,3 @@ export const onChildChangedTyped = <T>(
 
 export const nameof = <T>(name: Extract<keyof T, string>): string => name;
 export type ExtractKey<T, U extends keyof T> = Extract<keyof T, U>;
-
-export const getNewKey = (database: Database) => {
-  return push(ref(database, "___")).key!;
-};

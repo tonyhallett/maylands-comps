@@ -7,7 +7,7 @@ import {
   getDatabase,
 } from "firebase/database";
 import { isDevelopmentEnvironment } from "../../helpers/environment";
-import { getNewKey } from "./typeHelpers";
+import { getNewKey } from "./getNewKey";
 import { createRootUpdater } from "./match/db-helpers/createRootUpdater";
 
 export function getMaylandsCompRTB() {
