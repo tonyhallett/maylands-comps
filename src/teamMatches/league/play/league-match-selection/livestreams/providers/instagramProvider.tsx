@@ -1,6 +1,6 @@
-import { LivestreamProvider } from "./LiveStreamingDialog";
+import { LivestreamProvider } from "../LiveStreamingDialog";
 import InstagramIcon from "@mui/icons-material/Instagram";
-import { LivestreamService } from "../../../../../firebase/rtb/team";
+import { LivestreamService } from "../../../../../../firebase/rtb/team";
 
 // https://www.instagram.com/hallett1694/live/17927797259956173?igsh=MXgyN29vY3N5YzV5dQ%3D%3D
 const instagramRegex =

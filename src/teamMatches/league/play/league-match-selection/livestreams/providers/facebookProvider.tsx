@@ -1,6 +1,6 @@
-import { LivestreamProvider } from "./LiveStreamingDialog";
+import { LivestreamProvider } from "../LiveStreamingDialog";
 import FacebookIcon from "@mui/icons-material/Facebook";
-import { LivestreamService } from "../../../../../firebase/rtb/team";
+import { LivestreamService } from "../../../../../../firebase/rtb/team";
 
 // https://www.facebook.com/tony.hallett.777/videos/1554747258504979/
 

@@ -70,10 +70,10 @@ import {
   toggleButtonGroupAriaLabel,
 } from "../src/teamMatches/league/play/league-match-selection/livestreams/LiveStreamingDialog";
 import { updateLivestreams } from "../src/firebase/rtb/match/db-helpers/updateLivestreams";
-import { twitchProvider } from "../src/teamMatches/league/play/league-match-selection/livestreams/twitchProvider";
-import { instagramProvider } from "../src/teamMatches/league/play/league-match-selection/livestreams/instagramProvider";
-import { facebookProvider } from "../src/teamMatches/league/play/league-match-selection/livestreams/facebookProvider";
-import { youtubeProvider } from "../src/teamMatches/league/play/league-match-selection/livestreams/youtubeProvider";
+import { twitchProvider } from "../src/teamMatches/league/play/league-match-selection/livestreams/providers/twitchProvider";
+import { instagramProvider } from "../src/teamMatches/league/play/league-match-selection/livestreams/providers/instagramProvider";
+import { facebookProvider } from "../src/teamMatches/league/play/league-match-selection/livestreams/providers/facebookProvider";
+import { youtubeProvider } from "../src/teamMatches/league/play/league-match-selection/livestreams/providers/youtubeProvider";
 import { mainTable } from "../src/teamMatches/league/play/league-match-selection/getTablesAndMatchesNotCompleted";
 const mockedUpdateLivestreams = updateLivestreams as unknown as jest.Mock<
   typeof updateLivestreams

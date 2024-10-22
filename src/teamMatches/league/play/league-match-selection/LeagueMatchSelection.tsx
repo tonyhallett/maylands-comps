@@ -50,16 +50,16 @@ import { getTeamConcedeOrForfeitKey } from "../../../../firebase/rtb/match/dbMat
 const ForfeitIcon = PersonOffIcon;
 import LiveTvIcon from "@mui/icons-material/LiveTv";
 import { LiveStreamingDialog } from "./livestreams/LiveStreamingDialog";
-import { livestreamProviders } from "./livestreams/livestreamProviders";
+import { livestreamProviders } from "./livestreams/providers/livestreamProviders";
 import { updateLivestreams } from "../../../../firebase/rtb/match/db-helpers/updateLivestreams";
 import TableRestaurantIcon from "@mui/icons-material/TableRestaurant";
 import {
   getTablesAndMatchesNotCompleted,
   mainTable,
 } from "./getTablesAndMatchesNotCompleted";
-import { getLivestreamUpdates } from "./getLivestreamUpdates";
+import { getLivestreamUpdates } from "./livestreams/getLivestreamUpdates";
 import { TablesDialog } from "./TablesDialog";
-import { getLivestreamAvailability } from "./getLivestreamAvailability";
+import { getLivestreamAvailability } from "./livestreams/getLivestreamAvailability";
 
 export interface LeagueMatchSelectionProps {
   renderScoresheet: RenderScoresheet;

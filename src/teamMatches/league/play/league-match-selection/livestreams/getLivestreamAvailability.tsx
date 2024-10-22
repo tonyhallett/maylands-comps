@@ -3,9 +3,9 @@ import {
   LivestreamAvailability,
   GameKeyedLiveStreams,
   KeyedLivestream,
-} from "./livestreams/LiveStreamingDialog";
-import { Livestreams } from "../../../../firebase/rtb/team";
-import { TablesAndMatchesNotCompleted } from "./getTablesAndMatchesNotCompleted";
+} from "./LiveStreamingDialog";
+import { Livestreams } from "../../../../../firebase/rtb/team";
+import { TablesAndMatchesNotCompleted } from "../getTablesAndMatchesNotCompleted";
 
 interface CombinedLivestreams {
   free: KeyedLivestream[];

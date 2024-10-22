@@ -1,6 +1,6 @@
-import { LivestreamProvider } from "./LiveStreamingDialog";
+import { LivestreamProvider } from "../LiveStreamingDialog";
 import YouTubeIcon from "@mui/icons-material/YouTube";
-import { LivestreamService } from "../../../../../firebase/rtb/team";
+import { LivestreamService } from "../../../../../../firebase/rtb/team";
 
 // https://webapps.stackexchange.com/questions/54443/format-for-id-of-youtube-video
 //  https://youtube.com/live/U_BtCIwvHqg?feature=share

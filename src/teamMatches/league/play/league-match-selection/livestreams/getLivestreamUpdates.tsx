@@ -1,5 +1,5 @@
-import { LivestreamChanges } from "./livestreams/LiveStreamingDialog";
-import { Livestream } from "../../../../firebase/rtb/team";
+import { LivestreamChanges } from "./LiveStreamingDialog";
+import { Livestream } from "../../../../../firebase/rtb/team";
 
 export const getLivestreamUpdates = (
   { free, games, tables }: LivestreamChanges,

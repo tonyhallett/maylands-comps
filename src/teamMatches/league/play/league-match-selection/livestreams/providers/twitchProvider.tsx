@@ -1,8 +1,8 @@
 import {
   LivestreamProvider,
   PermittedLivestreamInputResult,
-} from "./LiveStreamingDialog";
-import { LivestreamService } from "../../../../../firebase/rtb/team";
+} from "../LiveStreamingDialog";
+import { LivestreamService } from "../../../../../../firebase/rtb/team";
 import { TwitchIcon } from "./TwitchIcon";
 
 // https://www.twitch.tv/thallett74?sr=a
