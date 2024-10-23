@@ -74,7 +74,7 @@ export interface LivestreamChanges {
 
 export interface PermittedLivestreamInputResult {
   suggestedTag: string;
-  playerUrl?: string;
+  playerProp?: string; // this needs to pass the regex of the react player https://github.com/cookpete/react-player/blob/master/src/patterns.js
 }
 
 export interface PermittedLivestreams {
@@ -516,7 +516,7 @@ function AddDelete({
                         newState.tag = permissionResult.suggestedTag;
                       }
 
-                      newState.playerUrl = permissionResult.playerUrl;
+                      newState.playerUrl = permissionResult.playerProp;
                     }
                     return newState;
                   });
@@ -560,7 +560,7 @@ function AddDelete({
                 service: selectedProvider.service,
               };
               if (addState.playerUrl) {
-                newLivestream.playerUrl = addState.playerUrl;
+                newLivestream.playerProp = addState.playerUrl;
               }
               added(newLivestream);
               resetAddedState(true);

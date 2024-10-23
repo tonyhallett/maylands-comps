@@ -29,6 +29,7 @@ export enum LivestreamService {
   twitch,
   facebook,
   instagram,
+  x,
 }
 
 export interface Livestream {
@@ -36,7 +37,7 @@ export interface Livestream {
   url: string;
   tag: string;
   service: LivestreamService;
-  playerUrl?: string;
+  playerProp?: string;
 }
 export type Livestreams = Record<string, Livestream>;
 

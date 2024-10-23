@@ -29,17 +29,6 @@ export interface TablesDialogProps {
   changed: (gameTableChanges: GameTableChange[]) => void;
 }
 
-// add a help for why you would want to do this
-// also need to change where mention how to change
-
-// what to do about Main
-
-// do I just show the games and a text field alongside it
-// or do I show the tables and the games underneath with a check box and an add table button
-// if the latter need an alert to say that the table has already been assigned
-// combine both views ?
-// drag drop ?
-
 interface GameTable {
   original: string;
   current: string;

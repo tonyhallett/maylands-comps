@@ -11,14 +11,12 @@ export const facebookProvider: LivestreamProvider = {
   icon: <FacebookIcon />,
   service: LivestreamService.facebook,
   serviceName: "Facebook",
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   isPermitted: (url) => {
     const match = url.match(facebookRegex);
     if (match) {
       return {
-        service: LivestreamService.facebook,
         suggestedTag: `${match[1]}`,
-        playerUrl: url,
+        playerProp: url,
       };
     }
     return undefined;

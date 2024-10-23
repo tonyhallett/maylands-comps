@@ -2403,7 +2403,7 @@ describe("<LeagueMatchView/>", () => {
                     service: livestreamProvider.service,
                   };
                   if (permittedTest.expectedPlayerUrl !== undefined) {
-                    expectedLivestream.playerUrl =
+                    expectedLivestream.playerProp =
                       permittedTest.expectedPlayerUrl;
                   }
 
@@ -2569,7 +2569,7 @@ describe("<LeagueMatchView/>", () => {
                     url: aYoutubeLiveUrl,
                     tag: videoId,
                     service: LivestreamService.youtube,
-                    playerUrl: aYoutubeLiveUrl,
+                    playerProp: aYoutubeLiveUrl,
                   };
                   if (expectedIdentifier !== undefined) {
                     expectedLivestream.identifier = expectedIdentifier;

@@ -10,19 +10,17 @@ export const instagramProvider: LivestreamProvider = {
   icon: <InstagramIcon />,
   service: LivestreamService.instagram,
   serviceName: "Instagram",
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   isPermitted: (url) => {
     const match = url.match(instagramRegex);
     if (match) {
       return {
-        service: LivestreamService.instagram,
         suggestedTag: `${match[1]}`,
       };
     }
     return undefined;
   },
   inputLabel: "Share url",
-  validInputs: [
+  /* validInputs: [
     "https://www.instagram.com/yourusername/live/yourvideoid?igsh=yourhash",
-  ],
+  ], */
 };

@@ -19,6 +19,7 @@ import Link from "@mui/material/Link/Link";
 import YoutubePlayer from "react-player/youtube";
 import FacebookPlayer from "react-player/facebook";
 import TwitchPlayer from "react-player/twitch";
+import TweetEmbed from "react-tweet-embed";
 
 export interface LeagueMatchAndKey {
   leagueMatch: DbLeagueMatch;
@@ -94,28 +95,34 @@ export function LeagueMatchLinks() {
           case LivestreamService.youtube:
             return (
               <YoutubePlayer
-                key={livestream.playerUrl}
-                url={livestream.playerUrl!}
+                key={livestream.playerProp}
+                url={livestream.playerProp!}
               />
             );
           case LivestreamService.facebook:
             // todo need to set up an app
             return (
               <FacebookPlayer
-                key={livestream.playerUrl}
-                url={livestream.playerUrl!}
+                key={livestream.playerProp}
+                url={livestream.playerProp!}
               />
             );
           case LivestreamService.twitch:
             return (
               <TwitchPlayer
-                key={livestream.playerUrl}
-                url={livestream.playerUrl!}
+                key={livestream.playerProp}
+                url={livestream.playerProp!}
               />
             );
           case LivestreamService.instagram:
-            alert("Instagram live stream");
             return <a href={livestream.url}>Instagram live stream</a>;
+          case LivestreamService.x:
+            return (
+              <TweetEmbed
+                key={livestream.playerProp}
+                tweetId={livestream.playerProp!}
+              />
+            );
         }
       })}
     </div>
