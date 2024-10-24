@@ -37,5 +37,5 @@ export const twitchProvider: LivestreamProvider = {
 
     return undefined;
   },
-  inputLabel: "Channel id",
+  inputLabel: "Channel address or id",
 };

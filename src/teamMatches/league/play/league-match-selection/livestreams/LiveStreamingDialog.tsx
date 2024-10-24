@@ -77,12 +77,6 @@ export interface PermittedLivestreamInputResult {
   playerProp?: string; // this needs to pass the regex of the react player https://github.com/cookpete/react-player/blob/master/src/patterns.js
 }
 
-export interface PermittedLivestreams {
-  icons: ReactNode[];
-  isPermitted: (url: string) => PermittedLivestreamInputResult | undefined;
-  getIconIndex: (service: LivestreamService) => number;
-}
-
 export interface LivestreamProvider {
   service: LivestreamService;
   serviceName: string;
