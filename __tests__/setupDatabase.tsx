@@ -53,7 +53,9 @@ export type SetupMatch = (dbMatch: DbMatch, index: number) => void;
 
 export async function setupDatabase(
   database: Database,
-  setUpMatch: SetupMatch = () => {},
+  setUpMatch: SetupMatch = () => {
+    // do nothing
+  },
   testClubSetups = defaultTestClubSetups,
   homeTeamName = defaultHomeTeamName,
   awayTeamName = defaultAwayTeamName,
@@ -137,8 +139,12 @@ export type SelectedPlayers = [boolean, boolean, boolean];
 export function getMatchSetupThatSetsDefaultPlayersThatAreSelected(
   homePlayersSelected: SelectedPlayers, // each index is a player position - A, B, C
   awayPlayersSelected: SelectedPlayers, // each index is a player position - X, Y, Z
-  setupDoubles: SetupDoubles = () => {},
-  afterSetupMatch: SetupMatch = () => {},
+  setupDoubles: SetupDoubles = () => {
+    // do nothing
+  },
+  afterSetupMatch: SetupMatch = () => {
+    // do nothing
+  },
 ) {
   // if selected collect the player ids for setupDoubles
   const homeTeamPlayerIds: TeamPlayerIds = [undefined, undefined, undefined];
@@ -174,7 +180,9 @@ export function setUpDatabaseWithDefaultPlayersThatAreSelected(
   database: Database,
   homePlayersSelected: SelectedPlayers,
   awayPlayersSelected: SelectedPlayers,
-  setupDoubles: SetupDoubles = () => {},
+  setupDoubles: SetupDoubles = () => {
+    // do nothing
+  },
 ) {
   return setupDatabase(
     database,

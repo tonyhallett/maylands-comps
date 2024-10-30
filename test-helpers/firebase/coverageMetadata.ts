@@ -19,6 +19,7 @@ function getDatabaseCoverageMeta(databaseName: string) {
    * by "firebase emulators:exec"
    */
   const hostAndPort = parseHostAndPort(
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     process.env.FIREBASE_DATABASE_EMULATOR_HOST!,
   );
   const { host, port } = hostAndPort;

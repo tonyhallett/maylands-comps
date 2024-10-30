@@ -87,7 +87,7 @@ export interface LivestreamProvider {
 }
 type LivestreamProviders = LivestreamProvider[];
 
-export type LiveStreamDialogProps = {
+export interface LiveStreamDialogProps {
   onClose: () => void;
   liveStreamAvailability: LivestreamAvailability;
   changed: (liveStreamChanges: LivestreamChanges) => void;
@@ -95,7 +95,7 @@ export type LiveStreamDialogProps = {
   helpNode: ReactNode;
   getGameMenuTitle: (game: number) => string;
   getTableMenuTitle: (table: string) => string;
-};
+}
 
 function hasChanges(additionsDeletions: AdditionsDeletions) {
   return (

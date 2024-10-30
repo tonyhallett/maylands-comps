@@ -11,9 +11,9 @@ type FindByRoleArgs<T extends (...args: unknown[]) => unknown> =
   | [...FunctionParams<T>["params"]]
   | [...FunctionParams<T>["params"], waitForOptions: waitForOptions];
 
-type RoleSelector<
+interface RoleSelector<
   T extends (...args: unknown[]) => Parameters<(typeof screen)["getByRole"]>,
-> = {
+> {
   findBy<THTMLElement extends HTMLElement = HTMLElement>(
     ...args: FindByRoleArgs<T>
   ): Promise<THTMLElement>;
@@ -33,7 +33,7 @@ type RoleSelector<
     ...args: FunctionParams<T>["params"]
   ): THTMLElement[];
   within(within: HTMLElement): Omit<RoleSelector<T>, "within">;
-};
+}
 
 export const roleSelectorFactory = <
   T extends (...args: unknown[]) => Parameters<Screen["getByRole"]>,

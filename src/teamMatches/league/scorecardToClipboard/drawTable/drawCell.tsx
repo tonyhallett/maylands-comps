@@ -21,20 +21,6 @@ export function drawCell(
   gridLineColor: string,
   fontInstruction: FontInstruction,
   cellSize: Size,
-  penColor: string,
-): number;
-export function drawCell(
-  ctx: CanvasRenderingContext2D,
-  gridLineColor: string,
-  fontInstruction: FontInstruction,
-  cellSize: Size,
-  customDraw: CustomDraw,
-): number;
-export function drawCell(
-  ctx: CanvasRenderingContext2D,
-  gridLineColor: string,
-  fontInstruction: FontInstruction,
-  cellSize: Size,
   penColorOrCustomDraw: string | CustomDraw,
 ): number {
   drawCellBorder(ctx, gridLineColor, cellSize);

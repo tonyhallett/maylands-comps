@@ -204,4 +204,6 @@ describe("getTeamForfeitedScores", () => {
   });
 });
 
-describe("getScorecardGames", () => {});
+describe("getScorecardGames", () => {
+  //todo
+});

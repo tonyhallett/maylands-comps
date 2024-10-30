@@ -78,8 +78,7 @@ interface BaseCalculatedCardInstructions extends BaseCardInstructions {
 interface PointsWonCalculatedCardInstructions
   extends BaseCalculatedCardInstructions,
     PointsWonDigitSpacing {}
-interface GameWonCalculatedCardInstructions
-  extends BaseCalculatedCardInstructions {}
+type GameWonCalculatedCardInstructions = BaseCalculatedCardInstructions;
 
 export interface CalculatedInstructions {
   cardGap: number;
@@ -91,7 +90,7 @@ export interface CalculatedInstructions {
 
 export class ScoreDrawer implements CanvasFontMaxImpl<CalculatedInstructions> {
   score: Score;
-  private gamesWonFontSizeProportion: number = 0.5;
+  private gamesWonFontSizeProportion = 0.5;
   public cardBorderColor = "yellow";
   public digitColor = "limegreen";
   private uncalculatedInstructions: UncalculatedInstructions | undefined;

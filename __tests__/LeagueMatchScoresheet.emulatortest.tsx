@@ -107,8 +107,12 @@ describe("render scoresheet", () => {
     Object.defineProperty(window.screen, "orientation", {
       value: {
         type: "portrait-primary",
-        addEventListener: () => {},
-        removeEventListener: () => {},
+        addEventListener: () => {
+          // do nothing
+        },
+        removeEventListener: () => {
+          // do nothing
+        },
       },
     });
   });
@@ -149,7 +153,9 @@ describe("render scoresheet", () => {
       async function gamePlayersCellTest(
         homePlayersSelected: SelectedPlayers,
         awayPlayersSelected: SelectedPlayers,
-        setupDoubles: SetupDoubles = () => {},
+        setupDoubles: SetupDoubles = () => {
+          // do nothing
+        },
       ) {
         const leagueMatchKey =
           await setUpDatabaseWithDefaultPlayersThatAreSelected(
@@ -177,7 +183,9 @@ describe("render scoresheet", () => {
       async function doublesGamePlayersCellTest(
         homePlayersSelected: SelectedPlayers,
         awayPlayersSelected: SelectedPlayers,
-        setupDoubles: SetupDoubles = () => {},
+        setupDoubles: SetupDoubles = () => {
+          // do nothing
+        },
       ) {
         const allGames = await gamePlayersCellTest(
           homePlayersSelected,
@@ -471,7 +479,9 @@ describe("render scoresheet", () => {
 
     describe("game score cells", () => {
       async function setupGetFirstMatchGameScoreCells(
-        setupFirstMatch: (firstMatch: DbMatch) => void = () => {},
+        setupFirstMatch: (firstMatch: DbMatch) => void = () => {
+          // do nothing
+        },
       ) {
         const leagueMatchKey = await setupDatabase(
           database,

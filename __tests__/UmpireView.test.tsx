@@ -89,12 +89,24 @@ describe("<UmpireView/", () => {
                 team2EndsAt: 1,
               }}
               umpire={{
-                pointScored() {},
-                resetServerReceiver() {},
-                setFirstGameDoublesReceiver() {},
-                setServer() {},
-                switchEnds() {},
-                undoPoint() {},
+                pointScored() {
+                  // do nothing
+                },
+                resetServerReceiver() {
+                  // do nothing
+                },
+                setFirstGameDoublesReceiver() {
+                  // do nothing
+                },
+                setServer() {
+                  // do nothing
+                },
+                switchEnds() {
+                  // do nothing
+                },
+                undoPoint() {
+                  // do nothing
+                },
                 ...umpire,
               }}
             />,
@@ -263,12 +275,24 @@ describe("<UmpireView/", () => {
                 team2EndsAt: 1,
               }}
               umpire={{
-                pointScored() {},
-                resetServerReceiver() {},
-                setFirstGameDoublesReceiver() {},
-                setServer() {},
-                switchEnds() {},
-                undoPoint() {},
+                pointScored() {
+                  // do nothing
+                },
+                resetServerReceiver() {
+                  // do nothing
+                },
+                setFirstGameDoublesReceiver() {
+                  // do nothing
+                },
+                setServer() {
+                  // do nothing
+                },
+                switchEnds() {
+                  // do nothing
+                },
+                undoPoint() {
+                  // do nothing
+                },
                 ...umpire,
               }}
             />,
@@ -409,12 +433,22 @@ describe("<UmpireView/", () => {
                 team2EndsAt: 1,
               }}
               umpire={{
-                pointScored() {},
+                pointScored() {
+                  // do nothing
+                },
                 resetServerReceiver,
-                setFirstGameDoublesReceiver() {},
-                setServer() {},
-                switchEnds() {},
-                undoPoint() {},
+                setFirstGameDoublesReceiver() {
+                  // do nothing
+                },
+                setServer() {
+                  // do nothing
+                },
+                switchEnds() {
+                  // do nothing
+                },
+                undoPoint() {
+                  // do nothing
+                },
               }}
             />,
           );
@@ -484,12 +518,24 @@ describe("<UmpireView/", () => {
               team2EndsAt: 1,
             }}
             umpire={{
-              pointScored() {},
-              resetServerReceiver() {},
-              setFirstGameDoublesReceiver() {},
-              setServer() {},
-              switchEnds() {},
-              undoPoint() {},
+              pointScored() {
+                // do nothing
+              },
+              resetServerReceiver() {
+                // do nothing
+              },
+              setFirstGameDoublesReceiver() {
+                // do nothing
+              },
+              setServer() {
+                // do nothing
+              },
+              switchEnds() {
+                // do nothing
+              },
+              undoPoint() {
+                // do nothing
+              },
             }}
           />,
         );
@@ -535,12 +581,24 @@ describe("<UmpireView/", () => {
               team2EndsAt: 1,
             }}
             umpire={{
-              pointScored() {},
-              resetServerReceiver() {},
-              setFirstGameDoublesReceiver() {},
-              setServer() {},
-              switchEnds() {},
-              undoPoint() {},
+              pointScored() {
+                // do nothing
+              },
+              resetServerReceiver() {
+                // do nothing
+              },
+              setFirstGameDoublesReceiver() {
+                // do nothing
+              },
+              setServer() {
+                // do nothing
+              },
+              switchEnds() {
+                // do nothing
+              },
+              undoPoint() {
+                // do nothing
+              },
             }}
           />,
         );
@@ -585,12 +643,24 @@ describe("<UmpireView/", () => {
               team2EndsAt: 1,
             }}
             umpire={{
-              pointScored() {},
-              resetServerReceiver() {},
-              setFirstGameDoublesReceiver() {},
-              setServer() {},
-              switchEnds() {},
-              undoPoint() {},
+              pointScored() {
+                // do nothing
+              },
+              resetServerReceiver() {
+                // do nothing
+              },
+              setFirstGameDoublesReceiver() {
+                // do nothing
+              },
+              setServer() {
+                // do nothing
+              },
+              switchEnds() {
+                // do nothing
+              },
+              undoPoint() {
+                // do nothing
+              },
             }}
           />,
         );
@@ -636,12 +706,24 @@ describe("<UmpireView/", () => {
               team2EndsAt: 1,
             }}
             umpire={{
-              pointScored() {},
-              resetServerReceiver() {},
-              setFirstGameDoublesReceiver() {},
-              setServer() {},
-              switchEnds() {},
-              undoPoint() {},
+              pointScored() {
+                // do nothing
+              },
+              resetServerReceiver() {
+                // do nothing
+              },
+              setFirstGameDoublesReceiver() {
+                // do nothing
+              },
+              setServer() {
+                // do nothing
+              },
+              switchEnds() {
+                // do nothing
+              },
+              undoPoint() {
+                // do nothing
+              },
             }}
           />,
         );
@@ -693,12 +775,22 @@ describe("<UmpireView/", () => {
               team2EndsAt: 1,
             }}
             umpire={{
-              pointScored() {},
+              pointScored() {
+                // do nothing
+              },
               resetServerReceiver,
-              setFirstGameDoublesReceiver() {},
-              setServer() {},
-              switchEnds() {},
-              undoPoint() {},
+              setFirstGameDoublesReceiver() {
+                // do nothing
+              },
+              setServer() {
+                // do nothing
+              },
+              switchEnds() {
+                // do nothing
+              },
+              undoPoint() {
+                // do nothing
+              },
             }}
           />,
         );
@@ -746,12 +838,24 @@ describe("<UmpireView/", () => {
               team2EndsAt: 1,
             }}
             umpire={{
-              pointScored() {},
-              resetServerReceiver() {},
-              setFirstGameDoublesReceiver() {},
-              setServer() {},
-              switchEnds() {},
-              undoPoint() {},
+              pointScored() {
+                // do nothing
+              },
+              resetServerReceiver() {
+                // do nothing
+              },
+              setFirstGameDoublesReceiver() {
+                // do nothing
+              },
+              setServer() {
+                // do nothing
+              },
+              switchEnds() {
+                // do nothing
+              },
+              undoPoint() {
+                // do nothing
+              },
             }}
           />,
         );
@@ -795,12 +899,24 @@ describe("<UmpireView/", () => {
               team2EndsAt: 1,
             }}
             umpire={{
-              pointScored() {},
-              resetServerReceiver() {},
-              setFirstGameDoublesReceiver() {},
-              setServer() {},
-              switchEnds() {},
-              undoPoint() {},
+              pointScored() {
+                // do nothing
+              },
+              resetServerReceiver() {
+                // do nothing
+              },
+              setFirstGameDoublesReceiver() {
+                // do nothing
+              },
+              setServer() {
+                // do nothing
+              },
+              switchEnds() {
+                // do nothing
+              },
+              undoPoint() {
+                // do nothing
+              },
             }}
           />,
         );
@@ -846,12 +962,24 @@ describe("<UmpireView/", () => {
               team2EndsAt: 1,
             }}
             umpire={{
-              pointScored() {},
-              resetServerReceiver() {},
-              setFirstGameDoublesReceiver() {},
-              setServer() {},
-              switchEnds() {},
-              undoPoint() {},
+              pointScored() {
+                // do nothing
+              },
+              resetServerReceiver() {
+                // do nothing
+              },
+              setFirstGameDoublesReceiver() {
+                // do nothing
+              },
+              setServer() {
+                // do nothing
+              },
+              switchEnds() {
+                // do nothing
+              },
+              undoPoint() {
+                // do nothing
+              },
             }}
           />,
         );
@@ -900,12 +1028,24 @@ describe("<UmpireView/", () => {
               team2EndsAt: 1,
             }}
             umpire={{
-              pointScored() {},
-              resetServerReceiver() {},
-              setFirstGameDoublesReceiver() {},
-              setServer() {},
-              switchEnds() {},
-              undoPoint() {},
+              pointScored() {
+                // do nothing
+              },
+              resetServerReceiver() {
+                // do nothing
+              },
+              setFirstGameDoublesReceiver() {
+                // do nothing
+              },
+              setServer() {
+                // do nothing
+              },
+              switchEnds() {
+                // do nothing
+              },
+              undoPoint() {
+                // do nothing
+              },
             }}
           />,
         );
@@ -989,18 +1129,31 @@ describe("<UmpireView/", () => {
             }}
             umpire={{
               pointScored,
-              resetServerReceiver() {},
-              setFirstGameDoublesReceiver() {},
-              setServer() {},
-              switchEnds() {},
-              undoPoint() {},
+              resetServerReceiver() {
+                // do nothing
+              },
+              setFirstGameDoublesReceiver() {
+                // do nothing
+              },
+              setServer() {
+                // do nothing
+              },
+              switchEnds() {
+                // do nothing
+              },
+              undoPoint() {
+                // do nothing
+              },
             }}
           />,
         );
-        const scoreLeftButton = queryByRole("button", { name: "Score left" })!;
+        const scoreLeftButton = queryByRole("button", { name: "Score left" });
         const scoreRightButton = queryByRole("button", {
           name: "Score right",
-        })!;
+        });
+        if (scoreLeftButton === null || scoreRightButton === null) {
+          throw new Error("Score buttons not found");
+        }
         return { scoreLeftButton, scoreRightButton };
       };
 
@@ -1172,11 +1325,21 @@ describe("<UmpireView/", () => {
               team2EndsAt: 1,
             }}
             umpire={{
-              pointScored() {},
-              resetServerReceiver() {},
-              setFirstGameDoublesReceiver() {},
-              setServer() {},
-              switchEnds() {},
+              pointScored() {
+                // do nothing
+              },
+              resetServerReceiver() {
+                // do nothing
+              },
+              setFirstGameDoublesReceiver() {
+                // do nothing
+              },
+              setServer() {
+                // do nothing
+              },
+              switchEnds() {
+                // do nothing
+              },
               undoPoint,
             }}
           />,
@@ -1241,12 +1404,24 @@ describe("<UmpireView/", () => {
               team2EndsAt: 1,
             }}
             umpire={{
-              pointScored() {},
-              resetServerReceiver() {},
-              setFirstGameDoublesReceiver() {},
-              setServer() {},
-              switchEnds() {},
-              undoPoint() {},
+              pointScored() {
+                // do nothing
+              },
+              resetServerReceiver() {
+                // do nothing
+              },
+              setFirstGameDoublesReceiver() {
+                // do nothing
+              },
+              setServer() {
+                // do nothing
+              },
+              switchEnds() {
+                // do nothing
+              },
+              undoPoint() {
+                // do nothing
+              },
             }}
           />,
         );
@@ -1276,17 +1451,33 @@ describe("<UmpireView/", () => {
           rightPoints,
         };
       };
-      xit("should have the left score on the left and the right score on the right", () => {});
-      xit("should have game point then set point for left", () => {});
-      xit("should have set point then game point for right", () => {});
-      xit("should display points larger than sets", () => {});
-      xit("should have italic games and points if team won", () => {});
+      xit("should have the left score on the left and the right score on the right", () => {
+        // todo
+      });
+      xit("should have game point then set point for left", () => {
+        // todo
+      });
+      xit("should have set point then game point for right", () => {
+        // todo
+      });
+      xit("should display points larger than sets", () => {
+        // todo
+      });
+      xit("should have italic games and points if team won", () => {
+        // todo
+      });
 
       // these colours are the same
-      xit("should color games differently when team is at match point", () => {});
-      xit("should color points differently when team is at match point or game point", () => {});
+      xit("should color games differently when team is at match point", () => {
+        // todo
+      });
+      xit("should color points differently when team is at match point or game point", () => {
+        // todo
+      });
 
-      xit("should move negative point indicator to the right when right", () => {});
+      xit("should move negative point indicator to the right when right", () => {
+        // todo
+      });
       it.each([true, false])(
         "should show the scores from MatchState - team1 left %p",
         (team1Left) => {
@@ -1371,12 +1562,24 @@ describe("<UmpireView/", () => {
               team2EndsAt: 1,
             }}
             umpire={{
-              pointScored() {},
-              resetServerReceiver() {},
-              setFirstGameDoublesReceiver() {},
-              setServer() {},
-              switchEnds() {},
-              undoPoint() {},
+              pointScored() {
+                // do nothing
+              },
+              resetServerReceiver() {
+                // do nothing
+              },
+              setFirstGameDoublesReceiver() {
+                // do nothing
+              },
+              setServer() {
+                // do nothing
+              },
+              switchEnds() {
+                // do nothing
+              },
+              undoPoint() {
+                // do nothing
+              },
             }}
           />,
         );
@@ -1561,12 +1764,24 @@ describe("<UmpireView/", () => {
             team2EndsAt: 1,
           }}
           umpire={{
-            pointScored() {},
-            resetServerReceiver() {},
-            setFirstGameDoublesReceiver() {},
-            setServer() {},
-            switchEnds() {},
-            undoPoint() {},
+            pointScored() {
+              // do nothing
+            },
+            resetServerReceiver() {
+              // do nothing
+            },
+            setFirstGameDoublesReceiver() {
+              // do nothing
+            },
+            setServer() {
+              // do nothing
+            },
+            switchEnds() {
+              // do nothing
+            },
+            undoPoint() {
+              // do nothing
+            },
           }}
         />,
       );
@@ -1609,12 +1824,24 @@ describe("<UmpireView/", () => {
             team2EndsAt: 1,
           }}
           umpire={{
-            pointScored() {},
-            resetServerReceiver() {},
-            setFirstGameDoublesReceiver() {},
-            setServer() {},
-            switchEnds() {},
-            undoPoint() {},
+            pointScored() {
+              // do nothing
+            },
+            resetServerReceiver() {
+              // do nothing
+            },
+            setFirstGameDoublesReceiver() {
+              // do nothing
+            },
+            setServer() {
+              // do nothing
+            },
+            switchEnds() {
+              // do nothing
+            },
+            undoPoint() {
+              // do nothing
+            },
           }}
         />,
       );
@@ -1656,12 +1883,24 @@ describe("<UmpireView/", () => {
             team2EndsAt: 1,
           }}
           umpire={{
-            pointScored() {},
-            resetServerReceiver() {},
-            setFirstGameDoublesReceiver() {},
-            setServer() {},
-            switchEnds() {},
-            undoPoint() {},
+            pointScored() {
+              // do nothing
+            },
+            resetServerReceiver() {
+              // do nothing
+            },
+            setFirstGameDoublesReceiver() {
+              // do nothing
+            },
+            setServer() {
+              // do nothing
+            },
+            switchEnds() {
+              // do nothing
+            },
+            undoPoint() {
+              // do nothing
+            },
           }}
         />,
       );

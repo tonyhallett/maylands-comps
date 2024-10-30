@@ -2,6 +2,7 @@ import { expect } from "../customMatchers/extendedExpect";
 describe("toMatchWithGetters", () => {
   it("should work", () => {
     class Demo {
+      // eslint-disable-next-line @typescript-eslint/class-literal-property-style
       get a() {
         return 1;
       }

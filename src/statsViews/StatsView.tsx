@@ -56,8 +56,8 @@ export function StatsView({
   matchWon: boolean;
   currentGameScore: GameScore;
   team1Left: boolean;
-  gameScores: ReadonlyArray<GameScore>;
-  pointHistory: ReadonlyArray<ReadonlyArray<PointHistory>>;
+  gameScores: readonly GameScore[];
+  pointHistory: readonly (readonly PointHistory[])[];
   team1StartScore: number;
   team2StartScore: number;
   gamePoint: number;

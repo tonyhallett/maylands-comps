@@ -7,16 +7,11 @@ import {
 import { InitialServersDoublesReceiver } from "../../../umpire/availableServerReceiverChoice";
 import { DoublesEndPoints } from "../../../umpire/getServerReceiver";
 
-export interface ObjectPointHistory {
-  [key: string]:
-    | "empty"
-    | {
-        [key: string]: SavePointHistory;
-      };
-}
-export interface ObjectGameScores {
-  [key: string]: GameScore;
-}
+export type ObjectPointHistory = Record<
+  string,
+  "empty" | Record<string, SavePointHistory>
+>;
+export type ObjectGameScores = Record<string, GameScore>;
 
 export interface DbInitialServersDoublesReceiver {
   gameInitialServers?: Player[];

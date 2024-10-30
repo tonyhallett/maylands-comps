@@ -1,6 +1,6 @@
 import { LinkProps } from "@mui/material";
 import { createTheme, ThemeProvider } from "@mui/material/styles";
-import { forwardRef, PropsWithChildren } from "react";
+import { forwardRef } from "react";
 import {
   Link as RouterLink,
   LinkProps as RouterLinkProps,
@@ -34,9 +34,10 @@ const theme = createTheme({
   },
 });
 
-interface MaylandsThemeProviderProps {}
 export default function MaylandsThemeProvider({
   children,
-}: PropsWithChildren<MaylandsThemeProviderProps>) {
+}: {
+  children: React.ReactNode;
+}) {
   return <ThemeProvider theme={theme}>{children}</ThemeProvider>;
 }

@@ -30,10 +30,10 @@ export interface MatchState extends TeamScores {
   remainingServes: number;
   matchWinState: MatchWinState;
   gameOrMatchPoints?: number;
-  completedGameScores: ReadonlyArray<GameScore>;
+  completedGameScores: readonly GameScore[];
   canUndoPoint: boolean;
   serverReceiverChoice: ServerReceiverChoice;
-  pointHistory: ReadonlyArray<ReadonlyArray<PointHistory>>;
+  pointHistory: readonly (readonly PointHistory[])[];
   isEnds: boolean;
 }
 type Team1Player1 = "Team1Player1";
@@ -117,8 +117,8 @@ interface SetServerReceiver {
 export class Umpire {
   private get canUndoPoint(): boolean {
     let canUndo = false;
-    for (let i = 0; i < this._pointHistory.length; i++) {
-      if (this._pointHistory[i].length > 0) {
+    for (const gamePointHistory of this._pointHistory) {
+      if (gamePointHistory.length > 0) {
         canUndo = true;
         break;
       }
@@ -226,7 +226,7 @@ export class Umpire {
     gameInitialServers: [],
     firstDoublesReceiver: undefined,
   };
-  private _team1Left: boolean = true;
+  private _team1Left = true;
 
   private get serverReceiverChoice(): ServerReceiverChoice {
     return availableServerReceiverChoice(
@@ -253,7 +253,7 @@ export class Umpire {
     );
   }
 
-  private _remainingServesAtStartOfGame: number = 0;
+  private _remainingServesAtStartOfGame = 0;
   private get remainingServes(): number {
     if (this.reachedAlternateServes()) {
       return 1;

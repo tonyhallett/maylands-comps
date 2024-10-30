@@ -719,20 +719,20 @@ describe("umpiring", () => {
       let matchState = scorePoints(umpire, true, 7);
       expect(matchState.completedGameScores).toHaveLength(0);
       matchState = scoreGames(umpire, false, 1);
-      expect(matchState.completedGameScores).toEqual<Array<GameScore>>([
+      expect(matchState.completedGameScores).toEqual<GameScore[]>([
         { team1Points: 7, team2Points: 11 },
       ]);
 
       scorePoints(umpire, false, 6);
       matchState = scoreGames(umpire, true, 1);
 
-      expect(matchState.completedGameScores).toEqual<Array<GameScore>>([
+      expect(matchState.completedGameScores).toEqual<GameScore[]>([
         { team1Points: 7, team2Points: 11 },
         { team1Points: 11, team2Points: 6 },
       ]);
 
       matchState = scoreGames(umpire, true, 2);
-      expect(matchState.completedGameScores).toEqual<Array<GameScore>>([
+      expect(matchState.completedGameScores).toEqual<GameScore[]>([
         { team1Points: 7, team2Points: 11 },
         { team1Points: 11, team2Points: 6 },
         { team1Points: 11, team2Points: 0 },
@@ -2168,7 +2168,7 @@ describe("umpiring", () => {
     });
     describe("initial setting server", () => {
       describe("when singles", () => {
-        const serverReceivers: Array<ServerReceiver> = [
+        const serverReceivers: ServerReceiver[] = [
           { server: "Team1Player1", receiver: "Team2Player1" },
           { server: "Team2Player1", receiver: "Team1Player1" },
         ];

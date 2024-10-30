@@ -106,8 +106,12 @@ describe("LeagueMatchScoresheet-Umpiring", () => {
     Object.defineProperty(window.screen, "orientation", {
       value: {
         type: "portrait-primary",
-        addEventListener: () => {},
-        removeEventListener: () => {},
+        addEventListener: () => {
+          // do nothing
+        },
+        removeEventListener: () => {
+          // do nothing
+        },
       },
     });
   });

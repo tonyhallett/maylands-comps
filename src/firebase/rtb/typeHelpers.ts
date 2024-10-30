@@ -61,7 +61,7 @@ type PathValue<
     ? T[TPath]
     : never;
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
+// eslint-disable-next-line @typescript-eslint/no-unused-vars, @typescript-eslint/no-empty-interface
 interface TypedDatabaseReference<TRoot, TPath extends Paths<TRoot>>
   extends DatabaseReference {}
 
@@ -82,6 +82,7 @@ export function createTypedRefHelper<TRoot>(root: TRoot) {
   ): TypedDatabaseReference<TRoot, TPath> {
     return ref(db, path) as TypedDatabaseReference<TRoot, TPath>;
   }
+
   return <TPath extends Paths<TRoot>>(
     db: Database,
     path: TPath,
@@ -164,7 +165,7 @@ export const createTypedValuesUpdater = <TRoot>(
 // todo - need to consider object vs list
 // export declare function get(query: Query): Promise<DataSnapshot>;
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
+// eslint-disable-next-line @typescript-eslint/no-unused-vars, @typescript-eslint/no-empty-interface
 interface TypedQuery<T> extends Query {}
 
 type ChildKeyOfList<T> = T extends Record<string, infer K> ? keyof K : never;

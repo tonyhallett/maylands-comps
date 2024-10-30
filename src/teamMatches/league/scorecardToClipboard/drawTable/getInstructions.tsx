@@ -14,22 +14,6 @@ export function getInstructions(
   fontFormat: FontFormat,
   fontFamily: string,
   cellWidth: number,
-  isEntry: boolean,
-): CellInstruction;
-export function getInstructions(
-  ctx: CanvasRenderingContext2D,
-  text: string,
-  fontFormat: FontFormat,
-  fontFamily: string,
-  cellWidth: number,
-  customDraw: CustomDraw,
-): CellInstruction;
-export function getInstructions(
-  ctx: CanvasRenderingContext2D,
-  text: string,
-  fontFormat: FontFormat,
-  fontFamily: string,
-  cellWidth: number,
   isEntryOrCustomDraw: boolean | CustomDraw,
 ): CellInstruction {
   const { canvasFont, metrics } = measureTexts(

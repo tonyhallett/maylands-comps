@@ -50,7 +50,9 @@ const { createMaylandsComps } = createEmulatorTests();
 
 describe("<LeagueMatchLinks />", () => {
   beforeEach(async () => {
-    let resolver: (value: void) => void = () => {};
+    let resolver: () => void = () => {
+      // do nothing
+    };
     const waitForSetupDatabasePromise = new Promise<void>((resolve) => {
       resolver = resolve;
     });

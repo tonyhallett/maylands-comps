@@ -121,8 +121,8 @@ class PlayerServeReceiveRecordImpl implements ServeOrReceiveRecord {
     this.numLost = this.num - this.numWon;
     this.winPercentage = getWinPercentage(this.numWon, this.num);
   }
-  num: number = 0;
-  numWon: number = 0;
+  num = 0;
+  numWon = 0;
   numLost: number;
   winPercentage: number | undefined;
 }

@@ -82,6 +82,8 @@ export async function copyToClipboardScorecard(
   );
   const blob = await canvasToBlobAsync(canvas);
   navigator.clipboard
-    .write([new ClipboardItem({ "image/png": blob! })])
-    .catch(() => {});
+    .write([new ClipboardItem({ "image/png": blob })])
+    .catch(() => {
+      // do nothing
+    });
 }

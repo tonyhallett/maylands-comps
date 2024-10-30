@@ -11,7 +11,9 @@ export const updateConceded = (
   db: Database,
   addAdditionalUpdates: (
     updatedMatch: PartialWithNullsWithoutUndefined<DbMatch>,
-  ) => void = () => {},
+  ) => void = () => {
+    // do nothing
+  },
 ) => {
   const updatedMatch = getConcedeOrForfeitUpdate(concede, true, isHome);
   const { updateListItem, update } = createRootUpdater(db);

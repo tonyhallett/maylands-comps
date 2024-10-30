@@ -13,9 +13,13 @@ import { CreateLeagueSeason } from "./teamMatches/league/db-population/CreateLea
 import { LeagueMatchLinks } from "./teamMatches/league/LeagueMatchLinks";
 import { LeagueMatchViewRoute } from "./teamMatches/league/play/LeagueMatchViewRoute";
 import { CreateLeagueSeasonForEmulator } from "./teamMatches/league/db-population/CreateLeagueSeasonForEmulator";
+import { SubscribeMaylandsYoutubeButton } from "./SubscribeMaylandsYoutubeButton";
+import { DemoYoutubePlayer } from "./DemoYoutubePlayer";
+import { ShareButtons } from "./share-buttons/ShareButtons";
 
 const leagueMatchesPath = "leagueMatches";
 const createLeagueSeasonPath = "createLeagueSeason";
+
 const router = createBrowserRouter([
   {
     path: "/",
@@ -23,6 +27,8 @@ const router = createBrowserRouter([
       <Box p={1}>
         <Typography variant="h5">Maylands Competitions </Typography>
         <MGLogo width={100} />
+        <SubscribeMaylandsYoutubeButton />
+        <ShareButtons />
         {/*         <Link style={{ display: "block" }} href="freescoring">
           Free scoring
         </Link> */}
@@ -30,8 +36,15 @@ const router = createBrowserRouter([
         <Link style={{ display: "block" }} href={leagueMatchesPath}>
           League matches
         </Link>
+        <Link style={{ display: "block" }} href="demoyoutubeplayer">
+          Demo youtube player
+        </Link>
       </Box>
     ),
+  },
+  {
+    path: "demoyoutubeplayer",
+    element: <DemoYoutubePlayer />,
   },
   {
     path: createLeagueSeasonPath,
@@ -51,8 +64,11 @@ const router = createBrowserRouter([
   },
   freeScoringRoute,
 ]);
-
-createRoot(document.getElementById("root")!).render(
+const root = document.getElementById("root");
+if (!root) {
+  throw new Error("Root element not found");
+}
+createRoot(root).render(
   <DatabaseProvider>
     <MaylandsThemeProvider>
       <CssBaseline enableColorScheme />

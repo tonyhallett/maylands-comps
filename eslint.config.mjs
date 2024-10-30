@@ -27,7 +27,9 @@ export default [
   { ignores: ["dist/**", "public/**", ".husky/**", ".parcel-cache/**"] },
   { languageOptions: { globals: globals.browser } },
   pluginJs.configs.recommended,
+  //todo go strict
   ...tseslint.configs.recommended,
+  ...tseslint.configs.stylistic,
   {
     settings: {
       react: {

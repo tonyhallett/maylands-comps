@@ -1,4 +1,4 @@
-// @ts-expect-error - parcel
+// @ts-expect-error - parcel.......
 import svg from "bundle-text:./MG Logo Clean.svg";
 
 export default function MGLogo({ width }: { width: number }) {

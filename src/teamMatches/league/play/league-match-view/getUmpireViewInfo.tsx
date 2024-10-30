@@ -18,7 +18,7 @@ const getPlayerNames = (
   keyedDoublesMatchNamesPositionDisplay: KeyedDoublesMatchNamesPositionDisplay,
   umpireMatchIndex: number,
 ): PlayerNames => {
-  return umpireMatchIndex! === 9
+  return umpireMatchIndex === 9
     ? getDoublesPlayerNames(keyedDoublesMatchNamesPositionDisplay)
     : getSinglesPlayerNames(
         keyedSinglesMatchNamePositionDisplays,

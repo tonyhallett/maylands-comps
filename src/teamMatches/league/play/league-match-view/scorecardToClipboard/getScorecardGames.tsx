@@ -80,10 +80,10 @@ const getScorecardGame = (
 };
 
 type PositionIdentifiers = [string, string];
-export type DoublesGamePositionIdentifiers = {
+export interface DoublesGamePositionIdentifiers {
   home: PositionIdentifiers;
   away: PositionIdentifiers;
-};
+}
 
 function getDoublesGame(
   doublesGamePositionIdentifiers: DoublesGamePositionIdentifiers | undefined,

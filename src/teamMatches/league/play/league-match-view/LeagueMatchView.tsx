@@ -219,7 +219,9 @@ export function LeagueMatchView({ leagueMatchId }: { leagueMatchId: string }) {
         };
 
         const resetManualInput = (
-          umpireCallback: (umpire: Umpire) => void = () => {},
+          umpireCallback: (umpire: Umpire) => void = () => {
+            // do nothing
+          },
         ) => {
           const resetUmpire = createUmpire(manualInput!.match.isDoubles);
           umpireCallback(resetUmpire);
