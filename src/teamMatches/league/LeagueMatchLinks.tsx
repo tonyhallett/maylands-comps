@@ -8,31 +8,17 @@ import {
   query,
   ref,
 } from "firebase/database";
-import {
-  DbLeagueMatch,
-  LivestreamService,
-  leagueMatchesKey,
-} from "../../firebase/rtb/team";
+import { DbLeagueMatch, leagueMatchesKey } from "../../firebase/rtb/team";
 import { getDbToday } from "../../helpers/getDbDate";
 import CenteredCircularProgress from "../../helper-components/CenteredCircularProgress";
 import Link from "@mui/material/Link/Link";
-import YoutubePlayer from "react-player/youtube";
-import FacebookPlayer from "react-player/facebook";
-import TwitchPlayer from "react-player/twitch";
-import TweetEmbed from "react-tweet-embed";
+import { Box } from "@mui/material";
 
 export interface LeagueMatchAndKey {
   leagueMatch: DbLeagueMatch;
   key: string;
 }
-function getStreamsLeagueMatch(leagueMatch: DbLeagueMatch) {
-  if (leagueMatch.livestreams) {
-    return Object.values(leagueMatch.livestreams).map(
-      (livestream) => livestream,
-    );
-  }
-  return [];
-}
+
 export function LeagueMatchLinks() {
   const db = useRTB();
   const [loading, setLoading] = useState(true);
@@ -75,56 +61,16 @@ export function LeagueMatchLinks() {
 
   const links = leagueMatches.map((leagueMatch) => {
     return (
-      <Link
-        key={`leaguematch-${leagueMatch.key}`}
-        style={{ display: "block" }}
-        href={`${leagueMatch.key}`}
-      >
-        {leagueMatch.leagueMatch.description}
-      </Link>
+      <>
+        <div>{leagueMatch.leagueMatch.description}</div>
+        <Box component="span" marginRight={1}>
+          <Link href={`${leagueMatch.key}`}>Play</Link>
+        </Box>
+
+        <Link href={`../watch/${leagueMatch.key}`}>Watch</Link>
+      </>
     );
   });
-  const allLivestreams = leagueMatches.flatMap((leagueMatch) =>
-    getStreamsLeagueMatch(leagueMatch.leagueMatch),
-  );
-  return (
-    <div>
-      {links}
-      {allLivestreams.map((livestream) => {
-        switch (livestream.service) {
-          case LivestreamService.youtube:
-            return (
-              <YoutubePlayer
-                key={livestream.playerProp}
-                url={livestream.playerProp!}
-              />
-            );
-          case LivestreamService.facebook:
-            // todo need to set up an app
-            return (
-              <FacebookPlayer
-                key={livestream.playerProp}
-                url={livestream.playerProp!}
-              />
-            );
-          case LivestreamService.twitch:
-            return (
-              <TwitchPlayer
-                key={livestream.playerProp}
-                url={livestream.playerProp!}
-              />
-            );
-          case LivestreamService.instagram:
-            return <a href={livestream.url}>Instagram live stream</a>;
-          case LivestreamService.x:
-            return (
-              <TweetEmbed
-                key={livestream.playerProp}
-                tweetId={livestream.playerProp!}
-              />
-            );
-        }
-      })}
-    </div>
-  );
+
+  return <div>{links}</div>;
 }

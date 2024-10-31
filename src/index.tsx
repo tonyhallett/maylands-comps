@@ -11,7 +11,8 @@ import freeScoringRoute from "./freeScoring/route";
 import { DatabaseProvider } from "./firebase/rtb/rtbProvider";
 import { CreateLeagueSeason } from "./teamMatches/league/db-population/CreateLeagueSeason";
 import { LeagueMatchLinks } from "./teamMatches/league/LeagueMatchLinks";
-import { LeagueMatchViewRoute } from "./teamMatches/league/play/LeagueMatchViewRoute";
+import { PlayLeagueMatchRoute } from "./teamMatches/league/play/PlayLeagueMatchRoute";
+import { WatchLeagueMatchRoute } from "./teamMatches/league/watch/WatchLeagueMatchRoute";
 import { CreateLeagueSeasonForEmulator } from "./teamMatches/league/db-population/CreateLeagueSeasonForEmulator";
 import { SubscribeMaylandsYoutubeButton } from "./SubscribeMaylandsYoutubeButton";
 import { DemoYoutubePlayer } from "./DemoYoutubePlayer";
@@ -60,7 +61,11 @@ const router = createBrowserRouter([
   },
   {
     path: `${leagueMatchesPath}/:leagueMatchId`,
-    element: <LeagueMatchViewRoute />,
+    element: <PlayLeagueMatchRoute />,
+  },
+  {
+    path: `watch/:leagueMatchId`,
+    element: <WatchLeagueMatchRoute />,
   },
   freeScoringRoute,
 ]);

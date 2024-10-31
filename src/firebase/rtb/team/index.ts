@@ -32,12 +32,15 @@ export enum LivestreamService {
   x,
 }
 
-export interface Livestream {
-  identifier?: string | number;
+export interface LivestreamPlayerInfo {
   url: string;
+  playerProp?: string;
+}
+
+export interface Livestream extends LivestreamPlayerInfo {
+  identifier?: string | number;
   tag: string;
   service: LivestreamService;
-  playerProp?: string;
 }
 export type Livestreams = Record<string, Livestream>;
 

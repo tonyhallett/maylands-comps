@@ -64,11 +64,11 @@ import {
 } from "../src/firebase/rtb/team";
 import { matchScoreGamesWon } from "./matchScoringHelpers";
 import {
-  LivestreamProvider,
   addLivestreamButtonAriaLabel,
   deleteSectionAriaLabel,
   toggleButtonGroupAriaLabel,
 } from "../src/teamMatches/league/play/league-match-selection/livestreams/LiveStreamingDialog";
+import { LivestreamProvider } from "../src/teamMatches/league/play/league-match-selection/livestreams/LivestreamProvider";
 import { updateLivestreams } from "../src/firebase/rtb/match/db-helpers/updateLivestreams";
 import { twitchProvider } from "../src/teamMatches/league/play/league-match-selection/livestreams/providers/twitchProvider";
 import { instagramProvider } from "../src/teamMatches/league/play/league-match-selection/livestreams/providers/instagramProvider";

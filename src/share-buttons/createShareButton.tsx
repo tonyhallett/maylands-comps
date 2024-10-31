@@ -33,7 +33,6 @@ function createShareButton<
         {...defaultProps}
         {...passedProps}
         forwardedRef={ref}
-        networkName={networkName}
         networkLink={link}
         opts={optsMap(props)}
       />

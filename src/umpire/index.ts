@@ -21,7 +21,7 @@ export interface TeamScores {
   team1Score: TeamScore;
   team2Score: TeamScore;
 }
-
+export type GamesPointHistory = readonly (readonly PointHistory[])[];
 export interface MatchState extends TeamScores {
   canResetServerReceiver: boolean;
   team1Left: boolean;
@@ -33,7 +33,7 @@ export interface MatchState extends TeamScores {
   completedGameScores: readonly GameScore[];
   canUndoPoint: boolean;
   serverReceiverChoice: ServerReceiverChoice;
-  pointHistory: readonly (readonly PointHistory[])[];
+  pointHistory: GamesPointHistory;
   isEnds: boolean;
 }
 type Team1Player1 = "Team1Player1";

@@ -98,7 +98,6 @@ interface CustomProps<LinkOptions> {
    * Passes as the native `title` atribute for the `button` element.
    */
   htmlTitle?: HTMLButtonElement["title"];
-  networkName: string;
   networkLink: NetworkLink<LinkOptions>;
   onClick?: (event: React.MouseEvent<HTMLButtonElement>, link: string) => void;
   /**

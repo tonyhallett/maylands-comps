@@ -8,7 +8,7 @@ import {
   scoresheetLeagueMatchResultCellAriaLabel,
   scoresheetLeagueMatchResultRowAriaLabel,
   scoresheetTableAriaLabel,
-} from "../src/teamMatches/league/play/league-match-view/LeagueMatchView";
+} from "../src/teamMatches/league/play/league-match-view/PlayLeagueMatch";
 import { fillArray } from "../src/helpers/fillArray";
 import {
   getGameScoreCellAriaLabel,

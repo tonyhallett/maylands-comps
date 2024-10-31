@@ -2,7 +2,7 @@
  * @jest-environment jsdom
  */
 import { render } from "@testing-library/react";
-import { LeagueMatchView } from "../src/teamMatches/league/play/league-match-view/LeagueMatchView";
+import { PlayLeagueMatch } from "../src/teamMatches/league/play/league-match-view/PlayLeagueMatch";
 import {
   SetupMatch,
   allPlayersSelected,
@@ -98,7 +98,7 @@ const { createMaylandsComps, database } = createEmulatorTests();
 describe("LeagueMatchScoresheet-Umpiring", () => {
   function createApp(leagueMatchId: string) {
     return createMaylandsComps(
-      <LeagueMatchView leagueMatchId={leagueMatchId} />,
+      <PlayLeagueMatch leagueMatchId={leagueMatchId} />,
     );
   }
 

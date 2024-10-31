@@ -1,25 +1,27 @@
 import {
   TableKeyedLiveStreams,
   LivestreamAvailability,
-  GameKeyedLiveStreams,
+  MatchKeyedLiveStreams,
   KeyedLivestream,
 } from "./LiveStreamingDialog";
 import { Livestreams } from "../../../../../firebase/rtb/team";
 import { TablesAndMatchesNotCompleted } from "../getTablesAndMatchesNotCompleted";
+import { ExtractKey } from "../../../../../firebase/rtb/typeHelpers";
 
 interface CombinedLivestreams {
   free: KeyedLivestream[];
   tables: Record<string, KeyedLivestream[]>;
-  games: Record<number, KeyedLivestream[]>;
+  matches: Record<number, KeyedLivestream[]>;
 }
 
+type TablesOrMatchesKey = ExtractKey<CombinedLivestreams, "tables" | "matches">;
 export function combineLiveStreams(
   livestreams: Livestreams | undefined,
 ): CombinedLivestreams {
   const combinedLivestreams: CombinedLivestreams = {
     free: [],
     tables: {},
-    games: {},
+    matches: {},
   };
   if (livestreams) {
     Object.entries(livestreams).forEach(([key, livestream]) => {
@@ -28,11 +30,11 @@ export function combineLiveStreams(
         ...livestream,
       };
       if (livestream.identifier !== undefined) {
-        const tablesOrGames =
-          typeof livestream.identifier === "string" ? "tables" : "games";
-        combinedLivestreams[tablesOrGames][livestream.identifier] =
-          combinedLivestreams[tablesOrGames][livestream.identifier] ?? [];
-        combinedLivestreams[tablesOrGames][livestream.identifier].push(
+        const tablesOrMatchesKey: TablesOrMatchesKey =
+          typeof livestream.identifier === "string" ? "tables" : "matches";
+        combinedLivestreams[tablesOrMatchesKey][livestream.identifier] =
+          combinedLivestreams[tablesOrMatchesKey][livestream.identifier] ?? [];
+        combinedLivestreams[tablesOrMatchesKey][livestream.identifier].push(
           keyedLivestream,
         );
       } else {
@@ -52,7 +54,7 @@ export function getLivestreamAvailability(
   const liveStreamAvailability: LivestreamAvailability = {
     free: [],
     tables: [],
-    games: [],
+    matches: [],
   };
   const combinedLivestreams = combineLiveStreams(livestreams);
   liveStreamAvailability.free = combinedLivestreams.free;
@@ -64,11 +66,11 @@ export function getLivestreamAvailability(
     liveStreamAvailability.tables.push(tableDisplayKeyedLiveStreams);
   });
   matches.forEach((match) => {
-    const gameDisplayKeyedLiveStreams: GameKeyedLiveStreams = {
+    const matchDisplayKeyedLiveStreams: MatchKeyedLiveStreams = {
       game: match.number,
-      streams: combinedLivestreams.games[match.number] ?? [],
+      streams: combinedLivestreams.matches[match.number] ?? [],
     };
-    liveStreamAvailability.games.push(gameDisplayKeyedLiveStreams);
+    liveStreamAvailability.matches.push(matchDisplayKeyedLiveStreams);
   });
 
   return liveStreamAvailability;

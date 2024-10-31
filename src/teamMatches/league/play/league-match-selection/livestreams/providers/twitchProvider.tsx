@@ -1,9 +1,8 @@
-import {
-  LivestreamProvider,
-  PermittedLivestreamInputResult,
-} from "../LiveStreamingDialog";
+import { PermittedLivestreamInputResult } from "../LiveStreamingDialog";
+import { LivestreamProvider } from "../LivestreamProvider";
 import { LivestreamService } from "../../../../../../firebase/rtb/team";
 import { TwitchIcon } from "./TwitchIcon";
+import TwitchPlayer from "react-player/twitch";
 
 // https://www.twitch.tv/thallett74?sr=a
 
@@ -38,4 +37,8 @@ export const twitchProvider: LivestreamProvider = {
     return undefined;
   },
   inputLabel: "Channel address or id",
+  canSeek: false,
+  getPlayer(livestreamPlayerInfo) {
+    return <TwitchPlayer url={livestreamPlayerInfo.playerProp!} />;
+  },
 };

@@ -8,9 +8,9 @@ import {
 } from "../test-helpers/mui/menu";
 import createEmulatorTests from "./createEmulatorTests";
 import {
-  LeagueMatchView,
+  PlayLeagueMatch,
   gameMenuButtonAriaLabel,
-} from "../src/teamMatches/league/play/league-match-view/LeagueMatchView";
+} from "../src/teamMatches/league/play/league-match-view/PlayLeagueMatch";
 import {
   SelectedPlayers,
   SetupDoubles,
@@ -118,7 +118,7 @@ describe("render scoresheet", () => {
   });
   function createApp(leagueMatchId: string) {
     return createMaylandsComps(
-      <LeagueMatchView leagueMatchId={leagueMatchId} />,
+      <PlayLeagueMatch leagueMatchId={leagueMatchId} />,
     );
   }
 

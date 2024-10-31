@@ -9,7 +9,7 @@ import {
   LeagueMatchResult,
   LeagueMatchResultState,
 } from "../model/getLeagueMatchResultModel";
-import { getLeagueMatchResultTeamElementAriaLabel } from "../../LeagueMatchView";
+import { getLeagueMatchResultTeamElementAriaLabel } from "../../PlayLeagueMatch";
 
 export const leadingLeagueMatchResultStateColorLookup = new Map<
   LeagueMatchResultState,

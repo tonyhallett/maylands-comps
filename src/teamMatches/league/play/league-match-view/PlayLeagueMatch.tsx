@@ -83,7 +83,7 @@ export const getMatchOrderCellAriaLabel = (index: number) =>
   `Match order cell ${index}`;
 export const gameMenuButtonAriaLabel = "Game Menu Button";
 
-export function LeagueMatchView({ leagueMatchId }: { leagueMatchId: string }) {
+export function PlayLeagueMatch({ leagueMatchId }: { leagueMatchId: string }) {
   const [umpireMatchIndex, setUmpireMatchIndex] = useState<number | undefined>(
     undefined,
   );

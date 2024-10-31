@@ -337,149 +337,145 @@ export function LeagueMatchSelection({
   const closeLiveStreamDialog = () => setShowLivestreamDialog(false);
 
   return (
-    <>
-      <div style={{ margin: 10 }}>
-        <TeamsSelectPlayersAndDoubles<AvailablePlayer>
-          autoCompleteProps={{
-            autoComplete: true, // !!! does not appear to be working
-            /*
-                If true, the portion of the selected suggestion that the user hasn't typed, known as the completion string,
-                appears inline after the input cursor in the textbox.
-                The inline completion string is visually highlighted and has a selected state.
-            */
-            autoHighlight: true,
-            clearOnEscape: true, //	If true, the first option is automatically highlighted.
-          }}
-          home={{
-            teamName: getTeamNameDisplay(true),
-            singles: {
-              enabled: autoCompletesEnabled.home.singles,
-              labels: homeTeamSelectLabels,
-              availablePlayers:
-                availablePlayersForSelection.homeTeamAvailablePlayers,
-              selectedPlayers:
-                availablePlayersForSelection.selectedHomeTeamPlayers,
-              playerSelected: (player, position) =>
-                playerSelected(true, player, position),
+    <Box m={1}>
+      <TeamsSelectPlayersAndDoubles<AvailablePlayer>
+        autoCompleteProps={{
+          autoComplete: true, // !!! does not appear to be working
+          /*
+              If true, the portion of the selected suggestion that the user hasn't typed, known as the completion string,
+              appears inline after the input cursor in the textbox.
+              The inline completion string is visually highlighted and has a selected state.
+          */
+          autoHighlight: true,
+          clearOnEscape: true, //	If true, the first option is automatically highlighted.
+        }}
+        home={{
+          teamName: getTeamNameDisplay(true),
+          singles: {
+            enabled: autoCompletesEnabled.home.singles,
+            labels: homeTeamSelectLabels,
+            availablePlayers:
+              availablePlayersForSelection.homeTeamAvailablePlayers,
+            selectedPlayers:
+              availablePlayersForSelection.selectedHomeTeamPlayers,
+            playerSelected: (player, position) =>
+              playerSelected(true, player, position),
+          },
+          doubles: {
+            enabled: autoCompletesEnabled.home.doubles,
+            availableDoubles: availablePlayersForSelection.homeAvailableDoubles,
+            selectedDoubles: availablePlayersForSelection.selectedHomeDoubles,
+            onChange(availableDoubles) {
+              doublesSelected(true, availableDoubles);
             },
-            doubles: {
-              enabled: autoCompletesEnabled.home.doubles,
-              availableDoubles:
-                availablePlayersForSelection.homeAvailableDoubles,
-              selectedDoubles: availablePlayersForSelection.selectedHomeDoubles,
-              onChange(availableDoubles) {
-                doublesSelected(true, availableDoubles);
-              },
+          },
+          isHome: true,
+        }}
+        away={{
+          teamName: getTeamNameDisplay(false),
+          singles: {
+            enabled: autoCompletesEnabled.away.singles,
+            labels: awayTeamSelectLabels,
+            availablePlayers:
+              availablePlayersForSelection.awayTeamAvailablePlayers,
+            selectedPlayers:
+              availablePlayersForSelection.selectedAwayTeamPlayers,
+            playerSelected: (player, position) =>
+              playerSelected(false, player, position),
+          },
+          doubles: {
+            enabled: autoCompletesEnabled.away.doubles,
+            availableDoubles: availablePlayersForSelection.awayAvailableDoubles,
+            selectedDoubles: availablePlayersForSelection.selectedAwayDoubles,
+            onChange(availableDoubles) {
+              doublesSelected(false, availableDoubles);
             },
-            isHome: true,
-          }}
-          away={{
-            teamName: getTeamNameDisplay(false),
-            singles: {
-              enabled: autoCompletesEnabled.away.singles,
-              labels: awayTeamSelectLabels,
-              availablePlayers:
-                availablePlayersForSelection.awayTeamAvailablePlayers,
-              selectedPlayers:
-                availablePlayersForSelection.selectedAwayTeamPlayers,
-              playerSelected: (player, position) =>
-                playerSelected(false, player, position),
-            },
-            doubles: {
-              enabled: autoCompletesEnabled.away.doubles,
-              availableDoubles:
-                availablePlayersForSelection.awayAvailableDoubles,
-              selectedDoubles: availablePlayersForSelection.selectedAwayDoubles,
-              onChange(availableDoubles) {
-                doublesSelected(false, availableDoubles);
-              },
-            },
-            isHome: false,
+          },
+          isHome: false,
+        }}
+      />
+
+      <Button onClick={() => setShowScoreboard(true)}>Scoreboard</Button>
+      <IconButton
+        aria-label={livestreamDialogButtonAriaLabel}
+        onClick={() => setShowLivestreamDialog(true)}
+      >
+        <LiveTvIcon />
+      </IconButton>
+      <IconButton
+        aria-label={tablesDialogButtonAriaLabel}
+        onClick={() => setShowTableDialog(true)}
+      >
+        <TableRestaurantIcon />
+      </IconButton>
+      {showTablesDialog && (
+        <TablesDialog
+          onClose={() => setShowTableDialog(false)}
+          tablesAndMatchesNotCompleted={tablesAndGamesNotCompleted}
+          changed={(changes) => {
+            // if new table is main then will want to remove the tableId
+            const rootUpdater = createRootUpdater();
+            changes.forEach((change) => {
+              rootUpdater.updateListItem(
+                "matches",
+                change.key,
+                change.newTableId === mainTable
+                  ? { tableId: null }
+                  : { tableId: change.newTableId },
+              );
+            });
+            rootUpdater.update();
+            setShowTableDialog(false);
           }}
         />
-
-        <Button onClick={() => setShowScoreboard(true)}>Scoreboard</Button>
-        <IconButton
-          aria-label={livestreamDialogButtonAriaLabel}
-          onClick={() => setShowLivestreamDialog(true)}
-        >
-          <LiveTvIcon />
-        </IconButton>
-        <IconButton
-          aria-label={tablesDialogButtonAriaLabel}
-          onClick={() => setShowTableDialog(true)}
-        >
-          <TableRestaurantIcon />
-        </IconButton>
-        {showTablesDialog && (
-          <TablesDialog
-            onClose={() => setShowTableDialog(false)}
-            tablesAndMatchesNotCompleted={tablesAndGamesNotCompleted}
-            changed={(changes) => {
-              // if new table is main then will want to remove the tableId
-              const rootUpdater = createRootUpdater();
-              changes.forEach((change) => {
-                rootUpdater.updateListItem(
-                  "matches",
-                  change.key,
-                  change.newTableId === mainTable
-                    ? { tableId: null }
-                    : { tableId: change.newTableId },
-                );
-              });
-              rootUpdater.update();
-              setShowTableDialog(false);
-            }}
-          />
+      )}
+      {showLivestreamDialog && (
+        <LiveStreamingDialog
+          helpNode={
+            <Box padding={1} width={200}>
+              <Typography>
+                Select the table or game to livestream. Free is for when
+                multiple tables and the stream covers all tables. You can change
+                the table for a match from `Table Main` with the three dots menu
+                alongside a game.
+              </Typography>
+            </Box>
+          }
+          onClose={closeLiveStreamDialog}
+          changed={(changes) => {
+            updateLivestreams(
+              db,
+              leagueMatchId,
+              getLivestreamUpdates(changes, getNewKey),
+            );
+            closeLiveStreamDialog();
+          }}
+          liveStreamAvailability={liveStreamAvailability}
+          livestreamProviders={livestreamProviders}
+          getGameMenuTitle={(game) => `Game ${game + 1}`}
+          getTableMenuTitle={(table) => {
+            return table === mainTable ? "Main table" : `Table ${table}`;
+          }}
+        />
+      )}
+      {getForfeitDialog()}
+      <IconButton
+        aria-label={openForfeitDialogButtonAriaLabel}
+        onClick={openForfeitDialog}
+        disabled={showForfeitDialogDisabled}
+      >
+        <ForfeitIcon />
+      </IconButton>
+      <section aria-label={scoresheetSectionAriaLabel}>
+        {renderScoresheet(
+          umpireMatchAndKeys,
+          db,
+          keyedSinglesMatchNamePositionDisplays,
+          keyedDoublesMatchNamesPositionDisplay,
+          homeTeam!.name,
+          awayTeam!.name,
         )}
-        {showLivestreamDialog && (
-          <LiveStreamingDialog
-            helpNode={
-              <Box padding={1} width={200}>
-                <Typography>
-                  Select the table or game to livestream. Free is for when
-                  multiple tables and the stream covers all tables. You can
-                  change the table for a match from `Table Main` with the three
-                  dots menu alongside a game.
-                </Typography>
-              </Box>
-            }
-            onClose={closeLiveStreamDialog}
-            changed={(changes) => {
-              updateLivestreams(
-                db,
-                leagueMatchId,
-                getLivestreamUpdates(changes, getNewKey),
-              );
-              closeLiveStreamDialog();
-            }}
-            liveStreamAvailability={liveStreamAvailability}
-            livestreamProviders={livestreamProviders}
-            getGameMenuTitle={(game) => `Game ${game + 1}`}
-            getTableMenuTitle={(table) => {
-              return table === mainTable ? "Main table" : `Table ${table}`;
-            }}
-          />
-        )}
-        {getForfeitDialog()}
-        <IconButton
-          aria-label={openForfeitDialogButtonAriaLabel}
-          onClick={openForfeitDialog}
-          disabled={showForfeitDialogDisabled}
-        >
-          <ForfeitIcon />
-        </IconButton>
-        <section aria-label={scoresheetSectionAriaLabel}>
-          {renderScoresheet(
-            umpireMatchAndKeys,
-            db,
-            keyedSinglesMatchNamePositionDisplays,
-            keyedDoublesMatchNamesPositionDisplay,
-            homeTeam!.name,
-            awayTeam!.name,
-          )}
-        </section>
-      </div>
-    </>
+      </section>
+    </Box>
   );
 }

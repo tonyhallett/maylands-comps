@@ -29,10 +29,8 @@ import AddIcon from "@mui/icons-material/Add";
 import { Fragment, ReactNode, useRef, useState } from "react";
 import HelpIcon from "@mui/icons-material/Help";
 import { useClickPopover } from "../../league-match-view/useClickPopover";
-import {
-  Livestream,
-  LivestreamService,
-} from "../../../../../firebase/rtb/team";
+import { Livestream } from "../../../../../firebase/rtb/team";
+import { LivestreamProvider } from "./LivestreamProvider";
 
 export interface KeyedLivestream extends Livestream {
   key: string;
@@ -42,7 +40,7 @@ export interface TableKeyedLiveStreams {
   streams: KeyedLivestream[];
 }
 
-export interface GameKeyedLiveStreams {
+export interface MatchKeyedLiveStreams {
   game: number;
   streams: KeyedLivestream[];
 }
@@ -50,7 +48,7 @@ export interface GameKeyedLiveStreams {
 export interface LivestreamAvailability {
   free: KeyedLivestream[];
   tables: TableKeyedLiveStreams[];
-  games: GameKeyedLiveStreams[];
+  matches: MatchKeyedLiveStreams[];
 }
 
 export interface AdditionsDeletions {
@@ -77,14 +75,6 @@ export interface PermittedLivestreamInputResult {
   playerProp?: string; // this needs to pass the regex of the react player https://github.com/cookpete/react-player/blob/master/src/patterns.js
 }
 
-export interface LivestreamProvider {
-  service: LivestreamService;
-  serviceName: string;
-  icon: ReactNode;
-  isPermitted: (url: string) => PermittedLivestreamInputResult | undefined;
-  inputLabel: string;
-  validInputs?: string[];
-}
 type LivestreamProviders = LivestreamProvider[];
 
 export interface LiveStreamDialogProps {
@@ -142,14 +132,14 @@ export function LiveStreamingDialog({
   const fakeKeyCounter = useRef(0);
   const theme = useTheme();
   const fullScreen = useMediaQuery(theme.breakpoints.down("md"));
-  const { free, games, tables } = liveStreamAvailability;
+  const { free, matches, tables } = liveStreamAvailability;
   const liveStreamsAndChangesRef = useRef<LiveStreamsAndChanges[]>([
     getNoChanges(free, "Free"),
 
     ...tables.map((table) =>
       getNoChanges(table.streams, getTableMenuTitle(table.table)),
     ),
-    ...games.map((game) =>
+    ...matches.map((game) =>
       getNoChanges(game.streams, getGameMenuTitle(game.game)),
     ),
   ]);
@@ -299,7 +289,7 @@ export function LiveStreamingDialog({
 
             const gamesChanges: GameAdditionsDeletions[] = liveStreamsAndChanges
               .slice(1 + tables.length)
-              .map((lsc, i) => ({ ...lsc.changes, game: games[i].game }))
+              .map((lsc, i) => ({ ...lsc.changes, game: matches[i].game }))
               .filter((gad) => hasChanges(gad));
             const liveStreamChanges: LivestreamChanges = {
               free: freeChanges,

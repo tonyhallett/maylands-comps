@@ -1,6 +1,7 @@
 import XIcon from "@mui/icons-material/X";
-import { LivestreamProvider } from "../LiveStreamingDialog";
+import { LivestreamProvider } from "../LivestreamProvider";
 import { LivestreamService } from "../../../../../../firebase/rtb/team";
+import TweetEmbed from "react-tweet-embed";
 
 const postRegex =
   /^https?:\/\/(?:www\.)?x\.com\/([A-Za-z0-9_]{1,15})\/status\/(\d+)$/;
@@ -20,4 +21,8 @@ export const xProvider: LivestreamProvider = {
     return undefined;
   },
   inputLabel: "Post url",
+  canSeek: false,
+  getPlayer(livestreamPlayerInfo) {
+    return <TweetEmbed tweetId={livestreamPlayerInfo.playerProp!} />;
+  },
 };

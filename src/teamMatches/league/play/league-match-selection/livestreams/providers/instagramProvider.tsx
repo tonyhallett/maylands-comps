@@ -1,4 +1,4 @@
-import { LivestreamProvider } from "../LiveStreamingDialog";
+import { LivestreamProvider } from "../LivestreamProvider";
 import InstagramIcon from "@mui/icons-material/Instagram";
 import { LivestreamService } from "../../../../../../firebase/rtb/team";
 
@@ -20,7 +20,11 @@ export const instagramProvider: LivestreamProvider = {
     return undefined;
   },
   inputLabel: "Share url",
+  canSeek: false,
   /* validInputs: [
     "https://www.instagram.com/yourusername/live/yourvideoid?igsh=yourhash",
   ], */
+  getPlayer(livestreamPlayerInfo) {
+    return <a href={livestreamPlayerInfo.url}>Instagram live stream</a>;
+  },
 };
