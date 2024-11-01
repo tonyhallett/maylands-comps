@@ -104,6 +104,9 @@ function SeekableYoutubePlayer<T extends Moment>({
   };
   return (
     <YoutubePlayer
+      style={{ aspectRatio: "16/9" }}
+      width="100%"
+      height="auto"
       ref={(r) => {
         playerRef.current = r;
         ytPlayerRef.current = r?.getInternalPlayer();

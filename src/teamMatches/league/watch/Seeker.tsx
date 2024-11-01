@@ -93,6 +93,7 @@ export function Seeker({
           <FormControl style={{ width: 120 }}>
             <InputLabel>Match</InputLabel>
             <Select
+              inputProps={{ MenuProps: { disableScrollLock: true } }}
               value={state.match}
               label="Match"
               onChange={handleMatchChange}
@@ -116,6 +117,7 @@ export function Seeker({
         <FormControl style={{ width: 120 }}>
           <InputLabel>Game</InputLabel>
           <Select<number>
+            inputProps={{ MenuProps: { disableScrollLock: true } }}
             value={state.game}
             label="Game"
             onChange={handleGameChange}
@@ -140,6 +142,7 @@ export function Seeker({
         <FormControl style={{ width: 120 }}>
           <InputLabel>Seek</InputLabel>
           <Select<number>
+            inputProps={{ MenuProps: { disableScrollLock: true } }}
             value={state.seekPointIndex}
             label="Seek"
             onChange={handleSeekChange}
