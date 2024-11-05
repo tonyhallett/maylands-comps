@@ -61,29 +61,46 @@ interface SeekableYoutubePlayerProps<T extends Moment> {
   seekCallback: SeekCallback<T>;
 }
 
-function getDiffInSeconds(now: Date, moment: Moment) {
-  return getDateDiffInSeconds(now, moment.date);
+function getDiffInSeconds(laterDate: Date, moment: Moment) {
+  return getDateDiffInSeconds(laterDate, moment.date);
 }
 
-function getDateDiffInSeconds(now: Date, date: Date) {
-  return (now.getTime() - date.getTime()) / 1000;
+function getDateDiffInSeconds(laterDate: Date, earlierDate: Date) {
+  return (laterDate.getTime() - earlierDate.getTime()) / 1000;
 }
 
-interface InitialState {
+export interface YouTubeInitialState {
   currentTime: number;
   date: Date;
+}
+
+export function youtubeGetSeekableMoments<T extends Moment>(
+  moments: T[],
+  initialState: YouTubeInitialState,
+  now: Date,
+): T[] {
+  return moments.filter((moment) => {
+    if (moment.date > now) {
+      return false;
+    }
+    if (moment.date > initialState.date) {
+      return true;
+    }
+    return (
+      getDiffInSeconds(initialState.date, moment) < initialState.currentTime
+    );
+  });
 }
 
 function SeekableYoutubePlayer<T extends Moment>({
   url,
   seekCallback,
 }: SeekableYoutubePlayerProps<T>) {
-  const initialStateRef = useRef<InitialState | undefined>(undefined);
+  const initialStateRef = useRef<YouTubeInitialState | undefined>(undefined);
   const playerRef = useRef<YoutubePlayer | null>(null);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const ytPlayerRef = useRef<any | null>(null);
   const seek = (moment: T) => {
-    // will need to handle ended too
     const initialState = initialStateRef.current!;
     const now = new Date();
     // cannot trust playerRef.current!.getDuration()
@@ -94,9 +111,12 @@ function SeekableYoutubePlayer<T extends Moment>({
     ytPlayerRef.current.seekTo(time, true);
   };
 
-  // return getDiffInSeconds(now, m) < currentTime;
   const getSeekableMoments = (moments: T[]) => {
-    return moments;
+    return youtubeGetSeekableMoments(
+      moments,
+      initialStateRef.current!,
+      new Date(),
+    );
   };
   const seekFunctions: SeekFunctions<T> = {
     seek,

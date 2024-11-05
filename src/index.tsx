@@ -15,7 +15,6 @@ import { PlayLeagueMatchRoute } from "./teamMatches/league/play/PlayLeagueMatchR
 import { WatchLeagueMatchRoute } from "./teamMatches/league/watch/WatchLeagueMatchRoute";
 import { CreateLeagueSeasonForEmulator } from "./teamMatches/league/db-population/CreateLeagueSeasonForEmulator";
 import { SubscribeMaylandsYoutubeButton } from "./SubscribeMaylandsYoutubeButton";
-import { DemoYoutubePlayer } from "./DemoYoutubePlayer";
 import { ShareButtons } from "./share-buttons/ShareButtons";
 
 const leagueMatchesPath = "leagueMatches";
@@ -42,10 +41,6 @@ const router = createBrowserRouter([
         </Link>
       </Box>
     ),
-  },
-  {
-    path: "demoyoutubeplayer",
-    element: <DemoYoutubePlayer />,
   },
   {
     path: createLeagueSeasonPath,

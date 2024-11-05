@@ -31,6 +31,7 @@ import HelpIcon from "@mui/icons-material/Help";
 import { useClickPopover } from "../../league-match-view/useClickPopover";
 import { Livestream } from "../../../../../firebase/rtb/team";
 import { LivestreamProvider } from "./LivestreamProvider";
+import { getLivestreamProvider } from "./providers/livestreamProviders";
 
 export interface KeyedLivestream extends Livestream {
   key: string;
@@ -373,11 +374,7 @@ function AddDelete({
             primary={keyedLivestream.tag}
           />
           <ListItemIcon sx={{ minWidth: 24, marginRight: 1 }}>
-            {
-              livestreamProviders.find(
-                (lsp) => lsp.service === keyedLivestream.service,
-              )!.icon
-            }
+            {getLivestreamProvider(keyedLivestream.service).icon}
           </ListItemIcon>
         </ListItemButton>
         <Divider />

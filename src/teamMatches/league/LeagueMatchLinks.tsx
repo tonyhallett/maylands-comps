@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { Fragment, useEffect, useState } from "react";
 import { useRTB } from "../../firebase/rtb/rtbProvider";
 import {
   child,
@@ -61,14 +61,14 @@ export function LeagueMatchLinks() {
 
   const links = leagueMatches.map((leagueMatch) => {
     return (
-      <>
+      <Fragment key={leagueMatch.key}>
         <div>{leagueMatch.leagueMatch.description}</div>
         <Box component="span" marginRight={1}>
           <Link href={`${leagueMatch.key}`}>Play</Link>
         </Box>
 
         <Link href={`../watch/${leagueMatch.key}`}>Watch</Link>
-      </>
+      </Fragment>
     );
   });
 

@@ -27,16 +27,19 @@ export interface SeekerState {
   seekPointIndex: OrNotSelected<number>;
 }
 const notSelected: NotSelected = "";
-// todo ids - https://mui.com/material-ui/react-select/
+
 export function Seeker({
   matchSeekPoints,
   seek,
   singleMatch,
+  identifying,
 }: {
   matchSeekPoints: MatchSeekPoints;
   seek: Seek;
   singleMatch: boolean;
+  identifying: string;
 }) {
+  const getIdentifier = (suffix: string) => `${identifying}-select-${suffix}`;
   const [state, setState] = useState<SeekerState>({
     match: singleMatch ? [...matchSeekPoints.keys()][0] : notSelected,
     game: notSelected,
@@ -86,16 +89,20 @@ export function Seeker({
     return getMatchSeekPontsFromState(state);
   };
 
+  const matchSelectIdentifier = getIdentifier("Match");
+  const gameSelectIdentifier = getIdentifier("Game");
+  const seekPointSelectIdentifier = getIdentifier("Seek");
   return (
     <Stack direction="row" spacing={1} m={1}>
       {!singleMatch && (
         <Box component="span">
           <FormControl style={{ width: 120 }}>
-            <InputLabel>Match</InputLabel>
+            <InputLabel id={matchSelectIdentifier}>Match</InputLabel>
             <Select
               inputProps={{ MenuProps: { disableScrollLock: true } }}
               value={state.match}
               label="Match"
+              labelId={matchSelectIdentifier}
               onChange={handleMatchChange}
             >
               {[...matchSeekPoints.keys()].map((match) => {
@@ -115,11 +122,12 @@ export function Seeker({
       )}
       <Box component="span">
         <FormControl style={{ width: 120 }}>
-          <InputLabel>Game</InputLabel>
+          <InputLabel id={gameSelectIdentifier}>Game</InputLabel>
           <Select<number>
             inputProps={{ MenuProps: { disableScrollLock: true } }}
             value={state.game}
             label="Game"
+            labelId={gameSelectIdentifier}
             onChange={handleGameChange}
             disabled={state.match === ""}
           >
@@ -140,11 +148,12 @@ export function Seeker({
       </Box>
       <Box component="span">
         <FormControl style={{ width: 120 }}>
-          <InputLabel>Seek</InputLabel>
+          <InputLabel id={seekPointSelectIdentifier}>Seek</InputLabel>
           <Select<number>
             inputProps={{ MenuProps: { disableScrollLock: true } }}
             value={state.seekPointIndex}
             label="Seek"
+            labelId={seekPointSelectIdentifier}
             onChange={handleSeekChange}
             disabled={state.game === ""}
           >

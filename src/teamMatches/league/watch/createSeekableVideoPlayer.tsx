@@ -7,7 +7,7 @@ import {
   SeekCallback,
   SeekFunctions,
 } from "../play/league-match-selection/livestreams/LivestreamProvider";
-import { livestreamProviders } from "../play/league-match-selection/livestreams/providers/livestreamProviders";
+import { getLivestreamProvider } from "../play/league-match-selection/livestreams/providers/livestreamProviders";
 import { GameSeekPoints, MatchSeekPoints, SeekPoint, Seeker } from "./Seeker";
 import { PossibleMatchPoints } from "./WatchLeagueMatch";
 
@@ -105,6 +105,7 @@ export function SeekableVideoPlayer({
             singleMatch={singleMatch}
             matchSeekPoints={seekPoints}
             seek={seekFunctions.seek}
+            identifying={livestreamPlayerInfo.url}
           />
         )}
     </div>
@@ -116,10 +117,7 @@ export function createSeekableVideoPlayer(
   matchesPossiblePoints: PossibleMatchPoints[],
   singleMatch = false,
 ) {
-  const livestreamProvider = livestreamProviders.filter(
-    (livestreamProvider) =>
-      livestreamProvider.service === keyedLivestream.service,
-  )[0];
+  const livestreamProvider = getLivestreamProvider(keyedLivestream.service);
 
   const playerInfo: LivestreamPlayerInfo = {
     url: keyedLivestream.url,
