@@ -937,7 +937,7 @@ describe("getGameStats", () => {
     });
 
     describe("availableGameMatchPoints", () => {
-      function availableGameMatchPointsTest(
+      function expectAvailableGameMatchPoints(
         expected: AvailableGameMatchPoints | undefined,
         scorePoints: (umpire: Umpire) => void,
         clearBy2 = true,
@@ -972,7 +972,7 @@ describe("getGameStats", () => {
       it.each([3, 5])(
         "should have numGameMatchPoints when enter game point state",
         (upTo) => {
-          availableGameMatchPointsTest(
+          expectAvailableGameMatchPoints(
             {
               available: upTo - 1,
               isGamePoint: true,
@@ -989,7 +989,7 @@ describe("getGameStats", () => {
       );
 
       it("should be undefined when no game match point states", () => {
-        availableGameMatchPointsTest(
+        expectAvailableGameMatchPoints(
           undefined,
           (umpire) => {
             umpire.pointScored(true);

@@ -29,7 +29,7 @@ jest.mock(
 jestExpect.extend(matchers);
 const expect = jestExpect as unknown as jest.ExtendedExpect<typeof matchers>;
 
-describe("<UmpireView/", () => {
+describe("UmpireView", () => {
   describe("choosing server / receiver", () => {
     describe("auto", () => {
       describe("server chooser", () => {
@@ -479,6 +479,7 @@ describe("<UmpireView/", () => {
             resetServerReceiver,
           );
           await user.click(resetServerReceiverButton);
+          expect(resetServerReceiver).toHaveBeenCalled();
         });
       });
     });
@@ -1151,9 +1152,6 @@ describe("<UmpireView/", () => {
         const scoreRightButton = queryByRole("button", {
           name: "Score right",
         });
-        if (scoreLeftButton === null || scoreRightButton === null) {
-          throw new Error("Score buttons not found");
-        }
         return { scoreLeftButton, scoreRightButton };
       };
 
@@ -1278,7 +1276,7 @@ describe("<UmpireView/", () => {
             ? buttons.scoreLeftButton
             : buttons.scoreRightButton;
 
-          await user.click(scoreButton);
+          await user.click(scoreButton!);
 
           expect(pointScored).toHaveBeenCalledWith(
             pointScoredTest.expectedTeam1Scored,
@@ -1451,33 +1449,21 @@ describe("<UmpireView/", () => {
           rightPoints,
         };
       };
-      xit("should have the left score on the left and the right score on the right", () => {
-        // todo
-      });
-      xit("should have game point then set point for left", () => {
-        // todo
-      });
-      xit("should have set point then game point for right", () => {
-        // todo
-      });
-      xit("should display points larger than sets", () => {
-        // todo
-      });
-      xit("should have italic games and points if team won", () => {
-        // todo
-      });
+      it.todo(
+        "should have the left score on the left and the right score on the right",
+      );
+      it.todo("should have game point then set point for left");
+      it.todo("should have set point then game point for right");
+      it.todo("should display points larger than sets");
+      it.todo("should have italic games and points if team won");
 
       // these colours are the same
-      xit("should color games differently when team is at match point", () => {
-        // todo
-      });
-      xit("should color points differently when team is at match point or game point", () => {
-        // todo
-      });
+      it.todo("should color games differently when team is at match point");
+      it.todo(
+        "should color points differently when team is at match point or game point",
+      );
 
-      xit("should move negative point indicator to the right when right", () => {
-        // todo
-      });
+      it.todo("should move negative point indicator to the right when right");
       it.each([true, false])(
         "should show the scores from MatchState - team1 left %p",
         (team1Left) => {
@@ -1729,7 +1715,7 @@ describe("<UmpireView/", () => {
     });
   });
   describe("EndsDialog", () => {
-    it("should display the ends dialog with message Ends ! when MatchState.isEnds is true and singles", () => {
+    it("should display the ends dialog with message Ends when MatchState.isEnds is true and singles", () => {
       const { getByRole } = render(
         <UmpireView
           team1Player1Name="T1P1"
@@ -1789,7 +1775,7 @@ describe("<UmpireView/", () => {
       expect(endsDialog).toHaveTextContent("Ends !");
     });
 
-    it("should display the ends dialog with message Ends ! Switch receivers when MatchState.isEnds is true and doubles", () => {
+    it("should display the ends dialog with message Ends  Switch receivers when MatchState.isEnds is true and doubles", () => {
       const { getByRole } = render(
         <UmpireView
           team1Player1Name="T1P1"

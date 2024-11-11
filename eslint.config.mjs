@@ -21,7 +21,11 @@ function updateToFlatConfig(...configs) {
 
 const reactHooks = updateToFlatConfig("plugin:react-hooks/recommended")[0];
 
-const testFiles = ["test/**"];
+const testFiles = [
+  "__tests__/**",
+  "__emulator-tests__/**",
+  "__hacky-mui-tests__/**",
+];
 
 export default [
   { ignores: ["dist/**", "public/**", ".husky/**", ".parcel-cache/**"] },
@@ -45,6 +49,25 @@ export default [
   {
     files: testFiles,
     ...pluginJest.configs["flat/recommended"],
+    rules: {
+      ...pluginJest.configs["flat/recommended"].rules,
+      "jest/no-standalone-expect": "off",
+      "jest/no-conditional-expect": "off",
+      "jest/expect-expect": [
+        "warn",
+        { assertFunctionNames: ["expect", "expect*"] },
+      ],
+      "jest/valid-title": [
+        "error",
+        {
+          mustNotMatch: [
+            // removing % for it.each - todo look at if possible to check if in an each block
+            '[&|><"^!()@]',
+            "Titles should not contain special characters",
+          ],
+        },
+      ],
+    },
   },
   jsxRuntimeConfig,
   reactHooks,

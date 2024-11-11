@@ -4,7 +4,7 @@
 import { render, within } from "@testing-library/react";
 import {
   openMenuClickMenuItem,
-  openMenuExpectMenuItemDisabled,
+  openMenuExpectMenuItemDisabled as expectOpenMenuMenuItemDisabled,
 } from "../test-helpers/mui/menu";
 import createEmulatorTests from "./createEmulatorTests";
 import {
@@ -135,7 +135,8 @@ describe("render scoresheet", () => {
       const leagueMatchKey = await setupDatabase(database);
       render(createApp(leagueMatchKey));
 
-      await findAllGameRows();
+      const allGameRows = await findAllGameRows();
+      expect(allGameRows).toHaveLength(10);
     });
 
     describe("player cells", () => {
@@ -1474,7 +1475,7 @@ describe("render scoresheet", () => {
           render(createApp(leagueMatchKey));
 
           const menuButton = await findGameMenuButton(isSingles ? 0 : 9);
-          openMenuExpectMenuItemDisabled(menuButton, menuItemName, disabled);
+          expectOpenMenuMenuItemDisabled(menuButton, menuItemName, disabled);
         },
       );
     });

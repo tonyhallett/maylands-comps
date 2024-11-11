@@ -144,7 +144,7 @@ function createApp(
   );
 }
 
-describe("<LeagueMatchView/>", () => {
+describe("LeagueMatchView", () => {
   const defaultOrderedHomeAvailablePlayerNames = defaultHomePlayerNames
     .sort()
     .concat(lowerRankedDefaultHomePlayerNames)
@@ -1182,7 +1182,9 @@ describe("<LeagueMatchView/>", () => {
       );
 
       const scoresheet = await findScoresheetSection();
-      within(scoresheet).getByTestId("testscoreboard");
+      expect(
+        within(scoresheet).getByTestId("testscoreboard"),
+      ).toBeInTheDocument();
     });
   });
 
@@ -1710,7 +1712,8 @@ describe("<LeagueMatchView/>", () => {
       it("should show the livestream dialog when click the button", async () => {
         const leagueMatchKey = await setupDatabase(database);
         render(createApp(leagueMatchKey));
-        await openLivestreamDialog();
+        const livestreamDialog = await openLivestreamDialog();
+        expect(livestreamDialog).toBeInTheDocument();
       });
     });
 
@@ -1753,7 +1756,7 @@ describe("<LeagueMatchView/>", () => {
     }
 
     describe("available options", () => {
-      async function optionsTest(
+      async function expectOptionsTest(
         expectedOptions: string[],
         setUpMatch?: SetupMatch,
         liveStreams?: Livestreams,
@@ -1779,11 +1782,11 @@ describe("<LeagueMatchView/>", () => {
       ];
 
       it("should show options for free, Main Table and all games by default,", async () => {
-        await optionsTest(["Free", "Main table", ...allGames]);
+        await expectOptionsTest(["Free", "Main table", ...allGames]);
       });
 
       it("should show an option for all table ids", async () => {
-        await optionsTest(
+        await expectOptionsTest(
           ["Free", "Main table", "Table 1", "Table 2", ...allGames],
           (match, index) => {
             switch (index) {
@@ -1799,7 +1802,7 @@ describe("<LeagueMatchView/>", () => {
       });
 
       it("should only show games options for game that have not been won or Conceded/Forfeited", async () => {
-        await optionsTest(
+        await expectOptionsTest(
           [
             "Free",
             "Main table",
@@ -1892,7 +1895,9 @@ describe("<LeagueMatchView/>", () => {
           const deleteButton = deleteButtons.find(
             (button) => button.textContent === textContent,
           );
-          expect(within(deleteButton!).getByTestId(iconTestId));
+          expect(
+            within(deleteButton!).getByTestId(iconTestId),
+          ).toBeInTheDocument();
         });
       }
 
@@ -2244,7 +2249,7 @@ describe("<LeagueMatchView/>", () => {
           expect(tagTextField).toBeDisabled();
         });
 
-        it("should should have enabled livestream ( labelled from first provider ) and tag text fields when have selected an option", async () => {
+        it("should should have enabled livestream, labelled from first provider, and tag text fields when have selected an option", async () => {
           const leagueMatchKey = await setupDatabase(database);
           const { dialog } = await renderOpenAndSelectOption(leagueMatchKey, 0);
 
@@ -2475,7 +2480,7 @@ describe("<LeagueMatchView/>", () => {
           });
 
           describe("permitted", () => {
-            it("should be valid when permitted - %p", async () => {
+            it("should be valid when permitted", async () => {
               const { livestreamTextField } =
                 await typeLivestream(aYoutubeLiveUrl);
               expect(livestreamTextField).toBeValid();

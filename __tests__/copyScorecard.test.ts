@@ -60,7 +60,7 @@ describe("getConcededScores", () => {
     );
   });
 
-  it("should work mid game - 7-2 => 11-2", () => {
+  it("should work mid game - 7-2 to 11-2", () => {
     scorePoints(umpire, true, 7);
     scorePoints(umpire, false, 2);
     expectScores(
@@ -82,7 +82,7 @@ describe("getConcededScores", () => {
     );
   });
 
-  it("should work mid game - 10-10 => 12-10", () => {
+  it("should work mid game - 10-10 to 12-10", () => {
     scorePoints(umpire, true, 10);
     scorePoints(umpire, false, 10);
     expectScores(
@@ -104,7 +104,7 @@ describe("getConcededScores", () => {
     );
   });
 
-  it("should work mid game - 13-14 => 13-15", () => {
+  it("should work mid game - 13-14 to 13-15", () => {
     scoreGameScores(umpire, [
       {
         team1Points: 13,

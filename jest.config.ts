@@ -8,14 +8,14 @@ const config: JestConfigWithTsJest = {
       displayName: "emulator",
       // prettier-ignore
       // eslint-disable-next-line no-useless-escape
-      testRegex: ["/__emulator-tests__\/.*.emulatortest.tsx"],
+      testRegex: ["/__emulator-tests__\/.*.test.tsx"],
       setupFilesAfterEnv: ["<rootDir>/jest-setup.ts"],
       setupFiles: ["jest-canvas-mock"],
     },
     {
       preset: "ts-jest",
       displayName: "not-emulator",
-      testRegex: ["/__tests__/.*.test.ts$"],
+      testRegex: ["/__tests__/.*.test.tsx?$"],
       setupFilesAfterEnv: ["<rootDir>/jest-setup.ts"],
     },
     // https://github.com/mui/mui-x/issues/11568 [charts][ESM] @mui/x-charts does not work with jest

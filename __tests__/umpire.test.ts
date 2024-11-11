@@ -1005,7 +1005,7 @@ describe("umpiring", () => {
             ).toBe(MatchWinState.GamePointTeam2);
           });
 
-          it("should be GamePointTeam1 & GamePointTeam2 at 0/14 - 0/14", () => {
+          it("should be GamePointTeam1 and GamePointTeam2 at 0 14 - 0 14", () => {
             expect(
               getMatchWinStatus(
                 hardBatBestOf3Options,
@@ -1025,7 +1025,7 @@ describe("umpiring", () => {
             });
           });
 
-          it("should be MatchPointTeam1 & GamePointTeam2 at 1/14 - 0/14", () => {
+          it("should be MatchPointTeam1 and GamePointTeam2 at 1 14 - 0 14", () => {
             expect(
               getMatchWinStatus(
                 hardBatBestOf3Options,
@@ -1043,7 +1043,7 @@ describe("umpiring", () => {
             );
           });
 
-          it("should be MatchPointTeam2 & GamePointTeam1 at 0/14 - 1/14", () => {
+          it("should be MatchPointTeam2 and GamePointTeam1 at 0 14 - 1 14", () => {
             expect(
               getMatchWinStatus(
                 hardBatBestOf3Options,
@@ -1061,7 +1061,7 @@ describe("umpiring", () => {
             );
           });
 
-          it("should be MatchPointTeam1 & MatchPointTeam2 at 1/14 - 1/14", () => {
+          it("should be MatchPointTeam1 and MatchPointTeam2 at 1 14 - 1 14", () => {
             const matchWinState = getMatchWinStatus(
               hardBatBestOf3Options,
               {
@@ -1204,7 +1204,7 @@ describe("umpiring", () => {
             expect(matchState.matchWinState).toBe(MatchWinState.GamePointTeam2);
           });
 
-          it("should be GamePointTeam1 & GamePointTeam2 at 0/14 - 0/14", () => {
+          it("should be GamePointTeam1 and GamePointTeam2 at 0 14 - 0 14", () => {
             const bestOf = 3;
             const umpire = getHardbatSinglesUmpire(bestOf);
             scorePoints(umpire, false, 14);
@@ -1215,7 +1215,7 @@ describe("umpiring", () => {
             );
           });
 
-          it("should be MatchPointTeam1 & GamePointTeam2 at 1/14 - 0/14", () => {
+          it("should be MatchPointTeam1 and GamePointTeam2 at 1 14 - 0 14", () => {
             const bestOf = 3;
             const umpire = getHardbatSinglesUmpire(bestOf);
             scorePoints(umpire, true, 15);
@@ -1227,7 +1227,7 @@ describe("umpiring", () => {
             );
           });
 
-          it("should be MatchPointTeam2 & GamePointTeam1 at 0/14 - 1/14", () => {
+          it("should be MatchPointTeam2 and GamePointTeam1 at 0 14 - 1 14", () => {
             const bestOf = 3;
             const umpire = getHardbatSinglesUmpire(bestOf);
             scorePoints(umpire, false, 15);
@@ -1239,7 +1239,7 @@ describe("umpiring", () => {
             );
           });
 
-          it("should be MatchPointTeam1 & MatchPointTeam2 at 1/14 - 1/14", () => {
+          it("should be MatchPointTeam1 and MatchPointTeam2 at 1 14 - 1 14", () => {
             const bestOf = 3;
             const umpire = getHardbatSinglesUmpire(bestOf);
             scorePoints(umpire, false, 15);
@@ -2239,7 +2239,7 @@ describe("umpiring", () => {
         umpire.setServer("Team1Player1");
 
         const matchState = umpire.setFirstGameDoublesReceiver("Team2Player1");
-        expect(matchState.receiver).toEqual<Player>("Team2Player1");
+        expect(matchState.receiver).toBe<Player>("Team2Player1");
       });
 
       it("should throw for singles", () => {
@@ -2322,7 +2322,7 @@ describe("umpiring", () => {
       });
 
       it.each([2, 5])(
-        "should switch server / receiver in singles - after serving all serves ( %p )",
+        "should switch server and receiver in singles - after serving all serves - %p",
         (numServes) => {
           const umpire = new Umpire(
             {
@@ -2490,7 +2490,7 @@ describe("umpiring", () => {
     });
 
     describe("setting doubles server at the begining of subsequent games", () => {
-      it("first receiver shall be the player who served to him or her in the preceding game - game 2 ( odd games played )", () => {
+      it("first receiver shall be the player who served to him or her in the preceding game - game 2 - odd games played", () => {
         const test = (
           server: Player,
           receiver: Player,
@@ -2509,7 +2509,7 @@ describe("umpiring", () => {
         test("Team1Player1", "Team2Player2", "Team2Player2", "Team1Player1");
       });
 
-      it("first receiver shall be the player who served to him or her in the preceding game - game 3 ( even games played )", () => {
+      it("first receiver shall be the player who served to him or her in the preceding game - game 3 - even games played", () => {
         const test = (
           server: Player,
           receiver: Player,

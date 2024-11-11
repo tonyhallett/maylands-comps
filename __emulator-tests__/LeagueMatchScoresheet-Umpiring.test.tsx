@@ -149,7 +149,7 @@ describe("LeagueMatchScoresheet-Umpiring", () => {
 
     await clickUmpire(matchIndex);
 
-    expect(mockDbUmpire.mock.calls.length).toBe(1);
+    expect(mockDbUmpire.mock.calls).toHaveLength(1);
     return getDbUmpireProps(0);
   };
 
