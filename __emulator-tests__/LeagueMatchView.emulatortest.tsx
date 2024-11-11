@@ -62,7 +62,6 @@ import {
   LivestreamService,
   Livestreams,
 } from "../src/firebase/rtb/team";
-import { matchScoreGamesWon } from "./matchScoringHelpers";
 import {
   addLivestreamButtonAriaLabel,
   deleteSectionAriaLabel,
@@ -75,6 +74,7 @@ import { instagramProvider } from "../src/teamMatches/league/play/league-match-s
 import { facebookProvider } from "../src/teamMatches/league/play/league-match-selection/livestreams/providers/facebookProvider";
 import { youtubeProvider } from "../src/teamMatches/league/play/league-match-selection/livestreams/providers/youtubeProvider";
 import { mainTable } from "../src/teamMatches/league/play/league-match-selection/getTablesAndMatchesNotCompleted";
+import { matchScoreGamesWon } from "./matchScoringHelpers";
 const mockedUpdateLivestreams = updateLivestreams as unknown as jest.Mock<
   typeof updateLivestreams
 >;
@@ -1882,6 +1882,7 @@ describe("<LeagueMatchView/>", () => {
         tag: string;
         iconTestId: string;
       }
+
       function expectDeleteButtons(
         deleteButtons: HTMLElement[],
         expectedDeleteButtons: ExpectedDeleteButton[],
@@ -2184,6 +2185,7 @@ describe("<LeagueMatchView/>", () => {
       function clickAddLivestream(livestreamDialog: HTMLElement) {
         fireEvent.click(getAddLivestreamButton(livestreamDialog));
       }
+
       async function typePermittedAndAdd(
         livestream: string,
         optionNumber = 0,
@@ -2302,7 +2304,7 @@ describe("<LeagueMatchView/>", () => {
         interface PermittedTest {
           permitted: string;
           expectedTag: string;
-          expectedPlayerUrl?: string;
+          expectedPlayerProp?: string;
         }
         interface PermittedTests {
           livestreamProvider: LivestreamProvider;
@@ -2317,17 +2319,17 @@ describe("<LeagueMatchView/>", () => {
               {
                 permitted: "https://youtube.com/live/U_BtCIwvHqg",
                 expectedTag: "U_BtCIwvHqg",
-                expectedPlayerUrl: "https://youtube.com/live/U_BtCIwvHqg",
+                expectedPlayerProp: "https://youtube.com/live/U_BtCIwvHqg",
               },
               {
                 permitted: "https://www.youtube.com/live/jfKfPfyJRdk",
                 expectedTag: "jfKfPfyJRdk",
-                expectedPlayerUrl: "https://www.youtube.com/live/jfKfPfyJRdk",
+                expectedPlayerProp: "https://www.youtube.com/live/jfKfPfyJRdk",
               },
               {
                 permitted: "https://www.youtube.com/watch?v=97d-tPo-YCQ",
                 expectedTag: "97d-tPo-YCQ",
-                expectedPlayerUrl:
+                expectedPlayerProp:
                   "https://www.youtube.com/watch?v=97d-tPo-YCQ",
               },
             ],
@@ -2340,12 +2342,12 @@ describe("<LeagueMatchView/>", () => {
               {
                 permitted: "https://www.twitch.tv/username",
                 expectedTag: "username",
-                expectedPlayerUrl: "https://player.twitch.tv/?channel=username",
+                expectedPlayerProp: "twitch.tv/username",
               },
               {
                 permitted: "username",
                 expectedTag: "username",
-                expectedPlayerUrl: "https://player.twitch.tv/?channel=username",
+                expectedPlayerProp: "twitch.tv/username",
               },
             ],
           },
@@ -2368,14 +2370,14 @@ describe("<LeagueMatchView/>", () => {
                 permitted:
                   "https://www.facebook.com/username/videos/1554747258504979",
                 expectedTag: "username",
-                expectedPlayerUrl:
+                expectedPlayerProp:
                   "https://www.facebook.com/username/videos/1554747258504979",
               },
               {
                 permitted:
                   "https://www.facebook.com/username/videos/1554747258504979/",
                 expectedTag: "username",
-                expectedPlayerUrl:
+                expectedPlayerProp:
                   "https://www.facebook.com/username/videos/1554747258504979/",
               },
             ],
@@ -2402,9 +2404,9 @@ describe("<LeagueMatchView/>", () => {
                     tag: permittedTest.expectedTag,
                     service: livestreamProvider.service,
                   };
-                  if (permittedTest.expectedPlayerUrl !== undefined) {
+                  if (permittedTest.expectedPlayerProp !== undefined) {
                     expectedLivestream.playerProp =
-                      permittedTest.expectedPlayerUrl;
+                      permittedTest.expectedPlayerProp;
                   }
 
                   expect(mockedUpdateLivestreams).toHaveBeenCalledWith<

@@ -12,16 +12,11 @@
   "include": [
     "src/**/*",
     "__tests__/**/*",
+    "__emulator-tests__/**/*",
     "__hacky-mui-tests__/StatsView.test.tsx",
     "test-helpers/testing-library/selectors/roleSelectorFactory.ts",
     "test-helpers/testing-library/from.ts",
-    "__tests__/LeagueMatchLinks.emulatortest.tsx",
-    "__tests__/LeagueMatchView.emulatortest.tsx",
-    "jest-setup.ts",
-    "__tests__/LeagueMatchScoresheet.emulatortest.tsx",
-    "__tests__/LeagueMatchScoresheet-Umpiring.emulatortest.tsx",
-    "__tests__/DbUmpireView.emulatortest.tsx",
-    "__tests__/LeagueMatchScoresheetSelectors.ts"
+    "jest-setup.ts"
   ],
   "ts-node": {
     "compilerOptions": {

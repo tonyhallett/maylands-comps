@@ -9,7 +9,7 @@ const postRegex =
 export const xProvider: LivestreamProvider = {
   icon: <XIcon />,
   service: LivestreamService.x,
-  serviceName: "Instagram",
+  serviceName: "X",
   isPermitted: (url) => {
     const match = url.match(postRegex);
     if (match) {

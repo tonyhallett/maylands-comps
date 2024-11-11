@@ -1,5 +1,18 @@
 {
   "editor.defaultFormatter": "esbenp.prettier-vscode",
   "typescript.tsdk": "node_modules\\typescript\\lib",
-  "jest.virtualFolders": []
+  "jest.virtualFolders": [
+    {
+      "name": "not-emulator",
+      "jestCommandLine": "npm run non-emulator-tests --"
+    },
+    {
+      "name": "emulator",
+
+      "jestCommandLine": "npm run vscode-jest-emulators-virtualfolder --"
+    }
+  ],
+  "jest.nodeEnv": {
+    "VSCODE_CWD": ""
+  }
 }
