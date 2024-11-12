@@ -57,16 +57,6 @@ export default [
         "warn",
         { assertFunctionNames: ["expect", "expect*"] },
       ],
-      "jest/valid-title": [
-        "error",
-        {
-          mustNotMatch: [
-            // removing % for it.each - todo look at if possible to check if in an each block
-            '[&|><"^!()@]',
-            "Titles should not contain special characters",
-          ],
-        },
-      ],
     },
   },
   jsxRuntimeConfig,

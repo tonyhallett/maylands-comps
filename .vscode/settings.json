@@ -7,9 +7,9 @@
       "jestCommandLine": "npm run non-emulator-tests --"
     },
     {
-      "name": "emulator",
+      "name": "emulatorX",
 
-      "jestCommandLine": "npm run vscode-jest-emulators-virtualfolder --"
+      "jestCommandLine": "npm run vscode-jest-emulators-virtualfolder2 --"
     }
   ],
   "jest.nodeEnv": {
