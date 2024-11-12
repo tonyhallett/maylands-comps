@@ -48,7 +48,7 @@ jest.mock(
 
 const { createMaylandsComps } = createEmulatorTests();
 
-describe("LeagueMatchLinks", () => {
+describe("<LeagueMatchLinks/>", () => {
   beforeEach(async () => {
     let resolver: () => void = () => {
       // do nothing

@@ -50,7 +50,7 @@ jest.mock("../src/umpireView", () => {
 });
 
 const { createMaylandsComps, database } = createEmulatorTests();
-describe("DbUmpireView", () => {
+describe("<DbUmpireView/>", () => {
   const renderGetProps = () => {
     const umpire = new Umpire(
       {
