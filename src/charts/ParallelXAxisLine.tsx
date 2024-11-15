@@ -13,6 +13,6 @@ export function ParallelXAxisLine({ y, ...other }: ParallelXAxisLineProps) {
   const xLeft = xAxisScale.range()[0];
   const xRight = xAxisScale.range()[1];
   const yAxis = useYScale<"point">();
-  y = yAxis(y);
-  return <line x1={xLeft} x2={xRight} y1={y} y2={y} {...other} />;
+  const outputY = yAxis(y);
+  return <line x1={xLeft} x2={xRight} y1={outputY} y2={outputY} {...other} />;
 }

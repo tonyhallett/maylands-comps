@@ -9,7 +9,6 @@ import {
   isMatchWon,
 } from "../umpire/pointStateHelpers";
 import { scoreTooltipRenderer } from "./GameScoreLineChart/ScoreTooltipRenderer/scoreTooltipRenderer";
-import Box from "@mui/material/Box/Box";
 import { GameStats, getGameStats } from "../matchstats";
 import { LeadsStats } from "../matchstats/LeadStatistician";
 import { StreaksStats } from "../matchstats/StreakStatistician";
@@ -28,6 +27,7 @@ import {
   Accordion,
   AccordionDetails,
   AccordionSummary,
+  Box,
   ToggleButton,
   ToggleButtonGroup,
 } from "@mui/material";

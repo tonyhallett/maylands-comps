@@ -1,8 +1,7 @@
-import Typography from "@mui/material/Typography/Typography";
-import Box from "@mui/material/Box/Box";
 import { ChartsAxisContentProps } from "@mui/x-charts/ChartsTooltip";
 import { GameScoreState } from "../../../umpire";
 import { ChartsTooltipPaper } from "./ChartsTooltipPaper";
+import { Box, Typography } from "@mui/material";
 
 export function scoreTooltipRenderer(
   { series }: ChartsAxisContentProps,

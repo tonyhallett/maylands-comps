@@ -13,7 +13,6 @@
     "src/**/*",
     "__tests__/**/*",
     "__emulator-tests__/**/*",
-    "__hacky-mui-tests__/StatsView.test.tsx",
     "test-helpers/testing-library/selectors/roleSelectorFactory.ts",
     "test-helpers/testing-library/from.ts",
     "jest-setup.ts"
