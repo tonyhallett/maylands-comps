@@ -1,7 +1,7 @@
 /**
  * @jest-environment jsdom
  */
-import { render, screen } from "@testing-library/react";
+import { render, screen, within } from "@testing-library/react";
 import { CreateLeagueSeason } from "../src/teamMatches/league/db-population/CreateLeagueSeason";
 import createEmulatorTests from "./createEmulatorTests";
 import { LeagueMatchLinks } from "../src/teamMatches/league/LeagueMatchLinks";
@@ -12,44 +12,40 @@ import { LinkProps } from "@mui/material";
 jest.mock("@mui/material/Link/Link", () => {
   return {
     default: function Link(props: LinkProps) {
-      return <a href="">{props.children}</a>;
+      return <a href={props.href}>{props.children}</a>;
     },
   };
 });
 
-jest.mock(
-  "../src/teamMatches/league/db-population/maylandsFixturesToAdd",
-  () => {
-    // todo - how can import when jest hoisted
-    function addDays(date: Date, days: number) {
-      const result = new Date(date);
-      result.setDate(result.getDate() + days);
-      return result;
-    }
+const getFixtures = (addToday = true) => {
+  // todo - how can import when jest hoisted
+  function addDays(date: Date, days: number) {
+    const result = new Date(date);
+    result.setDate(result.getDate() + days);
+    return result;
+  }
 
-    const tomorrow = addDays(new Date(), 1);
-    const maylandsFixturesToAdd: MaylandsFixture[] = [
-      {
-        homeTeam: "Maylands Green 1",
-        awayTeam: "Maylands Green 2",
-        date: new Date(),
-      },
-      {
-        homeTeam: "Maylands Green 3",
-        awayTeam: "Maylands Green 4",
-        date: tomorrow,
-      },
-    ];
-    return {
-      default: maylandsFixturesToAdd,
-    };
-  },
-);
-
+  const tomorrow = addDays(new Date(), 1);
+  const maylandsFixturesToAdd: MaylandsFixture[] = addToday
+    ? [
+        {
+          homeTeam: "Maylands Green 1",
+          awayTeam: "Maylands Green 2",
+          date: new Date(),
+        },
+      ]
+    : [];
+  maylandsFixturesToAdd.push({
+    homeTeam: "Maylands Green 3",
+    awayTeam: "Maylands Green 4",
+    date: tomorrow,
+  });
+  return maylandsFixturesToAdd;
+};
 const { createMaylandsComps } = createEmulatorTests();
 
 describe("<LeagueMatchLinks/>", () => {
-  beforeEach(async () => {
+  const createLeagueSeason = async (maylandsFixtures: MaylandsFixture[]) => {
     let resolver: () => void = () => {
       // do nothing
     };
@@ -59,6 +55,7 @@ describe("<LeagueMatchLinks/>", () => {
     render(
       createMaylandsComps(
         <CreateLeagueSeason
+          fixtures={maylandsFixtures}
           promiseCallback={(promise) => {
             promise.then(() => {
               resolver();
@@ -68,18 +65,32 @@ describe("<LeagueMatchLinks/>", () => {
       ),
     );
     await waitForSetupDatabasePromise;
-  });
+  };
 
-  it("should have some links for today's fixtures", async () => {
+  it("should have play and watch links for today's fixtures", async () => {
+    await createLeagueSeason(getFixtures());
     render(createMaylandsComps(<LeagueMatchLinks />));
 
-    await screen.findByText("Maylands Green 1 vs Maylands Green 2", {
-      collapseWhitespace: true,
-    });
+    const mg1vMg2Card = await screen.findByLabelText(
+      "Maylands Green 1 vs Maylands Green 2",
+    );
+    const playLink = within(mg1vMg2Card!).getByText("Play");
+    const watchLink = within(mg1vMg2Card!).getByText("Watch");
+    expect(playLink.tagName).toBe("A");
+    expect(watchLink.tagName).toBe("A");
+    // todo - check hrefs
+
     expect(
-      screen.queryByText("Maylands Green 3 vs Maylands Green 4", {
-        collapseWhitespace: true,
-      }),
+      screen.queryByLabelText("Maylands Green 3 vs Maylands Green 4"),
     ).toBeNull();
+  });
+
+  it("should notify if no league matches for today", async () => {
+    await createLeagueSeason(getFixtures(false));
+    render(createMaylandsComps(<LeagueMatchLinks />));
+
+    expect(
+      await screen.findByText("No league matches today"),
+    ).toBeInTheDocument();
   });
 });

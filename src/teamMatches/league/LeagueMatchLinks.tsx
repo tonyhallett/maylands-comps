@@ -1,4 +1,4 @@
-import { Fragment, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { useRTB } from "../../firebase/rtb/rtbProvider";
 import {
   child,
@@ -12,7 +12,7 @@ import { DbLeagueMatch, leagueMatchesKey } from "../../firebase/rtb/team";
 import { getDbToday } from "../../helpers/getDbDate";
 import CenteredCircularProgress from "../../helper-components/CenteredCircularProgress";
 import Link from "@mui/material/Link/Link";
-import { Box } from "@mui/material";
+import { Box, Card, CardContent, Container, Typography } from "@mui/material";
 
 export interface LeagueMatchAndKey {
   leagueMatch: DbLeagueMatch;
@@ -59,18 +59,36 @@ export function LeagueMatchLinks() {
     return <CenteredCircularProgress />;
   }
 
+  if (leagueMatches.length === 0) {
+    return (
+      <Container>
+        <Typography sx={{ textAlign: "center" }} variant="h6">
+          No league matches today
+        </Typography>
+      </Container>
+    );
+  }
+
   const links = leagueMatches.map((leagueMatch) => {
     return (
-      <Fragment key={leagueMatch.key}>
-        <div>{leagueMatch.leagueMatch.description}</div>
-        <Box component="span" marginRight={1}>
-          <Link href={`${leagueMatch.key}`}>Play</Link>
-        </Box>
+      <Card
+        aria-label={leagueMatch.leagueMatch.description}
+        key={leagueMatch.key}
+        sx={{ mb: 1 }}
+      >
+        <CardContent>
+          <Typography variant="h6">
+            {leagueMatch.leagueMatch.description}
+          </Typography>
+          <Box component="span" marginRight={1}>
+            <Link href={`${leagueMatch.key}`}>Play</Link>
+          </Box>
 
-        <Link href={`../watch/${leagueMatch.key}`}>Watch</Link>
-      </Fragment>
+          <Link href={`../watch/${leagueMatch.key}`}>Watch</Link>
+        </CardContent>
+      </Card>
     );
   });
 
-  return <div>{links}</div>;
+  return <Box m={1}>{links}</Box>;
 }

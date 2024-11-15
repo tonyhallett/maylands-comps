@@ -6,7 +6,6 @@ import {
   Database,
   getDatabase,
 } from "firebase/database";
-import { isDevelopmentEnvironment } from "../../helpers/environment";
 import { getNewKey } from "./getNewKey";
 import { createRootUpdater } from "./match/db-helpers/createRootUpdater";
 
@@ -17,8 +16,9 @@ export function getMaylandsCompRTB() {
     alternative - from docs
     if(location.hostname === "localhost")
   */
-  if (isDevelopmentEnvironment()) {
-    connectDatabaseEmulator(db, "127.0.0.1", 9000);
+  console.log(`process.env.EMULATOR_HOST = ${process.env.EMULATOR_HOST}`);
+  if (process.env.EMULATOR_HOST !== undefined) {
+    connectDatabaseEmulator(db, process.env.EMULATOR_HOST, 9000);
   }
   return db;
 }

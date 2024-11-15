@@ -4,12 +4,12 @@
   "jest.virtualFolders": [
     {
       "name": "not-emulator",
-      "jestCommandLine": "npm run non-emulator-tests --"
+      "jestCommandLine": "npm run test-non-emulator --"
     },
     {
       "name": "emulator",
 
-      "jestCommandLine": "npm run vscode-jest-emulators --"
+      "jestCommandLine": "npm run test-vscode-jest-emulator --"
     }
   ],
   "jest.nodeEnv": {

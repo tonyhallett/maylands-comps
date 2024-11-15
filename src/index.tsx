@@ -25,7 +25,7 @@ const router = createBrowserRouter([
     path: "/",
     element: (
       <Box p={1}>
-        <Typography variant="h5">Maylands Competitions </Typography>
+        <Typography variant="h5">Maylands Competitions</Typography>
         <MGLogo width={100} />
         <SubscribeMaylandsYoutubeButton />
         <ShareButtons />
@@ -35,9 +35,6 @@ const router = createBrowserRouter([
 
         <Link style={{ display: "block" }} href={leagueMatchesPath}>
           League matches
-        </Link>
-        <Link style={{ display: "block" }} href="demoyoutubeplayer">
-          Demo youtube player
         </Link>
       </Box>
     ),

@@ -7,9 +7,7 @@ const filePath = processArgs[0];
 let argsStr = fs.readFileSync(filePath, "utf8");
 const args = JSON.parse(argsStr);
 argsStr = escapeTestPathPattern(args);
+
 const command = `jest --runInBand --selectProjects emulator ${argsStr}`;
-fs.writeFileSync(
-  "C:\\Users\\tonyh\\Downloads\\test\\firebased-jest.txt",
-  command,
-);
+
 cp.spawn(command, { shell: true, detached: false, stdio: "inherit" });

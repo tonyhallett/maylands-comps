@@ -1,0 +1,7 @@
+firebase-tools hosting does not work with node >20
+"engines": {
+	    "node": ">=18.0.0 || >=20.0.0"
+	  },
+https://github.com/firebase/firebase-tools/issues/7173
+	resolved after reverting node.js back to v20.
+	  

@@ -1,3 +1,4 @@
+import { MaylandsFixture } from "./data/romfordLeagueData";
 import maylandsFixturesToAdd from "./maylandsFixturesToAdd";
 import {
   PromiseCallback,
@@ -10,9 +11,11 @@ export function CreateLeagueSeason({
       .then(() => alert("added"))
       .catch((reason) => alert(`error adding - ${reason}`));
   },
+  fixtures = maylandsFixturesToAdd,
 }: {
   promiseCallback?: PromiseCallback;
+  fixtures?: MaylandsFixture[];
 }) {
-  useCreateLeagueSeason(maylandsFixturesToAdd, promiseCallback);
+  useCreateLeagueSeason(fixtures, promiseCallback);
   return null;
 }
