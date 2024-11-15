@@ -19,6 +19,8 @@ import { ServerReceiverChoice } from "../src/umpire/availableServerReceiverChoic
 jestExpect.extend(matchers);
 const expect = jestExpect as unknown as jest.ExtendedExpect<typeof matchers>;
 
+jest.mock("../src/umpireView/dialogs/serverReceiver/Tosser/ClickKingTosser");
+
 describe("UmpireView", () => {
   describe("choosing server / receiver", () => {
     describe("auto", () => {
