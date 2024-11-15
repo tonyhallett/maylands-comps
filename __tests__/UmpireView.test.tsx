@@ -16,16 +16,6 @@ import { MatchState, Player, TeamScores } from "../src/umpire";
 import { Team } from "../src/umpire/playersHelpers";
 import { ServerReceiverChoice } from "../src/umpire/availableServerReceiverChoice";
 
-// mocking due to import.meta.url
-jest.mock(
-  "../src/umpireView/dialogs/serverReceiver/Tosser/ClickKingTosser",
-  () => {
-    return {
-      ClickKingTosser: () => <div data-testid="tosser"></div>,
-    };
-  },
-);
-
 jestExpect.extend(matchers);
 const expect = jestExpect as unknown as jest.ExtendedExpect<typeof matchers>;
 

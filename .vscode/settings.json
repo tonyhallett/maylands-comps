@@ -8,8 +8,8 @@
     },
     {
       "name": "emulator",
-
-      "jestCommandLine": "npm run test-vscode-jest-emulator --"
+      "jestCommandLine": "npm run test-vscode-jest-emulator --",
+      "monitorLongRun": "off"
     }
   ],
   "jest.nodeEnv": {

@@ -76,15 +76,6 @@ jest.mock(
   },
 );
 
-jest.mock(
-  "../src/umpireView/dialogs/serverReceiver/Tosser/ClickKingTosser",
-  () => {
-    return {
-      ClickKingTosser: () => <div data-testid="tosser"></div>,
-    };
-  },
-);
-
 jest.mock("../src/teamMatches/league/play/LeagueMatchScoreboard", () => {
   return {
     LeagueMatchScoreboard: () => (
