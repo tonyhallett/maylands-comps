@@ -16,7 +16,6 @@ export function getMaylandsCompRTB() {
     alternative - from docs
     if(location.hostname === "localhost")
   */
-  console.log(`process.env.EMULATOR_HOST = ${process.env.EMULATOR_HOST}`);
   if (process.env.EMULATOR_HOST !== undefined) {
     connectDatabaseEmulator(db, process.env.EMULATOR_HOST, 9000);
   }

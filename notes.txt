@@ -5,3 +5,27 @@ firebase-tools hosting does not work with node >20
 https://github.com/firebase/firebase-tools/issues/7173
 	resolved after reverting node.js back to v20.
 	  
+---------------------------------------------------------
+scripts
+
+There are 3 scripts for running the code in a browser
+"start"
+"start-device"
+"start-hosting"
+
+start and start-device both use parcel for HMR.
+The difference is that start-device makes the emulator to a device that uses the local machine address that is 
+added to env.device.
+start-hosting does this too but does not support HMR so no need to use this one.
+start and start-device use exec so to stop the emulator close the parcel server with Ctrl C in the terminal.
+start-hosting use start and Ctrl C agin needs to be used in the terminal to stop the emulators.
+
+All 3 require connection to the database emulator as do the tests.
+The connectDatabaseEmulator function call uses process.env.EMULATOR_HOST
+When using start, start-device and start-hosting parcel provides this via the .env.device and .env.serve environment files.
+Parcel is instructed to use these with
+cross-env NODE_ENV=device parcel
+cross-env NODE_ENV=serve
+The script add-device-address-to-env.ts ensures the address is correct.
+
+In testing the jest.config.ts file sets process.env.EMULATOR_HOST = "127.0.0.1";

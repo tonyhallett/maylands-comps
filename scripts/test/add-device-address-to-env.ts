@@ -39,7 +39,7 @@ function addAddressToEnv() {
   const address = getWifiIPV4Address();
 
   // Adjust path to .env file based on script's location in the scripts folder
-  const envPath = path.resolve(__dirname, "../.env.device");
+  const envPath = path.resolve(__dirname, "../../.env.device");
 
   // Read the .env file contents
   const envFileContent = fs.readFileSync(envPath, "utf-8");

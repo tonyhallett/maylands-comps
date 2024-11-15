@@ -7,7 +7,7 @@ const jsonParams = JSON.stringify(params);
 const tmpDir = os.tmpdir();
 const tmpFile = `${tmpDir}\\jest-emulator-test.txt`;
 fs.writeFileSync(tmpFile, jsonParams);
-const command = `firebase emulators:exec --only database "npm run firebased-jest ${tmpFile} "`;
+const command = `firebase emulators:exec --only database "npm run test-emulator-escaped-args-from-file ${tmpFile} "`;
 
 cp.spawn(command, {
   shell: true,
